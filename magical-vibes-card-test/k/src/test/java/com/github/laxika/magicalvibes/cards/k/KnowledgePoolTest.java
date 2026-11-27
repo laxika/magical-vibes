@@ -23,6 +23,9 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import com.github.laxika.magicalvibes.cards.r.RuleOfLaw;
+import com.github.laxika.magicalvibes.cards.s.SpinalEmbrace;
+import com.github.laxika.magicalvibes.cards.f.FireIce;
+import com.github.laxika.magicalvibes.cards.g.GaddockTeeg;
 
 import java.util.List;
 import java.util.UUID;
@@ -548,5 +551,45 @@ class KnowledgePoolTest extends BaseCardTest {
         assertThat(gd.stack).noneMatch(se -> se.getCard().getId().equals(bears.getId()));
         assertThat(gd.getCardsExiledByPermanent(kpPermId)).anyMatch(c -> c.getId().equals(bears.getId()));
         assertThat(gd.findExiledCard(bears.getId())).isNotNull();
+    }
+
+    @Test
+    @CardUsed({SpinalEmbrace.class})
+    @DisplayName("A card from the pool whose own text casts it only during combat can't be cast in a main phase")
+    void cardsOwnTimingRestrictionStillApplies() {
+        Card embrace = new SpinalEmbrace();
+        setupKnowledgePoolManually(List.of(embrace));
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID kpPermId = harness.getPermanentId(player1, "Knowledge Pool");
+
+        harness.setHand(player1, List.of(new CounselOfTheSoratami()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(embrace.getId()));
+
+        assertThat(gd.stack).noneMatch(se -> se.getCard().getId().equals(embrace.getId()));
+        assertThat(gd.getCardsExiledByPermanent(kpPermId)).anyMatch(c -> c.getId().equals(embrace.getId()));
+    }
+
+    @Test
+    @CardUsed({FireIce.class, GaddockTeeg.class})
+    @DisplayName("A split card from the pool is judged by the half cast, not by both halves' total mana value")
+    void splitCardIsJudgedByTheHalfCast() {
+        Card fireIce = new FireIce();
+        setupKnowledgePoolManually(List.of(fireIce));
+        harness.addToBattlefield(player2, new GaddockTeeg());
+
+        harness.setHand(player1, List.of(new CounselOfTheSoratami()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(fireIce.getId()));
+
+        PendingInteraction.ColorChoice halves = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(halves).isNotNull();
+        assertThat(halves.options()).hasSize(2)
+                .anyMatch(label -> label.startsWith("Fire"))
+                .anyMatch(label -> label.startsWith("Ice"));
     }
 }

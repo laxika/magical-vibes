@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.cards.z.ZanarkandAncientMetropolis;
+import com.github.laxika.magicalvibes.cards.b.BonecrusherGiant;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -14,7 +17,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({EtaliPrimalStorm.class, Forest.class, GrizzlyBears.class, Shock.class, VillageRites.class, RuleOfLaw.class})
+@CardUsed({EtaliPrimalStorm.class, BonecrusherGiant.class, ZanarkandAncientMetropolis.class, Forest.class, GrizzlyBears.class, Shock.class, VillageRites.class, RuleOfLaw.class})
 class EtaliPrimalStormTest extends BaseCardTest {
 
     @Test
@@ -182,5 +185,49 @@ class EtaliPrimalStormTest extends BaseCardTest {
 
         harness.assertInGraveyard(player2, "Shock");
         harness.assertNotInGraveyard(player1, "Shock");
+    }
+
+    @Test
+    @DisplayName("An exiled Adventure card is cast as the face its caster chooses")
+    void adventureCardIsCastAsTheChosenFace() {
+        BonecrusherGiant giant = new BonecrusherGiant();
+        harness.setLibrary(player1, List.of(giant));
+        harness.setLibrary(player2, List.of(new Forest()));
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        addCreatureReady(player1, new EtaliPrimalStorm());
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(giant.getId()));
+
+        PendingInteraction.ColorChoice faces = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(faces).isNotNull();
+        assertThat(faces.options()).containsExactly("Cast Bonecrusher Giant", "Cast Stomp");
+        harness.handleListChoice(player1, "Cast Stomp");
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.findExiledCard(giant.getId())).isNotNull();
+    }
+
+    @Test
+    @DisplayName("An exiled land card with an Adventure is offered and cast as its Adventure")
+    void landCardIsCastAsItsAdventure() {
+        ZanarkandAncientMetropolis town = new ZanarkandAncientMetropolis();
+        harness.setLibrary(player1, List.of(town));
+        harness.setLibrary(player2, List.of(new Forest()));
+        addCreatureReady(player1, new EtaliPrimalStorm());
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+
+        PendingInteraction.ImprovisationCapstoneCastChoice interaction =
+                gd.interaction.activeInteraction(PendingInteraction.ImprovisationCapstoneCastChoice.class);
+        assertThat(interaction).isNotNull();
+        assertThat(interaction.validCardIds()).containsExactly(town.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(town.getId()));
+
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getName().equals("Lasting Fayth"));
     }
 }

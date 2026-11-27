@@ -860,6 +860,14 @@ public class ChoiceHandlerService {
             exileFreeCastSupportProvider.getObject().completeFaceChoice(gameData, player, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.LibraryFreeCastFaceChoice ctx) {
+            libraryChoiceHandlerService.completeFaceChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.FreeCastQueueFaceChoice ctx) {
+            exileFreeCastQueueSupport.completeFaceChoice(gameData, player.getId(), colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.FreeCastAdditionalCostChoice ctx) {
             if (!colorChoice.options().contains(colorName)) throw new IllegalStateException("Invalid additional cost choice");
             exileFreeCastQueueSupport.completeAdditionalCostChoice(gameData, colorName, ctx);

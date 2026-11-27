@@ -356,9 +356,12 @@ public class ExileSupport {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
-        // CR 608.2g, CR 601.3: a "can't cast" that applies (Rule of Law after the spell that triggered this) stops the
+        // CR 608.2g, CR 601.3: a "can't cast" that applies (Rule of Law after the spell that triggered this), or the
+        // card's own "cast only during combat" (only its type's timing is ignored: Knowledge Pool's ruling), stops the
         // cast; nothing moves the card, so it stays exiled with Knowledge Pool.
-        if (!castingPermissionService.mayBeginCastDuringResolution(gameData, playerId, chosenCard)) {
+        if (!castingPermissionService.mayBeginCastDuringResolution(gameData, playerId, chosenCard)
+                || !castingPermissionService.canCastWithSpellTimingRestriction(gameData, playerId, chosenCard)
+                || !castingPermissionService.canCastWithCastCondition(gameData, playerId, chosenCard)) {
             gameLogService.append(gameData, GameLog.cardThen(chosenCard,
                     " can't be cast right now (Knowledge Pool) and stays exiled."));
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

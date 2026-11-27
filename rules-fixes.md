@@ -40,7 +40,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 |---|---|---|
 | 0 Owner and bookkeeping | 0 | moves done; owner questions asked after the last run |
 | DM Damage | DM-1, DM-2, DM-3 | DM-1, DM-2 done 2026-11-27; DM-3 open |
-| FC Free casts and casting from other zones | FC-1, FC-2, FC-3 | FC-1 done 2026-11-27; FC-2, FC-3 open |
+| FC Free casts and casting from other zones | FC-1, FC-2, FC-3 | FC-1, FC-2 done 2026-11-27; FC-3 open |
 | CP Casting permissions and cost readers | CP-1 | open |
 | MP Multiplayer opponent choices | MP-1, MP-2 | MP-1 done 2026-11-27; MP-2 open |
 | CT Counters | CT-1, CT-2 | CT-1 done 2026-11-27; CT-2 open |
@@ -300,7 +300,20 @@ stack before it resolves).
 
 Avoid: LS-1, LS-2.
 
-Outcome:
+Outcome: 2026-11-27. Fixed: P7, P8, T8, T9, P5, L6 (deleted from entry 18); O1 fixed in part and edited down (Knowledge Pool now
+asks the chosen card's own "cast only during" and cast condition, per its ruling; `SplitCardCastSupport.beginFromExile` no longer
+judges the whole split card, each half is judged as offered, CR 709.3a, which was also L6's one real case (Gaddock Teeg and
+Fire // Ice); suspending asks every casting prohibition, CR 702.62a, 116.2f, 601.3). Left in O1: Scrycast (Biting Remark has no
+Oracle data in Scryfall or MTGJSON, and the fix needs the scry answer and both AI strategies), the may-cast offers' shared check
+and CR 608.2n's ability removal (not reached). An effect's cast now judges only the face cast (CR 716.3, 716.3a, 712.8b): the
+library `CAST_WITHOUT_PAYING` flow carries each card's matching faces (`LibrarySearchParams.offeredFaces`, new `SpellFace`),
+casts an Adventure (`LibraryCastSpellTarget.physicalCard`, `LibraryCast.physicalCard`/`faces`) and asks which face when both
+match (`ChoiceContext.LibraryFreeCastFaceChoice`); the free-cast queue's producers offer through
+`ExileFreeCastQueueSupport.offerFaces` (Primeval Spawn and the others on `ExileTopCardsAndMayCastSpellsEffect`, every
+`CastCardsWithoutPayingManaCostEffect` card, which now also offers a land card's Adventure), the queue asks the face as it
+reaches a card both of whose faces fit (`GameData.pendingFreeCastEitherFaceIds`, `ChoiceContext.FreeCastQueueFaceChoice`) and the
+total cap counts the cheaper face. Mana of any type pays a land card's Adventure (`withAnyManaType`, the FIN towns' rulings). No
+effect class added or deleted, so no ledger or ratchet change. New lines N11 (CP-1), N12 and N13 (FC-3).
 
 #### FC-3. Additional costs outside the hand
 
@@ -326,6 +339,14 @@ New line N6 (seen in FC-1): Invasion of Alara's chosen card whose cost increase 
 (`LibraryChoiceHandlerService.handleCastOneAndPutOtherIntoHandChoice`), though the other card already went to the hand, so the
 player can't keep the uncast one instead.
 
+New line N12 (seen in FC-2): the other free-cast queue producers don't offer through `ExileFreeCastQueueSupport.offerFaces`, so
+they refuse a land card's Adventure or give no face choice: `ExileTopCardOfEachPlayersLibraryAndMayCastSpellsEffectHandler`,
+`ExileRandomCardFromEachOpponentGraveyardMayCastFreeEffectHandler`, `EachPlayerExilesTopUntilNonlandAndMayCastSpellsEffectHandler`
+and `PlarggAndNassariCardChoiceInteractionHandler` (CR 716.3).
+
+New line N13 (seen in FC-2): `ExileTopCardsAndMayCastSpellsEffectHandler` judges a modal double-faced card by its front face only,
+and the total cap counts the front's mana value, though Primeval Spawn's ruling lets its back face be cast and counted (CR 712.8b).
+
 Outcome:
 
 ### CP. Casting permissions and cost readers
@@ -340,6 +361,9 @@ abilities and face down), P3 (Jaya Ballard's emblem grants flashback where the t
 
 Likely touches: `CastingPermissionService`, `CastingCostService`.
 Avoid: FC-1.
+
+New line N11 (seen in FC-2): `ExileTopCardMayPlayThisTurnEffect`'s "you may cast that card" (`castOnly`: Ragavan, Daxos) gives
+a land card with an Adventure (the FIN towns) no permission, though the towns' rulings let such an effect cast the Adventure.
 
 Outcome:
 

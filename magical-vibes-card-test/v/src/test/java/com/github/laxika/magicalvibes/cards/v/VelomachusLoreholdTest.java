@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import org.junit.jupiter.api.DisplayName;
+import com.github.laxika.magicalvibes.cards.b.BonecrusherGiant;
 import com.github.laxika.magicalvibes.cards.b.BalefulMastery;
 import com.github.laxika.magicalvibes.cards.b.BlasphemousAct;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -19,7 +21,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({VelomachusLorehold.class, BlasphemousAct.class, Forest.class, GrizzlyBears.class,
+@CardUsed({BonecrusherGiant.class, VelomachusLorehold.class, BlasphemousAct.class, Forest.class, GrizzlyBears.class,
         Pyroclasm.class, BalefulMastery.class, Jadzi.class})
 class VelomachusLoreholdTest extends BaseCardTest {
 
@@ -161,5 +163,59 @@ class VelomachusLoreholdTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Offers a creature card whose Adventure is an instant, and casts it as that Adventure")
+    void castsAMatchingAdventureOfACreatureCard() {
+        addCreatureReady(player1, new VelomachusLorehold());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        BonecrusherGiant giant = new BonecrusherGiant();
+        harness.setLibrary(player1, List.of(giant, new Forest()));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+
+        PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().cards()).containsExactly(giant);
+        harness.handleCardChosen(player1, 0);
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.findExiledCard(giant.getId())).isNotNull();
+        harness.assertNotOnBattlefield(player1, "Bonecrusher Giant");
+    }
+
+    @Test
+    @DisplayName("A modal double-faced card offered by its sorcery back face can't be cast as its creature front face")
+    void modalDoubleFacedCardIsCastOnlyAsItsMatchingFace() {
+        Permanent velomachus = addCreatureReady(player1, new VelomachusLorehold());
+        velomachus.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.setLibrary(player1, List.of(new Jadzi()));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        PendingInteraction.ColorChoice modes = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(modes).isNotNull();
+        assertThat(modes.options()).containsExactly("Journey to the Oracle");
+    }
+
+    @Test
+    @DisplayName("A modal double-faced card's back face is judged by its own mana value against the power")
+    void backFaceIsJudgedByItsOwnManaValue() {
+        addCreatureReady(player1, new VelomachusLorehold());
+        harness.setLibrary(player1, List.of(new Jadzi()));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        PendingInteraction.ColorChoice modes = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(modes).isNotNull();
+        assertThat(modes.options()).containsExactly("Journey to the Oracle");
     }
 }

@@ -42,6 +42,7 @@ public class CastCardsWithoutPayingManaCostEffectHandler implements NormalEffect
     private final SubjectResolutionService subjectResolutionService;
     private final AmountEvaluationService amountEvaluationService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final ExileFreeCastQueueSupport exileFreeCastQueueSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -57,7 +58,8 @@ public class CastCardsWithoutPayingManaCostEffectHandler implements NormalEffect
                 : subjectResolutionService.locatedCards(gameData, entry, cast, cast.cards())) {
             ExiledCardEntry exiled = located.zone() == Zone.EXILE
                     ? gameData.findExiledCard(located.card().getId()) : null;
-            if (exiled != null && !exiled.faceDown() && isSpell(located.card())) {
+            if (exiled != null && !exiled.faceDown() && exileFreeCastQueueSupport.offerFaces(
+                    gameData, located.card(), CastCardsWithoutPayingManaCostEffectHandler::isSpell)) {
                 offered.add(located.card().getId());
             } else if (located.zone() == Zone.GRAVEYARD && isSpell(located.card())) {
                 inGraveyards.add(located.card());

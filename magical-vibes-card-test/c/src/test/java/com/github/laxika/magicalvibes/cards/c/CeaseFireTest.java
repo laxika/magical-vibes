@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.a.AeonChronicler;
 import com.github.laxika.magicalvibes.cards.d.DruidLyrist;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CeaseFire.class, CarefulStudy.class, DruidLyrist.class, Forest.class})
+@CardUsed({CeaseFire.class, AeonChronicler.class, CarefulStudy.class, DruidLyrist.class, Forest.class})
 class CeaseFireTest extends BaseCardTest {
 
     @Test
@@ -137,6 +138,21 @@ class CeaseFireTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(permanent -> permanent.getCard() == creature);
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The target player can't suspend a creature card, since they couldn't begin to cast it")
+    void preventsSuspendingACreatureCard() {
+        castCeaseFireAtPlayer2();
+        AeonChronicler card = new AeonChronicler();
+        harness.setHand(player2, List.of(card));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+        harness.ensurePriority(player2);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player2, 0, null, 1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(card);
     }
 
     private void castCeaseFireAtPlayer2() {

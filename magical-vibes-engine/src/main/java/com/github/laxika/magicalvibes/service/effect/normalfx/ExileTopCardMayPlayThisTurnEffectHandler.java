@@ -160,7 +160,9 @@ public class ExileTopCardMayPlayThisTurnEffectHandler implements NormalEffectHan
                                 topCard, exileEffect.freeCastFilter(), null);
                 if (freeCast) {
                     gameData.setExilePlayWithoutPayingManaCost(topCard.getId(), true);
-                } else if (exileEffect.anyManaType() && !topCard.hasType(CardType.LAND)) {
+                } else if (exileEffect.anyManaType() && (!topCard.hasType(CardType.LAND)
+                        || topCard.getCastingOption(AdventureCast.class).isPresent())) {
+                    // A land card's Adventure is a spell this permission casts, so mana of any type may pay for it.
                     gameData.grantExileAnyManaType(topCard.getId(), holderId, duration);
                 }
             }

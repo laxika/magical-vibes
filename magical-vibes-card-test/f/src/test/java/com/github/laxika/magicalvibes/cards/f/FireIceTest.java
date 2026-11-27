@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.g.GaddockTeeg;
 import com.github.laxika.magicalvibes.cards.k.KavuMauler;
 import com.github.laxika.magicalvibes.cards.m.MeddlingMage;
 import com.github.laxika.magicalvibes.model.Card;
@@ -16,7 +17,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FireIce.class, KavuMauler.class, MeddlingMage.class})
+@CardUsed({FireIce.class, GaddockTeeg.class, KavuMauler.class, MeddlingMage.class})
 class FireIceTest extends BaseCardTest {
 
     @Test
@@ -220,6 +221,17 @@ class FireIceTest extends BaseCardTest {
         addMana(ManaColor.BLUE);
 
         assertThat(harness.getGameActionAvailabilityService().getPlayableCardIndices(gd, player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A half is judged by its own mana value, not both halves' total, against Gaddock Teeg")
+    void halfIsJudgedByItsOwnManaValue() {
+        harness.addToBattlefield(player2, new GaddockTeeg());
+        int lifeBefore = gd.getLife(player2.getId());
+
+        castFire(Map.of(player2.getId(), 2), List.of(player2.getId()));
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 2);
     }
 
     private void castFire(Map<java.util.UUID, Integer> damageAssignments, List<java.util.UUID> targets) {

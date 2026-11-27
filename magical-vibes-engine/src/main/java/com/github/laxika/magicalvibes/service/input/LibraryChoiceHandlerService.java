@@ -45,6 +45,7 @@ import com.github.laxika.magicalvibes.model.PendingReturnExiledWithSourceCard;
 import com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.SpellFace;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -499,7 +500,8 @@ public class LibraryChoiceHandlerService
                         searchCards, sourceCards, deck, deckOwnerId, grantHaste, sacrificeAtEndStep,
                         librarySearch.mayCastManaValueAtMost() == null
                                 ? Integer.MAX_VALUE : librarySearch.mayCastManaValueAtMost(),
-                        restToExile, reorderRemainingToTop && !reorderRemainingToBottom);
+                        restToExile, reorderRemainingToTop && !reorderRemainingToBottom,
+                        librarySearch.offeredFaces());
                 return;
             }
 
@@ -4643,7 +4645,7 @@ public class LibraryChoiceHandlerService
                                                 List<Card> sourceCards, List<Card> deck, UUID deckOwnerId,
                                                 boolean grantHaste, boolean sacrificeAtEndStep,
                                                 int spellManaValueLimit, boolean restToExile,
-                                                boolean restStays) {
+                                                boolean restStays, Map<UUID, Set<SpellFace>> offeredFaces) {
         String playerName = player.getUsername();
         Set<UUID> exiledSourceIds = sourceCards.stream()
                 .filter(card -> gameData.findExiledCard(card.getId()) != null)
@@ -4688,6 +4690,7 @@ public class LibraryChoiceHandlerService
         }
 
         Card chosenCard = null;
+        Set<SpellFace> chosenFaces = Set.of();
         boolean uncastable = false;
         if (cardIndex == -1) {
             if (!canFailToFind) {
@@ -4698,7 +4701,14 @@ public class LibraryChoiceHandlerService
                 throw new IllegalStateException("Invalid card index: " + cardIndex);
             }
             Card picked = searchCards.get(cardIndex);
-            String refusal = freeCastRefusal(gameData, player.getId(), picked, spellManaValueLimit);
+            Set<SpellFace> allowedFaces = offeredFaces.getOrDefault(picked.getId(), Set.of());
+            chosenFaces = castableFaces(gameData, player.getId(), picked, spellManaValueLimit, allowedFaces);
+            String refusal = chosenFaces.isEmpty()
+                    ? freeCastRefusal(gameData, player.getId(), picked, spellManaValueLimit, allowedFaces)
+                    : null;
+            if (refusal == null && chosenFaces.isEmpty()) {
+                refusal = " can't be cast";
+            }
             if (refusal == null) {
                 chosenCard = picked;
                 // Remove chosen card from sourceCards
@@ -4748,8 +4758,81 @@ public class LibraryChoiceHandlerService
         // A card whose cost increase isn't paid goes where the effect puts the cards it doesn't cast.
         IfNotCast ifNotCast = castFromExile && (restToExile || restStays) ? IfNotCast.STAYS_EXILED
                 : !castFromExile && restStays ? IfNotCast.LIBRARY_TOP : IfNotCast.LIBRARY_BOTTOM;
+        Zone sourceZone = castFromExile ? Zone.EXILE : Zone.LIBRARY;
+        if (chosenFaces.size() > 1 && isAdventurer(chosenCard)) {
+            // Both the card and its Adventure may be cast, so the caster picks which (CR 716.3).
+            beginFaceChoice(gameData, player, chosenCard, sourceZone, new PayFreeCastCostIncreaseEffect.LibraryCast(
+                    deckOwnerId, null, grantHaste, sacrificeAtEndStep, spellManaValueLimit, ifNotCast));
+            return;
+        }
         castCardWithoutPaying(gameData, player, chosenCard, null, grantHaste, sacrificeAtEndStep,
-                castFromExile ? Zone.EXILE : Zone.LIBRARY, spellManaValueLimit, ifNotCast, deckOwnerId);
+                sourceZone, spellManaValueLimit, ifNotCast, deckOwnerId, chosenFaces);
+    }
+
+    private static boolean isAdventurer(Card card) {
+        return card.getBackFaceCard() != null && card.getCastingOption(AdventureCast.class).isPresent();
+    }
+
+    private static Card adventureFace(Card card) {
+        return card.createRuntimeCopyWithFace(card.getBackFaceCard());
+    }
+
+    /**
+     * The faces of {@code card} it can be cast as now without paying its mana cost, among {@code allowedFaces} (empty
+     * for any): an adventurer card as the card or its Adventure, each judged by its own characteristics (CR 716.3a); a
+     * modal double-faced card by the faces its legal modes cast (CR 712.8b); any other card as itself.
+     */
+    private Set<SpellFace> castableFaces(GameData gameData, UUID controllerId, Card card, int spellManaValueLimit,
+                                         Set<SpellFace> allowedFaces) {
+        Set<SpellFace> faces = java.util.EnumSet.noneOf(SpellFace.class);
+        if (isAdventurer(card)) {
+            if (allows(allowedFaces, SpellFace.CARD) && !card.hasType(CardType.LAND)
+                    && card.getManaValue() <= spellManaValueLimit
+                    && freeCastRefusal(gameData, controllerId, card, spellManaValueLimit) == null) {
+                faces.add(SpellFace.CARD);
+            }
+            Card adventure = adventureFace(card);
+            if (allows(allowedFaces, SpellFace.ADVENTURE) && adventure.getManaValue() <= spellManaValueLimit
+                    && freeCastRefusal(gameData, controllerId, adventure, spellManaValueLimit) == null) {
+                faces.add(SpellFace.ADVENTURE);
+            }
+            return faces;
+        }
+        if (freeCastRefusal(gameData, controllerId, card, spellManaValueLimit, allowedFaces) == null) {
+            faces.addAll(!allowedFaces.isEmpty() ? allowedFaces
+                    : card.isModalDoubleFaced() && card.getBackFaceCard() != null
+                    ? java.util.EnumSet.of(SpellFace.CARD, SpellFace.BACK_FACE) : java.util.EnumSet.of(SpellFace.CARD));
+        }
+        return faces;
+    }
+
+    private static boolean allows(Set<SpellFace> allowedFaces, SpellFace face) {
+        return allowedFaces.isEmpty() || allowedFaces.contains(face);
+    }
+
+    /** Asks which face of an adventurer card both of whose faces may be cast is cast (CR 716.3). */
+    private void beginFaceChoice(GameData gameData, Player player, Card card, Zone sourceZone,
+                                 PayFreeCastCostIncreaseEffect.LibraryCast cast) {
+        Map<String, Boolean> faces = new java.util.LinkedHashMap<>();
+        faces.put("Cast " + card.getName(), false);
+        faces.put("Cast " + card.getBackFaceCard().getName(), true);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(player.getId(), null, null,
+                new ChoiceContext.LibraryFreeCastFaceChoice(card, sourceZone, cast, faces),
+                new ArrayList<>(faces.keySet()), "Choose which spell to cast."));
+    }
+
+    /** Casts the face the caster chose for a card {@link #beginFaceChoice} asked about. */
+    public void completeFaceChoice(GameData gameData, Player player, String choice,
+                                   ChoiceContext.LibraryFreeCastFaceChoice context) {
+        Boolean adventure = context.faces().get(choice);
+        if (adventure == null) {
+            throw new IllegalStateException("Invalid spell face choice");
+        }
+        gameData.interaction.clearAwaitingInput();
+        PayFreeCastCostIncreaseEffect.LibraryCast cast = context.cast();
+        castCardWithoutPaying(gameData, player, context.card(), cast.discoverValue(), cast.grantHaste(),
+                cast.sacrificeAtEndStep(), context.sourceZone(), cast.spellManaValueLimit(), cast.ifNotCast(),
+                cast.ownerId(), Set.of(adventure ? SpellFace.ADVENTURE : SpellFace.CARD));
     }
 
     private void handleCastWithoutPayingAndShuffleLibraryChoice(
@@ -5191,6 +5274,15 @@ public class LibraryChoiceHandlerService
      */
     private LegalModalOptions legalModalOptions(GameData gameData, Card card, UUID controllerId,
                                                 int spellManaValueLimit) {
+        return legalModalOptions(gameData, card, controllerId, spellManaValueLimit, Set.of());
+    }
+
+    /**
+     * As above, among the modes that cast one of {@code faces} (empty for any): a modal double-faced card's first mode
+     * casts its front face and its second its back face, each judged by that face's mana value (CR 712.8b).
+     */
+    private LegalModalOptions legalModalOptions(GameData gameData, Card card, UUID controllerId,
+                                                int spellManaValueLimit, Set<SpellFace> faces) {
         ChooseOneEffect modal = spellModal(card);
         if (modal == null || modal.choicesRequired() != 1 || modal.choicesMax() != 1) {
             return null;
@@ -5204,11 +5296,16 @@ public class LibraryChoiceHandlerService
                     || castingPermissionService.isSplitModeForbiddenByName(gameData, controllerId, card, modeIndex)) {
                 continue;
             }
+            boolean backFaceMode = card.isModalDoubleFaced() && card.getBackFaceCard() != null && modeIndex == 1;
+            if (card.isModalDoubleFaced() && !allows(faces, backFaceMode ? SpellFace.BACK_FACE : SpellFace.CARD)) {
+                continue;
+            }
             ChooseOneEffect.ChooseOneOption option = modal.options().get(modeIndex);
             Card evaluationCard = card.createRuntimeCopy();
             List<CardEffect> effects = new ArrayList<>(evaluationCard.getCastingCostsAndSpellEffects());
             spellCastingService.prepareModalSpellCast(evaluationCard, effects, modeIndex);
-            if (evaluationCard.getManaValue() > spellManaValueLimit) {
+            int modeManaValue = backFaceMode ? card.getBackFaceCard().getManaValue() : evaluationCard.getManaValue();
+            if (modeManaValue > spellManaValueLimit) {
                 continue;
             }
             boolean needsTarget = EffectResolution.needsSpellCastTarget(
@@ -5417,8 +5514,14 @@ public class LibraryChoiceHandlerService
     }
 
     private String freeCastRefusal(GameData gameData, UUID controllerId, Card card, int spellManaValueLimit) {
+        return freeCastRefusal(gameData, controllerId, card, spellManaValueLimit, Set.of());
+    }
+
+    /** As above, for a card that may be cast only as one of {@code faces} (empty for any). */
+    private String freeCastRefusal(GameData gameData, UUID controllerId, Card card, int spellManaValueLimit,
+                                   Set<SpellFace> faces) {
         Zone sourceZone = gameData.findExiledCard(card.getId()) == null ? Zone.LIBRARY : Zone.EXILE;
-        return freeCastRefusal(gameData, controllerId, card, spellManaValueLimit, sourceZone);
+        return freeCastRefusal(gameData, controllerId, card, spellManaValueLimit, sourceZone, faces);
     }
 
     /**
@@ -5429,6 +5532,11 @@ public class LibraryChoiceHandlerService
      */
     private String freeCastRefusal(GameData gameData, UUID controllerId, Card card, int spellManaValueLimit,
                                    Zone sourceZone) {
+        return freeCastRefusal(gameData, controllerId, card, spellManaValueLimit, sourceZone, Set.of());
+    }
+
+    private String freeCastRefusal(GameData gameData, UUID controllerId, Card card, int spellManaValueLimit,
+                                   Zone sourceZone, Set<SpellFace> faces) {
         if (!gameQueryService.canCastSpellFromZone(gameData, card, sourceZone, controllerId)
                 || !castingPermissionService.canCastDuringResolution(gameData, controllerId, card)
                 || !castingPermissionService.canCastWithSpellTimingRestriction(gameData, controllerId, card)) {
@@ -5438,7 +5546,7 @@ public class LibraryChoiceHandlerService
             return " can't be cast: its additional cost can't be paid";
         }
         boolean legalChoices = spellModal(card) != null
-                ? legalModalOptions(gameData, card, controllerId, spellManaValueLimit) != null
+                ? legalModalOptions(gameData, card, controllerId, spellManaValueLimit, faces) != null
                 : !(EffectResolution.needsTarget(card) || EffectResolution.needsSpellTarget(card))
                 || !computeCastWithoutPayingTargets(gameData, card, controllerId).isEmpty();
         if (!legalChoices) {
@@ -5482,23 +5590,36 @@ public class LibraryChoiceHandlerService
                 ifNotCast, ifNotCastZoneOwnerId);
     }
 
+    private void castCardWithoutPaying(GameData gameData, Player player, Card chosenCard,
+                                       Integer discoverValue, boolean grantHaste,
+                                       boolean sacrificeAtEndStep, Zone sourceZone, int spellManaValueLimit,
+                                       IfNotCast ifNotCast, UUID ifNotCastZoneOwnerId) {
+        castCardWithoutPaying(gameData, player, chosenCard, discoverValue, grantHaste, sacrificeAtEndStep, sourceZone,
+                spellManaValueLimit, ifNotCast, ifNotCastZoneOwnerId, Set.of());
+    }
+
     /**
      * Casts {@code chosenCard}, already out of its library (a card cast from exile leaves exile once its cost
      * increases are paid), without paying its mana cost; {@link #canCastWithoutPaying} must hold.
      *
      * @param ifNotCast            where the card goes when its cost increase isn't paid
      * @param ifNotCastZoneOwnerId the player whose library or hand {@code ifNotCast} names
+     * @param faces                the faces it may be cast as (empty for any): {@code ADVENTURE} alone casts an
+     *                             adventurer card as its Adventure (CR 716.3); a modal double-faced card is offered
+     *                             only the modes casting these faces (CR 712.8b)
      */
     private void castCardWithoutPaying(GameData gameData, Player player, Card chosenCard,
                                        Integer discoverValue, boolean grantHaste,
                                        boolean sacrificeAtEndStep, Zone sourceZone, int spellManaValueLimit,
-                                       IfNotCast ifNotCast, UUID ifNotCastZoneOwnerId) {
+                                       IfNotCast ifNotCast, UUID ifNotCastZoneOwnerId, Set<SpellFace> faces) {
+        boolean asAdventure = isAdventurer(chosenCard) && faces.equals(Set.of(SpellFace.ADVENTURE));
+        Card face = asAdventure ? adventureFace(chosenCard) : chosenCard;
         // Its total cost is its cost increases (CR 601.2f), paid once nothing else can stop the cast, from the pool or
         // after a question during which mana abilities may be activated (CR 601.2g).
         FreeCastCostIncreaseSupport.Payment payment = freeCastCostIncreaseSupport.payOrAsk(gameData, player.getId(),
-                chosenCard, chosenCard.getId(), sourceZone, new PayFreeCastCostIncreaseEffect.LibraryCast(
+                face, chosenCard.getId(), sourceZone, new PayFreeCastCostIncreaseEffect.LibraryCast(
                         ifNotCastZoneOwnerId, discoverValue, grantHaste, sacrificeAtEndStep, spellManaValueLimit,
-                        ifNotCast));
+                        ifNotCast).castAs(chosenCard, faces));
         if (payment == FreeCastCostIncreaseSupport.Payment.ASKED) {
             return;
         }
@@ -5512,8 +5633,8 @@ public class LibraryChoiceHandlerService
         }
         UUID playerId = player.getId();
         String playerName = player.getUsername();
-        boolean creatureSpell = chosenCard.hasType(CardType.CREATURE);
-        Card castCard = chosenCard;
+        boolean creatureSpell = face.hasType(CardType.CREATURE);
+        Card castCard = face;
         if (creatureSpell && sacrificeAtEndStep) {
             castCard = chosenCard.createRuntimeCopy();
             castCard.setSacrificeAtEndStep(true);
@@ -5525,7 +5646,7 @@ public class LibraryChoiceHandlerService
         // Cast the chosen card without paying its mana cost
         StackEntryType spellType = mapCardTypeToSpellType(castCard);
 
-        LegalModalOptions modalOptions = legalModalOptions(gameData, castCard, playerId, spellManaValueLimit);
+        LegalModalOptions modalOptions = legalModalOptions(gameData, castCard, playerId, spellManaValueLimit, faces);
         if (modalOptions != null) {
             Card runtimeCard = castCard.createRuntimeCopy();
             playerInputService.beginLibraryCastModeChoice(gameData, playerId, runtimeCard,
@@ -5550,7 +5671,8 @@ public class LibraryChoiceHandlerService
             gameData.interaction.setPermanentChoiceContext(
                     new PermanentChoiceContext.LibraryCastSpellTarget(
                             castCard, playerId, spellEffects, spellType, null, discoverValue,
-                            searchedCardOwnerOverride(gameData, castCard, playerId), sourceZone));
+                            searchedCardOwnerOverride(gameData, castCard, playerId), sourceZone,
+                            asAdventure ? chosenCard : null));
             playerInputService.beginPermanentChoice(gameData, playerId, validTargets,
                     "Choose a target for " + castCard.getName() + ".");
 
@@ -5568,6 +5690,10 @@ public class LibraryChoiceHandlerService
         );
         freeSpell.setSourceZone(sourceZone);
         freeSpell.setOwnerIdOverride(searchedCardOwnerOverride(gameData, castCard, playerId));
+        if (asAdventure) {
+            freeSpell.setPhysicalCard(chosenCard);
+            freeSpell.setCastWithAdventure(true);
+        }
         if (exileFreeCastQueueSupport.beginSacrificeCostIfNeeded(gameData, freeSpell)) return;
         gameData.stack.add(freeSpell);
 
@@ -5596,13 +5722,17 @@ public class LibraryChoiceHandlerService
      */
     public void resumeAfterCostIncreaseDecision(GameData gameData, Player player, Card card, Zone sourceZone,
                                                 PayFreeCastCostIncreaseEffect.LibraryCast cast, boolean paid) {
-        if (paid && canCastWithoutPaying(gameData, player.getId(), card, cast.spellManaValueLimit(), sourceZone)) {
-            castCardWithoutPaying(gameData, player, card, cast.discoverValue(), cast.grantHaste(),
+        // The question was asked about the face being cast; the card is the one cast.
+        Card physicalCard = cast.physicalCard() != null ? cast.physicalCard() : card;
+        if (paid && freeCastRefusal(gameData, player.getId(), card, cast.spellManaValueLimit(), sourceZone,
+                cast.faces()) == null) {
+            castCardWithoutPaying(gameData, player, physicalCard, cast.discoverValue(), cast.grantHaste(),
                     cast.sacrificeAtEndStep(), sourceZone, cast.spellManaValueLimit(), cast.ifNotCast(),
-                    cast.ownerId());
+                    cast.ownerId(), cast.faces());
             return;
         }
-        abandonForUnpaidCostIncrease(gameData, player, card, cast.discoverValue(), cast.ifNotCast(), cast.ownerId());
+        abandonForUnpaidCostIncrease(gameData, player, physicalCard, cast.discoverValue(), cast.ifNotCast(),
+                cast.ownerId());
     }
 
     private void abandonForUnpaidCostIncrease(GameData gameData, Player player, Card card, Integer discoverValue,

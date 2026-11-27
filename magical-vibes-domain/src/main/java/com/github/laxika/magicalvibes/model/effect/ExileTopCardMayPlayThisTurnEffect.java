@@ -23,7 +23,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *                    declares the (harmful) player target
  * @param castOnly    "you may cast that card": a land card gets no permission (Ragavan, Daxos)
  * @param anyManaType "and you may spend mana as though it were mana of any color to cast that spell": for each
- *                    nonland card exiled this way, for as long as the permission lasts
+ *                    card exiled this way that can be cast (a nonland card, or a land card's Adventure), for as long
+ *                    as the permission lasts
  * @param duration    how long the permission lasts: {@link Duration#UNTIL_END_OF_TURN} ("this turn"),
  *                    {@link Duration#UNTIL_YOUR_NEXT_END_STEP}, {@link Duration#UNTIL_END_OF_YOUR_NEXT_TURN},
  *                    {@link Duration#UNTIL_CONTROLLERS_NEXT_UPKEEP}, {@link Duration#DURING_YOUR_NEXT_TURN} ("during

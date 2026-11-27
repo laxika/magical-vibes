@@ -29,6 +29,10 @@ Permissions, timing, targets and cost use the characteristics the spell is cast 
 Owner: `SpellCastingService.playCardFromLibraryTop`.
 Why: Johann, Apprentice Sorcerer allows a creature card's Adventure; no free alternative replaces a face-down cost.
 
+### An effect's cast judges only the face cast (CR 716.3a, 712.8b, 709.3a)
+A resolution cast of an adventurer, modal double-faced or split card offers the faces or halves the effect allows, each judged by its own characteristics; with two, the caster chooses. The library flow carries them as `LibrarySearchParams.offeredFaces`, the free-cast queue as `ExileFreeCastQueueSupport.offerFaces`.
+Why: a card's other face (or both halves' total) must not decide whether the spell may be cast.
+
 ### Mutate keeps the permanent (CR 702.140b, 702.140c, 731.2b, 731.3)
 A legal merge keeps the `Permanent` object and fires mutate, not entry, triggers; an illegal target resolves as a creature spell; one permanent departs, every component moves.
 Owner: `MutationSupport`, `Permanent.mutatedComponentCards`.

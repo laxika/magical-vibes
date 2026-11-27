@@ -107,10 +107,8 @@ public class ExileTopCardsAndMayCastSpellsEffectHandler implements NormalEffectH
                                 .text(" from the top of their library.")
                                 .build());
 
-                if (isCastable(card, e, entry) && card.getManaValue() <= manaValueLimit) {
+                if (offer(gameData, e, entry, card, manaValueLimit)) {
                     castableSpellIds.add(card.getId());
-                } else if (hasCastableAdventureFace(card, e, entry, manaValueLimit)) {
-                    offerAsAdventure(gameData, e, card, castableSpellIds);
                 } else if (e.playLands() && card.hasType(CardType.LAND)) {
                     castableSpellIds.add(card.getId());
                     playableLandIds.add(card.getId());
@@ -123,10 +121,8 @@ public class ExileTopCardsAndMayCastSpellsEffectHandler implements NormalEffectH
                 if (exiledCardIds.contains(earlier.getId()) || castableSpellIds.contains(earlier.getId())) {
                     continue;
                 }
-                if (isCastable(earlier, e, entry) && earlier.getManaValue() <= manaValueLimit) {
+                if (offer(gameData, e, entry, earlier, manaValueLimit)) {
                     castableSpellIds.add(earlier.getId());
-                } else if (hasCastableAdventureFace(earlier, e, entry, manaValueLimit)) {
-                    offerAsAdventure(gameData, e, earlier, castableSpellIds);
                 }
             }
         }
@@ -202,26 +198,19 @@ public class ExileTopCardsAndMayCastSpellsEffectHandler implements NormalEffectH
     }
 
     /**
-     * An Adventure card whose card fits no limit but whose Adventure does is offered as its Adventure: cast that way
-     * only the Adventure's characteristics are evaluated (CR 716.3a), so the free-cast queue casts it as the Adventure
-     * ({@code GameData.pendingFreeCastAdventureIds}), not as the card, whose mana value is over the limit.
+     * Whether an exiled card is offered: as the card or its Adventure, each judged by its own characteristics against
+     * the filter and the mana value limit (CR 716.3a). A free cast marks which faces the queue may cast
+     * ({@link ExileFreeCastQueueSupport#offerFaces}); a cast at its normal cost chooses its face as it is cast.
      */
-    private static void offerAsAdventure(GameData gameData, ExileTopCardsAndMayCastSpellsEffect effect, Card card,
-                                         List<UUID> castableSpellIds) {
-        if (!effect.normalCost()) {
-            gameData.pendingFreeCastAdventureIds.add(card.getId());
+    private boolean offer(GameData gameData, ExileTopCardsAndMayCastSpellsEffect effect, StackEntry entry, Card card,
+                          int manaValueLimit) {
+        java.util.function.Predicate<Card> faceFits = face -> isCastable(face, effect, entry)
+                && face.getManaValue() <= manaValueLimit;
+        if (effect.normalCost()) {
+            return faceFits.test(card) || card.getCastingOption(AdventureCast.class).isPresent()
+                    && card.getBackFaceCard() != null && faceFits.test(card.getBackFaceCard());
         }
-        castableSpellIds.add(card.getId());
-    }
-
-    /** The Adventure half of an exiled Adventure card is a spell of its own, with its own mana value. */
-    private boolean hasCastableAdventureFace(Card card, ExileTopCardsAndMayCastSpellsEffect effect,
-                                             StackEntry entry, int manaValueLimit) {
-        Card adventure = card.getBackFaceCard();
-        return card.getCastingOption(AdventureCast.class).isPresent()
-                && adventure != null
-                && adventure.getManaValue() <= manaValueLimit
-                && isCastable(adventure, effect, entry);
+        return exileFreeCastQueueSupport.offerFaces(gameData, card, faceFits);
     }
 
     private boolean isCastable(Card card, ExileTopCardsAndMayCastSpellsEffect effect, StackEntry entry) {

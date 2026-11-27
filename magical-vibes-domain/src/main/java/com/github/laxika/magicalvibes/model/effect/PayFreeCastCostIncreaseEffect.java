@@ -3,11 +3,13 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.FreeCastKickerOffer;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.SpellFace;
 import com.github.laxika.magicalvibes.model.SplitCardCast;
 import com.github.laxika.magicalvibes.model.Zone;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -52,12 +54,28 @@ public record PayFreeCastCostIncreaseEffect(UUID cardId, Zone zone, PausedCast p
      * @param sacrificeAtEndStep  whether that permanent is sacrificed at the next end step
      * @param spellManaValueLimit the largest mana value a modal spell's chosen spell may have
      * @param ifNotCast           where a card that isn't cast goes
+     * @param physicalCard        the card cast, when the paused card is one of its faces (an Adventure), else null
+     * @param faces               the faces the card may still be cast as (CR 716.3a, 712.8b); empty for any
      */
     public record LibraryCast(UUID ownerId, Integer discoverValue, boolean grantHaste, boolean sacrificeAtEndStep,
-                              int spellManaValueLimit, IfNotCast ifNotCast) implements PausedCast {
+                              int spellManaValueLimit, IfNotCast ifNotCast, Card physicalCard,
+                              Set<SpellFace> faces) implements PausedCast {
         public LibraryCast {
             Objects.requireNonNull(ownerId, "ownerId");
             Objects.requireNonNull(ifNotCast, "ifNotCast");
+            faces = faces == null ? Set.of() : Set.copyOf(faces);
+        }
+
+        public LibraryCast(UUID ownerId, Integer discoverValue, boolean grantHaste, boolean sacrificeAtEndStep,
+                           int spellManaValueLimit, IfNotCast ifNotCast) {
+            this(ownerId, discoverValue, grantHaste, sacrificeAtEndStep, spellManaValueLimit, ifNotCast, null,
+                    Set.of());
+        }
+
+        /** This cast of {@code card} as one of {@code faces}. */
+        public LibraryCast castAs(Card card, Set<SpellFace> faces) {
+            return new LibraryCast(ownerId, discoverValue, grantHaste, sacrificeAtEndStep, spellManaValueLimit,
+                    ifNotCast, card, faces);
         }
     }
 

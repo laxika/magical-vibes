@@ -1363,7 +1363,7 @@ Don't commit.
 - Journey for the Elixir: taking both cards from the graveyard doesn't shuffle, though its text says "search your library and graveyard … then shuffle". Sure of the code.
 - `CoinFlipService`'s Pokey d20 (the roll that replaces a flip) ignores dice advantage (Pixie Guide). Unverified.
 
-#### Wrong targets and choices (22)
+#### Wrong targets and choices (20)
 
 - `ChoosePermanentsEffect` keeps a lone chosen permanent as the source's chosen permanent, so Deepfathom Echo (if folded onto it) or any copier choosing its model would leave a "the chosen creature" card's copy with a choice it never made (Dauntless Bodyguard) (CR 607.2d). Sure of the code.
 - `CardSubject.TriggeringCards` names a card only in the stay its event put it in, so `bindCardSubjects` reads no type for a discarded card that was exiled instead or has left the graveyard, where the text reads last-known characteristics (CR 608.2h; Diviner of Fates' fold). Sure of the code.
@@ -1372,8 +1372,6 @@ Don't commit.
 - `beginAnyTargetChoice` and the permanent-or-player prompt don't drop what can't be chosen; about 400 counting callers unswept. Unverified.
 - A name prompt that requires a type offers a copy's name by the copy's types (CR 201.4a). Unverified.
 - The opponent-owned processor head and Ulamog's Nullifier offer face-down cards one by one where Ruin Processor chooses piles. Unverified.
-- `ImprovisationCapstoneCastChoice` offers an Adventure card only as its creature, with no face choice (CR 716.3). Sure of the code.
-- `ExileTopCardsAndMayCastSpellsEffect` with a total cap checks an Adventure offer against the card's own mana value, not the Adventure's (CR 716.3a). Fairly sure.
 - `SubjectResolutionService.attachedId` gives no host for an Aura that left together with its host when the entry has no source snapshot (the shuffle survivor reads the captured target instead). Sure of the code, low.
 - Kefnet, Reversal of Fortune, Spellweaver Volute: a copy of a card is created and cast in exile, not in the card's own zone (CR 707.12; Kefnet and Reversal rulings), so a "cast from hand / graveyard" trigger misses it. Sure.
 - The Clone Saga (SPM 28) chapter II offers new targets for the copy although the text doesn't say it may (CR 707.10, 707.10c). Fairly sure.
@@ -1388,15 +1386,12 @@ Don't commit.
 - Avatar's Wrath's airbend is scored by `SpellEvaluator` as single-target exile removal (AI). Unverified.
 - Rasaad, Radiant Monk: the specialize trigger's target spec is any exiled creature card, not one exiled with this creature. Sure of the code.
 
-#### Payments and costs (21)
+#### Payments and costs (18)
 
 - Moxite Refinery's `CounterType.ANY` cost removes kinds in enum order; the player should choose (the kind prompt serves one counter only).
 - Feather, Radiant Arbiter's {2} per creature is paid only from the pool: no mana abilities (CR 605.3a). Fairly sure.
 - Jaya Ballard's emblem grants flashback (an alternative cost, CR 702.34a, 118.9a) where the text permits casting for the mana cost. Fairly sure.
 - Charmed Pendant offers a monocoloured hybrid symbol's generic half; Animation Module offers only poison and energy player counters; Thran Portal's added life cost applies to its non-mana abilities; Tevesh Szat's -10 puts commanders outside the entry batch.
-- `ExileTopCardMayPlayThisTurnEffect.withAnyManaType()` skips land cards (a land's Adventure).
-- The library `CAST_WITHOUT_PAYING` flow offers no Adventure (CR 716.3): Kiora, Velomachus, Aetherworks. Sure of the code.
-- A modal double-faced card offered by a matching back face can then be cast as either face (`legalModalOptions` ignores the cast filter; Velomachus with Jadzi). Fairly sure.
 - Whispersteel Dagger and Xanathar's "as though it were mana of any color" is applied as any type, so coloured mana pays {C} (CR 609.4b). Fairly sure.
 - The free casts ask for their cost-increase mana before their targets are chosen (the queue also before its modes; since FC-1 none asks for a spell with no legal mode or target): a mana ability activated in that window that removes the only target leaves the mana in the pool and the card uncast, where the target is chosen first and the spell cast (CR 601.2c, 601.2g). Sure of the code.
 - The per-target cost readers have no lost-abilities or face-down check (CR 613.1f, 708.2a). Sure.
@@ -1412,14 +1407,13 @@ Don't commit.
 - An X chosen while paying (`PayXManaCost`) is paid with no answering prompt (`Payment.answering` null), so a {B} paid with 2 life under K'rrik doesn't ask a Lich's Duel Mastery death replacement first (CR 616.1); the old `PayXMana…` handlers couldn't pay with life at all. Sure of the code.
 - Madame Null, Power Broker asks "pay 0 life" for a creature with 0 power (HEAD's behaviour, pinned in U8: `MadameNullPowerBrokerTest.zeroPowerAsksForZeroLife`); the U3b orchestrator's decision (Q4) says it doesn't ask (CR 119.4).
 
-#### Layers and copy values (19)
+#### Layers and copy values (18)
 
 - Wickerwing Effigy's "becomes a black Bird ... Fairly sure, low.
 - Esix's copies keep none of the replaced copy's instructions (Faerie Artisans); Dance of Many waits for it. Sure of the code.
 - Step 10 run T1: `CreateTokenCopyOfSourceForEachOtherPlayerEffect` (Life of the Party) and `…ForTargetPlayerEffect` (Wedding Ring) offer no first-token-creation replacement to the players who create (another player's Mirrormind Crown, Moonlit Meditation; CR 701.7a). Sure of the code.
 - Step 10 run T1 (the plan's note): a token copy of a source reads `PermanentCopierService.cardToCopy`, not `copiableCard`, so a bestowed, Licid or became-a-creature source is copied with non-copiable values (CR 707.2). Unverified on a real card.
 - `CreateTokensAttachedToControlledCreaturesEffect` pairs tokens by `getTokenMultiplier`; an order prompt returns no ids. Unverified.
-- A split card's whole-card type and colour prohibitions weren't traced. Unverified.
 - The returned-permanent animations (Brilliance Unleashed, Tune Up, The War in Heaven) apply after the permanent entered. Unsure.
 - Thought Partition and Hydroponics Architect write colour, mana cost, supertype and subtype into runtime copies (layer 1, CR 613). Sure of the code.
 - Starfield of Nyx: `isAnimatedByStarfield` makes a battlefield enchantment a creature ignoring later layer-4 type removals, and `wouldEnterAsCreature` ignores Starfield (Torpor Orb). Sure of the code, low.
@@ -1448,7 +1442,7 @@ Don't commit.
 
 #### Other (95)
 
-- Casting checks left from runs 40 and 41: Scrycast (Biting Remark; `ScryInteractionHandler`, `ScryAiStrategy`, code); Knowledge Pool ignores the chosen card's "cast only during" (its ruling); `SplitCardCastSupport.beginFromExile` judges the whole split card (CR 709.3a, code); the may-cast offers don't ask the shared check; suspend asks no type restriction (Cease-Fire; CR 601.3); an ability leaves the stack before it resolves, where CR 608.2n removes it last. Unverified.
+- Casting checks left from runs 40 and 41: Scrycast (Biting Remark; `ScryInteractionHandler`, `ScryAiStrategy`, code: the scry answer casts it with no `canCastDuringResolution` check, and the AI strategies have no `CastingPermissionService`); the may-cast offers don't ask the shared check; an ability leaves the stack before it resolves, where CR 608.2n removes it last. Unverified. FC-2: Knowledge Pool's timing, the split exile cast and suspend's type restriction fixed.
 - Outside the entry batch: fixed in fold run 8; but a Painter's Servant it puts onto the battlefield got no as-enters colour prompt in a fold run 8 test (check whether `PutCardsOntoBattlefieldEffect` asks as-enters choices; unsure), fixed in fold run 21b (no observable test), fixed in fold run 10b, Karlach's specialize return (its "perpetually can't block" a static on a runtime copy; P02, low), Knickknack Ouphe's Auras attached after they enter (CR 303.4f, 303.4g; P02, fold: aura-host).
 - Lim-Dûl's returned bestow Aura and the triggering-card heads (but the former `ReturnTriggeringCardFromGraveyardToBattlefieldEffect`, since step 10 run R2 `PutCardsOntoBattlefieldEffect(triggeringCards())`, whose entry batch asks the host) enter without a host choice (CR 303.4f). Unverified.
 - Bad Wolf Bay's chaos ability is Don't Blink's replacement: creature cards entering from exile are shuffled, others enter; `CardsCantEnterBattlefieldFromZonesEffect` enforces only graveyard and library. Sure.

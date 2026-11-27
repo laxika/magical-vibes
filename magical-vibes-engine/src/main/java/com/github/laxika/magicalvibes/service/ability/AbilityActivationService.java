@@ -2336,11 +2336,9 @@ public class AbilityActivationService {
             validateNotBlockedByNonManaAbilityLock(gameData, playerId, ability);
         }
         if (ability.isSuspendsSourceFromHand()) {
-            // CR 702.62a: suspend requires that the player could begin to cast the card, so a name
-            // prohibition on casting it also prevents suspending it.
-            if (CastingPermissionService.isCastForbiddenByName(
-                    card, castingPermissionService.getForbiddenCardNames(gameData, playerId))
-                    || castingPermissionService.isPlayerPreventedFromCasting(gameData, playerId)) {
+            // CR 702.62a, 116.2f: suspend requires that the player could begin to cast the card (CR 601.3), so
+            // every prohibition on casting it, a type restriction included, also prevents suspending it.
+            if (!castingPermissionService.isSpellCastingAllowed(gameData, playerId, card)) {
                 throw new IllegalStateException("This card cannot be suspended at this time");
             }
             boolean mainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN

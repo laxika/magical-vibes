@@ -203,7 +203,8 @@ public class SplitCardCastSupport {
                 afterSuccessfulCastEffect, sourcePermanentId, payManaCost,
                 castingPermissionService.hasAnyManaTypePermission(gameData, controllerId, cardId),
                 0, false, null, exileCast, null);
-        if (exiledEntry == null || !castingPermissionService.isSpellCastingAllowed(gameData, controllerId, card)) {
+        // Only the half being cast is evaluated (CR 709.3a): each half is judged as it is offered.
+        if (exiledEntry == null) {
             returnToSourceZone(gameData, cast);
             return false;
         }

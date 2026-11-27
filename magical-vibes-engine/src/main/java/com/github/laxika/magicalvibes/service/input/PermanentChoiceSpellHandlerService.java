@@ -268,6 +268,10 @@ public class PermanentChoiceSpellHandlerService {
                     null
             );
             entry.setSourceZone(lct.sourceZone());
+            if (lct.physicalCard() != null) {
+                entry.setPhysicalCard(lct.physicalCard());
+                entry.setCastWithAdventure(true);
+            }
             if (lct.ownerIdOverride() != null) {
                 entry.setOwnerIdOverride(lct.ownerIdOverride());
                 entry.setSourceZone(Zone.OUTSIDE_GAME);
@@ -307,7 +311,8 @@ public class PermanentChoiceSpellHandlerService {
                 gameData.playerSideboards.computeIfAbsent(ownerId, ignored -> new ArrayList<>())
                         .add(lct.cardToCast());
             } else {
-                graveyardService.addCardToGraveyard(gameData, ownerId, lct.cardToCast());
+                graveyardService.addCardToGraveyard(gameData, ownerId,
+                        lct.physicalCard() != null ? lct.physicalCard() : lct.cardToCast());
             }
             String destination = lct.ownerIdOverride() != null
                     ? "'s target is no longer valid. It remains outside the game."

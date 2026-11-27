@@ -1525,11 +1525,19 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     /**
      * The target choice of a spell being cast by an effect (a free cast). {@code sourceZone} is the zone the card is
-     * cast from, carried here until the spell is put onto the stack, whose entry then uses it.
+     * cast from, carried here until the spell is put onto the stack, whose entry then uses it. {@code physicalCard} is
+     * the adventurer card when {@code cardToCast} is its Adventure (CR 716.3), else null.
      */
     record LibraryCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
                                   StackEntryType spellType, List<Card> cardsToBottom,
-                                  Integer discoverValue, UUID ownerIdOverride, Zone sourceZone) implements PermanentChoiceContext {
+                                  Integer discoverValue, UUID ownerIdOverride, Zone sourceZone,
+                                  Card physicalCard) implements PermanentChoiceContext {
+        public LibraryCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
+                                      StackEntryType spellType, List<Card> cardsToBottom,
+                                      Integer discoverValue, UUID ownerIdOverride, Zone sourceZone) {
+            this(cardToCast, controllerId, spellEffects, spellType, cardsToBottom, discoverValue, ownerIdOverride,
+                    sourceZone, null);
+        }
         public LibraryCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
                                       StackEntryType spellType, List<Card> cardsToBottom,
                                       Integer discoverValue, UUID ownerIdOverride) {

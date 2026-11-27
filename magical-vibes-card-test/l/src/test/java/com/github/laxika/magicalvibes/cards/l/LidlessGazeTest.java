@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import org.junit.jupiter.api.DisplayName;
+import com.github.laxika.magicalvibes.cards.z.ZanarkandAncientMetropolis;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
@@ -13,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LidlessGaze.class, Forest.class, GrizzlyBears.class})
+@CardUsed({ZanarkandAncientMetropolis.class, LidlessGaze.class, Forest.class, GrizzlyBears.class})
 class LidlessGazeTest extends BaseCardTest {
 
     @Test
@@ -157,5 +159,20 @@ class LidlessGazeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.RED, 1);
+    }
+
+    @Test
+    @DisplayName("Mana of any type can be spent on the Adventure of an exiled land card")
+    void anyManaTypePaysForALandCardsAdventure() {
+        Card town = new ZanarkandAncientMetropolis();
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(town));
+        harness.setHand(player1, List.of(new LidlessGaze()));
+        addLidlessGazeMana();
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.exilePlayPermissionHolders()).containsEntry(town.getId(), player1.getId());
+        assertThat(gd.exilePlayAnyManaTypeCardIds()).contains(town.getId());
     }
 }

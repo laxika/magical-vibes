@@ -110,6 +110,8 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
                 gameQueryService, predicateEvaluationService, targetLegalityService, validTargetService));
         ReflectionTestUtils.setField(exileSupport, "castingPermissionService", castingPermissionService);
         lenient().when(castingPermissionService.mayBeginCastDuringResolution(any(), any(), any())).thenReturn(true);
+        lenient().when(castingPermissionService.canCastWithSpellTimingRestriction(any(), any(), any())).thenReturn(true);
+        lenient().when(castingPermissionService.canCastWithCastCondition(any(), any(), any())).thenReturn(true);
         InteractionHandlerRegistry registry = new InteractionHandlerRegistry(
                 () -> mock(com.github.laxika.magicalvibes.service.event.GameMutationCoordinator.class));
         registry.register(new KnowledgePoolCastChoiceInteractionHandler(exileSupport));
@@ -317,6 +319,25 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
                 assertThat(gd.stack).anyMatch(se -> se.getCard() == chosenCard);
                 assertThat(gd.getSpellsCastThisTurnCount(player1Id)).isEqualTo(1);
                 verify(spellEvents).cast(gd, chosenCard, player1Id, false);
+                verify(inputCompletionService).processMayAbilitiesThenAutoPass(gd);
+            }
+
+            @Test
+            @DisplayName("Chosen spell whose own timing restriction doesn't hold stays exiled with Knowledge Pool")
+            void ownTimingRestrictionKeepsCardExiled() {
+                Player player = new Player(player1Id, "Player1");
+                Card chosenCard = createSorceryCard("Wrath of God");
+                UUID kpId = UUID.randomUUID();
+                when(castingPermissionService.canCastWithSpellTimingRestriction(any(), any(), any())).thenReturn(false);
+
+                gd.queueInteraction(new PendingKnowledgePoolCast(kpId));
+                gd.addToExile(player1Id, chosenCard, kpId);
+                gd.interaction.beginInteraction(new PendingInteraction.KnowledgePoolCastChoice(player1Id, List.of(chosenCard.getId()), 1));
+
+                exileSupport.handleKnowledgePoolCastChoice(gd, player, List.of(chosenCard.getId()));
+
+                assertThat(gd.getCardsExiledByPermanent(kpId)).contains(chosenCard);
+                assertThat(gd.stack).noneMatch(se -> se.getCard() == chosenCard);
                 verify(inputCompletionService).processMayAbilitiesThenAutoPass(gd);
             }
 

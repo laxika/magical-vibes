@@ -131,6 +131,44 @@ public class ExileFreeCastQueueSupport {
         this.outsideGameNormalCostCastSupport = outsideGameNormalCostCastSupport;
     }
 
+    /**
+     * Whether an exiled card is offered to the queue by an effect whose spells must satisfy {@code faceFits}, and as
+     * which face: an adventurer card is offered when the card or its Adventure fits, each judged by its own
+     * characteristics (CR 716.3a). When only the Adventure fits it is cast as the Adventure
+     * ({@link GameData#pendingFreeCastAdventureIds}); when both do, the caster chooses as the queue reaches it
+     * ({@link GameData#pendingFreeCastEitherFaceIds}, CR 716.3).
+     */
+    public boolean offerFaces(GameData gameData, Card card, java.util.function.Predicate<Card> faceFits) {
+        boolean cardFits = faceFits.test(card);
+        boolean adventureFits = card.getBackFaceCard() != null
+                && card.getCastingOption(AdventureCast.class).isPresent()
+                && faceFits.test(card.getBackFaceCard());
+        if (cardFits && adventureFits) {
+            gameData.pendingFreeCastEitherFaceIds.add(card.getId());
+        } else if (adventureFits) {
+            gameData.pendingFreeCastAdventureIds.add(card.getId());
+        }
+        return cardFits || adventureFits;
+    }
+
+    /**
+     * The smallest mana value {@code card} may be cast with by the queue: the cheaper of an adventurer card's faces
+     * the effect allows, else its cheapest split half (CR 716.3a, 709.3a). A shared total mana value limit is checked
+     * against it before the faces and halves are chosen.
+     */
+    public static int smallestFreeCastManaValue(GameData gameData, Card card) {
+        Card adventure = card.getBackFaceCard();
+        if (adventure != null && card.getCastingOption(AdventureCast.class).isPresent()) {
+            if (gameData.pendingFreeCastAdventureIds.contains(card.getId())) {
+                return adventure.getManaValue();
+            }
+            if (gameData.pendingFreeCastEitherFaceIds.contains(card.getId())) {
+                return Math.min(card.getSmallestSpellManaValue(), adventure.getManaValue());
+            }
+        }
+        return card.getSmallestSpellManaValue();
+    }
+
     public void castChosenSpellsWithoutPaying(GameData gameData, Player player, List<UUID> cardIds) {
         gameData.interaction.clearAwaitingInput();
 
@@ -257,7 +295,8 @@ public class ExileFreeCastQueueSupport {
             return;
         }
 
-        if (asksForCostIncreaseMana(gameData, playerId, gameData.pendingFreeCastQueue.getFirst())) {
+        if (asksForFace(gameData, playerId, gameData.pendingFreeCastQueue.getFirst())
+                || asksForCostIncreaseMana(gameData, playerId, gameData.pendingFreeCastQueue.getFirst())) {
             return;
         }
         UUID cardId = gameData.pendingFreeCastQueue.removeFirst();
@@ -1169,6 +1208,57 @@ public class ExileFreeCastQueueSupport {
                 : !exileCastTargetSupport.firstSlotCandidates(gameData, card, spellEffects, playerId).isEmpty();
     }
 
+    /**
+     * Settles which face the queue's first card is cast as when the effect allows both an adventurer card's faces:
+     * those that can be cast now within the shared mana value limit are offered and the caster chooses (CR 716.3);
+     * when only one can, it is the one cast. The choice's answer is {@link #completeFaceChoice}.
+     */
+    private boolean asksForFace(GameData gameData, UUID playerId, UUID cardId) {
+        if (!gameData.pendingFreeCastEitherFaceIds.remove(cardId)) {
+            return false;
+        }
+        ExiledCardEntry exiled = gameData.findExiledCard(cardId);
+        if (exiled == null) {
+            return false;
+        }
+        Card card = exiled.card();
+        Card adventure = card.createRuntimeCopyWithFace(card.getBackFaceCard());
+        int budget = manaValueAvailableFor(gameData, cardId);
+        boolean cardCastable = card.getManaValue() <= budget && castableFromExile(gameData, playerId, card)
+                && hasLegalModeOrTarget(gameData, playerId, card);
+        boolean adventureCastable = adventure.getManaValue() <= budget
+                && castableFromExile(gameData, playerId, adventure)
+                && hasLegalModeOrTarget(gameData, playerId, adventure);
+        if (!cardCastable && adventureCastable) {
+            gameData.pendingFreeCastAdventureIds.add(cardId);
+        }
+        if (!cardCastable || !adventureCastable) {
+            return false;
+        }
+        Map<String, Boolean> faces = new LinkedHashMap<>();
+        faces.put("Cast " + card.getName(), false);
+        faces.put("Cast " + card.getBackFaceCard().getName(), true);
+        interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.ColorChoice(
+                playerId, null, null, new com.github.laxika.magicalvibes.model.ChoiceContext.FreeCastQueueFaceChoice(
+                        cardId, faces),
+                new ArrayList<>(faces.keySet()), "Choose which spell to cast."));
+        return true;
+    }
+
+    /** Casts the queue's first card as the face its caster chose ({@link #asksForFace}). */
+    public void completeFaceChoice(GameData gameData, UUID playerId, String choice,
+                                   com.github.laxika.magicalvibes.model.ChoiceContext.FreeCastQueueFaceChoice context) {
+        Boolean adventure = context.faces().get(choice);
+        if (adventure == null) {
+            throw new IllegalStateException("Invalid spell face choice");
+        }
+        gameData.interaction.clearAwaitingInput();
+        if (adventure) {
+            gameData.pendingFreeCastAdventureIds.add(context.cardId());
+        }
+        castNextFromQueue(gameData, playerId);
+    }
+
     /** The face the queued card will be cast as: its Adventure when the queue says so, else the card. */
     private static Card queuedFace(GameData gameData, ExiledCardEntry exiled) {
         Card card = exiled.card();
@@ -1188,6 +1278,7 @@ public class ExileFreeCastQueueSupport {
             boolean asCopy = gameData.pendingFreeCastAsCopyIds.remove(cardId);
             gameData.pendingFreeCastXValues.remove(cardId);
             gameData.pendingFreeCastAdventureIds.remove(cardId);
+            gameData.pendingFreeCastEitherFaceIds.remove(cardId);
             ExiledCardEntry exiled = gameData.findExiledCard(cardId);
             if (exiled != null) {
                 logUnpaidCostIncrease(gameData, exiled.card(), asCopy);
@@ -1272,13 +1363,22 @@ public class ExileFreeCastQueueSupport {
      * (CR 709.3a). Unlimited when the casts share no limit.
      */
     private static int availableManaValue(GameData gameData) {
+        return manaValueAvailableFor(gameData, null);
+    }
+
+    /**
+     * As {@link #availableManaValue}, for the queued card {@code cardId} while it is still in the queue: what is left
+     * after keeping enough for every other queued spell's cheapest face or half.
+     */
+    private static int manaValueAvailableFor(GameData gameData, UUID cardId) {
         if (gameData.pendingFreeCastManaValueBudget == null) {
             return Integer.MAX_VALUE;
         }
         int reserved = gameData.pendingFreeCastQueue.stream()
+                .filter(id -> !id.equals(cardId))
                 .map(gameData::findExiledCard)
                 .filter(Objects::nonNull)
-                .mapToInt(exiled -> exiled.card().getSmallestSpellManaValue())
+                .mapToInt(exiled -> smallestFreeCastManaValue(gameData, exiled.card()))
                 .sum();
         return gameData.pendingFreeCastManaValueBudget - reserved;
     }
@@ -1313,6 +1413,7 @@ public class ExileFreeCastQueueSupport {
         gameData.pendingFreeCastManaValueBudget = null;
         gameData.pendingFreeCastLandPlayIds.clear();
         gameData.pendingFreeCastAdventureIds.clear();
+        gameData.pendingFreeCastEitherFaceIds.clear();
         gameData.freeCastEscalateModeCounts.clear();
         spellweaverVoluteSupport.clearIfUncast(gameData);
         putRemainderIntoOwnersGraveyards(gameData);

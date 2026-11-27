@@ -2022,6 +2022,13 @@ public class GameData {
     public final Set<UUID> pendingFreeCastAdventureIds = ConcurrentHashMap.newKeySet();
 
     /**
+     * Adventurer cards in {@link #pendingFreeCastQueue} that the effect lets their caster cast as either the card or
+     * its Adventure: the caster chooses as the queue reaches the card (CR 716.3), and the choice moves it out of this
+     * set (into {@link #pendingFreeCastAdventureIds} for the Adventure).
+     */
+    public final Set<UUID> pendingFreeCastEitherFaceIds = ConcurrentHashMap.newKeySet();
+
+    /**
      * Total mana value still available to the spells in {@link #pendingFreeCastQueue} when their
      * cast shares one limit (Primeval Spawn), or null when it is not limited. Each spell spends its
      * own mana value as it is cast, so a split card spends only the half being cast (CR 709.3a).
@@ -11073,6 +11080,7 @@ public class GameData {
         copy.deferredExileBottomSourceIds.addAll(this.deferredExileBottomSourceIds);
         copy.pendingFreeCastLandPlayIds.addAll(this.pendingFreeCastLandPlayIds);
         copy.pendingFreeCastAdventureIds.addAll(this.pendingFreeCastAdventureIds);
+        copy.pendingFreeCastEitherFaceIds.addAll(this.pendingFreeCastEitherFaceIds);
         copy.pendingFreeCastManaValueBudget = this.pendingFreeCastManaValueBudget;
         copy.pendingExileFreeCastRemainderToGraveyard.addAll(this.pendingExileFreeCastRemainderToGraveyard);
         copy.pendingExileFreeCastRemainderToLibraryBottom.addAll(this.pendingExileFreeCastRemainderToLibraryBottom);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.b.BonecrusherGiant;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.c.CatharticReunion;
 import com.github.laxika.magicalvibes.cards.c.ConsulateSkygate;
@@ -20,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AetherworksMarvel.class, CatharticReunion.class, ConsulateSkygate.class,
+@CardUsed({BonecrusherGiant.class, AetherworksMarvel.class, CatharticReunion.class, ConsulateSkygate.class,
         DukharaPeafowl.class, Forest.class, Mountain.class})
 class AetherworksMarvelTest extends BaseCardTest {
 
@@ -193,5 +194,26 @@ class AetherworksMarvelTest extends BaseCardTest {
         card.setToughness(1);
         card.setToken(true);
         return card;
+    }
+
+    @Test
+    @DisplayName("An Adventure card looked at may be cast as either the creature or its Adventure")
+    void adventureCardOffersBothFaces() {
+        addMarvel();
+        gd.playerEnergyCounters.put(player1.getId(), 6);
+        BonecrusherGiant giant = new BonecrusherGiant();
+        harness.setLibrary(player1, List.of(giant, new Forest()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        PendingInteraction.ColorChoice faces = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(faces).isNotNull();
+        assertThat(faces.options()).containsExactly("Cast Bonecrusher Giant", "Cast Stomp");
+        harness.handleListChoice(player1, "Cast Bonecrusher Giant");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Bonecrusher Giant");
     }
 }

@@ -361,7 +361,9 @@ triggered ability is a `TemporaryGlobalTriggeredAbility`. Never a `Permanent` or
   `CastCardFromGraveyardEffect.of(CardSubject)` (`.ifCast`), `CastCardWithoutPayingManaCostIfAbleEffect`,
   `MayCastAnySpellFromHandWithoutPayingManaCostEffect` (`anyNumber`, `upTo`, `orElse`), `MayCastDiscardedCardWithoutPayingManaCostEffect.castBy`,
   `CopyImprintedCardAndMayCastCopyEffect.of(cards)` (`.castingUpTo`, `.castingAnyNumber`), `ExileTopCardsAndMayCastSpellsEffect`
-  (Adventure-only fits cast as its Adventure, CR 716.3a; `controllerMayPlayUpTo`, CR 305.2, 305.3).
+  (`controllerMayPlayUpTo`, CR 305.2, 305.3). A producer of the free-cast queue offers each card through
+  `ExileFreeCastQueueSupport.offerFaces`: an adventurer card whose Adventure alone fits is cast as it, one whose faces
+  both fit is cast as the face its caster chooses (CR 716.3, 716.3a).
 
 **Permissions, restrictions and grants:**
 

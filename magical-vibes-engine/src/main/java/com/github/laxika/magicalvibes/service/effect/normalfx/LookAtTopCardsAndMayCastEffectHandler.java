@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -9,6 +10,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.MovedCard;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.SpellFace;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.StepOutcome;
@@ -32,7 +34,11 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -109,11 +115,14 @@ public class LookAtTopCardsAndMayCastEffectHandler implements NormalEffectHandle
                     controllerId);
         }
 
-        List<Card> offered = topCards.stream()
-                .filter(card -> offersFace(gameData, entry, look, controllerId, card, manaValueBound)
-                        || card.isModalDoubleFaced() && card.getBackFaceCard() != null
-                        && offersFace(gameData, entry, look, controllerId, card.getBackFaceCard(), manaValueBound))
-                .toList();
+        Map<UUID, Set<SpellFace>> offeredFaces = new HashMap<>();
+        for (Card card : topCards) {
+            Set<SpellFace> faces = offeredFaces(gameData, entry, look, controllerId, card, manaValueBound);
+            if (!faces.isEmpty()) {
+                offeredFaces.put(card.getId(), faces);
+            }
+        }
+        List<Card> offered = topCards.stream().filter(card -> offeredFaces.containsKey(card.getId())).toList();
         if (offered.isEmpty()) {
             if (look.restOnBottom()) {
                 deck.subList(0, looked).clear();
@@ -138,9 +147,33 @@ public class LookAtTopCardsAndMayCastEffectHandler implements NormalEffectHandle
                         .prompt(prompt)
                         .destination(LibrarySearchDestination.CAST_WITHOUT_PAYING)
                         .mayCastManaValueAtMost(manaValueBound)
+                        .offeredFaces(offeredFaces)
                         .build(),
                 prompt,
                 true));
+    }
+
+    /**
+     * The faces {@code card} may be cast as: the card, an adventurer card's Adventure, a modal double-faced card's
+     * back face, each judged by its own characteristics (CR 716.3a, 712.8b). Empty when it isn't offered.
+     */
+    private Set<SpellFace> offeredFaces(GameData gameData, StackEntry entry, LookAtTopCardsAndMayCastEffect look,
+                                        UUID controllerId, Card card, Integer manaValueBound) {
+        Set<SpellFace> faces = EnumSet.noneOf(SpellFace.class);
+        if (offersFace(gameData, entry, look, controllerId, card, manaValueBound)) {
+            faces.add(SpellFace.CARD);
+        }
+        Card backFace = card.getBackFaceCard();
+        if (backFace != null && card.getCastingOption(AdventureCast.class).isPresent()
+                && offersFace(gameData, entry, look, controllerId, card.createRuntimeCopyWithFace(backFace),
+                manaValueBound)) {
+            faces.add(SpellFace.ADVENTURE);
+        }
+        if (backFace != null && card.isModalDoubleFaced()
+                && offersFace(gameData, entry, look, controllerId, backFace, manaValueBound)) {
+            faces.add(SpellFace.BACK_FACE);
+        }
+        return faces;
     }
 
     /**

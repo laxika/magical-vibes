@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
+import com.github.laxika.magicalvibes.model.effect.PayFreeCastCostIncreaseEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -307,6 +308,30 @@ public sealed interface ChoiceContext {
                                   boolean grantHaste, boolean returnToHandIfUnable,
                                   boolean suspendHaste, boolean completeInput) implements ChoiceContext {
         public ExileFreeCastFaceChoice {
+            faces = Map.copyOf(faces);
+        }
+    }
+
+    /**
+     * Chooses whether the free-cast queue's first card, an adventurer card both of whose faces the effect allows, is
+     * cast as the card or as its Adventure (CR 716.3). {@code faces} maps each label to whether it is the Adventure.
+     */
+    record FreeCastQueueFaceChoice(UUID cardId, Map<String, Boolean> faces) implements ChoiceContext {
+        public FreeCastQueueFaceChoice {
+            faces = Map.copyOf(faces);
+        }
+    }
+
+    /**
+     * Chooses whether a card found or looked at in a library and cast from there without paying its mana cost, an
+     * adventurer card both of whose faces the effect allows, is cast as the card or as its Adventure (CR 716.3). The
+     * card has left its zone; {@code cast} says where it goes if it isn't cast. {@code faces} maps each label to
+     * whether it is the Adventure.
+     */
+    record LibraryFreeCastFaceChoice(Card card, Zone sourceZone,
+                                     PayFreeCastCostIncreaseEffect.LibraryCast cast,
+                                     Map<String, Boolean> faces) implements ChoiceContext {
+        public LibraryFreeCastFaceChoice {
             faces = Map.copyOf(faces);
         }
     }

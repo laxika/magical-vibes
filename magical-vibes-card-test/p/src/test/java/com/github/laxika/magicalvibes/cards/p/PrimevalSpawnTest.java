@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.b.BonecrusherGiant;
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
 import com.github.laxika.magicalvibes.cards.e.EssenceOfTheWild;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -23,7 +24,7 @@ import java.util.ArrayList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PrimevalSpawn.class, AvatarOfMight.class, GrizzlyBears.class, Forest.class,
+@CardUsed({BonecrusherGiant.class, PrimevalSpawn.class, AvatarOfMight.class, GrizzlyBears.class, Forest.class,
         Humility.class, SolRing.class, WearTear.class, EssenceOfTheWild.class, InkwellLeviathan.class,
         GloriousAnthem.class})
 class PrimevalSpawnTest extends BaseCardTest {
@@ -251,5 +252,57 @@ class PrimevalSpawnTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Essence of the Wild")).hasSize(2);
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(card);
+    }
+
+    @Test
+    @DisplayName("An Adventure card counts toward the total with its Adventure's mana value when that is cast")
+    void adventureCountsWithItsOwnManaValueTowardTheTotal() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new PrimevalSpawn());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        AvatarOfMight avatar = new AvatarOfMight();
+        BonecrusherGiant giant = new BonecrusherGiant();
+        harness.setLibrary(player1, List.of(
+                avatar, giant,
+                new Forest(), new Forest(), new Forest(), new Forest(), new Forest(), new Forest(), new Forest(),
+                new Forest()));
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, source));
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(avatar.getId(), giant.getId()));
+        harness.handlePermanentChosen(player1, bears.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Avatar of Might")).hasSize(1);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.findExiledCard(giant.getId())).isNotNull();
+    }
+
+    @Test
+    @DisplayName("An Adventure card both of whose faces fit is cast as the face its caster chooses")
+    void adventureCardIsCastAsTheChosenFace() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new PrimevalSpawn());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        BonecrusherGiant giant = new BonecrusherGiant();
+        harness.setLibrary(player1, List.of(
+                giant,
+                new Forest(), new Forest(), new Forest(), new Forest(), new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest()));
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, source));
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(giant.getId()));
+
+        PendingInteraction.ColorChoice faces = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(faces).isNotNull();
+        assertThat(faces.options()).containsExactly("Cast Bonecrusher Giant", "Cast Stomp");
+        harness.handleListChoice(player1, "Cast Stomp");
+        harness.handlePermanentChosen(player1, bears.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(findPermanents(player1, "Bonecrusher Giant")).isEmpty();
+        assertThat(gd.findExiledCard(giant.getId())).isNotNull();
     }
 }

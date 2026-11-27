@@ -69,13 +69,15 @@ public record LibrarySearchParams(
         UUID returnToHandAtControllerEndStepId,
         boolean declineSkipsShuffle,
         boolean requireSharedLandType,
-        Set<UUID> castOnlyCardIds
+        Set<UUID> castOnlyCardIds,
+        java.util.Map<UUID, Set<SpellFace>> offeredFaces
 ) {
     public LibrarySearchParams {
         if (followUp == null) {
             followUp = LibrarySearchFollowUp.NONE;
         }
         castOnlyCardIds = castOnlyCardIds == null ? Set.of() : Set.copyOf(castOnlyCardIds);
+        offeredFaces = offeredFaces == null ? java.util.Map.of() : java.util.Map.copyOf(offeredFaces);
         if (excludedCardNames == null) {
             excludedCardNames = List.of();
         } else {
@@ -101,7 +103,7 @@ public record LibrarySearchParams(
                 battlefieldIfChosenTapped, battlefieldIfOpponentControlsMoreLands,
                 placeBattlefieldCardsSimultaneously, finalCardToHand, allowCastFromLibraryWhileSearching,
                 grantExilePlayPermission, allowAnyManaType, exilePlayPermissionFilter, withoutPayingManaCost,
-                mayCastManaValueAtMost, returnToHandAtControllerEndStepId, declineSkipsShuffle, requireSharedLandType, castOnlyCardIds);
+                mayCastManaValueAtMost, returnToHandAtControllerEndStepId, declineSkipsShuffle, requireSharedLandType, castOnlyCardIds, offeredFaces);
     }
 
     /** Continues the same search with updated follow-up state and unchanged search permissions. */
@@ -119,7 +121,7 @@ public record LibrarySearchParams(
                 battlefieldIfChosenTapped, battlefieldIfOpponentControlsMoreLands,
                 placeBattlefieldCardsSimultaneously, finalCardToHand, allowCastFromLibraryWhileSearching,
                 grantExilePlayPermission, allowAnyManaType, exilePlayPermissionFilter, withoutPayingManaCost, mayCastManaValueAtMost,
-                returnToHandAtControllerEndStepId, declineSkipsShuffle, requireSharedLandType, castOnlyCardIds);
+                returnToHandAtControllerEndStepId, declineSkipsShuffle, requireSharedLandType, castOnlyCardIds, offeredFaces);
     }
 
     /** Marks cards offered only to be cast during the search; choosing one casts it instead of finding it. */
@@ -136,7 +138,8 @@ public record LibrarySearchParams(
                 battlefieldIfChosenTapped, battlefieldIfOpponentControlsMoreLands,
                 placeBattlefieldCardsSimultaneously, finalCardToHand, allowCastFromLibraryWhileSearching,
                 grantExilePlayPermission, allowAnyManaType, exilePlayPermissionFilter, withoutPayingManaCost,
-                mayCastManaValueAtMost, returnToHandAtControllerEndStepId, declineSkipsShuffle, requireSharedLandType, ids);
+                mayCastManaValueAtMost, returnToHandAtControllerEndStepId, declineSkipsShuffle, requireSharedLandType, ids,
+                offeredFaces);
     }
 
     public LibrarySearchParams withAllowCastFromLibraryWhileSearching(boolean allow) {
@@ -152,7 +155,7 @@ public record LibrarySearchParams(
                 battlefieldIfChosenTapped, battlefieldIfOpponentControlsMoreLands,
                 placeBattlefieldCardsSimultaneously, finalCardToHand, allow,
                 grantExilePlayPermission, allowAnyManaType, exilePlayPermissionFilter, withoutPayingManaCost,
-                mayCastManaValueAtMost, returnToHandAtControllerEndStepId, declineSkipsShuffle, requireSharedLandType, castOnlyCardIds);
+                mayCastManaValueAtMost, returnToHandAtControllerEndStepId, declineSkipsShuffle, requireSharedLandType, castOnlyCardIds, offeredFaces);
     }
 
     public LibrarySearchParams withRemainingCount(int count) {
@@ -167,7 +170,7 @@ public record LibrarySearchParams(
                 battlefieldIfChosenTapped, battlefieldIfOpponentControlsMoreLands,
                 placeBattlefieldCardsSimultaneously,
                 finalCardToHand, allowCastFromLibraryWhileSearching, grantExilePlayPermission, allowAnyManaType, exilePlayPermissionFilter,
-                withoutPayingManaCost, mayCastManaValueAtMost, returnToHandAtControllerEndStepId, declineSkipsShuffle, requireSharedLandType, castOnlyCardIds);
+                withoutPayingManaCost, mayCastManaValueAtMost, returnToHandAtControllerEndStepId, declineSkipsShuffle, requireSharedLandType, castOnlyCardIds, offeredFaces);
     }
 
     public LibrarySearchParams withDecisionPlayerId(UUID decisionPlayerId) {
@@ -182,7 +185,7 @@ public record LibrarySearchParams(
                 battlefieldIfChosenTapped, battlefieldIfOpponentControlsMoreLands,
                 placeBattlefieldCardsSimultaneously,
                 finalCardToHand, allowCastFromLibraryWhileSearching, grantExilePlayPermission, allowAnyManaType, exilePlayPermissionFilter,
-                withoutPayingManaCost, mayCastManaValueAtMost, returnToHandAtControllerEndStepId, declineSkipsShuffle, requireSharedLandType, castOnlyCardIds);
+                withoutPayingManaCost, mayCastManaValueAtMost, returnToHandAtControllerEndStepId, declineSkipsShuffle, requireSharedLandType, castOnlyCardIds, offeredFaces);
     }
 
     public LibrarySearchParams withExcludedCardNames(List<String> names) {
@@ -197,7 +200,7 @@ public record LibrarySearchParams(
                 battlefieldIfChosenTapped, battlefieldIfOpponentControlsMoreLands,
                 placeBattlefieldCardsSimultaneously,
                 finalCardToHand, allowCastFromLibraryWhileSearching, grantExilePlayPermission, allowAnyManaType, exilePlayPermissionFilter,
-                withoutPayingManaCost, mayCastManaValueAtMost, returnToHandAtControllerEndStepId, declineSkipsShuffle, requireSharedLandType, castOnlyCardIds);
+                withoutPayingManaCost, mayCastManaValueAtMost, returnToHandAtControllerEndStepId, declineSkipsShuffle, requireSharedLandType, castOnlyCardIds, offeredFaces);
     }
 
     /** Returns a copy recording the cards already chosen in this search (used for total mana value bounds). */
@@ -213,7 +216,7 @@ public record LibrarySearchParams(
                 battlefieldIfChosenTapped, battlefieldIfOpponentControlsMoreLands,
                 placeBattlefieldCardsSimultaneously,
                 finalCardToHand, allowCastFromLibraryWhileSearching, grantExilePlayPermission, allowAnyManaType, exilePlayPermissionFilter,
-                withoutPayingManaCost, mayCastManaValueAtMost, returnToHandAtControllerEndStepId, declineSkipsShuffle, requireSharedLandType, castOnlyCardIds);
+                withoutPayingManaCost, mayCastManaValueAtMost, returnToHandAtControllerEndStepId, declineSkipsShuffle, requireSharedLandType, castOnlyCardIds, offeredFaces);
     }
 
     public static class Builder {
@@ -274,6 +277,7 @@ public record LibrarySearchParams(
         private boolean declineSkipsShuffle;
         private boolean requireSharedLandType;
         private Set<UUID> castOnlyCardIds = Set.of();
+        private java.util.Map<UUID, Set<SpellFace>> offeredFaces = java.util.Map.of();
 
         private Builder(UUID playerId, List<Card> cards) {
             this.playerId = playerId;
@@ -556,6 +560,16 @@ public record LibrarySearchParams(
             return this;
         }
 
+        /**
+         * The faces each offered card of a {@link LibrarySearchDestination#CAST_WITHOUT_PAYING} choice may be cast as,
+         * when the effect allows only some ("an instant or sorcery spell": an adventurer creature card's Adventure, a
+         * modal double-faced card's matching face). A card not in the map may be cast as any of its faces.
+         */
+        public Builder offeredFaces(java.util.Map<UUID, Set<SpellFace>> offeredFaces) {
+            this.offeredFaces = offeredFaces;
+            return this;
+        }
+
         public LibrarySearchParams build() {
             return new LibrarySearchParams(playerId, decisionPlayerId, cards, reveals, canFailToFind, targetPlayerId,
                     remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
@@ -569,7 +583,7 @@ public record LibrarySearchParams(
                     battlefieldIfChosenTapped, battlefieldIfOpponentControlsMoreLands,
                     placeBattlefieldCardsSimultaneously, finalCardToHand, allowCastFromLibraryWhileSearching,
                     grantExilePlayPermission, allowAnyManaType, exilePlayPermissionFilter, withoutPayingManaCost,
-                    mayCastManaValueAtMost, returnToHandAtControllerEndStepId, declineSkipsShuffle, requireSharedLandType, castOnlyCardIds);
+                    mayCastManaValueAtMost, returnToHandAtControllerEndStepId, declineSkipsShuffle, requireSharedLandType, castOnlyCardIds, offeredFaces);
         }
     }
 }
