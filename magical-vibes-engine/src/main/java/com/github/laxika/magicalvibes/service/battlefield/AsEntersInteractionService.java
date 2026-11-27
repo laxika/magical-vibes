@@ -53,6 +53,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.WerewhatSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import org.springframework.beans.factory.annotation.Autowired;
+import com.github.laxika.magicalvibes.service.effect.entryfx.NoteMostPrevalentCreatureTypeOnEnterEffectHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -80,6 +81,7 @@ public class AsEntersInteractionService {
     private WerewhatSupport werewhatSupport;
     private PermanentRemovalService permanentRemovalService;
     private SubjectResolutionService subjectResolutionService;
+    private NoteMostPrevalentCreatureTypeOnEnterEffectHandler noteMostPrevalentCreatureTypeHandler;
 
     @Autowired
     public AsEntersInteractionService(GameQueryService gameQueryService,
@@ -118,6 +120,49 @@ public class AsEntersInteractionService {
     @Autowired
     void setPermanentRemovalService(@Lazy PermanentRemovalService permanentRemovalService) {
         this.permanentRemovalService = permanentRemovalService;
+    }
+
+    @Autowired
+    void setNoteMostPrevalentCreatureTypeHandler(
+            @Lazy NoteMostPrevalentCreatureTypeOnEnterEffectHandler noteMostPrevalentCreatureTypeHandler) {
+        this.noteMostPrevalentCreatureTypeHandler = noteMostPrevalentCreatureTypeHandler;
+    }
+
+    /**
+     * "As this enters, choose an opponent" ({@link ChooseOpponentOnEnterEffect}): with one opponent that player is
+     * chosen unasked; with more the controller is asked ({@code PermanentChoiceContext.ChoosePlayerAsEnter}, whose
+     * answer goes on with the entry abilities) and {@code true} is returned. A note made from the chosen opponent's
+     * library (Favored Enemy) is made once the opponent is known.
+     */
+    public boolean beginOpponentChoiceAsEnters(GameData gameData, UUID controllerId, Card card,
+                                               Permanent enteringPermanent, UUID targetId, boolean wasCastFromHand,
+                                               int etbMode, int xValue, boolean kicked, List<UUID> targetIds,
+                                               List<String> repeatedAdditionalCosts, List<UUID> convokeCreatureIds) {
+        if (enteringPermanent == null || enteringPermanent.isFaceDown() || card.getStaticEffects().stream()
+                .noneMatch(ChooseOpponentOnEnterEffect.class::isInstance)) {
+            return false;
+        }
+        List<UUID> validOpponentIds = gameData.orderedPlayerIds.stream()
+                .filter(playerId -> !playerId.equals(controllerId))
+                .toList();
+        if (enteringPermanent.getChosenPlayerIds().isEmpty() && validOpponentIds.size() == 1) {
+            UUID onlyOpponentId = validOpponentIds.getFirst();
+            enteringPermanent.getChosenPlayerIds().add(onlyOpponentId);
+            enteringPermanent.setRememberedTargetPlayerId(onlyOpponentId);
+            enteringPermanent.setAsEntersPlayerChooserId(controllerId);
+        } else if (enteringPermanent.getChosenPlayerIds().isEmpty() && !validOpponentIds.isEmpty()) {
+            gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ChoosePlayerAsEnter(
+                    enteringPermanent.getId(), controllerId, card, targetId, wasCastFromHand,
+                    etbMode, xValue, kicked, targetIds, repeatedAdditionalCosts,
+                    convokeCreatureIds));
+            playerInputService.beginPlayerChoice(gameData, controllerId,
+                    new ArrayList<>(validOpponentIds), "Secretly choose an opponent.");
+            return true;
+        }
+        if (noteMostPrevalentCreatureTypeHandler != null) {
+            noteMostPrevalentCreatureTypeHandler.applyAfterOpponentChoice(gameData, controllerId, enteringPermanent);
+        }
+        return false;
     }
 
     public void handleCreatureEnteredBattlefield(GameData gameData, UUID controllerId, Card card, UUID targetId, boolean wasCastFromHand) {
@@ -379,28 +424,9 @@ public class AsEntersInteractionService {
             }
         }
 
-        boolean needsOpponentChoice = card.getStaticEffects().stream()
-                .anyMatch(ChooseOpponentOnEnterEffect.class::isInstance);
-        if (needsOpponentChoice) {
-            Permanent justEntered = enteringPermanent;
-            UUID choiceControllerId = controllerId;
-            List<UUID> validOpponentIds = gameData.orderedPlayerIds.stream()
-                    .filter(playerId -> !playerId.equals(choiceControllerId))
-                    .toList();
-            if (justEntered.getChosenPlayerIds().isEmpty() && validOpponentIds.size() == 1) {
-                UUID onlyOpponentId = validOpponentIds.getFirst();
-                justEntered.getChosenPlayerIds().add(onlyOpponentId);
-                justEntered.setRememberedTargetPlayerId(onlyOpponentId);
-                justEntered.setAsEntersPlayerChooserId(controllerId);
-            } else if (justEntered.getChosenPlayerIds().isEmpty() && !validOpponentIds.isEmpty()) {
-                gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ChoosePlayerAsEnter(
-                        justEntered.getId(), controllerId, card, targetId, wasCastFromHand,
-                        etbMode, xValue, kicked, targetIds, repeatedAdditionalCosts,
-                        convokeCreatureIds));
-                playerInputService.beginPlayerChoice(gameData, controllerId,
-                        new ArrayList<>(validOpponentIds), "Secretly choose an opponent.");
-                return;
-            }
+        if (beginOpponentChoiceAsEnters(gameData, controllerId, card, enteringPermanent, targetId, wasCastFromHand,
+                etbMode, xValue, kicked, targetIds, repeatedAdditionalCosts, convokeCreatureIds)) {
+            return;
         }
 
         ChoosePlayerOnEnterEffect playerChoice = card.getStaticEffects().stream()

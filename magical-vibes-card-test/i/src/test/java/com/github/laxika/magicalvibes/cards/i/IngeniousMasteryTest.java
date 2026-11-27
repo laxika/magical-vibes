@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -45,6 +46,34 @@ class IngeniousMasteryTest extends BaseCardTest {
         assertThat(scry.libraryOwnerId()).isEqualTo(player2.getId());
 
         harness.getGameService().handleInteractionAnswer(gd, player2,
+                new InteractionAnswer.ScryOrder(List.of(0, 1), List.of()));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("With two opponents, the caster chooses the one who creates the Treasures and scries")
+    void casterChoosesTheOpponentWhoCreatesTreasuresAndScries() {
+        Player player3 = harness.addOpponent("Charlie");
+        harness.setLibrary(player3, List.of(new IngeniousMastery(), new IngeniousMastery()));
+        harness.setHand(player1, List.of(new IngeniousMastery()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castWithAlternateCost(player1, 0, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        PendingInteraction.PermanentChoice choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.validPlayerIds()).containsExactlyInAnyOrder(player2.getId(), player3.getId());
+        harness.handlePermanentChosen(player1, player3.getId());
+
+        assertThat(findPermanents(player3, "Treasure")).hasSize(2);
+        assertThat(findPermanents(player2, "Treasure")).isEmpty();
+        PendingInteraction.Scry scry = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(scry.playerId()).isEqualTo(player3.getId());
+        harness.getGameService().handleInteractionAnswer(gd, player3,
                 new InteractionAnswer.ScryOrder(List.of(0, 1), List.of()));
 
         assertThat(gd.interaction.activeInteraction()).isNull();

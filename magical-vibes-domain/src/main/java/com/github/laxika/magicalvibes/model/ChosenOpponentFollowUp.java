@@ -54,6 +54,9 @@ public sealed interface ChosenOpponentFollowUp {
         }
     }
 
+    /** Shared Fate: a replaced draw, before the drawing player chooses whose library it exiles from. */
+    record SharedFateExile(UUID drawingPlayerId, UUID sourcePermanentId) implements ChosenOpponentFollowUp {}
+
     /** Verdant Mastery cast for {3}{G}: the revealed basic lands, before one is put under an opponent's control. */
     record VerdantMasteryReveal(UUID controllerId, List<Card> revealedLands) implements ChosenOpponentFollowUp {
         public VerdantMasteryReveal {

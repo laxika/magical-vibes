@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardTargetOperationState;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -151,11 +152,22 @@ public class ReturnTargetCardsFromGraveyardToHandEffectHandler implements Normal
             return;
         }
 
-        UUID opponentId = gameData.orderedPlayerIds.stream()
-                .filter(playerId -> !playerId.equals(entry.getControllerId()))
-                .findFirst()
-                .orElse(null);
-        if (legalTargets.size() == 1 || opponentId == null) {
+        if (legalTargets.size() == 1) {
+            applyOpponentChoice(gameData, entry, effect, legalTargets, legalTargets.getFirst());
+            return;
+        }
+        // "An opponent chooses one of them": the caster chooses that opponent as the spell resolves (CR 608.2d), the
+        // choice put before this effect, which then reads it.
+        List<UUID> chosenOpponents = entry.getResolutionResults().outcome(StepKind.CHOOSE).playerIds();
+        UUID opponentId;
+        if (!chosenOpponents.isEmpty()) {
+            opponentId = chosenOpponents.getFirst();
+        } else if (ChoosePlayerEffectHandler.opponentToBeChosenFirst(gameData, entry, effect)) {
+            return;
+        } else {
+            opponentId = ChoosePlayerEffectHandler.onlyOpponent(gameData, entry.getControllerId());
+        }
+        if (opponentId == null || !gameData.playerIds.contains(opponentId)) {
             applyOpponentChoice(gameData, entry, effect, legalTargets, legalTargets.getFirst());
             return;
         }

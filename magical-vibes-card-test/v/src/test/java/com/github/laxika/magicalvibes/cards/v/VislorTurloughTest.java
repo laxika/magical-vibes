@@ -90,6 +90,23 @@ class VislorTurloughTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With two opponents, the chosen opponent gains control and Vislor is goaded under them")
+    void chosenOpponentGainsControlAndVislorIsGoaded() {
+        Player player3 = harness.addOpponent("Charlie");
+        castVislor();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+        harness.handlePermanentChosen(player1, player3.getId());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player3, "Vislor Turlough");
+        Permanent vislor = findPermanent(player3, "Vislor Turlough");
+        assertThat(gqs.isGoaded(gd, vislor)).isTrue();
+        assertThat(als.getMustAttackRequirementCount(gd, vislor)).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("The accepted control transfer gives Vislor the goaded designation")
     void transferredVislorIsGoaded() {
         castVislor();

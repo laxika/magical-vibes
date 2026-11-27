@@ -758,7 +758,7 @@ class ResolutionCostPaymentServiceTest {
         @Test
         @DisplayName("An opponent gaining life is payable only while that opponent can gain life")
         void opponentGainingLifeNeedsAnOpponentWhoCanGainLife() {
-            when(gameQueryService.getOpponentId(gd, payerId)).thenReturn(opponentId);
+            gd.playerIds.add(opponentId);
             when(gameQueryService.canPlayerGainLife(gd, opponentId)).thenReturn(false, true);
 
             assertThat(service.canPay(gd, payerId, new OpponentGainsLifeCost(2), null)).isFalse();

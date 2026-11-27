@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -109,9 +110,9 @@ class TheBrothersWarTest extends BaseCardTest {
         Permanent ownBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         assertThat(als.getMustAttackRequirementCount(gd, earlyBears)).isPositive();
-        assertThat(als.getRequiredAttackTargetIds(gd, earlyBears)).containsExactly(player1.getId());
+        assertThat(als.getRequiredAttackTargetIds(gd, earlyBears)).containsExactly(Set.of(player1.getId()));
         assertThat(als.getMustAttackRequirementCount(gd, lateBears)).isPositive();
-        assertThat(als.getRequiredAttackTargetIds(gd, lateBears)).containsExactly(player1.getId());
-        assertThat(als.getRequiredAttackTargetIds(gd, ownBears)).containsExactly(player2.getId());
+        assertThat(als.getRequiredAttackTargetIds(gd, lateBears)).containsExactly(Set.of(player1.getId()));
+        assertThat(als.getRequiredAttackTargetIds(gd, ownBears)).containsExactly(Set.of(player2.getId()));
     }
 }

@@ -8,9 +8,12 @@ import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -43,6 +46,27 @@ class FavoredEnemyTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .extracting(card -> card.getName())
                 .contains("Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("With two opponents, its controller chooses whose library the creature type is noted from")
+    void controllerChoosesTheOpponentWhoseLibraryIsNoted() {
+        Player player3 = harness.addOpponent("Charlie");
+        Permanent hillGiant = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player3, List.of(new LlanowarElves(), new LlanowarElves()));
+        harness.setHand(player1, List.of(new FavoredEnemy()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castEnchantment(player1, 0, hillGiant.getId());
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.validPlayerIds()).containsExactlyInAnyOrder(player2.getId(), player3.getId());
+        harness.handlePermanentChosen(player1, player3.getId());
+
+        assertThat(findPermanent(player1, "Favored Enemy").getChosenSubtype()).isEqualTo(CardSubtype.ELF);
     }
 
     @Test

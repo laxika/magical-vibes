@@ -53,7 +53,9 @@ public class TargetOpponentCreatesTokenEffectHandler implements NormalEffectHand
             return;
         }
         UUID opponentId;
-        if (entry.getTargetId() != null && gameData.playerIds.contains(entry.getTargetId())) {
+        if (e.creator() != null) {
+            opponentId = subjectResolutionService.player(gameData, entry, effect, e.creator());
+        } else if (entry.getTargetId() != null && gameData.playerIds.contains(entry.getTargetId())) {
             // "Target opponent creates": the opponent the ability targets (Phelddagrif), none once that target is
             // illegal (CR 608.2b).
             List<UUID> targeted = subjectResolutionService.players(gameData, entry, effect,

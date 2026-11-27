@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -59,6 +60,24 @@ class NornsAnnexTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.WHITE)).isZero();
         // No life loss from tax
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("With two opponents, attacking the Annex's controller costs {W/P} and attacking the other costs nothing")
+    void onlyAttacksOnTheAnnexControllerAreTaxed() {
+        Player player3 = harness.addOpponent("Charlie");
+        harness.addToBattlefield(player3, new NornsAnnex());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.setLife(player1, 20);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player1, List.of(0, 1), Map.of(0, player2.getId(), 1, player3.getId()));
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
     }
 
     @Test

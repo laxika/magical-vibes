@@ -44,6 +44,28 @@ class VarchildsWarRidersTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With two opponents, its controller chooses who creates each age counter's Survivor")
+    void controllerChoosesAnOpponentForEachSurvivor() {
+        Player player3 = harness.addOpponent("Charlie");
+        Permanent riders = harness.addToBattlefieldAndReturn(player1, new VarchildsWarRiders());
+        riders.setCounterCount(CounterType.AGE, 1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        PendingInteraction.PermanentChoice first = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(first.playerId()).isEqualTo(player1.getId());
+        assertThat(first.validPlayerIds()).containsExactlyInAnyOrder(player2.getId(), player3.getId());
+        harness.handlePermanentChosen(player1, player3.getId());
+        harness.handlePermanentChosen(player1, player3.getId());
+
+        assertThat(survivorCount(player3)).isEqualTo(2);
+        assertThat(survivorCount(player2)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(riders);
+    }
+
+    @Test
     @DisplayName("Survivor tokens fall back to another set's printing when ALL has none")
     void survivorTokenFallsBackWhenSourceSetLacksPrinting() {
         CardPrintingRegistry.registerTokenImages("FALLBACK_SURV", Map.of(

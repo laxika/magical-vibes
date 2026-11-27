@@ -1212,6 +1212,7 @@ questions under "The owner's open questions", the decisions under "The owner's d
 - 2026-11-27, CT-1 (entry 18, line O65): Perplex's "unless its controller discards their hand": the payer discards as a cost (CR 118.12a). Is that discard caused by a spell an opponent controls, so the payer's Obstinate Baloth or Wilt-Leaf Liege enters the battlefield? Their rulings speak of "a spell or ability an opponent controls causes you to discard" but not of a ransom. Today the payer is named as the cause, so they don't.
 - 2026-11-27, EB-3 (entry 18, line S19): CR 404.3 lets the owner arrange two or more cards put into their graveyard at once. The engine asks it only for the graveyard and library exchange; mill, discard, destroy-all and `PutExiledCardsIntoOwnersGraveyardEffect` (Covenant of Minds' three revealed cards) keep their own order unasked. Should every multi-card move into one graveyard ask (a prompt in many places, and the AI answers it), or is the unasked order accepted? Dakra Mystic puts at most one card into each graveyard, so it needs no prompt.
 - 2026-11-27, TK-1 (entry 18, lines S16 and L5): Asinine Antics and Twisted Sewer-Witch create one Role "attached to" each creature; when a replacement creates fewer Roles than creatures (the caster's Halving Season), which creatures get them? The engine spreads the Roles over the creatures in battlefield order (`AttachCreatedTokensToHostsEffectHandler`: Role i goes to creature i × creatures / Roles); neither CR 616.1 nor the Asinine Antics rulings say whether the creating player chooses.
+- 2026-11-27, MP-2 (entry 18, lines M3 and H7): two multiplayer views the engine doesn't have. (1) A player who loses leaves the game while the others play on (CR 104.2a, 800.4a), but every loss ends the game (`GameOutcomeService.checkWinCondition`, `declareWinner` with `getOpponentId` of the loser), so Triskaidekaphobia's "each player with exactly 13 life loses" can't eliminate one of three players. (2) `GameViewProjectionFactory.getRevealedOpponentHand` (Zur's Weirding, Telepathy) shows one opponent's hand, since `GameStateMessage` and the frontend have one opponent hand slot. Both are infrastructure (a player-elimination model; a hand per opponent in the view and client): move them to `missing-features-to-do.md`, or keep them in entry 18?
 
 #### Orchestrator decisions for the owner to review
 
@@ -1304,23 +1305,17 @@ Don't commit.
 - The static-set filter reads in `GameQueryService.layeredQueryReads` (`matchesLeaf`) use printed keywords and types ("creatures with flying" in static locks other than the tap lock; Katabatic Winds' attack/block half unverified). Fairly sure.
 - Painter's Servant doesn't colour cards that aren't on the battlefield, or spells (Oracle text). Sure.
 
-#### Two-player assumptions (`getOpponentId`, first seat) (15)
+#### Two-player assumptions (`getOpponentId`, first seat) (9)
 
-- Notion Thief, Hullbreacher, Alms Collector (`DrawService`), Elesh Norn (`areOpponentPermanentETBTriggersSuppressed`) look at one opponent; Distant Memories asks the first opponent by seat and finds its controller as "the other player"; Infernal Denizen offers the first opponent. Sure.
-- Shared Fate exiles from `getOpponentId` (the drawer chooses); Burning-Rune Demon, Captivating Glance's clash take the first other player. Sure.
-- Death or Glory takes the first other seat; Deliver Unto Evil, Fateseal use `getOpponentId` (the controller chooses, CR 700.2e's reading); Covenant of Minds takes the first non-opponent seat as controller; Triskaidekaphobia declares the first survivor the winner (CR 800.4a). Sure.
-- Galactus forces the first opponent on a tie; Norn's Annex's tax and Nahiri's `MustAttackPlayerEffect` count use `getOpponentId`. Sure.
-- Stand or Fall serves only `getOpponentId` ("each defending player") and floats `OnlyChosenCreaturesCanBlockEffect` on every player; Favored Enemy reads the first opponent's library. Sure.
-- Memories Returning, Murmurs from Beyond pick the opponent by seat or ask the controller. Sure.
-- Zur's Weirding offers the payment only to `getOpponentId` ("any other player"). Sure.
-- `TargetOpponentCreatesTokenEffect` derives "target opponent"; `OpponentGainsControlOfSourceCreatureEffect` picks by seat. Unverified.
+- Notion Thief, Hullbreacher, Alms Collector (`DrawService`) look at one opponent. Sure.
+- Triskaidekaphobia declares the first survivor the winner: the engine ends the game at the first loss (`ControllerLosesGameEffectHandler`, `GameOutcomeService.checkWinCondition`), with no multiplayer elimination (CR 104.2a, 800.4a); owner question in entry 17 (MP-2). Sure.
+- Nahiri's `MustAttackPlayerEffect` count uses `getOpponentId`. Sure.
+- Stand or Fall serves only `getOpponentId` ("each defending player") and floats `OnlyChosenCreaturesCanBlockEffect` on every player. Sure.
+- `TargetOpponentCreatesTokenEffect`'s gift branch gives the gift to `getOpponentId`; waits for the owner's gift-opponent answer (entry 17). Sure of the code.
 - `MayEffect`'s `DEFENDING_PLAYER` doesn't read the recorded defending player (CR 508.5; Harbor Guardian's kind); Soldevi Heretic derives "target opponent" and targets nobody. Unverified.
 - `CombatBlockService.handleDeclareBlockersStep`, `getBlockableAttackerIndices` and `ConditionEvaluationService.defendingPlayerControlsMatchingPermanent` take the defending player as `getOpponentId` (CR 506.2, 508.5) (CR 509.1). Sure.
-- Ingenious Mastery: "an opponent creates two Treasures and they scry 2" gives the tokens to the first seat and has every opponent scry.
 - `DrawService`: two Notion Thief / Hullbreacher / Alms Collector sources under different opponents apply in seat order; the affected player should choose (CR 616.1). Sure, low.
 - `ReturnCardExiledWithSourceToBattlefieldEffectHandler` puts a creature onto the battlefield attacking with no attack target; its controller should choose one (CR 508.4). Fairly sure.
-- Wake to Slaughter's opponent choice (`opponentChoosesOneForHand`, its own `wakeToSlaughterChosenCardId` state) is unchecked for multiplayer. Fairly sure from the code.
-- Vislor Turlough with 3+ players: whether the goad step resolves after the opponent prompt, with the new controller. Unverified.
 
 #### Simultaneity and APNAP (CR 101.4, 603.10a, 608.2e) (10)
 
@@ -1389,12 +1384,12 @@ Don't commit.
 - `ChooseCardEffectHandler` logs a chosen card unnamed whenever it is in a hand (fold run 12e's zone check), even a revealed one; keep hidden-ness on the subject (fold run 20's note: a zone-based prompt check broke Addle and Intuition). Sure, low.
 - `SetBasePowerToughnessEffectHandler`'s set and player-target log lines print "null" for a null side. Sure.
 - Shadow of Doubt logs nothing since fold run 34: `GrantStaticEffectToPlayerEffect` has no log line. Sure, low.
-- `getRevealedOpponentHand` returns only the first opponent's hand (multiplayer). Sure of the code.
+- `getRevealedOpponentHand` returns only the first opponent's hand (multiplayer); needs a hand per opponent in `GameStateMessage` and the frontend (owner question in entry 17, MP-2). Sure of the code.
 - `CantAttackThisTurnEffectHandler`'s set branch logs the source by `entry.getCard().getName()` with no face-down redaction and doesn't bind its filter's chosen values (only the except branch goes through `lastingRule`). Sure of the code.
 - `GameViewProjectionFactory.collectFaceDownReveals` decides looks from printed effects while `mayLookAtExiledCard` holds granted looks, so one question is answered twice; `exilesHandsFaceDown` doesn't look inside `MayEffect`. Sure of the code.
 - `ClashSupport`'s log says "opponent reveals" without naming the player. Sure, low.
 
-#### Other (53)
+#### Other (52)
 
 - Casting checks left from runs 40 and 41: Scrycast (Biting Remark; `ScryInteractionHandler`, `ScryAiStrategy`, code: the scry answer casts it with no `canCastDuringResolution` check, and the AI strategies have no `CastingPermissionService`); the may-cast offers don't ask the shared check; an ability leaves the stack before it resolves, where CR 608.2n removes it last. Unverified. FC-2: Knowledge Pool's timing, the split exile cast and suspend's type restriction fixed.
 - Krovikan Vampire's `ReturnDamagedCreaturesThatDiedUnderControlEffect` (a mass return with control and sacrifice links) puts an Aura card that died animated onto the battlefield with no host choice (CR 303.4f, 303.4g); Lim-Dûl's head since rules-fixes EB-1 and `ReturnDyingCreatureToBattlefieldEffect`, `ReturnDyingCreatureToOwnerBattlefieldEffect` since EB-2 go through the entry batch. Unverified.
@@ -1438,7 +1433,6 @@ Don't commit.
 - Behemoth of Vault 0: "when you do, destroy that permanent" is a reflexive ability about the declared target, which `QueueReflexiveAbilityEffect` would target again (needs a reflexive ability about an earlier target) (CR 118.3).
 - Sword-Point Diplomacy asks about the revealed cards in library order; its ruling lets the caster choose the order the cards are processed in (it matters only when an opponent's life runs short). Unsure it is worth a prompt.
 - Decoy Gambit (`ReturnTargetCreaturesUnlessControllersDrawEffect`) still offers "have you draw a card" when its caster can't draw; whether an opponent may choose it then (CR 608.2d: an impossible option can't be chosen; CR 121.3 bars a player who can't draw from choosing to draw, but here another player makes the choice) is not settled by the rules or its rulings. Sure the question is open.
-- Varchild's War-Riders and Wall of Shards pay their cumulative upkeep to `getOpponentId` (the first opponent); their rulings let each age counter's token or life go to any opponent, chosen separately. Sure of the rulings and the code.
 - Missing feature (owner): no client chooser for an "[A] or [B]" additional cast cost (`AnyOfCost` as `addCastingCost`) (CR 601.2b).
 - The free-cast additional-cost chooser ("Choose how to pay the additional cost.") is asked after the targets, not as the spell is announced (CR 601.2b, before 601.2c).
 - A free cast (`ExileFreeCastQueueSupport`) doesn't offer an "[A] or [B]" cost's graveyard-exile or forage alternative: there is no free-cast graveyard picker, so a free Soaring Stoneglider or Feed the Cycle pays its mana alternative or is skipped (CR 601.2b). Sure.

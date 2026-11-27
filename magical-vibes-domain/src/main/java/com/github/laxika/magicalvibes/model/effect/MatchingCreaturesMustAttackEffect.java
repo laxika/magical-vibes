@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -32,7 +33,7 @@ public record MatchingCreaturesMustAttackEffect(PermanentPredicate matcher, UUID
     }
 
     @Override
-    public UUID requiredAttackTargetId(GameData gameData, Permanent sourcePermanent) {
-        return requiredAttackTargetId;
+    public Set<UUID> requiredAttackTargetIds(GameData gameData, Permanent sourcePermanent) {
+        return requiredAttackTargetId == null ? Set.of() : Set.of(requiredAttackTargetId);
     }
 }

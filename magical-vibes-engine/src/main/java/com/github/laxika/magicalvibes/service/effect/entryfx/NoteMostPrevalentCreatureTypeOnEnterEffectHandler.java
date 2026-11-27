@@ -20,6 +20,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+/**
+ * "As this enters, note the most prevalent creature type in [a library]" (Favored Enemy). An opponent's library is the
+ * opponent chosen as it enters ({@code ChooseOpponentOnEnterEffect}).
+ */
 @Component
 @RequiredArgsConstructor
 public class NoteMostPrevalentCreatureTypeOnEnterEffectHandler implements EntryReplacementHandlerBean {
@@ -31,16 +35,42 @@ public class NoteMostPrevalentCreatureTypeOnEnterEffectHandler implements EntryR
         return NoteMostPrevalentCreatureTypeOnEnterEffect.class;
     }
 
+    /**
+     * Notes the type from the opponent chosen as {@code enteringPermanent} entered (its as-enters opponent choice),
+     * once that choice is made: with two or more opponents the note waits for it.
+     */
+    public void applyAfterOpponentChoice(GameData gameData, UUID controllerId, Permanent enteringPermanent) {
+        if (enteringPermanent.getChosenSubtype() != null || enteringPermanent.getChosenPlayerIds().isEmpty()) {
+            return;
+        }
+        for (CardEffect effect : enteringPermanent.getCard().getStaticEffects()) {
+            if (effect instanceof NoteMostPrevalentCreatureTypeOnEnterEffect note && note.opponentLibrary()) {
+                apply(gameData, controllerId, enteringPermanent, effect);
+            }
+        }
+    }
+
+    /**
+     * "An opponent's library": the opponent chosen as the permanent enters, or its controller's one opponent; with
+     * two or more and none chosen yet, {@code null} (the note is made by {@link #applyAfterOpponentChoice}).
+     */
+    private static UUID notedOpponent(GameData gameData, UUID controllerId, Permanent enteringPermanent) {
+        if (!enteringPermanent.getChosenPlayerIds().isEmpty()) {
+            return enteringPermanent.getChosenPlayerIds().getFirst();
+        }
+        List<UUID> opponents = gameData.orderedPlayerIds.stream()
+                .filter(playerId -> !playerId.equals(controllerId) && gameData.playerIds.contains(playerId))
+                .toList();
+        return opponents.size() == 1 ? opponents.getFirst() : null;
+    }
+
     @Override
     public void apply(GameData gameData, UUID controllerId, Permanent enteringPermanent,
                       CardEffect effect) {
         NoteMostPrevalentCreatureTypeOnEnterEffect noteEffect =
                 (NoteMostPrevalentCreatureTypeOnEnterEffect) effect;
         UUID libraryOwnerId = noteEffect.opponentLibrary()
-                ? gameData.orderedPlayerIds.stream()
-                .filter(playerId -> !playerId.equals(controllerId))
-                .findFirst()
-                .orElse(null)
+                ? notedOpponent(gameData, controllerId, enteringPermanent)
                 : controllerId;
         if (libraryOwnerId == null) {
             return;

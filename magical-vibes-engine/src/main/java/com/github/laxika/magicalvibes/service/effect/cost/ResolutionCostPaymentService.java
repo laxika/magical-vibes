@@ -416,17 +416,14 @@ public class ResolutionCostPaymentService {
             case SacrificeCreaturesWithTotalPowerCost power ->
                     reachablePower(gameData, powerCandidates(gameData, payerId, entry)) >= power.totalPower();
             case FlipCoinsCost ignored -> true;
-            case OpponentCreatesTokensCost ignored -> gameQueryService.getOpponentId(gameData, payerId) != null;
+            case OpponentCreatesTokensCost ignored -> !opponentsForPayment(gameData, payerId, ignored).isEmpty();
             case PutCounterOnOpponentCreatureCost counters ->
                     !opponentCreaturesForCounter(gameData, payerId, counters.counterType()).isEmpty();
             case DrawCardsCost ignored -> !drawService.isDrawPrevented(gameData, payerId);
             case ExileTopCardOfLibraryCost exile -> libraryExileSupport.hasAtLeast(gameData, payerId, exile.count());
             case PutCardsFromSingleGraveyardOnBottomOfLibraryCost bottom -> singleGraveyardPayments(gameData, bottom)
                     >= bottom.payments();
-            case OpponentGainsLifeCost ignored -> {
-                UUID opponentId = gameQueryService.getOpponentId(gameData, payerId);
-                yield opponentId != null && gameQueryService.canPlayerGainLife(gameData, opponentId);
-            }
+            case OpponentGainsLifeCost ignored -> !opponentsForPayment(gameData, payerId, ignored).isEmpty();
             case GainControlOfPermanentsCost control ->
                     destructionSupport.collectPermanentIdsNotControlledBy(gameData, payerId, control.filter()).size()
                             >= control.count();
@@ -915,17 +912,7 @@ public class ResolutionCostPaymentService {
                 yield Outcome.ASKING;
             }
             case FlipCoinsCost flip -> flipCoins(gameData, payer, flip, payment);
-            case OpponentCreatesTokensCost tokens -> {
-                UUID opponentId = gameQueryService.getOpponentId(gameData, payerId);
-                if (opponentId == null) {
-                    yield Outcome.NOT_PAID;
-                }
-                for (int i = 0; i < tokens.count(); i++) {
-                    destructionSupport.createTokenForPlayer(gameData, opponentId, tokens.tokenTemplate(),
-                            payment.sourceCard().getName(), payment.sourceCard().getSetCode());
-                }
-                yield afterImmediatePayment(gameData);
-            }
+            case OpponentCreatesTokensCost tokens -> payToOpponents(gameData, payerId, tokens, tokens.count(), payment);
             case PutCounterOnOpponentCreatureCost counters -> {
                 List<UUID> candidates = opponentCreaturesForCounter(gameData, payerId, counters.counterType());
                 if (candidates.isEmpty()) {
@@ -976,15 +963,7 @@ public class ResolutionCostPaymentService {
                                 + " cards from a single graveyard for the first cumulative upkeep payment.");
                 yield Outcome.ASKING;
             }
-            case OpponentGainsLifeCost life -> {
-                UUID opponentId = gameQueryService.getOpponentId(gameData, payerId);
-                if (opponentId == null || !gameQueryService.canPlayerGainLife(gameData, opponentId)) {
-                    yield Outcome.NOT_PAID;
-                }
-                lifeSupport.applyGainLife(gameData, opponentId, life.amount(), null, payment.sourceCard(),
-                        payment.entry() == null ? null : payment.entry().getEntryType());
-                yield afterImmediatePayment(gameData);
-            }
+            case OpponentGainsLifeCost life -> payToOpponents(gameData, payerId, life, life.payments(), payment);
             case GainControlOfPermanentsCost control -> {
                 if (destructionSupport.collectPermanentIdsNotControlledBy(gameData, payerId, control.filter()).size()
                         < control.count()) {
@@ -1174,6 +1153,10 @@ public class ResolutionCostPaymentService {
         }
         if (context.cost() instanceof GainControlOfPermanentsCost control) {
             completeGainControlPick(gameData, payerId, permanentId, context, control);
+            return;
+        }
+        if (context.cost() instanceof OpponentCreatesTokensCost || context.cost() instanceof OpponentGainsLifeCost) {
+            completeOpponentPayment(gameData, payerId, permanentId, context);
             return;
         }
         if (!(context.cost() instanceof PutCounterOnControlledCreatureCost blight)) {
@@ -1698,6 +1681,75 @@ public class ResolutionCostPaymentService {
     }
 
     /** A payment made at once is paid, unless one of its actions stopped to ask (a replacement's choice). */
+    /**
+     * The opponents of {@code payerId} one payment of an "an opponent creates" / "an opponent gains" cost can go to:
+     * every opponent still in the game, for a life gain only those who can gain life (CR 608.2d).
+     */
+    private List<UUID> opponentsForPayment(GameData gameData, UUID payerId, CostEffect cost) {
+        return gameData.orderedPlayerIds.stream()
+                .filter(id -> !id.equals(payerId) && gameData.playerIds.contains(id))
+                .filter(id -> !(cost instanceof OpponentGainsLifeCost) || gameQueryService.canPlayerGainLife(gameData, id))
+                .toList();
+    }
+
+    /**
+     * Pays {@code payments} payments of an opponent-paid cost (a token or a life gain each, one per age counter): with
+     * one opponent all go to that player unasked; with more, the payer chooses the opponent for each payment in turn
+     * (the Varchild's War-Riders and Wall of Shards rulings, CR 702.24a), finished by {@link #completePermanentChoice}.
+     */
+    private Outcome payToOpponents(GameData gameData, UUID payerId, CostEffect cost, int payments, Payment payment) {
+        List<UUID> opponents = opponentsForPayment(gameData, payerId, cost);
+        if (opponents.isEmpty()) {
+            return Outcome.NOT_PAID;
+        }
+        if (opponents.size() == 1) {
+            for (int i = 0; i < payments; i++) {
+                payOneToOpponent(gameData, opponents.getFirst(), cost, payment.sourceCard(), payment.entry());
+            }
+            return afterImmediatePayment(gameData);
+        }
+        if (payments <= 0) {
+            return Outcome.PAID;
+        }
+        askOpponentForPayment(gameData, payerId, cost, payment.sourceCard(), payment.sourceControllerId(), payments);
+        return Outcome.ASKING;
+    }
+
+    private void askOpponentForPayment(GameData gameData, UUID payerId, CostEffect cost, Card sourceCard,
+                                       UUID sourceControllerId, int remaining) {
+        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ResolutionCostPayment(
+                cost, payerId, sourceCard, sourceControllerId, null, remaining));
+        playerInputService.beginPlayerChoice(gameData, payerId, opponentsForPayment(gameData, payerId, cost),
+                sourceCard.getName() + " — choose an opponent for this payment (" + remaining + " left).");
+    }
+
+    private void payOneToOpponent(GameData gameData, UUID opponentId, CostEffect cost, Card sourceCard,
+                                  StackEntry entry) {
+        if (cost instanceof OpponentCreatesTokensCost tokens) {
+            destructionSupport.createTokenForPlayer(gameData, opponentId, tokens.tokenTemplate(),
+                    sourceCard.getName(), sourceCard.getSetCode());
+        } else if (cost instanceof OpponentGainsLifeCost life) {
+            lifeSupport.applyGainLife(gameData, opponentId, life.amountPerPayment(), null, sourceCard,
+                    entry == null ? null : entry.getEntryType());
+        }
+    }
+
+    /** One chosen opponent of an opponent-paid cost: that payment goes to them, and the next one is asked. */
+    private void completeOpponentPayment(GameData gameData, UUID payerId, UUID opponentId,
+                                         PermanentChoiceContext.ResolutionCostPayment context) {
+        if (!opponentsForPayment(gameData, payerId, context.cost()).contains(opponentId)) {
+            throw new IllegalStateException("That player can't take this payment");
+        }
+        payOneToOpponent(gameData, opponentId, context.cost(), context.sourceCard(),
+                gameData.pendingEffectResolutionEntry);
+        int remaining = context.remaining() - 1;
+        if (remaining > 0 && !gameData.interaction.isAwaitingInput()
+                && !opponentsForPayment(gameData, payerId, context.cost()).isEmpty()) {
+            askOpponentForPayment(gameData, payerId, context.cost(), context.sourceCard(),
+                    context.sourceControllerId(), remaining);
+        }
+    }
+
     private static Outcome afterImmediatePayment(GameData gameData) {
         return gameData.interaction.isAwaitingInput() ? Outcome.ASKING : Outcome.PAID;
     }

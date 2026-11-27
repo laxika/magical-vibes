@@ -37,9 +37,17 @@ public class ChosenOpponentSupport {
             continueWith(gameData, opponents.isEmpty() ? null : opponents.getFirst(), followUp);
             return;
         }
+        askThen(gameData, controllerId, opponents, sourceName + " — choose an opponent.", followUp);
+    }
+
+    /**
+     * Asks {@code chooserId} to choose one of {@code opponents} (two or more, the ones the instruction can act on) and
+     * goes on with {@code followUp} once answered ({@link #complete}). The caller changes nothing after this call.
+     */
+    public void askThen(GameData gameData, UUID chooserId, List<UUID> opponents, String prompt,
+                        ChosenOpponentFollowUp followUp) {
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ChooseOpponentThen(followUp));
-        playerInputService.beginPlayerChoice(gameData, controllerId, opponents,
-                sourceName + " — choose an opponent.");
+        playerInputService.beginPlayerChoice(gameData, chooserId, opponents, prompt);
     }
 
     /** The controller's answer: the chosen opponent goes on with the follow-up. */

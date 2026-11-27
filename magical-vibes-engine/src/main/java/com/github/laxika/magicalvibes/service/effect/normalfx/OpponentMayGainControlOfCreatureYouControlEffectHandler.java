@@ -6,12 +6,15 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayGainControlOfCreatureYouControlEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +24,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves {@link OpponentMayGainControlOfCreatureYouControlEffect}: offers an opponent a may-prompt
+ * Resolves {@link OpponentMayGainControlOfCreatureYouControlEffect}: offers an opponent (chosen by the controller as
+ * it resolves) a may-prompt
  * to take one creature the source's controller controls for the effect's control duration.
  */
 @Component
@@ -33,6 +37,7 @@ public class OpponentMayGainControlOfCreatureYouControlEffectHandler implements 
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -49,7 +54,13 @@ public class OpponentMayGainControlOfCreatureYouControlEffectHandler implements 
      */
     public void offer(GameData gameData, StackEntry entry, OpponentMayGainControlOfCreatureYouControlEffect effect) {
         UUID victimControllerId = entry.getControllerId();
-        UUID opponentId = firstOpponent(gameData, victimControllerId);
+        // "An opponent may gain control": the controller chooses which as it resolves (CR 608.2d).
+        UUID opponentId = effect.opponent() != null
+                ? subjectResolutionService.player(gameData, entry, effect, effect.opponent())
+                : ChoosePlayerEffectHandler.opponentToBeChosenFirst(gameData, entry,
+                        new OpponentMayGainControlOfCreatureYouControlEffect(effect.duration(),
+                                Subjects.playersThisWay(StepKind.CHOOSE))) ? null
+                : ChoosePlayerEffectHandler.onlyOpponent(gameData, victimControllerId);
         if (opponentId == null) {
             return;
         }
@@ -126,14 +137,5 @@ public class OpponentMayGainControlOfCreatureYouControlEffectHandler implements 
             }
         }
         return ids;
-    }
-
-    private static UUID firstOpponent(GameData gameData, UUID controllerId) {
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            if (!playerId.equals(controllerId)) {
-                return playerId;
-            }
-        }
-        return null;
     }
 }

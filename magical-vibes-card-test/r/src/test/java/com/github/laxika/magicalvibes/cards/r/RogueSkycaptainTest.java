@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.s.Solemnity;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -31,6 +33,27 @@ class RogueSkycaptainTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(captain);
         assertThat(captain.getCounterCount(CounterType.WAGE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("With two opponents, declining the wages lets its controller choose which opponent gains control")
+    void controllerChoosesTheOpponentWhoGainsControl() {
+        Player player3 = harness.addOpponent("Charlie");
+        giveManaSource(player1);
+        Permanent captain = harness.addToBattlefieldAndReturn(player1, new RogueSkycaptain());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        PendingInteraction.PermanentChoice choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.validPlayerIds()).containsExactlyInAnyOrder(player2.getId(), player3.getId());
+        harness.handlePermanentChosen(player1, player3.getId());
+
+        assertThat(captain.getCounterCount(CounterType.WAGE)).isZero();
+        assertThat(gd.playerBattlefields.get(player3.getId())).contains(captain);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(captain);
     }
 
     @Test

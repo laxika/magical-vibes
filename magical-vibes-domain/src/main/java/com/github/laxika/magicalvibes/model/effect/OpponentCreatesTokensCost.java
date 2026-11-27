@@ -4,7 +4,8 @@ package com.github.laxika.magicalvibes.model.effect;
  * Cost effect paid by having an opponent create {@code count} tokens (Varchild's War-Riders'
  * cumulative upkeep — "Have an opponent create a 1/1 red Survivor creature token"). The tokens
  * enter under the opponent's control, so the payment costs the source's controller nothing but
- * board position. Always payable: there is no resource the payer can run out of.
+ * board position. Always payable: there is no resource the payer can run out of. Each token is its own
+ * payment, the opponent chosen separately for each (the Varchild's War-Riders multiplayer ruling).
  *
  * @param count how many tokens the opponent creates (one per age counter for cumulative upkeep)
  * @param tokenTemplate blueprint for a single token; its own {@code amount} is ignored

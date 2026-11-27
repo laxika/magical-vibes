@@ -65,8 +65,8 @@ Owner: `GameService.activateDuringManaPayment`, `InteractionHandlerRegistry.resu
 Why: the game is still inside that decision.
 
 ### "An opponent" named mid-flow is chosen when its instruction is applied (CR 608.2d)
-A handler or completion that reaches "an opponent ..." after it has exiled, searched, revealed or asked something calls `ChosenOpponentSupport.chooseThen` with a `ChosenOpponentFollowUp` record of what it has done; with two or more opponents the controller is asked then (`PermanentChoiceContext.ChooseOpponentThen`) and the record's `ChosenOpponentContinuation` bean goes on with the answer; with one, nothing is asked. An instruction that changes nothing first uses `ChoosePlayerEffectHandler.opponentToBeChosenFirst`, a composed spell `ChoosePlayerEffect.opponent()`; never the first other seat or `getOpponentId`.
-Owner: `ChosenOpponentSupport` (Abstract Performance, Brilliant Ultimatum, Hostile Negotiations, Ecological Appreciation, Threats Undetected, Turtles Forever, Verdant Mastery).
+A handler or completion that reaches "an opponent ..." after it has exiled, searched, revealed or asked something calls `ChosenOpponentSupport.chooseThen` with a `ChosenOpponentFollowUp` record of what it has done; with two or more opponents the controller is asked then (`PermanentChoiceContext.ChooseOpponentThen`) and the record's `ChosenOpponentContinuation` bean goes on with the answer; with one, nothing is asked (`askThen` asks among the opponents the instruction can act on). An instruction that changes nothing first uses `ChoosePlayerEffectHandler.opponentToBeChosenFirst`, a composed spell `ChoosePlayerEffect.opponent()`; never the first other seat or `getOpponentId`.
+Owner: `ChosenOpponentSupport` (Abstract Performance, Brilliant Ultimatum, Hostile Negotiations, Ecological Appreciation, Threats Undetected, Turtles Forever, Verdant Mastery, Shared Fate).
 Why: the controller chooses the opponent as the spell resolves (the Abstract Performance and Verdant Mastery rulings), knowing what was exiled or revealed.
 
 ### "May search" is asked before the search (CR 701.23a, 701.23b)

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -54,6 +55,29 @@ class WakeToSlaughterTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Unruly Mob");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.equals(battlefieldCard));
+    }
+
+    @Test
+    @DisplayName("With two opponents, the caster chooses which opponent picks the card for hand")
+    void casterChoosesTheOpponentWhoPicks() {
+        Player player3 = harness.addOpponent("Charlie");
+        Card handCard = new CandlegroveWitch();
+        Card battlefieldCard = new UnrulyMob();
+        castWithTargets(handCard, battlefieldCard);
+
+        PendingInteraction.PermanentChoice opponentChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(opponentChoice.playerId()).isEqualTo(player1.getId());
+        assertThat(opponentChoice.validPlayerIds()).containsExactlyInAnyOrder(player2.getId(), player3.getId());
+        harness.handlePermanentChosen(player1, player3.getId());
+
+        PendingInteraction.GraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player3.getId());
+        harness.handleGraveyardCardChosen(player3, 1);
+
+        harness.assertInHand(player1, "Unruly Mob");
+        harness.assertOnBattlefield(player1, "Candlegrove Witch");
     }
 
     @Test

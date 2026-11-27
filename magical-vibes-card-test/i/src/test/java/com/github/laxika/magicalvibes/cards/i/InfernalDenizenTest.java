@@ -87,6 +87,33 @@ class InfernalDenizenTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With two opponents, Denizen's controller chooses which opponent may take a creature")
+    void controllerChoosesTheOpponentWithTwoOpponents() {
+        Player player3 = harness.addOpponent("Charlie");
+        harness.addToBattlefield(player1, new InfernalDenizen());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(denizen(player1).isTapped()).isTrue();
+        PendingInteraction.PermanentChoice opponentChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(opponentChoice.playerId()).isEqualTo(player1.getId());
+        assertThat(opponentChoice.validPlayerIds()).containsExactlyInAnyOrder(player2.getId(), player3.getId());
+        harness.handlePermanentChosen(player1, player3.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player3.getId());
+        harness.handleMayAbilityChosen(player3, true);
+        harness.handlePermanentChosen(player3, bearsId);
+
+        assertThat(gd.playerBattlefields.get(player3.getId())).anyMatch(p -> p.getId().equals(bearsId));
+        assertThat(gd.playerBattlefields.get(player2.getId())).noneMatch(p -> p.getId().equals(bearsId));
+    }
+
+    @Test
     @DisplayName("Opponent may decline the steal after Denizen taps")
     void opponentMayDeclineSteal() {
         harness.addToBattlefield(player1, new InfernalDenizen());

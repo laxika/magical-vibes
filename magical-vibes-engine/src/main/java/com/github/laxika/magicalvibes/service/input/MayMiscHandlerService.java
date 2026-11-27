@@ -326,6 +326,14 @@ public class MayMiscHandlerService {
         String playerName = gameData.playerIdToName.get(drawingPlayerId);
 
         if (!accepted) {
+            // "Any other player may pay 2 life": each other player who can pay is offered it in turn (CR 101.4).
+            if (effect.kind() == DrawReplacementKind.ZURS_WEIRDING && drawService.offerZursWeirdingToNextPlayer(
+                    gameData, drawingPlayerId, player.getId(), ability.sourcePermanentId())) {
+                gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " declines to pay for ",
+                        ability.sourceCard(), "."));
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
             if (effect.kind() == DrawReplacementKind.FASTING && hasPendingFastingDrawSkipOffer(gameData)) {
                 gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " declines to use " , ability.sourceCard(), "."));
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

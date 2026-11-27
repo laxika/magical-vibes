@@ -585,6 +585,17 @@ public class StackResolutionService {
 
     private void processResolvedPermanentEtb(GameData gameData, UUID controllerId, Card card,
                                              UUID targetId, StackEntry entry) {
+        // A noncreature permanent's "as this enters, choose an opponent" is asked before its entry abilities, as a
+        // creature's is (the answer goes on with them).
+        Permanent entering = gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
+                .filter(permanent -> permanent.getCard().getId().equals(card.getId())
+                        || permanent.getOriginalCard().getId().equals(card.getId()))
+                .findFirst().orElse(null);
+        if (battlefieldEntryService.beginOpponentChoiceAsEnters(gameData, controllerId, card, entering, targetId,
+                true, entry.getXValue(), entry.getXValue(), entry.isKicked(), entry.getTargetIds(),
+                entry.getRepeatedAdditionalCosts(), entry.getConvokeCreatureIds())) {
+            return;
+        }
         int stackSizeBeforeEtb = gameData.stack.size();
         if (entry.getRepeatedAdditionalCosts().isEmpty() && entry.getConvokeCreatureIds().isEmpty()) {
             battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, card, targetId,

@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.e.EverlastingTorment;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -25,6 +27,30 @@ class WallOfShardsTest extends BaseCardTest {
 
         assertThat(wall.getCounterCount(CounterType.AGE)).isEqualTo(1);
         harness.assertLife(player2, 21);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(wall);
+    }
+
+    @Test
+    @DisplayName("With two opponents, its controller chooses the opponent for each age counter's life")
+    void controllerChoosesAnOpponentForEachAgeCounter() {
+        Player player3 = harness.addOpponent("Charlie");
+        Permanent wall = harness.addToBattlefieldAndReturn(player1, new WallOfShards());
+        wall.setCounterCount(CounterType.AGE, 1);
+        harness.setLife(player2, 20);
+        harness.setLife(player3, 20);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        PendingInteraction.PermanentChoice first = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(first.playerId()).isEqualTo(player1.getId());
+        assertThat(first.validPlayerIds()).containsExactlyInAnyOrder(player2.getId(), player3.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handlePermanentChosen(player1, player3.getId());
+
+        harness.assertLife(player2, 21);
+        harness.assertLife(player3, 21);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(wall);
     }
 

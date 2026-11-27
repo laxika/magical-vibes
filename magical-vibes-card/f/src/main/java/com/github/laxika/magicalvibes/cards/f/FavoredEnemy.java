@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.NoteMostPrevalentCreatureTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
@@ -15,6 +16,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class FavoredEnemy extends Card {
 
     public FavoredEnemy() {
+        // "An opponent's library": the opponent is chosen as it enters (the one opponent, unasked).
+        addStaticEffect(new ChooseOpponentOnEnterEffect());
         addStaticEffect(new NoteMostPrevalentCreatureTypeOnEnterEffect());
 
         target(TargetFilters.creatureYouControl());

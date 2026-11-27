@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.cards.i.IvoryMask;
 import com.github.laxika.magicalvibes.cards.m.MizziumTransreliquat;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -35,6 +37,24 @@ class BlackViseTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve trigger
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
+    }
+
+    @Test
+    @DisplayName("With two opponents, its controller chooses the opponent as it enters")
+    void controllerChoosesTheOpponentAsItEnters() {
+        Player player3 = harness.addOpponent("Charlie");
+        harness.setHand(player1, List.of(new BlackVise()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.validPlayerIds()).containsExactlyInAnyOrder(player2.getId(), player3.getId());
+        harness.handlePermanentChosen(player1, player3.getId());
+
+        assertThat(findPermanent(player1, "Black Vise").getRememberedTargetPlayerId()).isEqualTo(player3.getId());
     }
 
     @Test

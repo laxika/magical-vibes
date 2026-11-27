@@ -597,7 +597,7 @@ class AttackLegalityServiceTest extends BaseCardTest {
                 UUID.randomUUID(), "Silver Surfer, Galactus's Herald", null, player1.getId(), requirement,
                 bears.getId(), null, null, Duration.UNTIL_END_OF_YOUR_NEXT_TURN, 0));
 
-        assertThat(als.getRequiredAttackTargetIds(gd, bears)).containsExactly(player2.getId());
+        assertThat(als.getRequiredAttackTargetIds(gd, bears)).containsExactly(Set.of(player2.getId()));
         assertThat(als.getMustAttackRequirementCount(gd, bears, player2.getId())).isEqualTo(1);
         assertThat(als.getMustAttackRequirementCount(gd, bears, planeswalker.getId())).isZero();
     }

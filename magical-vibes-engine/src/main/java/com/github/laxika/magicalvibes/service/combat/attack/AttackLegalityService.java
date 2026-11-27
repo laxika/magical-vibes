@@ -832,8 +832,8 @@ public class AttackLegalityService {
                     && floatingRequirementMatches(gameData, creature, floatingEffect, requirement)) {
                 Permanent sourcePermanent = floatingEffect.sourcePermanentId() == null
                         ? null : gameQueryService.findPermanentById(gameData, floatingEffect.sourcePermanentId());
-                UUID requiredTargetId = requirement.requiredAttackTargetId(gameData, sourcePermanent);
-                if (requiredTargetId != null && !canAttackRequiredTarget(gameData, creature, requiredTargetId)) {
+                Set<UUID> requiredTargetIds = requirement.requiredAttackTargetIds(gameData, sourcePermanent);
+                if (!requiredTargetIds.isEmpty() && !canAttackAnyRequiredTarget(gameData, creature, requiredTargetIds)) {
                     continue;
                 }
                 // CR 701.15d: a player goading a creature again creates no additional requirement.
@@ -854,10 +854,10 @@ public class AttackLegalityService {
      */
     public int getMustAttackRequirementCount(GameData gameData, Permanent creature, UUID targetId) {
         int count = getMustAttackRequirementCount(gameData, creature);
-        List<UUID> requiredTargetIds = getRequiredAttackTargetIds(gameData, creature);
+        List<Set<UUID>> requiredTargetIds = getRequiredAttackTargetIds(gameData, creature);
         count -= requiredTargetIds.size();
         if (targetId != null) {
-            count += (int) requiredTargetIds.stream().filter(targetId::equals).count();
+            count += (int) requiredTargetIds.stream().filter(targets -> targets.contains(targetId)).count();
         }
         return count;
     }
@@ -879,11 +879,12 @@ public class AttackLegalityService {
     }
 
     /**
-     * Returns the legal specific attack targets required by matching combat requirements.
-     * A target is omitted when the requirement is inactive or the creature cannot attack it.
+     * Returns, for each matching combat requirement that names specific attack targets, the legal ones among them
+     * (attacking any one satisfies that requirement). A requirement is omitted when it is inactive or the creature
+     * can attack none of its targets.
      */
-    public List<UUID> getRequiredAttackTargetIds(GameData gameData, Permanent creature) {
-        List<UUID> targetIds = new ArrayList<>();
+    public List<Set<UUID>> getRequiredAttackTargetIds(GameData gameData, Permanent creature) {
+        List<Set<UUID>> targetIds = new ArrayList<>();
         gameData.forEachPermanent((sourceControllerId, sourcePermanent) -> {
             FilterContext context = FilterContext.of(gameData)
                     .withSourceCardId(sourcePermanent.getOriginalCard().getId())
@@ -895,9 +896,10 @@ public class AttackLegalityService {
                         gameData, creature, sourcePermanent, requirement, context)) {
                     continue;
                 }
-                UUID targetId = requirement.requiredAttackTargetId(gameData, sourcePermanent);
-                if (targetId != null) {
-                    targetIds.add(targetId);
+                Set<UUID> legalTargets = legalRequiredTargets(gameData, creature,
+                        requirement.requiredAttackTargetIds(gameData, sourcePermanent));
+                if (!legalTargets.isEmpty()) {
+                    targetIds.add(legalTargets);
                 }
             }
         });
@@ -913,9 +915,10 @@ public class AttackLegalityService {
             }
             Permanent sourcePermanent = floatingEffect.sourcePermanentId() == null
                     ? null : gameQueryService.findPermanentById(gameData, floatingEffect.sourcePermanentId());
-            UUID targetId = requirement.requiredAttackTargetId(gameData, sourcePermanent);
-            if (targetId != null && canAttackRequiredTarget(gameData, creature, targetId)) {
-                targetIds.add(targetId);
+            Set<UUID> legalTargets = legalRequiredTargets(gameData, creature,
+                    requirement.requiredAttackTargetIds(gameData, sourcePermanent));
+            if (!legalTargets.isEmpty()) {
+                targetIds.add(legalTargets);
             }
         }
         return targetIds;
@@ -933,8 +936,22 @@ public class AttackLegalityService {
                 creature, requirement.affectedPredicate(), context)) {
             return false;
         }
-        UUID requiredTargetId = requirement.requiredAttackTargetId(gameData, sourcePermanent);
-        return requiredTargetId == null || canAttackRequiredTarget(gameData, creature, requiredTargetId);
+        Set<UUID> requiredTargetIds = requirement.requiredAttackTargetIds(gameData, sourcePermanent);
+        return requiredTargetIds.isEmpty() || canAttackAnyRequiredTarget(gameData, creature, requiredTargetIds);
+    }
+
+    private boolean canAttackAnyRequiredTarget(GameData gameData, Permanent creature, Set<UUID> targetIds) {
+        return !legalRequiredTargets(gameData, creature, targetIds).isEmpty();
+    }
+
+    private Set<UUID> legalRequiredTargets(GameData gameData, Permanent creature, Set<UUID> targetIds) {
+        Set<UUID> legal = new HashSet<>();
+        for (UUID targetId : targetIds) {
+            if (canAttackRequiredTarget(gameData, creature, targetId)) {
+                legal.add(targetId);
+            }
+        }
+        return legal;
     }
 
     private boolean isExemptedByControlledPermanent(GameData gameData, Permanent sourcePermanent,

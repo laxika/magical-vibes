@@ -2880,8 +2880,36 @@ public class CastingCostService {
                                 gameData, attackingPlayerId, defenderId, attacker) > 0)));
     }
 
+    /**
+     * The Phyrexian symbols one creature pays to attack the opponent who demands the most of them (Norn's Annex):
+     * empty when no opponent of {@code attackingPlayerId} taxes attacks this way, an upper bound otherwise.
+     */
     public List<ManaColor> getPhyrexianAttackPaymentsPerCreature(GameData gameData, UUID attackingPlayerId) {
-        UUID defenderId = gameQueryService.getOpponentId(gameData, attackingPlayerId);
+        List<ManaColor> most = List.of();
+        for (UUID defenderId : opponentsOf(gameData, attackingPlayerId)) {
+            List<ManaColor> payments = phyrexianAttackPaymentsImposedBy(gameData, defenderId);
+            if (payments.size() > most.size()) {
+                most = payments;
+            }
+        }
+        return most;
+    }
+
+    /**
+     * The Phyrexian symbols one creature pays to attack {@code attackTargetId} (a player, or a planeswalker that
+     * player controls): the attack taxes of the attacked player's permanents (Norn's Annex: "can't attack you or
+     * planeswalkers you control unless their controller pays"). An attack on a battle pays none.
+     */
+    public List<ManaColor> getPhyrexianAttackPaymentsPerCreature(GameData gameData, UUID attackingPlayerId,
+                                                                 UUID attackTargetId) {
+        Permanent attacked = attackTargetId == null ? null : gameQueryService.findPermanentById(gameData, attackTargetId);
+        if (attacked != null && gameQueryService.isBattle(gameData, attacked)) {
+            return List.of();
+        }
+        return phyrexianAttackPaymentsImposedBy(gameData, attackedPlayerId(gameData, attackingPlayerId, attackTargetId));
+    }
+
+    private List<ManaColor> phyrexianAttackPaymentsImposedBy(GameData gameData, UUID defenderId) {
         List<ManaColor> payments = new ArrayList<>();
         for (GameQueryService.ActiveStaticEffect<RequirePhyrexianPaymentToAttackEffect> active
                 : gameQueryService.activeStaticEffects(gameData, defenderId, RequirePhyrexianPaymentToAttackEffect.class)) {

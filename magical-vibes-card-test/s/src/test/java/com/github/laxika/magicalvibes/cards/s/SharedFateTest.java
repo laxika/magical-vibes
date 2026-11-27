@@ -1,7 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.AlphaMyr;
+import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
@@ -18,7 +22,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SharedFate.class, Forest.class, AlphaMyr.class})
+@CardUsed({SharedFate.class, Forest.class, AlphaMyr.class, Divination.class, GrizzlyBears.class})
 class SharedFateTest extends BaseCardTest {
 
     @Test
@@ -39,6 +43,38 @@ class SharedFateTest extends BaseCardTest {
         assertThat(entry.sourcePermanentId()).isEqualTo(harness.getPermanentId(player1, "Shared Fate"));
         assertThat(entry.faceDown()).isTrue();
         assertThat(entry.exilerId()).isEqualTo(player1.getId());
+    }
+
+    @Test
+    @DisplayName("With two opponents, the drawer chooses whose library each replaced draw exiles from")
+    void drawerChoosesTheOpponentForEachDraw() {
+        Player player3 = harness.addOpponent("Charlie");
+        harness.addToBattlefield(player1, new SharedFate());
+        Card ownCard = new Forest();
+        Card secondCard = new AlphaMyr();
+        Card thirdCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(ownCard));
+        harness.setLibrary(player2, List.of(secondCard));
+        harness.setLibrary(player3, List.of(thirdCard, new Forest()));
+        harness.setHand(player1, List.of(new Divination()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice first = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(first.playerId()).isEqualTo(player1.getId());
+        assertThat(first.validPlayerIds()).containsExactlyInAnyOrder(player2.getId(), player3.getId());
+        harness.handlePermanentChosen(player1, player3.getId());
+
+        assertThat(gd.findExiledCard(thirdCard.getId()).exilerId()).isEqualTo(player1.getId());
+        PendingInteraction.PermanentChoice second = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(second.validPlayerIds()).containsExactlyInAnyOrder(player2.getId(), player3.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        assertThat(gd.findExiledCard(secondCard.getId()).exilerId()).isEqualTo(player1.getId());
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(ownCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test

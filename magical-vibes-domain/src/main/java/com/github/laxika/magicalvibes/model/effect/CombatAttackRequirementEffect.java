@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -36,11 +37,12 @@ public interface CombatAttackRequirementEffect extends CardEffect {
     }
 
     /**
-     * The player or permanent that a matching creature must attack, or {@code null} when any
-     * legal attack target satisfies the requirement.
+     * The players or permanents a matching creature must attack one of, or an empty set when any
+     * legal attack target satisfies the requirement (several when the text names "an opponent with
+     * the most life" and opponents tie).
      */
-    default UUID requiredAttackTargetId(GameData gameData, Permanent sourcePermanent) {
-        return null;
+    default Set<UUID> requiredAttackTargetIds(GameData gameData, Permanent sourcePermanent) {
+        return Set.of();
     }
 
     /** Whether a legal attack must target a player other than the effect controller, if possible. */

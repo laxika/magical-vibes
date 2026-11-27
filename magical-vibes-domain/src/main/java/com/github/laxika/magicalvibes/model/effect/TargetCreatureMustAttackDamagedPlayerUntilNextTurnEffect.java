@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -31,7 +32,7 @@ public record TargetCreatureMustAttackDamagedPlayerUntilNextTurnEffect(UUID dama
     }
 
     @Override
-    public UUID requiredAttackTargetId(GameData gameData, Permanent sourcePermanent) {
-        return damagedPlayerId;
+    public Set<UUID> requiredAttackTargetIds(GameData gameData, Permanent sourcePermanent) {
+        return damagedPlayerId == null ? Set.of() : Set.of(damagedPlayerId);
     }
 }

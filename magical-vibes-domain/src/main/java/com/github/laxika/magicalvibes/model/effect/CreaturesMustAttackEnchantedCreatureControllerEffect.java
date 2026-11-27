@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -28,9 +29,10 @@ public record CreaturesMustAttackEnchantedCreatureControllerEffect()
     }
 
     @Override
-    public UUID requiredAttackTargetId(GameData gameData, Permanent sourcePermanent) {
+    public Set<UUID> requiredAttackTargetIds(GameData gameData, Permanent sourcePermanent) {
         Permanent enchantedPermanent = findEnchantedPermanent(gameData, sourcePermanent);
-        return enchantedPermanent == null ? null : gameData.findControllerOf(enchantedPermanent);
+        UUID controllerId = enchantedPermanent == null ? null : gameData.findControllerOf(enchantedPermanent);
+        return controllerId == null ? Set.of() : Set.of(controllerId);
     }
 
     private Permanent findEnchantedPermanent(GameData gameData, Permanent sourcePermanent) {

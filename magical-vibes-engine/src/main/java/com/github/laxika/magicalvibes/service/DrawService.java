@@ -45,6 +45,8 @@ import com.github.laxika.magicalvibes.model.effect.OpponentExtraDrawsRedirectedE
 import com.github.laxika.magicalvibes.model.effect.OpponentDrawTwoOrMoreReplacedEffect;
 import com.github.laxika.magicalvibes.model.effect.QuantumRiddlerDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SharedFateDrawReplacement;
+import com.github.laxika.magicalvibes.model.ChosenOpponentFollowUp;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ChosenOpponentSupport;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayThisTurnDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsChooseOneToHandDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.IslandSanctuaryEffect;
@@ -131,6 +133,9 @@ public class DrawService {
     @org.springframework.beans.factory.annotation.Autowired
     @Lazy
     private TriggeredAbilityStackService triggeredAbilityStackService;
+    @org.springframework.beans.factory.annotation.Autowired
+    @Lazy
+    private ChosenOpponentSupport chosenOpponentSupport;
     private final GameQueryService gameQueryService;
     private final ExileService exileService;
     private final GameLogService gameLogService;
@@ -1278,10 +1283,31 @@ public class DrawService {
                 gameData.id, playerName, source.getCard().getName());
     }
 
-    /** Shared Fate replaces the draw with a face-down exile from the opponent's library. */
+    /**
+     * Shared Fate replaces the draw with a face-down exile from one of the drawing player's opponents' libraries: the
+     * drawing player chooses which as the replacement applies (CR 608.2d; among those with a card to exile when any
+     * has one), the draw instruction waiting for the answer ({@link #exileWithSharedFate}).
+     */
     private void resolveSharedFateDrawReplacement(GameData gameData, UUID playerId, Permanent source) {
-        UUID opponentId = gameQueryService.getOpponentId(gameData, playerId);
-        List<Card> deck = gameData.playerDecks.get(opponentId);
+        List<UUID> opponents = gameData.orderedPlayerIds.stream()
+                .filter(id -> !id.equals(playerId) && gameData.playerIds.contains(id))
+                .toList();
+        List<UUID> withCards = opponents.stream()
+                .filter(id -> !gameData.playerDecks.getOrDefault(id, List.of()).isEmpty())
+                .toList();
+        List<UUID> candidates = withCards.isEmpty() ? opponents : withCards;
+        if (candidates.size() > 1) {
+            chosenOpponentSupport.askThen(gameData, playerId, candidates,
+                    source.getCard().getName() + " — choose an opponent's library to exile the top card of.",
+                    new ChosenOpponentFollowUp.SharedFateExile(playerId, source.getId()));
+            return;
+        }
+        exileWithSharedFate(gameData, playerId, candidates.isEmpty() ? null : candidates.getFirst(), source);
+    }
+
+    /** Shared Fate's replaced draw, once the opponent whose library it exiles from is known. */
+    public void exileWithSharedFate(GameData gameData, UUID playerId, UUID opponentId, Permanent source) {
+        List<Card> deck = opponentId == null ? null : gameData.playerDecks.get(opponentId);
         String playerName = gameData.playerIdToName.get(playerId);
 
         if (deck == null || deck.isEmpty()) {
@@ -1395,8 +1421,44 @@ public class DrawService {
     }
 
     private boolean zursWeirdingPayable(GameData gameData, UUID drawingPlayerId) {
-        UUID otherPlayerId = gameQueryService.getOpponentId(gameData, drawingPlayerId);
-        return ResolutionCostPaymentService.canPayLife(gameQueryService, gameData, otherPlayerId, 2);
+        return zursWeirdingPayerAfter(gameData, drawingPlayerId, null) != null;
+    }
+
+    /**
+     * The next player who may pay Zur's Weirding's 2 life for {@code drawingPlayerId}'s revealed card: "any other
+     * player" is asked in turn order from the active player (CR 101.4), the drawing player excluded, after
+     * {@code declinedPlayerId} ({@code null} for the first); {@code null} when no one left can pay.
+     */
+    private UUID zursWeirdingPayerAfter(GameData gameData, UUID drawingPlayerId, UUID declinedPlayerId) {
+        List<UUID> order = new ArrayList<>(gameData.orderedPlayerIds);
+        int active = Math.max(0, order.indexOf(gameData.activePlayerId));
+        java.util.Collections.rotate(order, -active);
+        List<UUID> others = order.stream()
+                .filter(id -> !id.equals(drawingPlayerId) && gameData.playerIds.contains(id))
+                .toList();
+        int start = declinedPlayerId == null ? 0 : others.indexOf(declinedPlayerId) + 1;
+        for (int i = start; i < others.size(); i++) {
+            if (ResolutionCostPaymentService.canPayLife(gameQueryService, gameData, others.get(i), 2)) {
+                return others.get(i);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * After {@code declinedPlayerId} declined to pay for Zur's Weirding, offers the payment to the next other player
+     * who can pay; {@code false} when nobody is left, and the draw goes on.
+     */
+    public boolean offerZursWeirdingToNextPlayer(GameData gameData, UUID drawingPlayerId, UUID declinedPlayerId,
+                                                 UUID sourcePermanentId) {
+        UUID nextPayerId = zursWeirdingPayerAfter(gameData, drawingPlayerId, declinedPlayerId);
+        Permanent source = sourcePermanentId == null ? null
+                : gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        if (nextPayerId == null || source == null) {
+            return false;
+        }
+        queueZursWeirdingOffer(gameData, drawingPlayerId, source, nextPayerId);
+        return true;
     }
 
     /** Whether Zur's Weirding has already been declined for the draw currently being resolved. */
@@ -1432,8 +1494,13 @@ public class DrawService {
     }
 
     private void beginZursWeirdingOffer(GameData gameData, UUID drawingPlayerId, Permanent zursWeirding) {
+        queueZursWeirdingOffer(gameData, drawingPlayerId, zursWeirding,
+                zursWeirdingPayerAfter(gameData, drawingPlayerId, null));
+    }
+
+    private void queueZursWeirdingOffer(GameData gameData, UUID drawingPlayerId, Permanent zursWeirding,
+                                        UUID otherPlayerId) {
         List<Card> deck = gameData.playerDecks.get(drawingPlayerId);
-        UUID otherPlayerId = gameQueryService.getOpponentId(gameData, drawingPlayerId);
         String playerName = gameData.playerIdToName.get(drawingPlayerId);
         String prompt = deck != null && !deck.isEmpty()
                 ? "Pay 2 life to put " + playerName + "'s revealed "
@@ -1443,7 +1510,10 @@ public class DrawService {
                 zursWeirding.getCard(),
                 otherPlayerId,
                 List.of(new ReplaceSingleDrawEffect(drawingPlayerId, DrawReplacementKind.ZURS_WEIRDING)),
-                prompt
+                prompt,
+                null,
+                null,
+                zursWeirding.getId()
         ));
     }
 

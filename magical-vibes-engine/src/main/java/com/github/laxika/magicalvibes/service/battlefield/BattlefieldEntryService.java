@@ -272,6 +272,16 @@ public class BattlefieldEntryService {
                 gameData, entering, controllerId, simultaneouslyEntered, subtype);
     }
 
+    /** See {@link AsEntersInteractionService#beginOpponentChoiceAsEnters}. */
+    public boolean beginOpponentChoiceAsEnters(GameData gameData, UUID controllerId, Card card,
+                                               Permanent enteringPermanent, UUID targetId, boolean wasCastFromHand,
+                                               int etbMode, int xValue, boolean kicked, List<UUID> targetIds,
+                                               List<String> repeatedAdditionalCosts, List<UUID> convokeCreatureIds) {
+        return interactionService.beginOpponentChoiceAsEnters(gameData, controllerId, card, enteringPermanent,
+                targetId, wasCastFromHand, etbMode, xValue, kicked, targetIds, repeatedAdditionalCosts,
+                convokeCreatureIds);
+    }
+
     public void handleCreatureEnteredBattlefield(
             GameData gameData, UUID controllerId, Card card, UUID targetId, boolean wasCastFromHand) {
         interactionService.handleCreatureEnteredBattlefield(

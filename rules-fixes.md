@@ -42,7 +42,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | DM Damage | DM-1, DM-2, DM-3 | DM-1, DM-2, DM-3 done 2026-11-27 |
 | FC Free casts and casting from other zones | FC-1, FC-2, FC-3, FC-4 | FC-1, FC-2, FC-3 done 2026-11-27 |
 | CP Casting permissions and cost readers | CP-1 | open |
-| MP Multiplayer opponent choices | MP-1, MP-2 | MP-1 done 2026-11-27; MP-2 open |
+| MP Multiplayer opponent choices | MP-1, MP-2 | MP-1, MP-2 done 2026-11-27 (Triskaidekaphobia, H7 for the owner) |
 | CT Counters | CT-1, CT-2 | CT-1, CT-2 done 2026-11-27 |
 | EB Entry and leave batches | EB-1, EB-2, EB-3 | EB-1, EB-2, EB-3 done 2026-11-27 |
 | PY Payments | PY-1, PY-2, PY-3 | PY-1, PY-2 done 2026-11-27; PY-3 open |
@@ -445,7 +445,26 @@ to the first opponent), H7 (`getRevealedOpponentHand` returns one opponent's han
 Avoid: PY-1 (Zur's Weirding and the cumulative upkeep payments).
 Notes: If this run is too big, split it into MP-2a (M1 to M7) and MP-2b (the rest) and run them in parallel.
 
-Outcome:
+Outcome: 2026-11-27. Fixed, each with a three-player test that failed first: Infernal Denizen and Rogue Skycaptain (the
+controller chooses the opponent as the ability resolves, `opponentToBeChosenFirst` and an engine-set `PlayerSubject` on
+`OpponentMayGainControlOfCreatureYouControlEffect` / `OpponentGainsControlOfSourceCreatureEffect`; Rogue Skycaptain ruling,
+CR 608.2d), Shared Fate (the drawer chooses among opponents with a card, each replaced draw: `ChosenOpponentSupport.askThen`,
+`ChosenOpponentFollowUp.SharedFateExile`, `SharedFateLibraryContinuation`), Galactus (every opponent tied for the most life
+satisfies it: `CombatAttackRequirementEffect.requiredAttackTargetIds` is now a set, read by `AttackLegalityService`), Norn's
+Annex (each attacker pays the attacked player's Phyrexian tax: `CastingCostService.getPhyrexianAttackPaymentsPerCreature(..,
+attackTargetId)`), Favored Enemy (`ChooseOpponentOnEnterEffect` + the note waiting for it; the noncreature spell path now asks
+the as-enters opponent choice, `AsEntersInteractionService.beginOpponentChoiceAsEnters`; Jihad, Energy Vortex and Call to Arms take
+that path too, untested with three players), Zur's Weirding (each other player who can pay is offered it in APNAP order, CR 101.4),
+Ingenious Mastery (`ChoosePlayerEffect.opponent()` after the draw, `TargetOpponentCreatesTokenEffect.createdBy`, scry by
+`playersThisWay(CHOOSE)`; its multiplayer ruling), Wake to Slaughter (`opponentToBeChosenFirst`), Varchild's War-Riders and
+Wall of Shards (the opponent chosen per age counter: `OpponentGainsLifeCost(amount, payments)`, the player choice on
+`PermanentChoiceContext.ResolutionCostPayment`; their rulings). Dropped: M17 Vislor Turlough (the three-player test passes on
+HEAD; kept as a pin), and the parts of M1 to M6 already fixed before this run (Elesh Norn, Distant Memories, Burning-Rune
+Demon, Captivating Glance, Death or Glory, Deliver Unto Evil, Fateseal, Covenant of Minds, Memories Returning, Murmurs from
+Beyond: read in the code, three-player tests exist or were added). Left: Triskaidekaphobia (no player elimination) and H7
+(one revealed opponent hand in the view): owner question in entry 17; M9's gift branch (the gift-opponent question); M1's
+draw part (DR-1), M4's Nahiri part and M5's Stand or Fall (CB-1). New lines N48 (CB-1), N49 and N50 (MC-2). No effect class
+added or deleted, so no ledger or ratchet change.
 
 ### CT. Counters
 
@@ -987,6 +1006,10 @@ O39 was fixed in TR-1 (the `AttackedTargetIsOpponent` event condition on every "
 Likely touches: `CombatBlockService`, `CombatAttackService`, `AttackLegalityService`, `ConditionEvaluationService`.
 Notes: Test with three players.
 
+New line N48 (seen in MP-2): `CombatAttackService.declareAttackers` raises the generic attack tax's tax-paid event (Ghostly
+Prison, Windborn Muse) toward `getOpponentId`, not the attacked player whose permanent imposed it (CR 508.1h; matters with Tax
+Taker); MP-2 made the Phyrexian part (Norn's Annex) per attacked player.
+
 Outcome:
 
 ### PP. Perpetual changes
@@ -1121,6 +1144,14 @@ shuffled" but neither records nor shuffles, though "search your library and grav
 New line N42 (seen in LS-2): a card Opposition Agent's controller takes from a search (`handleOppositionAgentChoice`, before
 `recordFoundCard`) isn't in the search's SEARCH outcome, so a later step about "the card found" reads nothing; unverified
 whether a card exiled instead counts as found.
+
+New line N49 (seen in MP-2): Sheltering Ancient's cumulative upkeep (`PutCounterOnOpponentCreatureCost`:
+`ResolutionCostPaymentService.opponentCreaturesForCounter`, `MultiPermanentChoiceHandlerService.handleOpponentCreatureCounterPlacement`)
+offers only `getOpponentId`'s creatures; "a creature an opponent controls" is any opponent's, chosen per age counter (CR 702.24a).
+
+New line N50 (seen in MP-2): a noncreature permanent with `ChooseOpponentOnEnterEffect` put onto the battlefield by an effect,
+not by its resolving spell, may still get no opponent choice with three or more players (MP-2 added it to
+`StackResolutionService.processResolvedPermanentEtb`, the spell path); unverified.
 
 Outcome:
 

@@ -127,7 +127,7 @@ public class CumulativeUpkeepEffectHandler implements NormalEffectHandlerBean {
                     ageCounters);
         }
         if (e.opponentLifeGainPerAge() > 0) {
-            return new OpponentGainsLifeCost(e.opponentLifeGainPerAge() * ageCounters);
+            return new OpponentGainsLifeCost(e.opponentLifeGainPerAge() * ageCounters, Math.max(1, ageCounters));
         }
         if (e.gainControlFilter() != null) {
             return new GainControlOfPermanentsCost(ageCounters, e.gainControlFilter());

@@ -4,12 +4,15 @@ import com.github.laxika.magicalvibes.cards.o.OneWithTheStars;
 import com.github.laxika.magicalvibes.cards.s.SilverSurferGalactussHerald;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -35,6 +38,41 @@ class GalactusDevourerOfWorldsTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must attack");
         assertThat(galactus.isAttacking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("With two opponents tied for the most life, attacking either satisfies the requirement")
+    void attackingEitherTiedOpponentSatisfiesTheRequirement() {
+        Player player3 = harness.addOpponent("Charlie");
+        Permanent galactus = addCreatureReady(player1, new GalactusDevourerOfWorlds());
+        harness.setLife(player2, 20);
+        harness.setLife(player3, 20);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> gs.declareAttackers(gd, player1, List.of(0), Map.of(0, player3.getId())));
+
+        assertThat(galactus.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("With two opponents, Galactus can't attack one with less life than the other")
+    void attackingTheOpponentWithLessLifeIsIllegal() {
+        Player player3 = harness.addOpponent("Charlie");
+        addCreatureReady(player1, new GalactusDevourerOfWorlds());
+        harness.setLife(player2, 20);
+        harness.setLife(player3, 10);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0), Map.of(0, player3.getId())))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test

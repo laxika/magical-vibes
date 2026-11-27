@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -42,6 +43,49 @@ class ZursWeirdingTest extends BaseCardTest {
         harness.assertLife(player2, 18);
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertNotInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("With two other players, the next one in turn order may pay after the first declines")
+    void eachOtherPlayerIsOfferedThePaymentInTurn() {
+        Player player3 = harness.addOpponent("Charlie");
+        harness.addToBattlefield(player1, new ZursWeirding());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new Forest()));
+
+        gd.turnNumber = 2;
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player3.getId());
+        harness.handleMayAbilityChosen(player3, true);
+
+        harness.assertLife(player2, 20);
+        harness.assertLife(player3, 18);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("With two other players, one who can't pay is passed over")
+    void anOtherPlayerWhoCantPayIsPassedOver() {
+        Player player3 = harness.addOpponent("Charlie");
+        harness.addToBattlefield(player1, new ZursWeirding());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new Forest()));
+        harness.setLife(player2, 1);
+
+        gd.turnNumber = 2;
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player3.getId());
+        harness.handleMayAbilityChosen(player3, false);
+
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 
     @Test

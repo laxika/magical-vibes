@@ -9,9 +9,11 @@ import com.github.laxika.magicalvibes.cards.s.SkrelvsHive;
 import com.github.laxika.magicalvibes.cards.z.ZoZuThePunisher;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -71,6 +73,25 @@ class EleshNornMotherOfMachinesTest extends BaseCardTest {
     void doesNotAllowOpponentPermanentTriggerWhenLandEnters() {
         harness.addToBattlefield(player1, new EleshNornMotherOfMachines());
         harness.addToBattlefield(player2, new ZoZuThePunisher());
+        harness.setLife(player2, 20);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Forest()));
+
+        harness.playLand(player2, 0);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("With two opponents, the second opponent's permanents' abilities don't trigger on an entry either")
+    void suppressesTriggersOfEveryOpponentsPermanents() {
+        Player player3 = harness.addOpponent("Charlie");
+        harness.addToBattlefield(player1, new EleshNornMotherOfMachines());
+        harness.addToBattlefield(player3, new ZoZuThePunisher());
         harness.setLife(player2, 20);
 
         harness.forceActivePlayer(player2);

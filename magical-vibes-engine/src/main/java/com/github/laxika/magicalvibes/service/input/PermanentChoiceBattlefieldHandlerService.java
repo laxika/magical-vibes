@@ -2107,6 +2107,12 @@ public class PermanentChoiceBattlefieldHandlerService {
         if (!opponentOnly) {
             gameLogService.append(gameData, GameLog.cardThen(entering.getCard(),
                     " chooses " + gameData.playerIdToName.get(chosenPlayerId) + "."));
+        } else {
+            // What the entering permanent notes from the chosen opponent (Favored Enemy) is noted now.
+            battlefieldEntryService.beginOpponentChoiceAsEnters(gameData, context.controllerId(), context.card(),
+                    entering, context.targetId(), context.wasCastFromHand(), context.etbMode(), context.xValue(),
+                    context.kicked(), context.targetIds(), context.repeatedAdditionalCosts(),
+                    context.convokeCreatureIds());
         }
         log.info("Game {} - {} chooses player {}", gameData.id,
                 entering.getCard().getName(), gameData.playerIdToName.get(chosenPlayerId));
