@@ -548,10 +548,10 @@ public class TargetPolarityClassifier {
                     : TargetPolarity.NEUTRAL;
         }
         if (effect instanceof DistributeCountersAmongTargetsEffect distribute) {
-            if (distribute.counterType() == CounterType.MINUS_ONE_MINUS_ONE) {
+            if (LOWERING_COUNTERS.contains(distribute.counterType())) {
                 return TargetPolarity.HARMFUL;
             }
-            return distribute.counterType() == CounterType.PLUS_ONE_PLUS_ONE
+            return RAISING_COUNTERS.contains(distribute.counterType())
                     ? TargetPolarity.BENEFICIAL
                     : TargetPolarity.NEUTRAL;
         }

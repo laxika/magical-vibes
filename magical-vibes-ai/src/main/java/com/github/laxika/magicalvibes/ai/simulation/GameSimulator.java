@@ -73,6 +73,7 @@ import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.combat.attack.CombatAttackService;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityService;
+import com.github.laxika.magicalvibes.service.combat.block.CombatBlockService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -141,6 +142,7 @@ public class GameSimulator {
     private final GameService gameService;
     private final GameQueryService gameQueryService;
     private final BlockLegalityService blockLegalityService;
+    private final CombatBlockService combatBlockService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameActionAvailabilityService actionAvailabilityService;
     private final com.github.laxika.magicalvibes.service.cast.CastingCostService castingCostService;
@@ -162,7 +164,8 @@ public class GameSimulator {
                   com.github.laxika.magicalvibes.service.cast.CastingCostService castingCostService,
                   GameRegistry gameRegistry,
                   CombatAttackService combatAttackService,
-                  ValidTargetService validTargetService) {
+                  ValidTargetService validTargetService,
+                  CombatBlockService combatBlockService) {
         this.gameService = gameService;
         this.gameQueryService = gameQueryService;
         this.blockLegalityService = blockLegalityService;
@@ -179,6 +182,7 @@ public class GameSimulator {
         this.polarityClassifier = new TargetPolarityClassifier(amountEvaluationService);
         this.sizeGatedRemovalPump = new SizeGatedRemovalPump(gameQueryService, amountEvaluationService);
         this.validTargetService = validTargetService;
+        this.combatBlockService = combatBlockService;
     }
 
 
@@ -333,6 +337,13 @@ public class GameSimulator {
                         actions.add(new SimulationAction.DeclareBlockers(doubleBlock));
                         doubleBlocksAdded++;
                     }
+                }
+                // Only declarations the engine accepts (CR 509.1b, 509.1c): no block of an attacker that must be
+                // blocked, a lone block of a menace attacker. With none left, the requirement-aware search's.
+                actions.removeIf(action -> action instanceof SimulationAction.DeclareBlockers db
+                        && !obeysBlockRules(gd, db.blockerAssignments()));
+                if (actions.isEmpty()) {
+                    actions.add(new SimulationAction.DeclareBlockers(findLegalBlockerAssignments(gd, playerId)));
                 }
             }
             // Every other kind enumerates generically from the record's legal options
@@ -1007,7 +1018,7 @@ public class GameSimulator {
                 gameService.declareAttackers(gd, player, attackers, null);
             }
             case PendingInteraction.BlockerDeclaration ignored -> {
-                List<int[]> blockers = findBestBlockerAssignments(gd, player.getId());
+                List<int[]> blockers = findLegalBlockerAssignments(gd, player.getId());
                 List<BlockerAssignment> assignments = blockers.stream()
                         .map(a -> new BlockerAssignment(a[0], a[1]))
                         .toList();
@@ -1206,6 +1217,36 @@ public class GameSimulator {
             }
         }
         return true;
+    }
+
+    /** Whether the engine would accept {@code assignments} as this step's blocks, costs aside. */
+    private boolean obeysBlockRules(GameData gd, List<int[]> assignments) {
+        return combatBlockService.obeysRestrictionsAndRequirements(gd, assignments.stream()
+                .map(a -> new BlockerAssignment(a[0], a[1]))
+                .toList());
+    }
+
+    /**
+     * The greedy blocks when the engine would accept them, else the exhaustive search's, which obeys block
+     * requirements (it may still be refused, and the step's own fallback then decides).
+     */
+    private List<int[]> findLegalBlockerAssignments(GameData gd, UUID playerId) {
+        List<int[]> greedy = findBestBlockerAssignments(gd, playerId);
+        if (obeysBlockRules(gd, greedy)) {
+            return greedy;
+        }
+        UUID opponentId = getOpponentId(gd, playerId);
+        List<Permanent> oppBattlefield = gd.playerBattlefields.getOrDefault(opponentId, List.of());
+        List<Permanent> battlefield = gd.playerBattlefields.getOrDefault(playerId, List.of());
+        List<Integer> attackerIndices = new ArrayList<>();
+        for (int i = 0; i < oppBattlefield.size(); i++) {
+            if (oppBattlefield.get(i).isAttacking()) attackerIndices.add(i);
+        }
+        List<Integer> blockerIndices = new ArrayList<>();
+        for (int i = 0; i < battlefield.size(); i++) {
+            if (blockLegalityService.canBlock(gd, battlefield.get(i))) blockerIndices.add(i);
+        }
+        return combatSimulator.findBestBlockersExhaustive(gd, playerId, attackerIndices, blockerIndices);
     }
 
     private List<int[]> findBestBlockerAssignments(GameData gd, UUID playerId) {

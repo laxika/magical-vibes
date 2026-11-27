@@ -656,7 +656,8 @@ public abstract class AiDecisionEngine {
 
     /**
      * Answers an ETB ability's target prompt with the same judgement the AI uses for a spell's
-     * targets, so a beneficial ability is aimed at its own side and a harmful one at the opponent's.
+     * targets, so a beneficial ability is aimed at its own side and a harmful one at the opponent's;
+     * a single target of another triggered ability is judged by that ability's own effects.
      * ETB abilities choose their targets as they are put on the stack (CR 603.3d), so this is where
      * a permanent spell's targets are picked. Returns {@code false} to leave the prompt to the
      * generic permanent-choice strategy.
@@ -665,7 +666,8 @@ public abstract class AiDecisionEngine {
         UUID aiPlayerId = aiPlayer.getId();
         if (active instanceof PendingInteraction.PermanentChoice choice && aiPlayerId.equals(choice.playerId())) {
             if (choice.context() instanceof PermanentChoiceContext.AttackTriggerTarget single) {
-                UUID target = targetSelector.chooseTarget(gameData, single.sourceCard(), aiPlayerId);
+                UUID target = targetSelector.chooseTriggeredAbilityTarget(gameData, single.sourceCard(),
+                        single.effects(), choice.validIds(), aiPlayerId);
                 if (target == null || !choice.validIds().contains(target)) {
                     return false;
                 }

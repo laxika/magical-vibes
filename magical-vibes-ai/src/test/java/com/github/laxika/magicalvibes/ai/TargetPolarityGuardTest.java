@@ -525,6 +525,30 @@ class TargetPolarityGuardTest {
                 .isNull();
     }
 
+    @Test
+    @DisplayName("Distributing a power/toughness counter kind other than +1/+1 or -1/-1 follows its sign")
+    void distributedCountersFollowEveryPowerToughnessKind() {
+        GameTestHarness harness = new GameTestHarness();
+        TargetPolarityClassifier classifier = createClassifier(harness);
+        GameData gd = harness.getGameData();
+        UUID aiPlayerId = harness.getPlayer2().getId();
+
+        Map<CounterType, TargetPolarity> expected = Map.of(
+                CounterType.PLUS_ONE_PLUS_ZERO, TargetPolarity.BENEFICIAL,
+                CounterType.PLUS_ZERO_PLUS_ONE, TargetPolarity.BENEFICIAL,
+                CounterType.PLUS_ONE_PLUS_ONE, TargetPolarity.BENEFICIAL,
+                CounterType.MINUS_ZERO_MINUS_ONE, TargetPolarity.HARMFUL,
+                CounterType.MINUS_ONE_MINUS_ONE, TargetPolarity.HARMFUL,
+                CounterType.CHARGE, TargetPolarity.NEUTRAL);
+        expected.forEach((counterType, polarity) ->
+                assertThat(classifier.classify(gd, new com.github.laxika.magicalvibes.model.effect
+                        .DistributeCountersAmongTargetsEffect(counterType, new com.github.laxika.magicalvibes.model
+                        .amount.Fixed(2), com.github.laxika.magicalvibes.model.effect.DivisionMode.EVEN, false, false,
+                        false, null, false, false), aiPlayerId))
+                        .as("distributed %s counters", counterType)
+                        .isEqualTo(polarity));
+    }
+
     private TargetPolarityClassifier createClassifier(GameTestHarness harness) {
         AmountEvaluationService amountEvaluationService = new AmountEvaluationService(
                 new PredicateEvaluationService(harness.getGameQueryService()), harness.getGameQueryService());

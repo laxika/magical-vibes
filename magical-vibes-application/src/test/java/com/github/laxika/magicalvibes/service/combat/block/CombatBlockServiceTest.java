@@ -531,4 +531,40 @@ class CombatBlockServiceTest extends BaseCardTest {
         assertThat(blocker.isBlocking()).isFalse();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class)).isNull();
     }
+
+    @Nested
+    @DisplayName("Judging a declaration without making it")
+    class ObeysRestrictionsAndRequirements {
+
+        @Test
+        @CardUsed({com.github.laxika.magicalvibes.cards.b.BoggartBrute.class, GrizzlyBears.class})
+        @DisplayName("CR 509.1b: one creature blocking a menace attacker breaks a restriction, two don't")
+        void menaceNeedsTwoBlockers() {
+            Permanent brute = attacking(player1, new com.github.laxika.magicalvibes.cards.b.BoggartBrute());
+            Permanent first = addCreatureReady(player2, new GrizzlyBears());
+            Permanent second = addCreatureReady(player2, new GrizzlyBears());
+            enterDeclareBlockers();
+
+            assertThat(service().obeysRestrictionsAndRequirements(gd,
+                    List.of(new BlockerAssignment(defenderIndex(first), attackerIndex(brute))))).isFalse();
+            assertThat(service().obeysRestrictionsAndRequirements(gd, List.of(
+                    new BlockerAssignment(defenderIndex(first), attackerIndex(brute)),
+                    new BlockerAssignment(defenderIndex(second), attackerIndex(brute))))).isTrue();
+            assertThat(first.isBlocking()).isFalse();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class)).isNotNull();
+        }
+
+        @Test
+        @CardUsed({com.github.laxika.magicalvibes.cards.g.GaeasProtector.class, GrizzlyBears.class})
+        @DisplayName("CR 509.1c: no block of an attacker that must be blocked if able breaks a requirement")
+        void mustBeBlockedAttackerNeedsABlock() {
+            Permanent protector = attacking(player1, new com.github.laxika.magicalvibes.cards.g.GaeasProtector());
+            Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+            enterDeclareBlockers();
+
+            assertThat(service().obeysRestrictionsAndRequirements(gd, List.of())).isFalse();
+            assertThat(service().obeysRestrictionsAndRequirements(gd,
+                    List.of(new BlockerAssignment(defenderIndex(bears), attackerIndex(protector))))).isTrue();
+        }
+    }
 }

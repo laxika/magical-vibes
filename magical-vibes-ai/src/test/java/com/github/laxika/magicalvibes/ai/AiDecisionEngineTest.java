@@ -1028,6 +1028,53 @@ class AiDecisionEngineTest {
                 com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    @DisplayName("AI aims a harmful attack trigger (Spider-Man, Web-Spinner's \"can't block\") at the opponent's creature")
+    void aimsHarmfulAttackTriggerAtOpponent() {
+        Permanent spiderMan = harness.addToBattlefieldAndReturn(aiPlayer,
+                new com.github.laxika.magicalvibes.cards.s.SpiderManWebSpinner());
+        spiderMan.setSummoningSick(false);
+        Permanent ownBears = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        ownBears.setSummoningSick(false);
+        Permanent opponentBears = harness.addToBattlefieldAndReturn(human, new GrizzlyBears());
+        harness.setHand(aiPlayer, List.of());
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        harness.beginAttackerDeclarationInput();
+        int spiderManIndex = gd.playerBattlefields.get(aiPlayer.getId()).indexOf(spiderMan);
+        harness.getGameService().declareAttackers(gd, aiPlayer, List.of(spiderManIndex));
+
+        ai.handleEvent(AiDecisionKind.INTERACTION);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(opponentBears.getId());
+    }
+
+    @Test
+    @DisplayName("AI forced to aim a harmful attack trigger at its own board picks its least valuable creature")
+    void harmfulAttackTriggerWithNoOpposingTargetTakesOwnWeakest() {
+        Permanent spiderMan = harness.addToBattlefieldAndReturn(aiPlayer,
+                new com.github.laxika.magicalvibes.cards.s.SpiderManWebSpinner());
+        spiderMan.setSummoningSick(false);
+        Permanent angel = harness.addToBattlefieldAndReturn(aiPlayer, new SerraAngel());
+        angel.setSummoningSick(false);
+        harness.setHand(aiPlayer, List.of());
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        gd.status = GameStatus.RUNNING;
+        harness.beginAttackerDeclarationInput();
+        int spiderManIndex = gd.playerBattlefields.get(aiPlayer.getId()).indexOf(spiderMan);
+        harness.getGameService().declareAttackers(gd, aiPlayer, List.of(spiderManIndex));
+
+        ai.handleEvent(AiDecisionKind.INTERACTION);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isNotEqualTo(angel.getId());
+    }
+
     // ===== Graveyard targeting =====
 
     /**

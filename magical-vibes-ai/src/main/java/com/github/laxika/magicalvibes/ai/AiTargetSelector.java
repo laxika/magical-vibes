@@ -63,6 +63,7 @@ import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 
 import com.github.laxika.magicalvibes.service.trigger.WatchedAbilities;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -295,6 +296,55 @@ class AiTargetSelector {
         }
 
         return null;
+    }
+
+    /**
+     * A triggered ability's permanent target, chosen as the ability is put on the stack (CR 603.3d) from among
+     * {@code validIds}. The ability's own effects decide its direction: when they aim the other way than the card's
+     * spell and "when this enters" abilities do (an attack trigger's "target creature can't block this turn" on a
+     * creature with no harmful entry), a harmful ability takes the most threatening opposing permanent and a
+     * beneficial one the AI's most valuable, and with none on that side the other side's least valuable; otherwise
+     * the card's own judgement ({@link #chooseTarget}) picks. Null when nothing fits.
+     */
+    UUID chooseTriggeredAbilityTarget(GameData gameData, Card card, List<CardEffect> effects,
+                                      Collection<UUID> validIds, UUID aiPlayerId) {
+        TargetPolarity own = effects == null ? null : polarityClassifier.classifyGroup(gameData, effects, aiPlayerId);
+        TargetPolarity cards = polarityClassifier.classifyCard(gameData, card, aiPlayerId);
+        boolean directional = own != null && own != TargetPolarity.NEUTRAL;
+        if (!directional || cards != null && cards != TargetPolarity.NEUTRAL && cards.isHarmful() == own.isHarmful()) {
+            return chooseTarget(gameData, card, aiPlayerId);
+        }
+        boolean harmful = own.isHarmful();
+        UUID preferred = pickTriggeredTarget(gameData, validIds, aiPlayerId, !harmful, true);
+        // Forced onto the other side: the least valuable permanent there.
+        return preferred != null ? preferred : pickTriggeredTarget(gameData, validIds, aiPlayerId, harmful, false);
+    }
+
+    /**
+     * Among {@code validIds}, the AI's own ({@code ownSide}) or an opponent's permanent ranked highest
+     * ({@code best}) or lowest by {@link #generalTargetPriority}; null when that side has none.
+     */
+    private UUID pickTriggeredTarget(GameData gameData, Collection<UUID> validIds, UUID aiPlayerId,
+                                     boolean ownSide, boolean best) {
+        UUID pick = null;
+        double pickScore = 0;
+        for (Map.Entry<UUID, List<Permanent>> side : gameData.playerBattlefields.entrySet()) {
+            if (side.getKey().equals(aiPlayerId) != ownSide) {
+                continue;
+            }
+            UUID rival = ownSide ? AiUtils.getOpponentId(gameData, aiPlayerId) : aiPlayerId;
+            for (Permanent p : side.getValue()) {
+                if (!validIds.contains(p.getId())) {
+                    continue;
+                }
+                double score = generalTargetPriority(gameData, p, side.getKey(), rival);
+                if (pick == null || (best ? score > pickScore : score < pickScore)) {
+                    pick = p.getId();
+                    pickScore = score;
+                }
+            }
+        }
+        return pick;
     }
 
     /**

@@ -55,7 +55,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | CB Combat | CB-1 | CB-1 done 2026-11-27 (M11's block half left: it needs multi-defender combat damage) |
 | PP Perpetual changes | PP-1 | PP-1 done 2026-11-27 (L8, O47 left; O41's hand half left) |
 | PL Each player chooses, then all act | PL-1 | PL-1 done 2026-11-27 (Gilded Ambusher's damage reading for the owner) |
-| MC Single cards | MC-1, MC-2 | MC-1 done 2026-11-27 (O13's direct counter removals left; O81 for the owner) |
+| MC Single cards | MC-1, MC-2 | MC-1 done 2026-11-27 (O13's direct counter removals left; O81 for the owner); MC-2a done 2026-11-28 |
 | AI Hard / easy AI | AI-1, AI-2 | AI-1, AI-2 done 2026-11-27 |
 | UI Frontend | UI-1 | UI-1 done 2026-11-27 |
 | LG, CL Logs and non-rules cleanup | LG-1, CL-1 | CL-1, LG-1 done 2026-11-27 |
@@ -1588,7 +1588,24 @@ New line N90 (seen in LS-3): Verdant Crescendo searches its library twice before
 `SearchLibraryAndGraveyardForCardsToHandEffect`), which is one search (CR 701.23h), but records two searches and shuffles twice;
 sure of the code, unverified by a test.
 
+New line N91 (seen in MC-2a): `AiDecisionEngine.sendBlockerDeclaration` falls back only when a non-empty declaration is
+refused, so an empty one the engine refuses (a block requirement `enforceBlockRequirements` doesn't model) leaves the AI's
+blocker declaration unanswered; sure of the code, unverified by a test.
+
 Outcome:
+
+MC-2a: done 2026-11-28. Fixed: N19, N20, N21, N22, N23. N19: the AI's single target of a triggered ability
+(`AttackTriggerTarget`) is judged by the ability's own effects (`AiTargetSelector.chooseTriggeredAbilityTarget`, CR 603.3d):
+when they aim the other way than the card's spell and entry abilities, a harmful ability takes the most threatening opposing
+permanent, a beneficial one the AI's most valuable, and with none on that side the other side's least valuable; otherwise the
+card's judgement as before (Spider-Man, Web-Spinner aimed its own creature; Shaper Parasite, whose mode is chosen on
+resolution per its 2007-02-01 ruling, is now aimed at an opponent). Of the line's cards only Shaper Parasite can target outside
+its controller's board. N20: `GameSimulator` offers only blocker declarations the new
+`CombatBlockService.obeysRestrictionsAndRequirements` accepts (CR 509.1b, 509.1c; menace is 702.111b), and with none left,
+or for the auto-resolved step, the greedy blocks if legal, else the exhaustive search's. N21: "each player draws" is the AI's
+draw less one per opponent (0 in two-player games). N22: a damage sweep's set filter (Tremor's "without flying") picks the
+scored creatures on both sides, and the survival bonus counts what survives outside the set. N23: the distribute-counters
+rule reads every power/toughness counter kind. No effect class added or deleted, so no ledger or ratchet change.
 
 ### AI. Hard / easy AI (`magical-vibes-ai`)
 

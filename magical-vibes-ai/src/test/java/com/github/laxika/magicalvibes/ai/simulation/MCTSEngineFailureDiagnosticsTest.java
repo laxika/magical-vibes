@@ -45,7 +45,7 @@ class MCTSEngineFailureDiagnosticsTest {
      */
     private static class ThrowingSimulator extends GameSimulator {
         ThrowingSimulator() {
-            super(null, null, null, availabilityService(), null, null, null, null);
+            super(null, null, null, availabilityService(), null, null, null, null, null);
         }
 
         /**

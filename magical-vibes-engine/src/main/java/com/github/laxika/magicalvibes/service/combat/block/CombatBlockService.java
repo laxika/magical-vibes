@@ -413,6 +413,32 @@ public class CombatBlockService {
                 gameData.playerIdToName.get(defenderId), blockerAssignments);
     }
 
+    /**
+     * Whether {@code blockerAssignments} would pass this step's block restrictions and requirements (CR 509.1b,
+     * 509.1c), judged as {@link #declareBlockers} judges them but without declaring anything; the blocks' costs aren't
+     * judged. For a caller weighing several declarations before it makes one (the hard AI's simulator).
+     */
+    public boolean obeysRestrictionsAndRequirements(GameData gameData, List<BlockerAssignment> blockerAssignments) {
+        UUID activeId = gameData.activePlayerId;
+        UUID defenderId = gameQueryService.getOpponentId(gameData, activeId);
+        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
+        List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(activeId);
+        if (defenderBattlefield == null || attackerBattlefield == null) {
+            return false;
+        }
+        List<Integer> blockable = getBlockableCreatureIndices(gameData, defenderId);
+        BlockLegalityContext blockContext = blockLegalityService.createBlockLegalityContext(gameData, defenderBattlefield);
+        try {
+            validateBlockRestrictions(gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable,
+                    blockerAssignments);
+            validateBlockRequirements(gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable,
+                    blockerAssignments);
+            return true;
+        } catch (IllegalStateException illegal) {
+            return false;
+        }
+    }
+
     private CombatResult processBlockerDeclaration(GameData gameData, UUID activeId, UUID defenderId,
                                                     String playerName,
                                                     List<BlockerAssignment> blockerAssignments) {

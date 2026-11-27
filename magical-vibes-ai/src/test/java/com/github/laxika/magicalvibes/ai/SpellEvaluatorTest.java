@@ -1868,4 +1868,60 @@ class SpellEvaluatorTest {
 
         assertThat(withCreature).isGreaterThan(empty);
     }
+
+    @Test
+    @DisplayName("\"Each player draws a card\" in a three-player game costs the AI the extra opponent's card")
+    void eachPlayerDrawsInMultiplayerFavoursTheOpponents() {
+        List<com.github.laxika.magicalvibes.model.effect.CardEffect> draw =
+                List.of(new DrawCardEffect(1, Subjects.eachPlayer()));
+        java.util.UUID player3Id = java.util.UUID.randomUUID();
+        gd.playerIds.add(player3Id);
+        gd.orderedPlayerIds.add(player3Id);
+        gd.playerBattlefields.put(player3Id, new ArrayList<>());
+        double threePlayers = spellEvaluator.evaluateAbilityEffects(gd, draw, player1.getId());
+        double eachOpponentDraws = spellEvaluator.evaluateAbilityEffects(gd,
+                List.of(new DrawCardEffect(1, Subjects.eachOpponent())), player1.getId());
+        double aiDraws = spellEvaluator.evaluateAbilityEffects(gd, List.of(new DrawCardEffect()), player1.getId());
+
+        assertThat(threePlayers).isNegative();
+        assertThat(threePlayers).isEqualTo(aiDraws + eachOpponentDraws);
+    }
+
+    @Test
+    @DisplayName("Damage to each creature without flying (Tremor) doesn't count the opponent's flyer it can't hit")
+    void filteredDamageSweepIgnoresOpposingCreaturesOutsideTheFilter() {
+        double empty = spellEvaluator.estimateSpellValue(gd,
+                new com.github.laxika.magicalvibes.cards.t.Tremor(), player1.getId());
+        gd.playerBattlefields.get(player2.getId()).add(
+                new Permanent(new com.github.laxika.magicalvibes.cards.b.BirdsOfParadise()));
+        double withOpposingFlyer = spellEvaluator.estimateSpellValue(gd,
+                new com.github.laxika.magicalvibes.cards.t.Tremor(), player1.getId());
+
+        assertThat(withOpposingFlyer).isEqualTo(empty);
+    }
+
+    @Test
+    @DisplayName("Damage to each creature without flying (Tremor) costs nothing for the AI's own flyer")
+    void filteredDamageSweepSparesOwnCreaturesOutsideTheFilter() {
+        double empty = spellEvaluator.estimateSpellValue(gd,
+                new com.github.laxika.magicalvibes.cards.t.Tremor(), player1.getId());
+        gd.playerBattlefields.get(player1.getId()).add(
+                new Permanent(new com.github.laxika.magicalvibes.cards.b.BirdsOfParadise()));
+        double withOwnFlyer = spellEvaluator.estimateSpellValue(gd,
+                new com.github.laxika.magicalvibes.cards.t.Tremor(), player1.getId());
+
+        assertThat(withOwnFlyer).isEqualTo(empty);
+    }
+
+    @Test
+    @DisplayName("Damage to each creature without flying (Tremor) still scores the opponent's ground creature it kills")
+    void filteredDamageSweepScoresOpposingCreaturesInsideTheFilter() {
+        double empty = spellEvaluator.estimateSpellValue(gd,
+                new com.github.laxika.magicalvibes.cards.t.Tremor(), player1.getId());
+        gd.playerBattlefields.get(player2.getId()).add(new Permanent(new LlanowarElves()));
+        double withGroundCreature = spellEvaluator.estimateSpellValue(gd,
+                new com.github.laxika.magicalvibes.cards.t.Tremor(), player1.getId());
+
+        assertThat(withGroundCreature).isGreaterThan(empty);
+    }
 }

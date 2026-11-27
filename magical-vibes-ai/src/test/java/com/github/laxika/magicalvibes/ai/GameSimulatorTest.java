@@ -833,6 +833,55 @@ class GameSimulatorTest {
     class BlockerDeclarationActions {
 
         @Test
+        @DisplayName("An attacker that must be blocked if able (Gaea's Protector) gets no \"no block\" option")
+        void mustBeBlockedAttackerHasNoEmptyBlockOption() {
+            harness.addToBattlefield(player1, new GrizzlyBears());
+            harness.addToBattlefield(player1, new SerraAngel());
+            gd.playerBattlefields.get(player1.getId()).forEach(p -> p.setSummoningSick(false));
+            Permanent protector = harness.addToBattlefieldAndReturn(player2,
+                    new com.github.laxika.magicalvibes.cards.g.GaeasProtector());
+            protector.setSummoningSick(false);
+            protector.setAttacking(true);
+            int protectorIndex = gd.playerBattlefields.get(player2.getId()).indexOf(protector);
+            setUpBlockerDeclaration(player1, player2);
+
+            List<SimulationAction.DeclareBlockers> blockOptions =
+                    simulator.getLegalActions(gd, player1.getId()).stream()
+                            .filter(SimulationAction.DeclareBlockers.class::isInstance)
+                            .map(SimulationAction.DeclareBlockers.class::cast)
+                            .toList();
+
+            assertThat(blockOptions).isNotEmpty();
+            assertThat(blockOptions).allMatch(db -> db.blockerAssignments().stream()
+                    .anyMatch(pair -> pair[1] == protectorIndex));
+        }
+
+        @Test
+        @DisplayName("A menace attacker (Boggart Brute) gets no option blocking it with one creature")
+        void menaceAttackerHasNoSingleBlockOption() {
+            harness.addToBattlefield(player1, new GrizzlyBears());
+            harness.addToBattlefield(player1, new GrizzlyBears());
+            harness.addToBattlefield(player1, new SerraAngel());
+            gd.playerBattlefields.get(player1.getId()).forEach(p -> p.setSummoningSick(false));
+            Permanent brute = harness.addToBattlefieldAndReturn(player2,
+                    new com.github.laxika.magicalvibes.cards.b.BoggartBrute());
+            brute.setSummoningSick(false);
+            brute.setAttacking(true);
+            int bruteIndex = gd.playerBattlefields.get(player2.getId()).indexOf(brute);
+            setUpBlockerDeclaration(player1, player2);
+
+            List<SimulationAction.DeclareBlockers> blockOptions =
+                    simulator.getLegalActions(gd, player1.getId()).stream()
+                            .filter(SimulationAction.DeclareBlockers.class::isInstance)
+                            .map(SimulationAction.DeclareBlockers.class::cast)
+                            .toList();
+
+            assertThat(blockOptions).anyMatch(db -> db.blockerAssignments().isEmpty());
+            assertThat(blockOptions).noneMatch(db -> db.blockerAssignments().stream()
+                    .filter(pair -> pair[1] == bruteIndex).count() == 1);
+        }
+
+        @Test
         @DisplayName("Blocker actions always include no-block option")
         void blockerActionsAlwaysIncludeNoBlock() {
             // One blocker for player1, one attacker for player2

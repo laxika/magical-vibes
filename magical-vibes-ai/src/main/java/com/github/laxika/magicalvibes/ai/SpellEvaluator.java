@@ -724,15 +724,13 @@ public class SpellEvaluator {
 
     /**
      * A draw's worth to the AI: its own draw is card advantage, an opponents' draw the same as a cost for each opponent
-     * still in the game, a draw for every player alike nothing; null for a draw whose players aren't known ahead (a
-     * target, an event's player).
+     * still in the game, and a draw for every player both: its own draw less one for each opponent, nothing in a
+     * two-player game; null for a draw whose players aren't known ahead (a target, an event's player).
      */
     private Double drawScore(GameData gameData, CardDrawingEffect draw, UUID aiPlayerId) {
         AiUtils.DrawRecipients recipients = AiUtils.drawRecipients(draw);
-        if (recipients == AiUtils.DrawRecipients.EACH_PLAYER) {
-            return 0.0;
-        }
-        if (recipients != AiUtils.DrawRecipients.CONTROLLER && recipients != AiUtils.DrawRecipients.OPPONENTS) {
+        if (recipients != AiUtils.DrawRecipients.CONTROLLER && recipients != AiUtils.DrawRecipients.OPPONENTS
+                && recipients != AiUtils.DrawRecipients.EACH_PLAYER) {
             return null;
         }
         double cards = amountEvaluationService.evaluate(gameData, draw.drawnCardAmount(),
@@ -740,8 +738,8 @@ public class SpellEvaluator {
         if (recipients == AiUtils.DrawRecipients.CONTROLLER) {
             return cards;
         }
-        long opponents = gameData.playerIds.stream().filter(id -> !id.equals(aiPlayerId)).count();
-        return -cards * Math.max(1, opponents);
+        long opponents = Math.max(1, gameData.playerIds.stream().filter(id -> !id.equals(aiPlayerId)).count());
+        return recipients == AiUtils.DrawRecipients.EACH_PLAYER ? cards - cards * opponents : -cards * opponents;
     }
 
     private boolean hasCardDrawEffect(Card card) {
@@ -1080,10 +1078,12 @@ public class SpellEvaluator {
 
         // Board wipes; a set the AI's opponents control ("each creature target opponent controls", Simoon; "destroy all
         // creatures target player controls", aimed at the opponent) spares the AI's own battlefield.
+        // A filtered set ("each creature without flying", Tremor) is scored over the creatures it is dealt to.
         if (effect instanceof DealDamageEffect aoe && aoe.sweepsBoard()) {
             int damage = estimateDamageAmount(gameData, card, aoe.damage(), aiPlayerId);
             return evaluateBoardWipeDamage(gameData, damage, aiPlayerId, opponentId,
-                    aiBattlefield, oppBattlefield);
+                    inSweptSet(gameData, aoe.subject(), aiBattlefield, aiPlayerId),
+                    inSweptSet(gameData, aoe.subject(), oppBattlefield, aiPlayerId));
         }
         if (effect instanceof DealDamageEffect aoe && aoe.dealers() == null
                 && aoe.recipient() == DealDamageEffect.Recipient.EACH_PERMANENT
@@ -1646,6 +1646,18 @@ public class SpellEvaluator {
         };
     }
 
+    /** The permanents of {@code battlefield} a set subject's filter admits; every one for an unfiltered set. */
+    private List<Permanent> inSweptSet(GameData gameData, PermanentSubject subject, List<Permanent> battlefield,
+                                       UUID aiPlayerId) {
+        if (!(subject instanceof PermanentSubject.ControlledBy set) || set.filter() == null) {
+            return battlefield;
+        }
+        FilterContext filterContext = FilterContext.of(gameData).withSourceControllerId(aiPlayerId);
+        return battlefield.stream()
+                .filter(p -> predicateEvaluationService.matchesPermanentPredicate(p, set.filter(), filterContext))
+                .toList();
+    }
+
     private double evaluateBoardWipeDamage(GameData gameData, int damage,
                                            UUID aiPlayerId, UUID opponentId,
                                            List<Permanent> aiBattlefield, List<Permanent> oppBattlefield) {
@@ -1668,10 +1680,11 @@ public class SpellEvaluator {
         if (aiLife > 0) {
             int totalOppDamage = computeOpponentBoardDamage(gameData, opponentId);
             if (totalOppDamage >= aiLife) {
-                int remainingOppDamage = oppBattlefield.stream()
+                // The opponent's whole board less what the sweep kills: a creature outside its set survives it.
+                int remainingOppDamage = totalOppDamage - oppBattlefield.stream()
                         .filter(p -> gameQueryService.isCreature(gameData, p))
                         .filter(p -> !gameQueryService.hasKeyword(gameData, p, Keyword.DEFENDER))
-                        .filter(p -> gameQueryService.getEffectiveToughness(gameData, p) > damage)
+                        .filter(p -> gameQueryService.getEffectiveToughness(gameData, p) <= damage)
                         .mapToInt(p -> Math.max(0, gameQueryService.getEffectivePower(gameData, p)))
                         .sum();
                 if (remainingOppDamage < aiLife) {
