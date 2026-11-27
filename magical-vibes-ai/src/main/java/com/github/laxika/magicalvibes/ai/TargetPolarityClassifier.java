@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfT
 import com.github.laxika.magicalvibes.model.effect.ExileFaceDownPileEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTargetingRestrictionToTargetUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
+import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithPermanentsPredicate;
 import com.github.laxika.magicalvibes.model.effect.PreventNextDamageByTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.AbilityEffects;
@@ -128,7 +130,8 @@ public class TargetPolarityClassifier {
      * before the consolidation. Returns null when no effect classifies.
      */
     public TargetPolarity classifyCard(GameData gameData, Card card, UUID aiPlayerId) {
-        if (tradesTheTargetForAnother(card.getCastingCostsAndSpellEffects())) {
+        if (tradesTheTargetForAnother(card.getCastingCostsAndSpellEffects())
+                || tradesTheTargetForOneSharingItsType(card.getCastingCostsAndSpellEffects())) {
             return TargetPolarity.NEUTRAL;
         }
         TargetPolarity best = null;
@@ -688,6 +691,17 @@ public class TargetPolarityClassifier {
     }
 
     /**
+     * "Reveal cards until you reveal a card that shares a card type with that permanent. Put that card onto the
+     * battlefield" (Reality Scramble): the target is traded for another of its kind, as good as bad.
+     */
+    private static boolean tradesTheTargetForOneSharingItsType(List<? extends CardEffect> effects) {
+        return effects.stream().anyMatch(effect -> effect instanceof RevealUntilCardPredicateRestOnBottomRandomEffect reveal
+                && reveal.destination() == LibrarySearchDestination.BATTLEFIELD
+                && reveal.predicate() instanceof CardSharesCardTypeWithPermanentsPredicate shares
+                && shares.permanents() instanceof PermanentSubject.TargetDeclaredElsewhere);
+    }
+
+    /**
      * "Its controller reveals ... until a creature card, puts it onto the battlefield" (Polymorph, Shape Anew), also
      * after "if the player does" (Reweave): as good as bad.
      */
@@ -917,9 +931,6 @@ public class TargetPolarityClassifier {
             entry("GrantSubtypeToTargetCreatureEffect", TargetPolarity.HARMFUL),
             entry("RegisterControlLossUnattachTriggerEffect", TargetPolarity.NEUTRAL),
             entry("SearchLibraryForTargetCreatureNameToBattlefieldEffect", TargetPolarity.NEUTRAL),
-            // Reality Scramble: a permanent its caster owns, traded for a random one sharing a card type.
-            entry("PutTargetOnBottomThenRevealUntilSharedCardTypeToBattlefieldRestOnBottomRandomEffect",
-                    TargetPolarity.NEUTRAL),
             // Fateful Handoff: the caster's own artifact or creature is handed away for cards.
             entry("TargetPlayerGainsControlOfSourceCreatureEffect", TargetPolarity.NEUTRAL),
             // Fallaji Antiquarian, Smog Smasher: a duplicate of any artifact or creature, best aimed at the strongest one.

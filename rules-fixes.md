@@ -44,7 +44,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | CP Casting permissions and cost readers | CP-1 | open |
 | MP Multiplayer opponent choices | MP-1, MP-2 | MP-1 done 2026-11-27; MP-2 open |
 | CT Counters | CT-1, CT-2 | CT-1, CT-2 done 2026-11-27 |
-| EB Entry and leave batches | EB-1, EB-2, EB-3 | EB-1, EB-2 done 2026-11-27; EB-3 open |
+| EB Entry and leave batches | EB-1, EB-2, EB-3 | EB-1, EB-2, EB-3 done 2026-11-27 |
 | PY Payments | PY-1, PY-2, PY-3 | PY-1 done 2026-11-27; PY-2, PY-3 open |
 | TR Triggers, subjects and targeting | TR-1, TR-2, TR-3 | TR-1 done 2026-11-27; TR-2, TR-3 open |
 | LS Library searches and reveals | LS-1, LS-2 | LS-1 done 2026-11-27; LS-2 open |
@@ -568,7 +568,28 @@ New line N27 (seen in EB-2): `GraveyardReturnSupport`'s other returns that place
 `handleCreatureEtbAndLegendRule` over them (the steal-from-graveyards and exile-and-graveyard returns) ask each permanent's
 as-enters choices without waiting for an earlier one's open prompt, the N14 shape (CR 614.12); unverified.
 
-Outcome:
+Outcome: 2026-11-27. Fixed: O107, O106, S6, O78, O27, N27 (deleted from entry 18). New shared step
+`PermanentRemovalService.removeTogether(gameData, permanents, removal)`: two or more leave as one leave batch, each judged as all
+were before any left (`performSimultaneousRemovals`; CR 603.2c, 603.10a, 608.2h). O107: `ExileTargetPermanentEffectHandler`'s
+target path takes every target's last-known values first and exiles them together, and its non-set several-permanent subjects
+get the snapshot too (Ulamog, Silence the Believers: Dour Port-Mage now sees Mind Stone leave as a creature under March of the
+Machines / Animate Artifact). O106: Sarulf's exile through `removeTogether`. S6: Kairi's return
+(`ReturnTargetPermanentsWithinTotalManaValueEffectHandler`) and Leadership Vacuum's commanders through `removeTogether`; Resounding
+Wave was already dropped in D13. O78: a ransom's returned permanents (`ResolutionCostPaymentService.returnToHandTogether`, Bull
+Elephant, Ovinomancer) leave as one event: Nefarious Imp triggered twice, now once. O27: Reality Scramble is
+`PutTargetOnBottomOfLibraryEffect` then `RevealUntilCardPredicateRestOnBottomRandomEffect(CardSharesCardTypeWithPermanentsPredicate(
+Subjects.targetDeclaredElsewhere()), BATTLEFIELD)`: the found card enters through the entry batch, so an Aura card gets a host
+(CR 303.4f; it was lost before), with the target's last-known types (its ruling); the bespoke effect and handler deleted (ledger
+row, ratchet 2855 / 2239; the AI keeps it NEUTRAL by `TargetPolarityClassifier.tradesTheTargetForOneSharingItsType`). N27: the
+simultaneous puts of `GraveyardReturnSupport` (`putCardsOntoBattlefieldSimultaneously`, `...UnderController`,
+`putCardsFromGraveyardAndExileOntoBattlefieldSimultaneously`, the Aura-retether placement, the pile placement) ask as-enters
+choices in turn through `askAsEntersChoicesInTurn` with their "one or more enter" window (Patriarch's Bidding with two Adaptive
+Automatons). Dropped: O75 (Acererak: no player acts and no trigger in the pool tells "sacrifices, then tokens" from simultaneous;
+death triggers look back before both, entry triggers after both). Left: S19 as an owner question (entry 17: CR 404.3 ordering is
+asked nowhere but the exchange; Dakra Mystic's part is no defect, one card per graveyard; the line edited down to Covenant of
+Minds). New line N36 (MC-2). Tests: 741 XML files, 6,755 tests, 2 failures in the Mockito `ExileTargetPermanentEffectHandlerTest`
+(the mocked `removeTogether` didn't run its removal; stubbed, rerun green with the architecture tests and
+`PermanentRemovalServiceTest`, 18 files, 73 tests).
 
 ### PY. Payments
 
@@ -971,6 +992,12 @@ N31 (seen in EB-2): fixed by the orchestrator after EB-2 (the two Tergrid tests 
 New line N33 (seen in UI-1): a `GraveyardChoice` over a card pool that holds a hidden (face-down exiled) card is projected without cards, so the
 client still guesses the pool as every graveyard's creature and artifact cards and can show the wrong cards or none; the fix is a
 face-down placeholder view per hidden pool card (`CardViewFactory`'s face-down view), then the client's fallback can go.
+
+New line N36 (seen in EB-3): handlers that move several permanents with their own loop of single removals and no leave batch or
+simultaneous snapshot, so a later one is judged after an earlier one left (the O107 shape, CR 603.10a, 608.2h), among them
+`ExileTargetCreaturesUntilSourceLeavesEffectHandler`, `ExileSourceAndCreaturesAndPlaneswalkersWithManaValueAtMostSourceCountersEffectHandler`,
+`ExileTokensCreatedWithSourceEffectHandler`, `ReturnTargetPermanentsThenEffectHandler` and `FlickerEffectHandler` (17 handlers by a
+grep); route each through `PermanentRemovalService.removeTogether`; unverified.
 
 Outcome:
 

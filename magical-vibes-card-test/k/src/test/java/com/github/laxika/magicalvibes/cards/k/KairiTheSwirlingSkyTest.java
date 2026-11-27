@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.k;
 import java.util.Set;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DourPortMage;
+import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
 import com.github.laxika.magicalvibes.cards.c.CoilingStalker;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.i.InvokeDespair;
@@ -27,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({KairiTheSwirlingSky.class, GrizzlyBears.class, HillGiant.class, MindStone.class,
         Shock.class, YavimayaWurm.class, CoilingStalker.class, InvokeDespair.class,
-        TamiyosSafekeeping.class, SuitUp.class})
+        TamiyosSafekeeping.class, SuitUp.class, DourPortMage.class, MarchOfTheMachines.class})
 class KairiTheSwirlingSkyTest extends BaseCardTest {
 
     private static final String RETURN_MODE =
@@ -209,6 +211,25 @@ class KairiTheSwirlingSkyTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(kairi);
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The returned permanents leave as one event, each judged as it was before any left (CR 603.10a)")
+    void returnedPermanentsLeaveAsOneEvent() {
+        harness.addToBattlefield(player2, new DourPortMage());
+        Permanent march = harness.addToBattlefieldAndReturn(player2, new MarchOfTheMachines());
+        Permanent stone = harness.addToBattlefieldAndReturn(player2, new MindStone());
+        harness.addToBattlefield(player1, new KairiTheSwirlingSky());
+
+        killKairi();
+        harness.handleListChoice(player1, RETURN_MODE);
+        harness.handlePermanentChosen(player1, march.getId());
+        harness.handlePermanentChosen(player1, stone.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getId)
+                .contains(march.getCard().getId(), stone.getCard().getId());
+        assertThat(gd.stack).filteredOn(entry -> entry.getCard().getName().equals("Dour Port-Mage")).hasSize(1);
     }
 
     private void killKairi() {

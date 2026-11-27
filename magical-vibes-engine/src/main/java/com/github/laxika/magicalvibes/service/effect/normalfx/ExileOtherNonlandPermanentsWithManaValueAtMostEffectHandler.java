@@ -18,7 +18,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-/** Resolves {@link ExileOtherNonlandPermanentsWithManaValueAtMostEffect}, the maximum read as it resolves. */
+/**
+ * Resolves {@link ExileOtherNonlandPermanentsWithManaValueAtMostEffect}, the maximum read as it resolves; what it exiles
+ * leaves as one event.
+ */
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -58,13 +61,16 @@ public class ExileOtherNonlandPermanentsWithManaValueAtMostEffectHandler
             }
         });
 
-        for (Permanent permanent : toExile) {
-            if (permanentRemovalService.removePermanentToExile(gameData, permanent)) {
-                gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is exiled."));
-                log.info("Game {} - {} is exiled by {}",
-                        gameData.id, permanent.getCard().getName(), entry.getCard().getName());
+        // One instruction, one event (CR 603.2c, 603.10a).
+        permanentRemovalService.removeTogether(gameData, toExile, () -> {
+            for (Permanent permanent : toExile) {
+                if (permanentRemovalService.removePermanentToExile(gameData, permanent)) {
+                    gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is exiled."));
+                    log.info("Game {} - {} is exiled by {}",
+                            gameData.id, permanent.getCard().getName(), entry.getCard().getName());
+                }
             }
-        }
+        });
 
         permanentRemovalService.removeOrphanedAuras(gameData);
     }

@@ -252,6 +252,26 @@ public class PermanentRemovalService {
         permanent.setLastKnownEquipmentCount(attachmentCounts[1]);
     }
 
+    /**
+     * Runs {@code removal}, which moves {@code permanents} off the battlefield, as one event (CR 603.2c): one leave
+     * batch when two or more leave, judged as they all were immediately before it ({@link #performSimultaneousRemovals}),
+     * so each one's leave abilities see the others leave and none is judged after an earlier one is gone
+     * (CR 603.10a). For a resolving effect's own loop of single-permanent removals.
+     */
+    public void removeTogether(GameData gameData, List<Permanent> permanents, Runnable removal) {
+        boolean together = permanents.size() > 1;
+        if (together) {
+            beginPermanentLeaveBatch(gameData);
+        }
+        try {
+            performSimultaneousRemovals(gameData, permanents, removal);
+        } finally {
+            if (together) {
+                endPermanentLeaveBatch(gameData);
+            }
+        }
+    }
+
     /** Preserves battlefield information while a simultaneous group of removals is performed. */
     public void performSimultaneousRemovals(GameData gameData, List<Permanent> permanents, Runnable removal) {
         Map<UUID, Permanent> oldPermanents = new java.util.HashMap<>(gameData.simultaneousDyingPermanents);

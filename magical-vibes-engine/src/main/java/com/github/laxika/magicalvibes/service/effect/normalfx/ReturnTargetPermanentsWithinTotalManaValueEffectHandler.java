@@ -41,9 +41,10 @@ public class ReturnTargetPermanentsWithinTotalManaValueEffectHandler implements 
         }
 
         int totalManaValue = 0;
+        List<Permanent> toReturn = new java.util.ArrayList<>();
         for (UUID targetId : targetIds) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-            if (target == null || (returnEffect.filter() != null
+            if (target == null || toReturn.contains(target) || (returnEffect.filter() != null
                     && !predicateEvaluationService.matchesPermanentPredicate(
                     gameData, target, returnEffect.filter()))) {
                 continue;
@@ -52,12 +53,18 @@ public class ReturnTargetPermanentsWithinTotalManaValueEffectHandler implements 
             if (totalManaValue + manaValue > returnEffect.maxTotalManaValue()) {
                 continue;
             }
-            if (permanentRemovalService.removePermanentToHand(gameData, target)) {
-                totalManaValue += manaValue;
-                gameLogService.append(gameData,
-                        GameLog.cardThen(target.getCard(), " is returned to its owner's hand."));
-            }
+            totalManaValue += manaValue;
+            toReturn.add(target);
         }
+        // One instruction, one event (CR 603.2c, 603.10a).
+        permanentRemovalService.removeTogether(gameData, toReturn, () -> {
+            for (Permanent target : toReturn) {
+                if (permanentRemovalService.removePermanentToHand(gameData, target)) {
+                    gameLogService.append(gameData,
+                            GameLog.cardThen(target.getCard(), " is returned to its owner's hand."));
+                }
+            }
+        });
         permanentRemovalService.removeOrphanedAuras(gameData);
         gameOutcomeService.checkWinCondition(gameData);
     }

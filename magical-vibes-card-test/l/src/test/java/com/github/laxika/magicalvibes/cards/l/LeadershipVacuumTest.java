@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.a.AnjeFalkenrath;
+import com.github.laxika.magicalvibes.cards.d.DourPortMage;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
+import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -9,6 +12,7 @@ import com.github.laxika.magicalvibes.model.DeckFormat;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -18,7 +22,8 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LeadershipVacuum.class, GrizzlyBears.class, AnjeFalkenrath.class})
+@CardUsed({LeadershipVacuum.class, GrizzlyBears.class, AnjeFalkenrath.class, DourPortMage.class,
+        MarchOfTheMachines.class, MindStone.class})
 class LeadershipVacuumTest extends BaseCardTest {
 
     @Test
@@ -108,6 +113,27 @@ class LeadershipVacuumTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
         assertThat(gd.pendingCommanderZoneMoves).isEmpty();
     }
+    @Test
+    @DisplayName("The commanders leave as one event, each judged as it was before any left (CR 603.10a)")
+    void commandersLeaveAsOneEvent() {
+        harness.addToBattlefield(player2, new DourPortMage());
+        Card march = new MarchOfTheMachines();
+        Card stone = new MindStone();
+        harness.addToBattlefield(player2, march);
+        harness.addToBattlefield(player2, stone);
+        gd.format = DeckFormat.COMMANDER;
+        gd.makeCommander(player2.getId(), march);
+        gd.addCommander(player2.getId(), stone);
+        harness.setHand(player1, List.of(new LeadershipVacuum()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gd.playerCommandZones.get(player2.getId())).contains(march, stone);
+        assertThat(gd.stack).filteredOn(entry -> entry.getCard().getName().equals("Dour Port-Mage")).hasSize(1);
+    }
+
     private Card commander(com.github.laxika.magicalvibes.model.Player owner, String name) {
         Card card = new Card();
         card.setName(name);

@@ -1414,18 +1414,23 @@ public class ResolutionCostPaymentService {
     }
 
     /**
-     * The payer returns the permanents they chose, still theirs, to their owners' hands by the one instruction, through
-     * the shared bounce: no ability resolves between them.
+     * The payer returns the permanents they chose, still theirs, to their owners' hands by the one instruction: they
+     * leave as one event (CR 603.2c, 603.10a).
      */
     private void returnToHandTogether(GameData gameData, UUID payerId, List<UUID> permanentIds) {
+        List<Permanent> chosen = permanentIds.stream()
+                .map(permanentId -> gameQueryService.findPermanentById(gameData, permanentId))
+                .filter(permanent -> permanent != null
+                        && payerId.equals(gameQueryService.findPermanentController(gameData, permanent.getId())))
+                .toList();
         List<Card> returned = new ArrayList<>();
-        for (UUID permanentId : permanentIds) {
-            Permanent chosen = gameQueryService.findPermanentById(gameData, permanentId);
-            if (chosen != null && payerId.equals(gameQueryService.findPermanentController(gameData, permanentId))
-                    && permanentRemovalService.removePermanentToHand(gameData, chosen)) {
-                returned.add(chosen.getCard());
+        permanentRemovalService.removeTogether(gameData, chosen, () -> {
+            for (Permanent permanent : chosen) {
+                if (permanentRemovalService.removePermanentToHand(gameData, permanent)) {
+                    returned.add(permanent.getCard());
+                }
             }
-        }
+        });
         if (!returned.isEmpty()) {
             permanentRemovalService.removeOrphanedAuras(gameData);
             GameLog.Builder line = GameLog.builder().text(gameData.playerIdToName.get(payerId) + " returns ");

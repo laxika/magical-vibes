@@ -426,7 +426,7 @@ Run the test classes of every card that used a deleted class (scripts/effect-inv
 - Demonic Hordes' `OpponentChoosesPermanentToSacrificeEffect` and Infernal Denizen's `OpponentMayGainControlOfCreatureYouControlEffect` were `blocked-other` on the old forced-cost fallback list; both are now ordinary steps of their resolution (U4a), so their folds (`ChoosePlayerEffect` + `ChoosePermanentsEffect.chosenBy(playersThisWay(CHOOSE))` + the verb) are open for a fold run. Sure of the code.
 - Eye for an Eye, Harm's Way, Jade Monolith, Shaman en-Kor, General's Regalia, Nova Pentacle: their chosen-source handlers now ask `DamageSourceChoiceSupport.choosable` (rules-fixes DM-3); fold them onto `ChooseDamageSourceEffect` plus a step that reads the choice.
 
-#### Blocked records by cause (693)
+#### Blocked records by cause (692)
 
 #### The first half prompts mid-step (blocked-step-model) (127)
 
@@ -730,7 +730,7 @@ Each player chooses in its own continuation; unblocked by a generic "each player
 - `TapAndPreventCombatDamageByTargetAndBlockersEffect`: Feint: needs a creatures-blocking-[subject] PermanentSubject and a prevent-all-combat-damage-dealt-by-[subject]-this-turn record.
 - `TurnSourceFaceUpOrExileAndMayCastEffect`: Etrata, Deadly Fugitive (granted ability): 'If you can't [turn it face up], exile it, then you may cast it' needs a turn-face-up step result (no StepKind records one) and the one turn-face-up path (this calls GameService's, Showstopping Surprise ….
 
-#### A parameter only one card would set (67)
+#### A parameter only one card would set (66)
 
 Folding would add a component only this card sets (the guard rail "never add a parameter only one card sets"); fold when a second user appears.
 
@@ -781,7 +781,6 @@ Folding would add a component only this card sets (the guard rail "never add a p
 - `PutTargetCardsFromGraveyardOnBottomOfLibraryEffect`: targetCard names one target, this has up to four; one card (Bow of Nylea).
 - `PutTargetCreatureCardFromGraveyardOnTopAndDealPowerDamageEffect`: PutCardsIntoLibraryEffect takes a targetCard; left: no amount of the moved card's power as it was in the graveyard; one card (Dead Reckoning).
 - `PutTargetExiledCardOwnedByDamagedPlayerOnBottomOfOwnersLibraryAndGainLifeEffect`: targetExiledCard exists; left: an owner that is the damaged player, bound as the target is chosen; one card (Time Reaper).
-- `PutTargetOnBottomThenRevealUntilSharedCardTypeToBattlefieldRestOnBottomRandomEffect`: the filter exists now (CardSharesCardTypeWithPermanentsPredicate, bound by the reveal-until step); left: PutTargetOnBottomOfLibraryEffect records no DepartureResult (last-known card types) for departedThisWay to read; one card (Reality Scramble).
 - `PutTargetPlayerHandOnLibraryThenSearchThatManyToHandEffect`: SearchLibraryEffect has no exact count from a step for another player's library and hand; one card (Jester's Mask).
 - `PutTimeCountersOnTargetExiledCardWithSuspendEffect`: targetExiledCard exists; left: a put-into-exile-from-your-graveyard-this-turn qualifier; one card (Soovril).
 - `RegisterGlobalTriggeredAbilityUntilEndOfNextTurnEffect`: left out of the Duration fold: its watched player is a permanent target's controller or the attacked player (Nuka-Nuke Launcher's defending player), which the 52-card survivor can't take (RulesEventPipeline makes the watched player the triggered entry's ….
@@ -1213,6 +1212,7 @@ questions under "The owner's open questions", the decisions under "The owner's d
 - 2026-11-25, U3b Q5: the special-action delayed payments (Quenchable Fire, the Asps, Sabertooth Cobra; CR 116.2c) raise no tax-paid event (matters only with Tax Taker).
 - 2026-11-27, DM-1 (entry 18, line O9): Bomb Squad's "destroy it. That creature deals 4 damage to its controller": the creature deals the damage as it last existed (CR 608.2h). Does a "prevent all damage that creature would deal this turn" effect on it (Soul Parry) still prevent that damage once it has left the battlefield (CR 400.7)? The handler asks before the destruction, so today it does; moving the check into the player's damage pool needs the answer.
 - 2026-11-27, CT-1 (entry 18, line O65): Perplex's "unless its controller discards their hand": the payer discards as a cost (CR 118.12a). Is that discard caused by a spell an opponent controls, so the payer's Obstinate Baloth or Wilt-Leaf Liege enters the battlefield? Their rulings speak of "a spell or ability an opponent controls causes you to discard" but not of a ransom. Today the payer is named as the cause, so they don't.
+- 2026-11-27, EB-3 (entry 18, line S19): CR 404.3 lets the owner arrange two or more cards put into their graveyard at once. The engine asks it only for the graveyard and library exchange; mill, discard, destroy-all and `PutExiledCardsIntoOwnersGraveyardEffect` (Covenant of Minds' three revealed cards) keep their own order unasked. Should every multi-card move into one graveyard ask (a prompt in many places, and the AI answers it), or is the unasked order accepted? Dakra Mystic puts at most one card into each graveyard, so it needs no prompt.
 
 #### Orchestrator decisions for the owner to review
 
@@ -1323,19 +1323,18 @@ Don't commit.
 - Wake to Slaughter's opponent choice (`opponentChoosesOneForHand`, its own `wakeToSlaughterChosenCardId` state) is unchecked for multiplayer. Fairly sure from the code.
 - Vislor Turlough with 3+ players: whether the goad step resolves after the opponent prompt, with the new controller. Unverified.
 
-#### Simultaneity and APNAP (CR 101.4, 603.10a, 608.2e) (14)
+#### Simultaneity and APNAP (CR 101.4, 603.10a, 608.2e) (13)
 
 - Disorienting Choice exiles, Eumidian Wastewaker sacrifices or discards at each player's answer. Sure.
 - Ezuri's Predation pairs by battlefield order and fights one at a time (rulings: you choose the pairs, fights are simultaneous). Sure.
 - Ol Rin's Searing Light, Gilded Ambusher exile each opponent's choice before the next chooses; Dispersal returns and discards one opponent at a time; The Second Doctor, Kwain draw before the next player chooses (CR 121.2c). Unverified.
-- Kairi, Leadership Vacuum, Resounding Wave's cycling return one permanent at a time. Likely the same, untested.
 - Mythweaver Poq's simultaneous duplicates are one conjure event each (unsettled). Unverified.
 - `ParleyEffect`'s token form (Cutthroat Negotiator, Innocuous Researcher) creates the tokens inside its own handler, so a token-creation prompt pauses it after the draws' order is set and a rerun would reveal and draw again; Storm Fleet Negotiator and Phabine now use the step form. Unsure (by reading).
 - Tribute's "paid" check is `placed >= N`, so a halved tribute (an opponent's Halving Season) reads as unpaid (CR 702.104b: "as specified").
 - `TokenKindReplacements` and `JinnieFayTokenReplacements` read `event.controllerId()`'s battlefield, not the tokens' creator after Crafty Cutpurse; the count replacements resolve with Gather Specimens for creature tokens, though Chatterfang's ruling applies entering-control changes after (CR 616.1). Fairly sure.
 - The two remaining fixed-order `getTokenMultiplier` callers (`CreateTokensAttachedToControlledCreaturesEffectHandler`, `ReturnTargetCreatureToHandAndCreateTokenCopyEffectHandler`) skip the ordered token event.
 - Precursor Golem, Ink-Treader Nephilim: the copies' controller doesn't choose the order they go on the stack (rulings). Sure.
-- `PutExiledCardsIntoOwnersGraveyardEffect` (Covenant of Minds, Dakra Mystic) gives no CR 404.3 order prompt. Sure, low.
+- `PutExiledCardsIntoOwnersGraveyardEffect` (Covenant of Minds) gives no CR 404.3 order prompt for the cards it puts into one graveyard; an engine-wide policy, see entry 17 (EB-3). Sure, low.
 - Eumidian Wastewaker counts a sacrificed land token, or a permanent that is a land only on the battlefield (Ashaya), as a land card put into a graveyard (ruling). Sure.
 - Ezuri's Predation: "those creatures" are read at the fight, not when counted (CR 608.2h).
 - `AttackLegalityService.isCantAttackDueToGlobalRestriction`'s planechase branch judges a plane's `CreaturesCantAttackUnlessPredicateEffect` exemption with no filter context (the context it builds is used only by the attack-or-block branch), so a source-relative exemption (Ensnaring Bridge's hand size, `youControl`) on a plane would misjudge; no plane uses one today. Sure of the code, latent.
@@ -1414,7 +1413,7 @@ Don't commit.
 - `GameViewProjectionFactory.collectFaceDownReveals` decides looks from printed effects while `mayLookAtExiledCard` holds granted looks, so one question is answered twice; `exilesHandsFaceDown` doesn't look inside `MayEffect`. Sure of the code.
 - `ClashSupport`'s log says "opponent reveals" without naming the player. Sure, low.
 
-#### Other (68)
+#### Other (63)
 
 - Casting checks left from runs 40 and 41: Scrycast (Biting Remark; `ScryInteractionHandler`, `ScryAiStrategy`, code: the scry answer casts it with no `canCastDuringResolution` check, and the AI strategies have no `CastingPermissionService`); the may-cast offers don't ask the shared check; an ability leaves the stack before it resolves, where CR 608.2n removes it last. Unverified. FC-2: Knowledge Pool's timing, the split exile cast and suspend's type restriction fixed.
 - Krovikan Vampire's `ReturnDamagedCreaturesThatDiedUnderControlEffect` (a mass return with control and sacrifice links) puts an Aura card that died animated onto the battlefield with no host choice (CR 303.4f, 303.4g); Lim-Dûl's head since rules-fixes EB-1 and `ReturnDyingCreatureToBattlefieldEffect`, `ReturnDyingCreatureToOwnerBattlefieldEffect` since EB-2 go through the entry batch. Unverified.
@@ -1435,7 +1434,6 @@ Don't commit.
 - Boseiju, Hall of the Bandit Lord: when a land-mana replacement applies, the produced mana may lose its rider (CR 106.6a). Unverified.
 - Caged Sun's "a land's ability causes you to add" misses land mana abilities without {T}; `youTapLandForMana` fires only for {T} abilities. Sure, low.
 - `TappedLandManaSupport.producedManaTypes`' basic-land-type fallback (Mana Flare, `AddManaForEachOtherLandWithSameNameEffect`) adds mana for a tap that reported none (CR 106.12a). Unsure.
-- Reality Scramble stays blocked: `PutTargetOnBottomOfLibraryEffect` records no `DepartureResult`, so `departedThisWay` has nothing to read (the filter exists since fold run 29c). Sure.
 - `CounterSpellEffect` with several targets and `LIBRARY_TOP_OR_BOTTOM` opens overlapping prompts. Sure.
 - Bow of Nylea and The Moonbase wait in blocked-other for a subject naming every target card: the activation path (`AbilityActivationService`'s `TargetedGraveyardCardsEffect` keying) needs the `targetGraveyardCards` branch the cast path got in fold run 50c. Sure.
 - Panglacial Wurm can't be cast during the later picks of a multi-pick search; cast-only cards are offered only on the first prompt ("while you're searching"). Sure of the code.
@@ -1462,9 +1460,7 @@ Don't commit.
 - Timothar, Baron of Bats: when a replacement creates more than one Bat, only the last one is linked to the exiled card (`CreateTokenLinkedToCardsExiledThisWayEffectHandler` gives each exile entry one source); the ruling says every such Bat has the linked ability and any of them returns the card. Sure of the ruling and the code.
 - Mana abilities that work from the graveyard, exile or the command zone count as mana sources for `couldPossiblyPay` but can't be activated during a may-pay prompt (only hand abilities can, step 10 run U3a); no implemented card has one today. Sure, harmless today.
 - Quenchable Fire, Glass Asp, Nafs Asp, Sabertooth Cobra: the special action that pays before the delayed trigger (`AbilityActivationService.payDelayedTriggerCost`, CR 116.2c) raises no tax-paid event, so Tax Taker doesn't see mana an opponent pays for your spell's or creature's delayed ability; it changes play only with Tax Taker and the rules don't say whether it is a "tax". Sure of the code.
-- Acererak the Archlich's tokens are created as the step after the paid-together sacrifices (`UnlessPaysEffect.payingTogether()` then the branch), not in the same event as the sacrifices (its ruling: "creatures are sacrificed and tokens are created simultaneously"); nothing can be done between them and no trigger sees one without the other. Unsure it is observable.
 - `UnlessPaysEffectHandler.nextStep` now sets the entry's accepted players to the payers who chose to pay before every branch (for `eachUnless`); an entry that also had a `TemptingOfferEffect` or Snort's discard set them before its "unless" would lose that list. Sure of the code.
-- Several permanents returned for one ransom (Bull Elephant's two Forests, Ovinomancer's three lands) leave one by one inside the one instruction through `PermanentRemovalService.removePermanentToHand`, not as one departure batch, so a leaves-the-battlefield look-back (CR 603.10a) of one wouldn't see the others leave; no ability resolves between them and no card in the pool observes it (the same as the old `returnPlayerMatchingPermanents`). Unsure it is observable.
 - Behemoth of Vault 0: "when you do, destroy that permanent" is a reflexive ability about the declared target, which `QueueReflexiveAbilityEffect` would target again (needs a reflexive ability about an earlier target) (CR 118.3).
 - Sword-Point Diplomacy asks about the revealed cards in library order; its ruling lets the caster choose the order the cards are processed in (it matters only when an opponent's life runs short). Unsure it is worth a prompt.
 - Decoy Gambit (`ReturnTargetCreaturesUnlessControllersDrawEffect`) still offers "have you draw a card" when its caster can't draw; whether an opponent may choose it then (CR 608.2d: an impossible option can't be chosen; CR 121.3 bars a player who can't draw from choosing to draw, but here another player makes the choice) is not settled by the rules or its rulings. Sure the question is open.
@@ -1482,8 +1478,6 @@ Don't commit.
 - `EachOtherPlayerDrawsCardEffectHandler` (the 11 gift cards) draws in seating order from the first seat, not in APNAP order (CR 101.4); fold with the gift opponent. Sure of the code.
 - `TheGrimCaptainsLockerTest.doesNotGrantEscapeToNonCreatureCards` asserts a Grizzly Bears in a graveyard that holds only a Shock and never tries to cast the Shock with escape, so it doesn't test what its name says. Sure.
 - Rikku, Resourceful Guardian: "until end of turn, that creature can't be blocked by creatures your opponents control" floats a granted `CantBeBlockedByCreaturesMatchingPredicateEffect` ability (`MakeCreatureUnblockableEffect.byCreaturesYourOpponentsControl()`), so a later "loses all abilities" ends it, though the effect gives no ability (CR 611.2a, 613.11). Sure of the code and the rule.
-- Sarulf, Realm Eater: its exile (`ExileOtherNonlandPermanentsWithManaValueAtMostEffectHandler`) moves each permanent with its own `removePermanentToExile`, not as one leave batch, so "whenever one or more ... Sure of the code.
-- `ExileTargetPermanentEffectHandler`: a plain `target()` over several targets ("exile up to two target creatures") exiles them one by one with no leave batch, and a non-set several-permanent subject (`allOf(source(), target())`, `allTargets()`) gets the leave batch but not the one rules-event occurrence a set has since run K2 (CR 603.2c, 603.10a: one instruction, one event). Sure of the code.
 
 ---
 

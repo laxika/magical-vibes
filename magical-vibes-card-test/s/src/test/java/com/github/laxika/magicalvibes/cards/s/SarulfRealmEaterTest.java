@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.d.DourPortMage;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
+import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -18,7 +21,8 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SarulfRealmEater.class, AirElemental.class, Forest.class, GrizzlyBears.class, LlanowarElves.class})
+@CardUsed({SarulfRealmEater.class, AirElemental.class, Forest.class, GrizzlyBears.class, LlanowarElves.class,
+        DourPortMage.class, MarchOfTheMachines.class, MindStone.class})
 class SarulfRealmEaterTest extends BaseCardTest {
 
     @Test
@@ -198,6 +202,22 @@ class SarulfRealmEaterTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(faceDown.getCard());
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(faceDown);
+    }
+
+    @Test
+    @DisplayName("The exiled permanents leave as one event, each judged as it was before any left (CR 603.10a)")
+    void exiledPermanentsLeaveAsOneEvent() {
+        addSarulf(player1, 4);
+        harness.addToBattlefield(player2, new DourPortMage());
+        harness.addToBattlefield(player2, new MarchOfTheMachines());
+        Permanent mindStone = harness.addToBattlefieldAndReturn(player2, new MindStone());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(mindStone.getCard());
+        assertThat(gd.stack).filteredOn(entry -> entry.getCard().getName().equals("Dour Port-Mage")).hasSize(1);
     }
 
     private Permanent addSarulf(Player player, int counterCount) {

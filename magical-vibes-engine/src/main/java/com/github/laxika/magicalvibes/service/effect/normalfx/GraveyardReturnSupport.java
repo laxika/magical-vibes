@@ -1708,9 +1708,7 @@ public class GraveyardReturnSupport {
             enteredCards.add(placement.auraCard());
         }
 
-        for (ReturnedPermanent returned : enteredPermanents) {
-            handleCreatureEtbAndLegendRule(gameData, returned.controllerId(), returned.permanent(), returned.card());
-        }
+        askEnteredAsEntersChoicesInTurn(gameData, enteredPermanents);
 
         if (!enteredCards.isEmpty()) {
             UUID controllerId = logControllerId != null ? logControllerId :
@@ -2429,9 +2427,7 @@ public class GraveyardReturnSupport {
             }
         }
 
-        for (ReturnedPermanent returned : enteredPermanents) {
-            handleCreatureEtbAndLegendRule(gameData, returned.controllerId(), returned.permanent(), returned.card());
-        }
+        askEnteredAsEntersChoicesInTurn(gameData, enteredPermanents);
     }
 
     public void putCardsOntoBattlefieldSimultaneouslyUnderController(
@@ -2507,10 +2503,7 @@ public class GraveyardReturnSupport {
             enteredPermanents.add(new ReturnedPermanent(placement.controllerId(), permanent, placement.auraCard()));
         }
 
-        for (ReturnedPermanent returned : enteredPermanents) {
-            handleCreatureEtbAndLegendRule(
-                    gameData, returned.controllerId(), returned.permanent(), returned.card());
-        }
+        askEnteredAsEntersChoicesInTurn(gameData, enteredPermanents);
     }
 
     private List<UUID> findAuraAttachmentCandidates(GameData gameData, Card auraCard, UUID auraControllerId) {
@@ -2564,8 +2557,26 @@ public class GraveyardReturnSupport {
             enteredPermanents.add(new ReturnedPermanent(controllerId, permanent, card));
         }
 
-        for (ReturnedPermanent returned : enteredPermanents) {
-            handleCreatureEtbAndLegendRule(gameData, returned.controllerId(), returned.permanent(), returned.card());
+        askEnteredAsEntersChoicesInTurn(gameData, enteredPermanents);
+    }
+
+    /**
+     * The enter handling of permanents a simultaneous put placed itself, which entered as one event: each one's
+     * as-enters choices asked in turn, a later one waiting while an earlier one's prompt is open, the "one or more
+     * enter" window held open until all are made (CR 614.12, 603.2c); then the legend rule unless a prompt is open.
+     */
+    private void askEnteredAsEntersChoicesInTurn(GameData gameData, List<ReturnedPermanent> entered) {
+        if (entered.isEmpty()) {
+            return;
+        }
+        boolean outerCollecting = gameData.collectingSimultaneousCreatureEntryTriggers;
+        if (!outerCollecting) {
+            gameData.simultaneousCreatureEntryTriggers.clear();
+        }
+        askAsEntersChoicesInTurn(gameData, entered, outerCollecting);
+        if (!gameData.interaction.isAwaitingInput()) {
+            entered.stream().map(ReturnedPermanent::controllerId).distinct()
+                    .forEach(controllerId -> legendRuleService.checkLegendRule(gameData, controllerId));
         }
     }
 
@@ -3610,9 +3621,7 @@ public class GraveyardReturnSupport {
                         controllerName + " puts ", card, " onto the battlefield."));
             }
         }
-        for (ReturnedPermanent returned : enteredPermanents) {
-            handleCreatureEtbAndLegendRule(gameData, returned.controllerId(), returned.permanent(), returned.card());
-        }
+        askEnteredAsEntersChoicesInTurn(gameData, enteredPermanents);
 
         // Other pile → owners' graveyards
         for (UUID cardId : otherPileCardIds) {

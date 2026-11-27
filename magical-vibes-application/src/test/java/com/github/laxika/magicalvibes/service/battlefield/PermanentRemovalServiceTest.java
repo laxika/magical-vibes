@@ -71,6 +71,27 @@ class PermanentRemovalServiceTest {
     }
 
     @Test
+    @DisplayName("Removing several permanents together snapshots all of them inside one leave batch")
+    void removeTogetherSnapshotsAllInsideOneLeaveBatch() {
+        Permanent first = addPermanent(player1Id, createEnchantment("First"));
+        Permanent second = addPermanent(player1Id, createEnchantment("Second"));
+        when(gameQueryService.findPermanentController(gd, first.getId())).thenReturn(player1Id);
+        when(gameQueryService.findPermanentController(gd, second.getId())).thenReturn(player1Id);
+        List<UUID> snapshotted = new java.util.ArrayList<>();
+        int[] depth = {0};
+
+        prs.removeTogether(gd, List.of(first, second), () -> {
+            snapshotted.addAll(gd.simultaneousDyingPermanents.keySet());
+            depth[0] = gd.permanentLeaveNotificationDepth;
+        });
+
+        assertThat(snapshotted).containsExactlyInAnyOrder(first.getId(), second.getId());
+        assertThat(depth[0]).isEqualTo(1);
+        assertThat(gd.simultaneousDyingPermanents).isEmpty();
+        assertThat(gd.permanentLeaveNotificationDepth).isZero();
+    }
+
+    @Test
     @DisplayName("A deferred mana-ability trigger remembers the controller of a permanent that leaves")
     void deferredManaTriggerRemembersControllerWhenPermanentLeaves() {
         Card card = new Card();

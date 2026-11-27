@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.a.AdaptiveAutomaton;
 import com.github.laxika.magicalvibes.cards.a.AvianChangeling;
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.cards.g.GoblinSledder;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -13,7 +16,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PatriarchsBidding.class, ElvishWarrior.class, GoblinSledder.class, AvianChangeling.class})
+@CardUsed({PatriarchsBidding.class, ElvishWarrior.class, GoblinSledder.class, AvianChangeling.class,
+        AdaptiveAutomaton.class})
 class PatriarchsBiddingTest extends BaseCardTest {
 
     @Test
@@ -36,6 +40,22 @@ class PatriarchsBiddingTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Elvish Warrior");
         harness.assertNotInGraveyard(player1, "Goblin Sledder");
         harness.assertNotInGraveyard(player2, "Elvish Warrior");
+    }
+
+    @Test
+    @DisplayName("Each returned creature is asked its as-enters choice in turn (CR 614.12)")
+    void asksEachReturnedCreaturesAsEntersChoiceInTurn() {
+        harness.setGraveyard(player1, List.of(new AdaptiveAutomaton(), new AdaptiveAutomaton()));
+        harness.setGraveyard(player2, List.of());
+        cast();
+
+        harness.handleListChoice(player1, "CONSTRUCT");
+        harness.handleListChoice(player2, "CONSTRUCT");
+        harness.handleListChoice(player1, "ELF");
+        harness.handleListChoice(player1, "GOBLIN");
+
+        assertThat(findPermanents(player1, "Adaptive Automaton")).extracting(Permanent::getChosenSubtype)
+                .containsExactlyInAnyOrder(CardSubtype.ELF, CardSubtype.GOBLIN);
     }
 
     @Test

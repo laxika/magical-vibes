@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.a.AnimateArtifact;
+import com.github.laxika.magicalvibes.cards.d.DourPortMage;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GnarledScarhide;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
+import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.cards.v.VelaTheNightClad;
@@ -23,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SilenceTheBelievers.class, GrizzlyBears.class, Pacifism.class,
         LeoninScimitar.class, FountainOfYouth.class, GnarledScarhide.class,
-        Unsummon.class, VelaTheNightClad.class})
+        Unsummon.class, VelaTheNightClad.class, AnimateArtifact.class, DourPortMage.class, MindStone.class})
 class SilenceTheBelieversTest extends BaseCardTest {
 
     @Test
@@ -184,6 +187,21 @@ class SilenceTheBelieversTest extends BaseCardTest {
         harness.assertLife(player1, 18);
         harness.assertNotOnBattlefield(player2, "Vela the Night-Clad");
         harness.assertNotOnBattlefield(player2, "Gnarled Scarhide");
+    }
+
+    @Test
+    @DisplayName("A creature is judged as it was before its Aura left with it (CR 603.10a)")
+    void creatureIsJudgedAsItWasBeforeItsAuraLeft() {
+        harness.addToBattlefield(player2, new DourPortMage());
+        Permanent mindStone = harness.addToBattlefieldAndReturn(player2, new MindStone());
+        Permanent animate = harness.addToBattlefieldAndReturn(player2, new AnimateArtifact());
+        animate.setAttachedTo(mindStone.getId());
+
+        castAndResolveSilenceTheBelievers(List.of(mindStone.getId()));
+
+        harness.assertNotOnBattlefield(player2, "Mind Stone");
+        harness.assertNotOnBattlefield(player2, "Animate Artifact");
+        assertThat(gd.stack).filteredOn(entry -> entry.getCard().getName().equals("Dour Port-Mage")).hasSize(1);
     }
 
     private void castAndResolveSilenceTheBelievers(List<UUID> targetIds) {

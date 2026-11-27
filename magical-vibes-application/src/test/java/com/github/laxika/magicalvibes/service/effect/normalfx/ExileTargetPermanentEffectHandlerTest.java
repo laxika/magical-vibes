@@ -40,6 +40,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -67,6 +68,11 @@ class ExileTargetPermanentEffectHandlerTest {
 
     @BeforeEach
     void setUp() {
+        // The removals run inside the one leave event, as the real service runs them.
+        lenient().doAnswer(invocation -> {
+            invocation.<Runnable>getArgument(2).run();
+            return null;
+        }).when(permanentRemovalService).removeTogether(any(), any(), any());
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
@@ -192,7 +198,7 @@ class ExileTargetPermanentEffectHandlerTest {
 
 
     @Test
-            @DisplayName("Exiles two target artifacts")
+            @DisplayName("Exiles two target artifacts as one leave event")
             void exilesTwoTargetArtifacts() {
                 Card targetCard1 = createCard("Spellbook");
                 Permanent target1 = new Permanent(targetCard1);
@@ -208,6 +214,7 @@ class ExileTargetPermanentEffectHandlerTest {
 
                 exileTargetPermanentHandler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
+                verify(permanentRemovalService).removeTogether(eq(gd), eq(List.of(target1, target2)), any());
                 verify(permanentRemovalService).removePermanentToExile(gd, target1);
                 verify(permanentRemovalService).removePermanentToExile(gd, target2);
                 verify(gameLogService, times(2)).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Spellbook is exiled.")));
@@ -266,10 +273,9 @@ class ExileTargetPermanentEffectHandlerTest {
         exileTargetPermanentHandler.resolve(gd, entry, effect);
 
         InOrder order = inOrder(permanentRemovalService);
-        order.verify(permanentRemovalService).beginPermanentLeaveBatch(gd);
+        order.verify(permanentRemovalService).removeTogether(eq(gd), eq(List.of(source, target)), any());
         order.verify(permanentRemovalService).removePermanentToExile(gd, source);
         order.verify(permanentRemovalService).removePermanentToExile(gd, target);
-        order.verify(permanentRemovalService).endPermanentLeaveBatch(gd);
         assertThat(entry.lastKnownPermanentController(target.getId())).isEqualTo(player2Id);
     }
 }

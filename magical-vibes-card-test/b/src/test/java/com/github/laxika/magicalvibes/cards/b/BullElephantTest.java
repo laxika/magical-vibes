@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.n.NefariousImp;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,7 +17,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BullElephant.class, Forest.class, Island.class})
+@CardUsed({BullElephant.class, Forest.class, Island.class, NefariousImp.class})
 class BullElephantTest extends BaseCardTest {
 
     private long forestsControlledBy(UUID playerId) {
@@ -160,6 +161,27 @@ class BullElephantTest extends BaseCardTest {
 
         assertThat(forestsControlledBy(player1.getId())).isEqualTo(1);
         harness.assertOnBattlefield(player1, "Bull Elephant");
+    }
+
+    @Test
+    @DisplayName("The returned Forests leave as one event: a \"one or more\" leave trigger triggers once")
+    void returnedForestsLeaveAsOneEvent() {
+        harness.addToBattlefield(player1, new NefariousImp());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        castBullElephant();
+
+        harness.handleMayAbilityChosen(player1, true);
+        List<UUID> forestIds = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().getSubtypes().contains(CardSubtype.FOREST))
+                .map(Permanent::getId)
+                .limit(2)
+                .toList();
+        harness.handleMultiplePermanentsChosen(player1, forestIds);
+
+        assertThat(forestsControlledBy(player1.getId())).isEqualTo(1);
+        assertThat(gd.stack).filteredOn(entry -> entry.getCard().getName().equals("Nefarious Imp")).hasSize(1);
     }
 
     @Test

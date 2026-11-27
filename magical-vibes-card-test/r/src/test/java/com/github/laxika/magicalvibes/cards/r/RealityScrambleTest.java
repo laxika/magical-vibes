@@ -1,9 +1,13 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
+import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +21,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RealityScramble.class, Forest.class, GrizzlyBears.class, HillGiant.class, Mountain.class})
+@CardUsed({RealityScramble.class, Forest.class, GrizzlyBears.class, HillGiant.class, Mountain.class,
+        GloriousAnthem.class, Pacifism.class, MarchOfTheMachines.class, MindStone.class})
 class RealityScrambleTest extends BaseCardTest {
 
     @Test
@@ -61,6 +66,43 @@ class RealityScrambleTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId()))
                 .extracting(Card::getName)
                 .containsExactlyInAnyOrder("Forest", "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("A revealed Aura card enters attached to something it can enchant (CR 303.4f)")
+    void revealedAuraEntersAttached() {
+        Permanent anthem = harness.addToBattlefieldAndReturn(player1, new GloriousAnthem());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Pacifism()));
+        harness.setHand(player1, List.of(new RealityScramble()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castSorcery(player1, 0, anthem.getId());
+        harness.passBothPriorities();
+
+        Permanent pacifism = gqs.findPermanentById(gd, harness.getPermanentId(player1, "Pacifism"));
+        assertThat(pacifism).isNotNull();
+        assertThat(pacifism.getAttachedTo()).isEqualTo(bears.getId());
+    }
+
+    @Test
+    @DisplayName("Judges the permanent's card types as it last existed on the battlefield")
+    void judgesCardTypesAsThePermanentLastExisted() {
+        harness.addToBattlefield(player2, new MarchOfTheMachines());
+        Permanent stone = harness.addToBattlefieldAndReturn(player1, new MindStone());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new RealityScramble()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castSorcery(player1, 0, stone.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(p -> p.getCard().getName())
+                .containsExactly("Grizzly Bears");
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(Card::getName)
+                .containsExactly("Mind Stone");
     }
 
     @Test

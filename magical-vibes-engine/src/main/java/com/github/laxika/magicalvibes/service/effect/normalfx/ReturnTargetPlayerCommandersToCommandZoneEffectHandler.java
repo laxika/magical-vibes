@@ -40,12 +40,15 @@ public class ReturnTargetPlayerCommandersToCommandZoneEffectHandler implements N
                 .filter(permanent -> isCommander(gameData, permanent))
                 .toList();
 
-        for (Permanent commander : commanders) {
-            if (permanentRemovalService.removePermanentToCommandZone(gameData, commander)) {
-                gameLogService.append(gameData, GameLog.cardThen(
-                        commander.getCard(), " is returned to its owner's command zone."));
+        // One instruction, one event (CR 603.2c, 603.10a).
+        permanentRemovalService.removeTogether(gameData, commanders, () -> {
+            for (Permanent commander : commanders) {
+                if (permanentRemovalService.removePermanentToCommandZone(gameData, commander)) {
+                    gameLogService.append(gameData, GameLog.cardThen(
+                            commander.getCard(), " is returned to its owner's command zone."));
+                }
             }
-        }
+        });
         permanentRemovalService.removeOrphanedAuras(gameData);
     }
 

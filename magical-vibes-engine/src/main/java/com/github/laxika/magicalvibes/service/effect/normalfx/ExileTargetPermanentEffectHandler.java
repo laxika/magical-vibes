@@ -74,48 +74,53 @@ public class ExileTargetPermanentEffectHandler implements NormalEffectHandlerBea
             targetIds = entry.getTargetIds();
         }
 
+        List<Permanent> targets = new java.util.ArrayList<>();
+        for (UUID targetId : targetIds) {
+            Permanent target = targetId == null ? null : gameQueryService.findPermanentById(gameData, targetId);
+            if (target != null && !targets.contains(target)) {
+                targets.add(target);
+            }
+        }
         List<UUID> tokenControllers = new java.util.ArrayList<>();
         List<MovedCard> moved = new java.util.ArrayList<>();
         List<LastKnownCardStats> known = new java.util.ArrayList<>();
-        for (UUID targetId : targetIds) {
-            if (targetId == null) {
-                continue;
-            }
-            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-            if (target == null) {
-                continue;
-            }
-
-            // Capture the controller before exile (needed for token creation)
-            UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
-
+        // Every target as it was before any of them left (CR 608.2h), for later steps of the same resolution.
+        java.util.Map<UUID, LastKnownCardStats> lastKnown = new java.util.HashMap<>();
+        for (Permanent target : targets) {
+            UUID targetId = target.getId();
+            UUID controllerId = gameQueryService.findPermanentController(gameData, targetId);
             if (controllerId != null) {
                 entry.getRemovedPermanentControllers().put(targetId, controllerId);
             }
-            // Later steps of the same resolution read the exiled permanent's last known information.
             entry.rememberLastKnownPermanentCard(targetId, target.getCard());
             entry.getLastKnownPermanentPowers().put(targetId, gameQueryService.getEffectivePower(gameData, target));
             entry.getLastKnownPermanentToughnesses().put(targetId,
                     gameQueryService.getEffectiveToughness(gameData, target));
-            List<Card> cards = leavingCards(target);
-            LastKnownCardStats lastKnown = asLastKnown(gameData, target);
-            if (permanentRemovalService.removePermanentToExile(gameData, target)) {
-                exiled.add(targetId);
-                known.add(lastKnown);
-                if (controllerId != null) {
-                    exiledControllers.add(controllerId);
-                }
-                addMovedCards(gameData, targetId, cards, moved);
-            }
-            gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is exiled."));
-            log.info("Game {} - {} is exiled by {}",
-                    gameData.id, target.getCard().getName(), entry.getCard().getName());
-
-            // Create a token for the exiled permanent's controller if specified
-            if (exile.tokenForController() != null && controllerId != null) {
-                tokenControllers.add(controllerId);
-            }
+            lastKnown.put(targetId, asLastKnown(gameData, target));
         }
+        exileTogether(gameData, targets, false, () -> {
+            for (Permanent target : targets) {
+                UUID targetId = target.getId();
+                UUID controllerId = entry.getRemovedPermanentControllers().get(targetId);
+                List<Card> cards = leavingCards(target);
+                if (permanentRemovalService.removePermanentToExile(gameData, target)) {
+                    exiled.add(targetId);
+                    known.add(lastKnown.get(targetId));
+                    if (controllerId != null) {
+                        exiledControllers.add(controllerId);
+                    }
+                    addMovedCards(gameData, targetId, cards, moved);
+                }
+                gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " is exiled."));
+                log.info("Game {} - {} is exiled by {}",
+                        gameData.id, target.getCard().getName(), entry.getCard().getName());
+
+                // Create a token for the exiled permanent's controller if specified
+                if (exile.tokenForController() != null && controllerId != null) {
+                    tokenControllers.add(controllerId);
+                }
+            }
+        });
 
         entry.recordStep(StepKind.EXILE,
                 StepOutcome.ofObjects(exiled, exiledControllers, moved).withLastKnownPermanents(known));
@@ -127,9 +132,8 @@ public class ExileTargetPermanentEffectHandler implements NormalEffectHandlerBea
     }
 
     /**
-     * Exiles what a non-target subject names. Several permanents ("exile this creature and target creature") leave as
-     * one event, so each one's leave abilities see the others leave with it (CR 603.10a); a set ("exile all
-     * creatures") is one occurrence of the exile event too (CR 603.2c). The target part of such a subject keeps its
+     * Exiles what a non-target subject names. Several permanents ("exile this creature and target creature") and a set
+     * ("exile all creatures") leave as one event ({@link #exileTogether}). The target part of such a subject keeps its
      * controller and last-known card and power for later steps, as the target path does.
      */
     private void exileSubject(GameData gameData, StackEntry entry, ExileTargetPermanentEffect exile) {
@@ -146,31 +150,26 @@ public class ExileTargetPermanentEffectHandler implements NormalEffectHandlerBea
                 }
             }
         }
-        boolean together = named.size() > 1;
-        if (together) {
-            permanentRemovalService.beginPermanentLeaveBatch(gameData);
-        }
-        try {
-            // Each as it was before any of them left (CR 608.2h).
-            named.forEach(permanent -> known.add(asLastKnown(gameData, permanent)));
-            if (exile.subject().isSet()) {
-                // "Exile all creatures": one event (CR 603.2c) whose leave abilities look back at everything that
-                // left with them (CR 603.10a).
-                gameData.runAsSingleCardExileBatch(() -> permanentRemovalService.performSimultaneousRemovals(
-                        gameData, named,
-                        () -> exileNamed(gameData, entry, exile, named, targeted, exiled, exiledControllers, moved)));
-            } else {
-                exileNamed(gameData, entry, exile, named, targeted, exiled, exiledControllers, moved);
-            }
-        } finally {
-            if (together) {
-                permanentRemovalService.endPermanentLeaveBatch(gameData);
-            }
-        }
+        // Each as it was before any of them left (CR 608.2h).
+        named.forEach(permanent -> known.add(asLastKnown(gameData, permanent)));
+        exileTogether(gameData, named, exile.subject().isSet(),
+                () -> exileNamed(gameData, entry, exile, named, targeted, exiled, exiledControllers, moved));
         known.removeIf(lastKnown -> !exiled.contains(lastKnown.cardId()));
         entry.recordStep(StepKind.EXILE,
                 StepOutcome.ofObjects(exiled, exiledControllers, moved).withLastKnownPermanents(known));
         permanentRemovalService.removeOrphanedAuras(gameData);
+    }
+
+    /**
+     * Runs {@code removal}, which moves {@code permanents}: two or more, or a set ("exile all creatures"), leave as
+     * one event ({@link PermanentRemovalService#removeTogether}).
+     */
+    private void exileTogether(GameData gameData, List<Permanent> permanents, boolean set, Runnable removal) {
+        if (permanents.size() > 1 || set) {
+            permanentRemovalService.removeTogether(gameData, permanents, removal);
+        } else {
+            removal.run();
+        }
     }
 
     private LastKnownCardStats asLastKnown(GameData gameData, Permanent permanent) {

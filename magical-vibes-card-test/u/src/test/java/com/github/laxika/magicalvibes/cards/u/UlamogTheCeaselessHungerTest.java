@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.cards.d.DourPortMage;
 import com.github.laxika.magicalvibes.cards.g.GideonAllyOfZendikar;
 import com.github.laxika.magicalvibes.cards.e.ExpeditionEnvoy;
+import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
+import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.cards.s.SmiteTheMonstrous;
 import com.github.laxika.magicalvibes.cards.s.SuperShredder;
 import com.github.laxika.magicalvibes.model.Card;
@@ -21,7 +23,8 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({UlamogTheCeaselessHunger.class, ExpeditionEnvoy.class,
-        GideonAllyOfZendikar.class, SmiteTheMonstrous.class, DourPortMage.class, SuperShredder.class})
+        GideonAllyOfZendikar.class, SmiteTheMonstrous.class, DourPortMage.class, SuperShredder.class,
+        MarchOfTheMachines.class, MindStone.class})
 class UlamogTheCeaselessHungerTest extends BaseCardTest {
 
     @Test
@@ -156,6 +159,23 @@ class UlamogTheCeaselessHungerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).filteredOn(entry -> entry.getCard().getName().equals("Super Shredder")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Both targets are judged as they were before either left (CR 603.10a)")
+    void targetsAreJudgedAsTheyWereBeforeEitherLeft() {
+        harness.addToBattlefield(player2, new DourPortMage());
+        Permanent march = harness.addToBattlefieldAndReturn(player2, new MarchOfTheMachines());
+        Permanent mindStone = harness.addToBattlefieldAndReturn(player2, new MindStone());
+        harness.setHand(player1, List.of(new UlamogTheCeaselessHunger()));
+        harness.addMana(player1, ManaColor.COLORLESS, 10);
+
+        harness.castCreature(player1, 0);
+        harness.handleMultiplePermanentsChosen(player1, List.of(march.getId(), mindStone.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.findExiledCard(mindStone.getOriginalCard().getId())).isNotNull();
+        assertThat(gd.stack).filteredOn(entry -> entry.getCard().getName().equals("Dour Port-Mage")).hasSize(1);
     }
 
     @Test

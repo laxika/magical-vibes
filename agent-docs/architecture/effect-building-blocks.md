@@ -96,7 +96,9 @@ triggered ability is a `TemporaryGlobalTriggeredAbility`. Never a `Permanent` or
   (CR 603.7c). Card subjects do this; a handler with its own lookup must too.
 - Permanents one instruction moves leave or enter as one event (CR 603.10a, 608.2e); several players choose in APNAP order, then act:
   collect the choices in the choice context, then act once (leave batch or departure batch); reference handlers Sothera, Ol Rin's
-  Searing Light. A cost sacrificing several permanents leaves as one batch (`SpellCastingService.paySacrificeCostTogether`).
+  Searing Light. A cost sacrificing several permanents leaves as one batch (`SpellCastingService.paySacrificeCostTogether`); a
+  handler's own loop of single removals runs inside `PermanentRemovalService.removeTogether`, which also judges each as all were
+  before any left (CR 608.2h).
 - A choice with one possible answer is made unasked; a permanent that can't be chosen is neither offered, counted nor drawn at random
   (CR 608.2d); the shared prompts (`PlayerInputService.beginAnyTargetChoice`, `beginMultiPermanentOrPlayerChoice` and the others) drop
   it. A `MayEffect` whose leading step can do nothing isn't asked (a `source()` counter step whose source is gone or can't have the
