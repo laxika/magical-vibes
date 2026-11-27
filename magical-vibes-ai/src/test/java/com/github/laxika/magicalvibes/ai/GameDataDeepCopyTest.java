@@ -132,6 +132,19 @@ class GameDataDeepCopyTest {
     }
 
     @Test
+    @DisplayName("Deep copy keeps the zones card copies waiting to be cast were created in, independently")
+    void deepCopyKeepsCastCopyCreationZonesIndependent() {
+        UUID copyId = UUID.randomUUID();
+        gd.castCopyCreationZones.put(copyId, com.github.laxika.magicalvibes.model.Zone.GRAVEYARD);
+
+        GameData copy = gd.simulationCopy();
+        assertThat(copy.castCopyCreationZones).containsEntry(copyId, com.github.laxika.magicalvibes.model.Zone.GRAVEYARD);
+        copy.castCopyCreationZones.remove(copyId);
+
+        assertThat(gd.castCopyCreationZones).containsEntry(copyId, com.github.laxika.magicalvibes.model.Zone.GRAVEYARD);
+    }
+
+    @Test
     @DisplayName("Deep copy keeps the damage shields in force and reduces them independently")
     void deepCopyKeepsShieldsInForce() {
         UUID playerId = UUID.randomUUID();

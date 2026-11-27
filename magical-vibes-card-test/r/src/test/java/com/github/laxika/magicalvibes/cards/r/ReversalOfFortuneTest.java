@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.g.GoblinBrawler;
 import com.github.laxika.magicalvibes.cards.m.ManaGeyser;
 import com.github.laxika.magicalvibes.cards.m.MagmaJet;
+import com.github.laxika.magicalvibes.cards.v.VegaTheWatcher;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ReversalOfFortune.class, ManaGeyser.class, MagmaJet.class, GoblinBrawler.class})
+@CardUsed({ReversalOfFortune.class, ManaGeyser.class, MagmaJet.class, GoblinBrawler.class, VegaTheWatcher.class})
 class ReversalOfFortuneTest extends BaseCardTest {
 
     @Test
@@ -68,6 +69,18 @@ class ReversalOfFortuneTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player2.getId()))
                 .anyMatch(card -> card.getId().equals(original.getId()));
+    }
+
+    @Test
+    @DisplayName("The copy is cast from the opponent's hand, not its caster's, so a cast-from-elsewhere trigger sees it")
+    void copyIsNotCastFromItsCastersHand() {
+        harness.addToBattlefield(player1, new VegaTheWatcher());
+        castReversal(new ManaGeyser(), new GoblinBrawler());
+
+        harness.handleCardChosen(player1, 0);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getName().equals("Vega, the Watcher"));
     }
 
     @Test

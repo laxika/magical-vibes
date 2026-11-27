@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.a.AnointedProcession;
 import com.github.laxika.magicalvibes.cards.t.TatteredRatter;
+import com.github.laxika.magicalvibes.cards.t.TippyToeTerrificPartner;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({RoyalTreatment.class, TatteredRatter.class, RatOut.class})
+@CardUsed({RoyalTreatment.class, TatteredRatter.class, RatOut.class, AnointedProcession.class,
+        TippyToeTerrificPartner.class})
 class RoyalTreatmentTest extends BaseCardTest {
 
     @Test
@@ -30,6 +34,24 @@ class RoyalTreatmentTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> target.getId().equals(permanent.getAttachedTo())))
                 .hasSize(1);
+    }
+
+    @Test
+    @DisplayName("After the caster orders a doubler and an addition, the Role is attached to the creature")
+    void roleIsAttachedAfterTheReplacementOrder() {
+        harness.addToBattlefield(player1, new AnointedProcession());
+        harness.addToBattlefield(player1, new TippyToeTerrificPartner());
+        Permanent target = addCreatureReady(player1, new TatteredRatter());
+        castRoyalTreatment(target);
+
+        PendingInteraction.ColorChoice order = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(order).isNotNull();
+        harness.handleListChoice(player1, order.options().stream()
+                .filter(option -> option.startsWith("Anointed Procession")).findFirst().orElseThrow());
+
+        assertThat(findPermanents(player1, "Royal")).isNotEmpty()
+                .allSatisfy(role -> assertThat(role.getAttachedTo()).isEqualTo(target.getId()));
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
     }
 
     @Test

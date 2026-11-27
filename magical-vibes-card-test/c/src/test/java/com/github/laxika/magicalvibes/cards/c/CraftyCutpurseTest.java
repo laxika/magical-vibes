@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninWarleader;
 import com.github.laxika.magicalvibes.cards.s.SailorOfMeans;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -55,6 +56,24 @@ class CraftyCutpurseTest extends BaseCardTest {
 
         assertThat(tokenCount(player1, "Human")).isEqualTo(2);
         assertThat(tokenCount(player2, "Human")).isZero();
+    }
+
+    @Test
+    @DisplayName("The redirected tokens' would-be controller orders that player's replacement effects")
+    void wouldBeControllerOrdersTheReplacements() {
+        harness.addToBattlefield(player1, new AnointedProcession());
+        harness.addToBattlefield(player1, new TippyToeTerrificPartner());
+        resolveCraftyCutpurse();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new GatherTheTownsfolk()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.castAndResolveSorcery(player2, 0, 0);
+
+        PendingInteraction.ColorChoice order = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(order).isNotNull();
+        assertThat(order.playerId()).isEqualTo(player1.getId());
     }
 
     @Test

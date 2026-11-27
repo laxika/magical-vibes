@@ -1317,14 +1317,13 @@ Don't commit.
 - `DrawService`: two Notion Thief / Hullbreacher / Alms Collector sources under different opponents apply in seat order; the affected player should choose (CR 616.1). Sure, low.
 - `ReturnCardExiledWithSourceToBattlefieldEffectHandler` puts a creature onto the battlefield attacking with no attack target; its controller should choose one (CR 508.4). Fairly sure.
 
-#### Simultaneity and APNAP (CR 101.4, 603.10a, 608.2e) (10)
+#### Simultaneity and APNAP (CR 101.4, 603.10a, 608.2e) (9)
 
 - Disorienting Choice exiles, Eumidian Wastewaker sacrifices or discards at each player's answer. Sure.
 - Ezuri's Predation pairs by battlefield order and fights one at a time (rulings: you choose the pairs, fights are simultaneous). Sure.
 - Ol Rin's Searing Light, Gilded Ambusher exile each opponent's choice before the next chooses; Dispersal returns and discards one opponent at a time; The Second Doctor, Kwain draw before the next player chooses (CR 121.2c). Unverified.
 - Mythweaver Poq's simultaneous duplicates are one conjure event each (unsettled). Unverified.
 - Tribute's "paid" check is `placed >= N`, so a halved tribute (an opponent's Halving Season) reads as unpaid (CR 702.104b: "as specified").
-- Precursor Golem, Ink-Treader Nephilim: the copies' controller doesn't choose the order they go on the stack (rulings). Sure.
 - `PutExiledCardsIntoOwnersGraveyardEffect` (Covenant of Minds) gives no CR 404.3 order prompt for the cards it puts into one graveyard; an engine-wide policy, see entry 17 (EB-3). Sure, low.
 - Eumidian Wastewaker counts a sacrificed land token, or a permanent that is a land only on the battlefield (Ashaya), as a land card put into a graveyard (ruling). Sure.
 - Ezuri's Predation: "those creatures" are read at the fight, not when counted (CR 608.2h).
@@ -1339,13 +1338,11 @@ Don't commit.
 - `CombatAttackService` throws "must attack the specified player" for a `MustAttackIfAbleEffect(defenderId)` instead of weighing it against other requirements (CR 508.1d). Sure of the code, low.
 - `CoinFlipService`'s Pokey d20 (the roll that replaces a flip) ignores dice advantage (Pixie Guide). Unverified.
 
-#### Wrong targets and choices (8)
+#### Wrong targets and choices (6)
 
 - `ChoosePermanentsEffect` keeps a lone chosen permanent as the source's chosen permanent, so Deepfathom Echo (if folded onto it) or any copier choosing its model would leave a "the chosen creature" card's copy with a choice it never made (Dauntless Bodyguard) (CR 607.2d). Sure of the code.
 - The prompt callers (about 415 calls of `beginPermanentChoice`, `beginAnyTargetChoice`, `beginMultiPermanentChoice`, `beginMultiPermanentOrPlayerChoice`) that count or auto-pick candidates before prompting don't drop a permanent that can't be chosen (`GameQueryService.cantBeChosen`; the prompts themselves do since D15), so a lone such candidate can be taken or an empty prompt opened; only Glimpse the Unthinkable (playtest) has the ability. Unverified.
 - The opponent-owned processor head and Ulamog's Nullifier offer face-down cards one by one where Ruin Processor chooses piles. Unverified.
-- Kefnet, Reversal of Fortune, Spellweaver Volute: a copy of a card is created and cast in exile, not in the card's own zone (CR 707.12; Kefnet and Reversal rulings), so a "cast from hand / graveyard" trigger misses it. Sure.
-- The Clone Saga (SPM 28) chapter II offers new targets for the copy although the text doesn't say it may (CR 707.10, 707.10c). Fairly sure.
 - Nowhere to Run: "spells and abilities" are any player's, but it is modelled as its controller's only (multiplayer). Sure.
 - The copy-service turn-face-up path used by state-based actions doesn't check "can't be turned face up" (CR 101.2). Unverified.
 - Ulamog's Nullifier (`TwoOpponentOwnedExiledCardsToGraveyardChoiceInteractionHandler`): face-down picks are taken by id, not at random from their pile (2015-08-25 ruling). Fairly sure.
@@ -1380,7 +1377,7 @@ Don't commit.
 - `CantAttackThisTurnEffectHandler`'s set branch logs the source by `entry.getCard().getName()` with no face-down redaction and doesn't bind its filter's chosen values (only the except branch goes through `lastingRule`). Sure of the code.
 - `GameViewProjectionFactory.collectFaceDownReveals` decides looks from printed effects while `mayLookAtExiledCard` holds granted looks, so one question is answered twice; `exilesHandsFaceDown` doesn't look inside `MayEffect`. Sure of the code.
 
-#### Other (50)
+#### Other (49)
 
 - Casting checks left from runs 40 and 41: Scrycast (Biting Remark; `ScryInteractionHandler`, `ScryAiStrategy`, code: the scry answer casts it with no `canCastDuringResolution` check, and the AI strategies have no `CastingPermissionService`); the may-cast offers don't ask the shared check; an ability leaves the stack before it resolves, where CR 608.2n removes it last. Unverified. FC-2: Knowledge Pool's timing, the split exile cast and suspend's type restriction fixed.
 - Krovikan Vampire's `ReturnDamagedCreaturesThatDiedUnderControlEffect` (a mass return with control and sacrifice links) puts an Aura card that died animated onto the battlefield with no host choice (CR 303.4f, 303.4g); Lim-Dûl's head since rules-fixes EB-1 and `ReturnDyingCreatureToBattlefieldEffect`, `ReturnDyingCreatureToOwnerBattlefieldEffect` since EB-2 go through the entry batch. Unverified.
@@ -1429,7 +1426,6 @@ Don't commit.
 - Battle cry is built on "creatures you control" (B2 keeps it), but CR 702.91a gives +1/+0 to "each other attacking creature", a teammate's attackers too (Two-Headed Giant).
 - Text-changing effects (CR 612.2) reach a source-reading boost's amounts and target filter only: not a self or named-permanent boost's amounts ("+1/+1 for each black creature"), not `targetPermanent`'s filter (Buccaneer's Bravado's "target Pirate"), not the mass boosts' set filters.
 - "Attacking creatures get" / "other attacking creatures get" written as `BoostEffect.creaturesYouControl(…, attacking)` (Iroh, Firebending Instructor, Kangee's Lieutenant, Motivated Pony, Targ Nar, Honored Crop-Captain and others) leaves out a teammate's attackers (Two-Headed Giant), as battle cry does (Q7); `allCreatures(…, attacking)` would say it.
-- `CloneService.exileCopiedCardAbility` (Superior Spider-Man, Activated Sleeper, The Mimeoplasm and the other "enter as a copy of a creature card in a graveyard; when you do, exile that card" cards) names the copied card by `setTriggeringCardId` with no graveyard stay, so a card that left the graveyard and came back before the reflexive ability resolves is still exiled; it is a new object (CR 400.7). Sure of the code, not tested.
 - `EachOtherPlayerDrawsCardEffectHandler` (the 11 gift cards) draws in seating order from the first seat, not in APNAP order (CR 101.4); fold with the gift opponent. Sure of the code.
 - Rikku, Resourceful Guardian: "until end of turn, that creature can't be blocked by creatures your opponents control" floats a granted `CantBeBlockedByCreaturesMatchingPredicateEffect` ability (`MakeCreatureUnblockableEffect.byCreaturesYourOpponentsControl()`), so a later "loses all abilities" ends it, though the effect gives no ability (CR 611.2a, 613.11). Sure of the code and the rule.
 

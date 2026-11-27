@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -16,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -23,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.IntStream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -43,6 +47,7 @@ public class CopyTriggeringSpellEffectHandler implements NormalEffectHandlerBean
     private final TargetRedirectionSupport targetRedirectionSupport;
     private final SubjectResolutionService subjectResolutionService;
     private final ValidTargetService validTargetService;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -147,7 +152,8 @@ public class CopyTriggeringSpellEffectHandler implements NormalEffectHandlerBean
      * each permanent the effect names that the spell, as its controller would target it, could target; each copy has
      * that permanent as every one of its targets, with the whole divided damage, and is put on the stack at once (the
      * copier chooses no new targets). The copies are controlled by the copier the effect names, else the spell's
-     * controller.
+     * controller, who chooses the order they are put on the stack in (Precursor Golem and Ink-Treader Nephilim rulings),
+     * through the trigger-order prompt, unless that player lets the game order their simultaneous stack objects.
      */
     private void copyOntoEachPermanent(GameData gameData, StackEntry entry, CopyTriggeringSpellEffect effect,
                                        StackEntry spell) {
@@ -167,6 +173,7 @@ public class CopyTriggeringSpellEffectHandler implements NormalEffectHandlerBean
         Card spellCard = spell.getCard();
         boolean token = effect.tokenCopy() || effect.permanentSpellToken() && isPermanentSpell(spell.getEntryType());
         int dividedDamage = spell.getDamageAssignments().values().stream().mapToInt(Integer::intValue).sum();
+        List<StackEntry> copies = new ArrayList<>();
         for (Permanent target : targets) {
             Card copyCard = token ? copySupport.createTokenCopyCard(spellCard) : copySupport.createCopyCard(spellCard);
             UUID targetId = target.getId();
@@ -174,12 +181,22 @@ public class CopyTriggeringSpellEffectHandler implements NormalEffectHandlerBean
                     spell.getDamageAssignments().isEmpty() ? Map.of() : Map.of(targetId, dividedDamage),
                     new ArrayList<>(Collections.nCopies(spell.getDeclaredTargetIds().size(), targetId)));
             copySupport.addCopyToStack(gameData, copyEntry);
+            copies.add(copyEntry);
             gameLogService.append(gameData, GameLog.builder()
                     .text("A copy of ").card(spellCard)
                     .text(" is created targeting ").card(target.getCard()).text(".").build());
         }
         log.info("Game {} - {} copies of {} created, one targeting each of {} permanents",
                 gameData.id, targets.size(), spellCard.getName(), targets.size());
+        if (copies.size() > 1 && !gameData.playersAutoOrderingTriggers.contains(copierId)) {
+            List<UUID> ids = copies.stream().map(StackEntry::getTargetableId).toList();
+            String spellName = FaceDownVisibility.nameShownTo(gameData, spell, copierId);
+            List<String> labels = IntStream.range(0, copies.size()).mapToObj(index -> (index + 1) + ": " + spellName
+                    + " targeting " + FaceDownVisibility.nameShownTo(gameData, targets.get(index), copierId)).toList();
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(copierId, null, null,
+                    new ChoiceContext.TriggerOrder(ids, List.of()), labels,
+                    "Choose the copy to put on the stack first (it will resolve last)."));
+        }
     }
 
     private static boolean isPermanentSpell(StackEntryType entryType) {

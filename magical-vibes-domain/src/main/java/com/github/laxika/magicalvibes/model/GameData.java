@@ -643,7 +643,8 @@ public class GameData {
     public final Map<UUID, Set<TurnStep>> playerAutoStopSteps = new ConcurrentHashMap<>();
     /**
      * Players who let the game put their simultaneous triggered abilities on the stack in the order
-     * they triggered instead of being asked for an order (CR 603.3b leaves the order to the player).
+     * they triggered instead of being asked for an order (CR 603.3b leaves the order to the player), and
+     * likewise the spell copies one effect puts on the stack at once under their control.
      */
     public final Set<UUID> playersAutoOrderingTriggers = ConcurrentHashMap.newKeySet();
     /**
@@ -1964,6 +1965,15 @@ public class GameData {
 
     /** Number of casualty copies still to queue for each just-cast spell. */
     public final Map<UUID, Integer> casualtySpellCopyCounts = new ConcurrentHashMap<>();
+
+    /**
+     * The zone each card copy waiting in exile to be cast was created in (CR 707.12: "the copy is created in the same
+     * zone the object is in"), by the copy's card id: its caster's hand for God-Eternal Kefnet, a graveyard for
+     * Spellweaver Volute, exile for a copy of an exiled card. The copy is cast from that zone: {@code SpellEvents}
+     * takes the entry as the copy becomes cast and records it as the spell's cast zone. A copy of a card in another
+     * player's hand has none, as no zone value tells that hand from its caster's.
+     */
+    public final Map<UUID, Zone> castCopyCreationZones = new ConcurrentHashMap<>();
 
 
     /** Mana choices awaiting completion whose chosen mana carries a {@link ManaCopyRider} (Primal
@@ -11030,6 +11040,7 @@ public class GameData {
         copy.counteredSpellManaCosts.putAll(this.counteredSpellManaCosts);
 
         copy.conspiredSpellCopyCounts.putAll(this.conspiredSpellCopyCounts);
+        copy.castCopyCreationZones.putAll(this.castCopyCreationZones);
         copy.casualtySpellCopyCounts.putAll(this.casualtySpellCopyCounts);
 
         // --- Pending one-shot spell copy triggers (Primal Wellspring) ---

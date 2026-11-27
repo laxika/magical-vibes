@@ -371,7 +371,10 @@ public sealed interface ChoiceContext {
         }
     }
 
-    /** Orders triggered abilities a player put on the stack together, from the bottom of the stack upward. */
+    /**
+     * Orders the objects a player puts on the stack together, from the bottom of the stack upward: their simultaneous
+     * triggered abilities (CR 603.3b), or the spell copies one effect puts there at once under their control.
+     */
     record TriggerOrder(List<UUID> remainingIds, List<UUID> orderedIds) implements ChoiceContext {
         public TriggerOrder {
             remainingIds = List.copyOf(remainingIds);

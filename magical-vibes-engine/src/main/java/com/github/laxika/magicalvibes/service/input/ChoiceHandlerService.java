@@ -549,17 +549,18 @@ public class ChoiceHandlerService {
             List<UUID> remaining = new ArrayList<>(order.remainingIds());
             List<UUID> ordered = new ArrayList<>(order.orderedIds());
             ordered.add(remaining.remove(index));
+            // The labels the prompt was opened with (a trigger's, or a spell copy's with its target), renumbered.
+            List<String> labels = new ArrayList<>(colorChoice.options());
+            labels.remove(index);
             gameData.interaction.clearAwaitingInput();
             if (remaining.size() > 1) {
                 List<String> options = java.util.stream.IntStream.range(0, remaining.size())
-                        .mapToObj(i -> (i + 1) + ": " + gameData.stack.stream()
-                                .filter(entry -> entry.getTargetableId().equals(remaining.get(i)))
-                                .map(com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService::triggerOrderLabel)
-                                .findFirst().orElseThrow()).toList();
+                        .mapToObj(i -> (i + 1) + ": " + labels.get(i).substring(labels.get(i).indexOf(": ") + 2))
+                        .toList();
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         player.getId(), null, null,
                         new ChoiceContext.TriggerOrder(remaining, ordered), options,
-                        "Choose the next trigger to put on the stack."));
+                        "Choose the next object to put on the stack."));
                 return;
             }
             ordered.addAll(remaining);

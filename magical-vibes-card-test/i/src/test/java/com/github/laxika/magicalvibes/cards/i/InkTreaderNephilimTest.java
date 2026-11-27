@@ -8,7 +8,9 @@ import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.r.Repeal;
 import com.github.laxika.magicalvibes.cards.s.SeedsOfStrength;
 import com.github.laxika.magicalvibes.cards.s.Shunt;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -47,6 +49,32 @@ class InkTreaderNephilimTest extends BaseCardTest {
         assertThat(copies).extracting(StackEntry::getTargetId)
                 .containsExactlyInAnyOrder(ownCreature.getId(), opposingCreature.getId());
         assertThat(copies).allMatch(copy -> copy.getControllerId().equals(player1.getId()));
+    }
+
+    @Test
+    @DisplayName("The Nephilim's controller chooses the order its copies go on the stack")
+    void controllerChoosesTheCopiesStackOrder() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new InkTreaderNephilim());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new BatteringWurm());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.forceActivePlayer(player2);
+        harness.setAutoOrderTriggers(player1, false);
+
+        harness.castInstant(player2, 0, source.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class))
+                .satisfies(order -> {
+                    assertThat(order.playerId()).isEqualTo(player1.getId());
+                    assertThat(order.context()).isInstanceOf(ChoiceContext.TriggerOrder.class);
+                });
+        harness.chooseTriggerToStackNext(player1, "targeting Grizzly Bears");
+
+        List<StackEntry> copies = gd.stack.stream().filter(StackEntry::isCopy).toList();
+        assertThat(copies).extracting(StackEntry::getTargetId)
+                .containsExactly(opposingCreature.getId(), ownCreature.getId());
     }
 
     @Test

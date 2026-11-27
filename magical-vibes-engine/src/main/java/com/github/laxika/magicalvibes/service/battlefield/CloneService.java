@@ -664,7 +664,7 @@ public class CloneService {
         if (battlefieldEntryBatch != null) {
             List<StackEntry> triggers = new ArrayList<>();
             if (graveyardCardToExile != null) {
-                triggers.add(exileCopiedCardAbility(perm, controllerId, graveyardCardToExile));
+                triggers.add(exileCopiedCardAbility(gameData, perm, controllerId, graveyardCardToExile));
             }
             if (targetPerm != null && !reflexiveEffects.isEmpty()) {
                 triggers.add(copiedPermanentAbility(card, perm, controllerId, targetPerm, reflexiveEffects));
@@ -747,7 +747,7 @@ public class CloneService {
 
         if (graveyardCardToExile != null) {
             triggeredAbilityStackService.putMade(gameData,
-                    exileCopiedCardAbility(perm, controllerId, graveyardCardToExile));
+                    exileCopiedCardAbility(gameData, perm, controllerId, graveyardCardToExile));
         }
 
         if (targetPerm != null && !reflexiveEffects.isEmpty()) {
@@ -763,13 +763,16 @@ public class CloneService {
 
     /**
      * The reflexive ability the copy's entering makes when it copied a card in a graveyard ("when you do, exile that
-     * card", CR 603.12), with the copy as its source.
+     * card", CR 603.12), with the copy as its source. It names the card in the graveyard stay it has as the copy
+     * enters, so a card that left the graveyard and came back before it resolves is a new object it leaves alone
+     * (CR 400.7).
      */
-    private static StackEntry exileCopiedCardAbility(Permanent perm, UUID controllerId, Card copiedCard) {
+    private static StackEntry exileCopiedCardAbility(GameData gameData, Permanent perm, UUID controllerId,
+                                                     Card copiedCard) {
         StackEntry ability = TriggeredAbilityStackService.madeAbility(perm.getCard(), controllerId,
                 FaceDownVisibility.publicName(perm) + "'s reflexive ability",
                 List.of(ExileGraveyardCardsEffect.cards(Subjects.triggeringCards())), 0, perm.getId());
-        ability.setTriggeringCardId(copiedCard.getId());
+        ability.setTriggeringCard(copiedCard.getId(), gameData.graveyardEntryVersion(copiedCard.getId()));
         return ability;
     }
 

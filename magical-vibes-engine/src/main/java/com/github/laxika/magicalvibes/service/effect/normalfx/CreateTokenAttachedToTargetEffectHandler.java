@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.AttachCreatedTokensToHostsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
@@ -56,8 +57,8 @@ public class CreateTokenAttachedToTargetEffectHandler implements NormalEffectHan
             return;
         }
         if (!(e.subject() instanceof PermanentSubject.Target)) {
-            subjectResolutionService.permanents(gameData, entry, e, e.subject())
-                    .forEach(host -> createAttachedToken(gameData, entry, e, host.getId()));
+            resolve(gameData, entry, e, subjectResolutionService.permanents(gameData, entry, e, e.subject())
+                    .stream().map(Permanent::getId).toList());
             recordCreated(gameData, entry, createdBefore);
             return;
         }
@@ -102,7 +103,7 @@ public class CreateTokenAttachedToTargetEffectHandler implements NormalEffectHan
                     "Choose one of the creatures that entered to attach the token to.");
             return false;
         }
-        candidates.forEach(candidateId -> createAttachedToken(gameData, entry, e, candidateId));
+        resolve(gameData, entry, e, candidates);
         return true;
     }
 
@@ -118,7 +119,7 @@ public class CreateTokenAttachedToTargetEffectHandler implements NormalEffectHan
             throw new IllegalStateException("Choose one of the creatures that entered");
         }
         int createdBefore = entry.getCreatedPermanentIds().size();
-        createAttachedToken(gameData, entry, context.effect(), chosenPermanentId);
+        resolve(gameData, entry, context.effect(), List.of(chosenPermanentId));
         recordCreated(gameData, entry, createdBefore);
     }
 
@@ -135,15 +136,31 @@ public class CreateTokenAttachedToTargetEffectHandler implements NormalEffectHan
                 .toList();
     }
 
+    /**
+     * Creates the token attached to each host in turn, each host's creation its own event. One its creating player stops
+     * to order its replacements (CR 616.1) finishes after the answer, so its tokens are attached by an inserted
+     * {@link AttachCreatedTokensToHostsEffect} step once every token it made is known, and the hosts after it get their
+     * tokens in steps of their own after that one.
+     */
     void resolve(GameData gameData, StackEntry entry, CreateTokenAttachedToTargetEffect e,
                  List<UUID> targetIds) {
-        for (UUID targetId : targetIds) {
-            createAttachedToken(gameData, entry, e, targetId);
+        for (int i = 0; i < targetIds.size(); i++) {
+            int createdBefore = entry.getCreatedPermanentIds().size();
+            if (!createAttachedToken(gameData, entry, e, targetIds.get(i))) {
+                List<CardEffect> rest = new ArrayList<>();
+                rest.add(new AttachCreatedTokensToHostsEffect(createdBefore, List.of(targetIds.get(i))));
+                targetIds.subList(i + 1, targetIds.size()).forEach(hostId -> rest.add(
+                        new CreateTokenAttachedToTargetEffect(e.token(), e.targetControllerRelation(),
+                                e.targetFilter(), Subjects.named(hostId))));
+                entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, rest);
+                return;
+            }
         }
     }
 
-    private void createAttachedToken(GameData gameData, StackEntry entry,
-                                     CreateTokenAttachedToTargetEffect e, UUID targetId) {
+    /** @return false when the creation stopped for its replacements' order, so nothing was attached yet */
+    private boolean createAttachedToken(GameData gameData, StackEntry entry,
+                                        CreateTokenAttachedToTargetEffect e, UUID targetId) {
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         UUID targetControllerId = target == null
                 ? null : gameQueryService.findPermanentController(gameData, target.getId());
@@ -155,7 +172,7 @@ public class CreateTokenAttachedToTargetEffectHandler implements NormalEffectHan
         if (target == null || !targetControllerMatches
                 || e.targetFilter() != null
                 && !predicateEvaluationService.matchesPermanentPredicate(gameData, target, e.targetFilter())) {
-            return;
+            return true;
         }
 
         Permanent source = entry.getSourcePermanentId() == null
@@ -164,7 +181,7 @@ public class CreateTokenAttachedToTargetEffectHandler implements NormalEffectHan
         AmountContext context = AmountContext.forStackEntry(entry, source);
         int amount = amountEvaluationService.evaluate(gameData, e.token().amount(), context);
         if (amount <= 0) {
-            return;
+            return true;
         }
         int power = amountEvaluationService.evaluate(gameData, e.token().power(), context);
         int toughness = amountEvaluationService.evaluate(gameData, e.token().toughness(), context);
@@ -173,13 +190,17 @@ public class CreateTokenAttachedToTargetEffectHandler implements NormalEffectHan
         Permanent previewPermanent = new Permanent(preview);
         if (!auraAttachmentService.canEnchant(gameData, preview, entry.getControllerId(), target)
                 || gameQueryService.hasProtectionFromSource(gameData, target, previewPermanent)) {
-            return;
+            return true;
         }
 
         List<UUID> createdIds = permanentControlSupport.applyCreateToken(
                 gameData, entry.getControllerId(), e.token(), amount,
                 entry.getCard().getSetCode(), power, toughness);
         entry.getCreatedPermanentIds().addAll(createdIds);
+        if (createdIds.isEmpty() && gameData.interaction.isAwaitingInput()
+                && gameData.pendingTokenCreationReplacement == null && entry.getResolvingEffectIndex() >= 0) {
+            return false;
+        }
 
         for (UUID createdId : createdIds) {
             Permanent role = gameQueryService.findPermanentById(gameData, createdId);
@@ -192,5 +213,6 @@ public class CreateTokenAttachedToTargetEffectHandler implements NormalEffectHan
             role.setTimestamp(gameData.nextTimestamp());
             gameData.rulesEvents.occur(new AttachmentEvent.AuraAttached(role, target.getId()));
         }
+        return true;
     }
 }

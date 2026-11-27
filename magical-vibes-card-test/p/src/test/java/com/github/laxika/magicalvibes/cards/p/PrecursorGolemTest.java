@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.cards.f.ForkedBolt;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -251,6 +253,33 @@ class PrecursorGolemTest extends BaseCardTest {
         assertThat(gd.stack)
                 .allSatisfy(entry -> assertThat(entry.getControllerId()).isEqualTo(player2.getId()));
         assertThat(gd.stack.stream().filter(entry -> entry.isCopy()).toList()).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("The copies' controller chooses the order the copies go on the stack")
+    void copiesControllerChoosesTheirStackOrder() {
+        castAndResolveGolemWithTokens();
+        Permanent precursor = harness.getGameQueryService().findPermanentById(gd,
+                harness.getPermanentId(player1, "Precursor Golem"));
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.forceActivePlayer(player2);
+        harness.setAutoOrderTriggers(player2, false);
+
+        harness.castInstant(player2, 0, getAnyGolemTokenId(player1));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class))
+                .satisfies(order -> {
+                    assertThat(order.playerId()).isEqualTo(player2.getId());
+                    assertThat(order.context()).isInstanceOf(ChoiceContext.TriggerOrder.class);
+                    assertThat(order.options()).hasSize(2);
+                });
+        harness.chooseTriggerToStackNext(player2, "targeting Precursor Golem");
+
+        assertThat(gd.stack).hasSize(3);
+        assertThat(gd.stack.get(1).getTargetId()).isEqualTo(precursor.getId());
+        assertThat(gd.stack.get(2).getTargetId()).isNotEqualTo(precursor.getId());
     }
 
     private void castAndResolveGolemWithTokens() {

@@ -117,6 +117,16 @@ A copy with a retarget prompt waits in `GameData.stagedSpellCopies`; copy and be
 Owner: `CopySupport` (`addCopyToStack`, `commitDecidedStagedCopies`).
 Why: ward sees only the final targets.
 
+### Copies one effect puts on the stack at once are ordered by their controller
+"Copy it for each other creature it could target" stacks its copies in the order their controller chooses, through the trigger-order prompt (`ChoiceContext.TriggerOrder`).
+Owner: `CopyTriggeringSpellEffectHandler` (`copyOntoEachPermanent`).
+Why: the Precursor Golem and Ink-Treader Nephilim rulings.
+
+### A copy of a card is cast from its card's zone (CR 707.12)
+A copy parked in exile for its cast records the zone it was created in (`GameData.castCopyCreationZones`); the cast event and the copy's `sourceZone` read it. A copy of a card in another player's hand records none.
+Owner: the copy-and-cast handlers, `SpellEvents.cast`.
+Why: Kefnet's copy is cast from the hand and Spellweaver Volute's from a graveyard, and "cast from" triggers read that.
+
 ## What a stack entry retains
 
 ### The source's last-known information (CR 608.2h)

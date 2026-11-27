@@ -48,7 +48,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | PY Payments | PY-1, PY-2, PY-3 | PY-1, PY-2 done 2026-11-27; PY-3 open |
 | TR Triggers, subjects and targeting | TR-1, TR-2, TR-3 | TR-1, TR-2, TR-3 done 2026-11-27 (TR-3: T5's caller sweep left) |
 | LS Library searches and reveals | LS-1, LS-2, LS-3 | LS-1 done 2026-11-27; LS-2 done 2026-11-27 (N35, E10 left) |
-| TK Tokens and copies | TK-1, TK-2 | TK-1 done 2026-11-27; TK-2 open |
+| TK Tokens and copies | TK-1, TK-2 | TK-1 done 2026-11-27; TK-2 done 2026-11-27 (T1 left: choices keyed by their linking ability) |
 | FD Face-down and hidden reads | FD-1, FD-2 | open |
 | LY Layers, protection, text changes, linked abilities | LY-1 to LY-5 | open |
 | DR Draws | DR-1 | open |
@@ -407,6 +407,15 @@ New line N37 (seen in PY-2): the castability readers of the any-mana permissions
 `getAnyManaTypeExiledCardIds` and library-top checks, `GameActionAvailabilityService.canSpendAnyManaTypeToCast` with Xanathar's
 library-top grant) check `canPayAsGeneric`, so an "as though it were mana of any color" permission (`AnyManaSpending`) shows a {C}
 cost as castable with colored mana that the payment then refuses (CR 107.4c); read `CastingPermissionService.anyManaSpending`.
+
+New line N52 (seen in TK-2): `StackEntryCastFromZonePredicate(Zone.HAND)` readers of "your hand" (Vega the Watcher's "from
+anywhere other than your hand", the "cast from your hand" checks) can't tell another player's hand: a spell cast from an
+opponent's hand (Sen Triplets' `playFromHandOf`) reads as cast from its caster's hand; unverified. Reversal of Fortune's copy
+records no zone for that reason (TK-2).
+
+New line N53 (seen in TK-2): a copy of a card parked in exile for its cast is still judged as cast from exile before it becomes
+cast: `CopyImprintedCardAndMayCastCopyHandler`'s `castableFromExile`, Kefnet's `getCastCostModifier`/`paySpellManaCostFromNonHandZone`
+with `Zone.EXILE`, so an exile restriction or cost change applies to a copy created in a hand or graveyard (CR 707.12).
 
 Outcome:
 
@@ -901,7 +910,26 @@ New line N47 (seen in TK-1): Life of the Party with three or more players: when 
 their own turn), Esix's creature choice ends the resolution, so the copies of the opponents after them are never created
 (`CreateTokenCopyOfSourceForEachOtherPlayerEffectHandler`).
 
-Outcome:
+Outcome: 2026-11-27. Fixed: S18, T11, T12, O99 (deleted from entry 18), N43, N44, N45, N47. S18: "copy it for each other
+creature it could target" (Precursor Golem, Ink-Treader Nephilim, Zada, Mirrorwing Dragon) asks the copies' controller their
+stacking order through the trigger-order prompt (`ChoiceContext.TriggerOrder`, labels "<spell> targeting <permanent>"; the
+answer now renumbers the prompt's own labels); rulings. T11: a copy of a card parked in exile for its cast records the zone it
+was created in (`GameData.castCopyCreationZones`: Kefnet the caster's hand, Spellweaver Volute a graveyard, the
+`CopyImprintedCardAndMayCastCopyEffect` copies their card's zone), and `SpellEvents.cast` makes it the cast zone and the copy's
+`sourceZone` (CR 707.12; Kefnet, Volute rulings). Reversal of Fortune's copy, in the opponent's hand, records none, so it keeps
+reading as cast from elsewhere than its caster's hand (Vega the Watcher pinned; see N52). T12: The Clone Saga chapter II copies
+`withoutNewTargetChoice()` (CR 707.10, 707.10c; mutate made it observable). O99: `CloneService.exileCopiedCardAbility` records
+the copied card's graveyard stay (CR 400.7). N43: Timothar's Bat ability is granted by `GrantEffectToTargetEffect` over
+`Subjects.createdThisResolution()`, so a copy of the Bat lacks it (ruling; the pin is now "a copy isn't sacrificed"). N44:
+`CreateTokenAttachedToTargetEffectHandler` inserts `AttachCreatedTokensToHostsEffect` (and one `Subjects.named` step per later
+host) when a creation stops for the replacement order; `CreateTokensAndAttachEquipmentEffectHandler` inserts the new internal
+step `AttachEquipmentToCreatedTokensEffect`. N45: `ReplacementOrderService` asks a token creation's order of the would-be
+controller after Crafty Cutpurse (ruling, CR 616.1). N47: when an Esix creature choice stops Life of the Party's creation, the
+handler inserts the effect again `forCreators` the later players. Dropped: N46 (the Roles one creation attaches at once are
+identical, so which one the controller keeps under CR 613.7m changes nothing). Left: T1 (the one `Permanent.chosenPermanentId`
+outlives a copy effect and is written by 49 call sites in 28 files and read in 26: a copied "the chosen creature" ability reads a
+choice it never made, CR 607.2d, 707.7; needs choices keyed by their linking ability; only Zenos yae Galvus reads
+`ChoosePermanentsEffect`'s write). New lines N52, N53 (CP-1), N54 (MC-2). Ratchet 2855/2239 to 2856/2240, one ledger row.
 
 ### FD. Face-down and hidden reads
 
@@ -1170,6 +1198,10 @@ not by its resolving spell, may still get no opponent choice with three or more 
 
 New line N51 (seen in LG-1): `ClashSupport`'s outcome line says "No one won the clash." also when the other player's card had
 the higher mana value, and `performClash` still reads the opponent as the first other seat in turn order (multiplayer).
+
+New line N54 (seen in TK-2): `CreateTokenAttachedToTargetEffectHandler` records its CREATE_TOKEN step as it returns, so a
+creation that stops for the replacement order (its tokens made and attached after the answer) records none, and a "when you do"
+reader of it (Curse of the Werefox) sees no token.
 
 Outcome:
 

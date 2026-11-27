@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyDrawnInstantOrSorceryAndMayCastCopyEffect;
@@ -41,6 +42,8 @@ public class CopyDrawnInstantOrSorceryAndMayCastCopyEffectHandler implements Nor
         copy.addStaticEffect(new ReduceOwnCastCostEffect(new Fixed(2)));
 
         exileService.exileCard(gameData, entry.getControllerId(), copy);
+        // "The copy is created in and cast from your hand" (ruling, CR 707.12).
+        gameData.castCopyCreationZones.put(copy.getId(), Zone.HAND);
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 copy,
                 entry.getControllerId(),

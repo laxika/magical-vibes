@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -49,6 +50,25 @@ class SuperiorSpiderManTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(bears);
         assertThat(gd.findExiledCard(bears.getId())).isNotNull();
+    }
+
+    @Test
+    @DisplayName("A copied card that left the graveyard and came back is a new object the reflexive ability doesn't exile")
+    void copiedCardThatLeftAndReturnedIsNotExiled() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(bears));
+        harness.castFromHand(player1, new SuperiorSpiderMan(), "{2}{U}{B}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
+
+        gd.markGraveyardExit(bears.getId());
+        gd.markGraveyardEntry(bears);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(bears);
+        assertThat(gd.findExiledCard(bears.getId())).isNull();
     }
 
     @Test

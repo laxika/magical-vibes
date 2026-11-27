@@ -222,8 +222,8 @@ class TimotharBaronOfBatsTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A copy of the Bat returns nothing")
-    void copiedBatSacrificesItselfWithoutReturningOriginalsExiledCard() {
+    @DisplayName("A copy of the Bat doesn't have the ability Timothar grants: it isn't sacrificed and returns nothing")
+    void copiedBatLacksTheGrantedAbility() {
         Permanent original = createBat();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -236,7 +236,7 @@ class TimotharBaronOfBatsTest extends BaseCardTest {
         dealBatCombatDamage(copy);
         resolveAllTriggers();
 
-        assertThat(findPermanents(player1, "Bat")).containsExactly(original);
+        assertThat(findPermanents(player1, "Bat")).containsExactlyInAnyOrder(original, copy);
         harness.assertNotOnBattlefield(player1, "Vampire Noble");
         assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(1);
     }

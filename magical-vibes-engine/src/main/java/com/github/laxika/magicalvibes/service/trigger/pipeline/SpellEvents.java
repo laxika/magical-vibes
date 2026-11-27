@@ -95,8 +95,18 @@ public class SpellEvents {
         applyNextSpellRiders(gameData, spellCard, castingPlayerId, castFaceDown);
         emitSpellCastCue(gameData, spellCard);
         gameData.initializeCardIntensity(spellCard);
+        Zone copyCreatedIn = gameData.castCopyCreationZones.remove(spellCard.getId());
+        if (copyCreatedIn != null) {
+            // A copy of a card waits in exile to be cast, but it was created in its card's zone and is cast from
+            // there (CR 707.12).
+            castZone = copyCreatedIn;
+        }
         StackEntry spellEntry = null;
         for (StackEntry spell : gameData.stack) {
+            if (copyCreatedIn != null && spell.isCopy() && spell.getCard() != null
+                    && spell.getCard().getId().equals(spellCard.getId())) {
+                spell.setSourceZone(copyCreatedIn);
+            }
             if (spell.getCard() != null && spell.getCard().getId().equals(spellCard.getId()) && !spell.isCopy()) {
                 spell.setAdditionalEnterCounters(gameData.spellAdditionalEnterCounters
                         .getOrDefault(spellCard.getId(), 0));

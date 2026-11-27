@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.h.Heartfire;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.SwordsToPlowshares;
+import com.github.laxika.magicalvibes.cards.v.VegaTheWatcher;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -22,7 +23,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({GodEternalKefnet.class, Divination.class, Forest.class, Mountain.class, Plains.class,
-        SwordsToPlowshares.class, WrathOfGod.class, FinaleOfRevelation.class, Heartfire.class})
+        SwordsToPlowshares.class, WrathOfGod.class, FinaleOfRevelation.class, Heartfire.class,
+        VegaTheWatcher.class})
 class GodEternalKefnetTest extends BaseCardTest {
 
     @Test
@@ -64,6 +66,23 @@ class GodEternalKefnetTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 3);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    @DisplayName("The copy is cast from its caster's hand, so a cast-from-elsewhere trigger doesn't see it")
+    void copyIsCastFromHand() {
+        harness.addToBattlefield(player1, new GodEternalKefnet());
+        harness.addToBattlefield(player1, new VegaTheWatcher());
+        harness.setLibrary(player1, List.of(new Divination(), new Forest(), new Mountain(), new Plains()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).singleElement()
+                .satisfies(entry -> assertThat(entry.isCopy()).isTrue());
     }
 
     @Test

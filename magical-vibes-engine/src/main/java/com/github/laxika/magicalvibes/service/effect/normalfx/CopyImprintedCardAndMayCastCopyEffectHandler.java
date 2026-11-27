@@ -105,6 +105,7 @@ public class CopyImprintedCardAndMayCastCopyEffectHandler implements NormalEffec
         for (Card imprintedCard : imprintedCards.reversed()) {
             Card copy = copySupport.createCopyCard(imprintedCard);
             exileService.exileCard(gameData, controllerId, copy);
+            gameData.castCopyCreationZones.put(copy.getId(), Zone.EXILE);
 
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     copy,
@@ -124,18 +125,19 @@ public class CopyImprintedCardAndMayCastCopyEffectHandler implements NormalEffec
      */
     private void offerCopiesOfSubjectCards(GameData gameData, StackEntry entry,
                                            CopyImprintedCardAndMayCastCopyEffect copyEffect) {
-        List<Card> namedCards = subjectResolutionService.locatedCards(gameData, entry, copyEffect, copyEffect.cards())
+        List<SubjectResolutionService.LocatedCard> namedCards = subjectResolutionService
+                .locatedCards(gameData, entry, copyEffect, copyEffect.cards())
                 .stream()
                 .filter(located -> COPIED_ZONES.contains(located.zone()))
-                .map(SubjectResolutionService.LocatedCard::card)
                 .toList();
         if (copyEffect.castsAtMost() > 0) {
             offerChoiceAmongCopies(gameData, entry, copyEffect, namedCards);
             return;
         }
-        for (Card namedCard : namedCards.reversed()) {
-            Card copy = copySupport.createCopyCard(namedCard);
+        for (SubjectResolutionService.LocatedCard namedCard : namedCards.reversed()) {
+            Card copy = copySupport.createCopyCard(namedCard.card());
             exileService.exileCard(gameData, entry.getControllerId(), copy);
+            recordCreationZone(gameData, copy, namedCard, entry.getControllerId());
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     copy,
                     entry.getControllerId(),
@@ -153,15 +155,17 @@ public class CopyImprintedCardAndMayCastCopyEffectHandler implements NormalEffec
      * cease to exist (CR 707.10a).
      */
     private void offerChoiceAmongCopies(GameData gameData, StackEntry entry,
-                                        CopyImprintedCardAndMayCastCopyEffect copyEffect, List<Card> namedCards) {
+                                        CopyImprintedCardAndMayCastCopyEffect copyEffect,
+                                        List<SubjectResolutionService.LocatedCard> namedCards) {
         UUID controllerId = entry.getControllerId();
         List<UUID> copyIds = new ArrayList<>();
-        for (Card namedCard : namedCards) {
-            if (!isSpell(namedCard)) {
+        for (SubjectResolutionService.LocatedCard namedCard : namedCards) {
+            if (!isSpell(namedCard.card())) {
                 continue;
             }
-            Card copy = copySupport.createCopyCard(namedCard);
+            Card copy = copySupport.createCopyCard(namedCard.card());
             exileService.exileCard(gameData, controllerId, copy);
+            recordCreationZone(gameData, copy, namedCard, controllerId);
             copyIds.add(copy.getId());
         }
         if (copyIds.isEmpty()) {
@@ -173,6 +177,18 @@ public class CopyImprintedCardAndMayCastCopyEffectHandler implements NormalEffec
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ImprovisationCapstoneCastChoice(
                 controllerId, copyIds, Math.min(atMost, copyIds.size()),
                 "You may cast " + spells + " without paying their mana costs.", true));
+    }
+
+    /**
+     * The copy, parked in exile for its cast, is created in the zone its card is in and cast from there (CR 707.12): a
+     * graveyard, exile, or its caster's own hand. A copy of a card in another player's hand (Reversal of Fortune) gets
+     * no zone, so it reads as cast from elsewhere than its caster's hand.
+     */
+    private static void recordCreationZone(GameData gameData, Card copy, SubjectResolutionService.LocatedCard card,
+                                           UUID casterId) {
+        if (card.zone() != Zone.HAND || casterId.equals(card.ownerId())) {
+            gameData.castCopyCreationZones.put(copy.getId(), card.zone());
+        }
     }
 
     /** An instant, a sorcery or a nonland permanent card: a land card is played, not cast. */

@@ -67,6 +67,8 @@ public class CopyEnchantedInstantAndMayCastCopyEffectHandler implements NormalEf
 
         Card copy = copySupport.createCopyCard(enchantedCard);
         exileService.exileCard(gameData, entry.getControllerId(), copy);
+        // "The copy will exist in the graveyard ... the copy is cast from the graveyard" (ruling, CR 707.12).
+        gameData.castCopyCreationZones.put(copy.getId(), com.github.laxika.magicalvibes.model.Zone.GRAVEYARD);
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 copy,
                 entry.getControllerId(),

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.c.Cubwarden;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -12,6 +13,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -25,7 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({TheCloneSaga.class, Forest.class, GrizzlyBears.class, Island.class, StormCrow.class,
-        ScarletSpiderBenReilly.class, SchoolDaze.class})
+        ScarletSpiderBenReilly.class, SchoolDaze.class, Cubwarden.class})
 class TheCloneSagaTest extends BaseCardTest {
 
     @Test
@@ -45,6 +47,25 @@ class TheCloneSagaTest extends BaseCardTest {
 
         gs.handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.ScryOrder(List.of(0, 1, 2), List.of()));
+    }
+
+    @Test
+    @DisplayName("Chapter II's copy of a mutating spell keeps its target: no new targets are offered")
+    void chapterIICopyKeepsTheSpellsTarget() {
+        addSagaWithLore(1);
+        advanceToNextChapter();
+        Permanent host = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new StormCrow());
+        harness.setHand(player1, List.of(new Cubwarden()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castWithAlternateCost(player1, 0, host.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).filteredOn(StackEntry::isCopy).singleElement()
+                .satisfies(copy -> assertThat(copy.getTargetId()).isEqualTo(host.getId()));
     }
 
     @Test

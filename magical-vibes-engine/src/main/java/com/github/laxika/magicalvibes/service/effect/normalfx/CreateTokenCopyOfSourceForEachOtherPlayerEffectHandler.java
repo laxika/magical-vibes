@@ -53,7 +53,8 @@ public class CreateTokenCopyOfSourceForEachOtherPlayerEffectHandler implements N
         if (sourceControllerId == null) return;
 
         Card copied = PermanentCopierService.cardToCopy(source);
-        List<UUID> creators = gameData.orderedPlayerIds.stream()
+        List<UUID> creators = copyEffect.creators() != null ? copyEffect.creators()
+                : gameData.orderedPlayerIds.stream()
                 .filter(playerId -> !playerId.equals(sourceControllerId))
                 .toList();
         int next = 0;
@@ -64,7 +65,17 @@ public class CreateTokenCopyOfSourceForEachOtherPlayerEffectHandler implements N
         for (int i = next; i < creators.size(); i++) {
             UUID creatorId = creators.get(i);
             if (tokenCopyHandler.replaceFirstTokenCreation(gameData, entry, 1, creatorId)) {
-                if (gameData.pendingTokenCreationReplacement != null || gameData.interaction.isAwaitingInput()) {
+                if (gameData.pendingTokenCreationReplacement != null) {
+                    // The offer's answer resolves this effect again, from this player on.
+                    return;
+                }
+                if (gameData.interaction.isAwaitingInput()) {
+                    // The accepted replacement asks a choice of its own (Esix's creature) and the resolution goes on
+                    // with its next step once it is made: the players after this one create theirs in that step.
+                    if (i + 1 < creators.size() && entry.getResolvingEffectIndex() >= 0) {
+                        entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1,
+                                List.of(copyEffect.forCreators(creators.subList(i + 1, creators.size()))));
+                    }
                     return;
                 }
                 continue;

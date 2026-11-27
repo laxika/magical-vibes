@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -36,25 +38,24 @@ public class TimotharBaronOfBats extends Card {
                         ObjectRelation.ANOTHER_YOU_CONTROL),
                 UnlessPaysEffect.youMayPay(AllOfCost.of(new PayManaCost("{1}"),
                                 new ExileCardsCost(Subjects.triggeringCards())),
-                        new CreateTokenLinkedToCardsExiledThisWayEffect(batToken()))
+                        SequenceEffect.of(
+                                new CreateTokenLinkedToCardsExiledThisWayEffect(batToken()),
+                                // "It gains": a granted ability, so a copy of the Bat doesn't have it (ruling).
+                                new GrantEffectToTargetEffect(batAbility(), Duration.PERMANENT, false,
+                                        Subjects.createdThisResolution())))
                         .withPrompt("Pay {1} and exile that card to create a Bat?"));
     }
 
     private static CreateTokenEffect batToken() {
-        return new CreateTokenEffect(
-                1,
-                "Bat",
-                1,
-                1,
-                CardColor.BLACK,
-                List.of(CardSubtype.BAT),
-                Set.of(Keyword.FLYING),
-                Set.<CardType>of(),
-                List.of(
-                        new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(), SequenceEffect.of(
-                                new SacrificeSelfEffect(),
-                                new PutCardsOntoBattlefieldEffect(Subjects.exiledWithSource())
-                                        .enteringTapped()
-                                        .underControlOf(Subjects.you())))));
+        return new CreateTokenEffect(1, "Bat", 1, 1, CardColor.BLACK, List.of(CardSubtype.BAT),
+                Set.of(Keyword.FLYING), Set.<CardType>of());
+    }
+
+    private static TriggeredAbility batAbility() {
+        return new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(), SequenceEffect.of(
+                new SacrificeSelfEffect(),
+                new PutCardsOntoBattlefieldEffect(Subjects.exiledWithSource())
+                        .enteringTapped()
+                        .underControlOf(Subjects.you())));
     }
 }

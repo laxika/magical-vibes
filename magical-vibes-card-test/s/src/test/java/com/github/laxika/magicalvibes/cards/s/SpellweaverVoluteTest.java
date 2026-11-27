@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.Ghostfire;
 import com.github.laxika.magicalvibes.cards.g.GrafdiggersCage;
 import com.github.laxika.magicalvibes.cards.m.MysticSpeculation;
 import com.github.laxika.magicalvibes.cards.p.PatriciansScorn;
+import com.github.laxika.magicalvibes.cards.r.RiverKelpie;
 import com.github.laxika.magicalvibes.cards.t.TormodsCrypt;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({SpellweaverVolute.class, Ghostfire.class, MysticSpeculation.class,
-        PatriciansScorn.class, TormodsCrypt.class, GrafdiggersCage.class})
+        PatriciansScorn.class, TormodsCrypt.class, GrafdiggersCage.class, RiverKelpie.class})
 class SpellweaverVoluteTest extends BaseCardTest {
 
     @Test
@@ -69,6 +70,30 @@ class SpellweaverVoluteTest extends BaseCardTest {
                 .contains(enchantedCard.getId());
         assertThat(gd.stack).anyMatch(entry ->
                 entry.getCard().getName().equals("Ghostfire") && entry.isCopy());
+    }
+
+    @Test
+    @DisplayName("The copy is cast from the graveyard, so a cast-from-a-graveyard trigger sees it")
+    void copyIsCastFromTheGraveyard() {
+        Ghostfire enchantedCard = new Ghostfire();
+        Ghostfire anotherInstant = new Ghostfire();
+        harness.setGraveyard(player2, List.of(enchantedCard, anotherInstant));
+        harness.addToBattlefield(player2, new RiverKelpie());
+        harness.setHand(player1, List.of(new SpellweaverVolute()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.castEnchantment(player1, 0, enchantedCard.getId());
+        harness.passBothPriorities();
+        harness.forceActivePlayer(player1);
+        harness.castFromHand(player1, new MysticSpeculation(), "{U}");
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(anotherInstant.getId()));
+
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getName().equals("River Kelpie")
+                && !entry.isCopy());
     }
 
     @Test

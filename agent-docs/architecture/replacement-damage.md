@@ -64,8 +64,8 @@ Owner: `PermanentControlSupport` (`applyCreateToken`), `TokenCopySupport`.
 Why: a doubler applied after an addition doubles the added tokens too.
 
 ### The replacements are those of the player the tokens are created under
-A change of who creates them (Crafty Cutpurse) applies first; a change of who they enter under (Gather Specimens) applies after the creation's replacements, so it never decides whose doublers, additions or kind replacements apply.
-Owner: `GameQueryService` (`resolveTokenCreationController`, `tokenCreationReplacements`), the `replacement/token` candidate sources.
+A change of who creates them (Crafty Cutpurse) applies first, and that would-be controller orders them; a change of who they enter under (Gather Specimens) applies after the creation's replacements, so it never decides whose doublers, additions or kind replacements apply.
+Owner: `GameQueryService` (`resolveTokenCreationController`, `tokenCreationReplacements`), the `replacement/token` candidate sources, `ReplacementOrderService` (the chooser).
 Why: the Crafty Cutpurse and Chatterfang rulings.
 
 ### Applicability is judged against the event as it stands (CR 616.1f)
@@ -79,7 +79,7 @@ Owner: `TokenCopySupport` (`createCopiesAfterReplacementOrder`), `TokenCopyBatch
 Why: they aren't copies, but "those tokens gain haste" applies (rulings).
 
 ### Follow-ups on created tokens run after the creation finishes
-Pass the follow-up as `TokenCopyBatch.afterEntry` or splice it as the next step (`AttachCreatedTokensToHostsEffect`, `LinkCreatedTokensToExiledCardsEffect` read the entry's created permanents), and look permanents up through the game given.
+Pass the follow-up as `TokenCopyBatch.afterEntry` or splice it as the next step (`AttachCreatedTokensToHostsEffect`, `AttachEquipmentToCreatedTokensEffect`, `LinkCreatedTokensToExiledCardsEffect` read the entry's created permanents), and look permanents up through the game given.
 Owner: `TokenCopySupport` (`createTokenCopiesThen`), `StackEntry` (`insertEffectsToResolve`).
 Why: a creation may pause; the follow-up must see every token once.
 

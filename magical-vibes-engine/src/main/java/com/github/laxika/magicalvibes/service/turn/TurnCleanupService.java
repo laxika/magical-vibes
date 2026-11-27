@@ -245,6 +245,7 @@ public class TurnCleanupService {
         gameData.spellsPaidUsingPendingAnyManaTypeThisTurn.clear();
         gameData.conspiredSpellCopyCounts.clear();
         gameData.casualtySpellCopyCounts.clear();
+        gameData.castCopyCreationZones.clear();
 
         // Defensive reset of graveyard-leave batching state (always balanced via try/finally,
         // but guard against any leaked batch depth across turns).

@@ -26,7 +26,7 @@ public class TheCloneSaga extends Card {
         addTrigger(Triggers.chapter(1), new SurveilEffect(3));
         addTrigger(Triggers.chapter(2), RegisterDelayedControllerSpellCastTriggerEffect.nextThisTurn(
                 new CardTypePredicate(CardType.CREATURE), List.of(new CopyTriggeringSpellEffect()
-                        .permanentSpellCopiesAreTokens().withoutSupertypes(Set.of(CardSupertype.LEGENDARY)))));
+                        .withoutNewTargetChoice().permanentSpellCopiesAreTokens().withoutSupertypes(Set.of(CardSupertype.LEGENDARY)))));
         addTrigger(Triggers.chapter(3), new ChooseCardNameAtResolutionEffect(),
                 new RegisterChosenNameCombatDamageTriggerEffect(List.of(new DrawCardEffect())));
     }

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.replacement.ReplacementEvent;
+import com.github.laxika.magicalvibes.model.replacement.TokenCreationEvent;
 import com.github.laxika.magicalvibes.model.replacement.ReplacementOption;
 import com.github.laxika.magicalvibes.model.replacement.ReplacementOptionPreview;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -17,6 +18,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Applies the replacement and prevention effects that modify an event in the order CR 616.1
@@ -227,6 +229,20 @@ public class ReplacementOrderService {
         return (E) event.withoutAppliedKeys();
     }
 
+    /**
+     * The player who orders the effects (CR 616.1): the event's chooser, but for a token creation the player the tokens
+     * would be created under once Crafty Cutpurse changed it, whose replacements are the ones that apply (the Crafty
+     * Cutpurse ruling: "the token's would-be controller chooses").
+     */
+    private UUID chooser(GameData gameData, ReplacementEvent event) {
+        if (event instanceof TokenCreationEvent tokens) {
+            UUID wouldBeController = gameQueryService.resolveTokenCreationController(
+                    gameData, tokens.controllerId(), false);
+            return wouldBeController != null ? wouldBeController : event.chooserId();
+        }
+        return event.chooserId();
+    }
+
     private <E extends ReplacementEvent> void prompt(GameData gameData, E event, List<Candidate<E>> candidates) {
         List<ReplacementOption> options = candidates.stream().map(Candidate::option).toList();
         List<ReplacementOptionPreview> previews = new ArrayList<>();
@@ -237,7 +253,7 @@ public class ReplacementOrderService {
                     outcomes.stream().mapToInt(ReplacementEvent::amount).max().orElse(event.amount())));
         }
         PendingInteraction.ColorChoice choice = new PendingInteraction.ColorChoice(
-                event.chooserId(), null, null, new ChoiceContext.ReplacementEffectOrder(event, options, previews),
+                chooser(gameData, event), null, null, new ChoiceContext.ReplacementEffectOrder(event, options, previews),
                 options.stream().map(ReplacementOption::label).toList(), PROMPT);
         if (gameData.interaction.isAwaitingInput()) {
             gameData.queueInteraction(choice);
