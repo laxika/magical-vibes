@@ -97,6 +97,17 @@ public record InteractionPromptMessage(
                 null, null, null, null, null, null, null, allGraveyards, null);
     }
 
+    /**
+     * Pick one card out of a cross-graveyard pool. {@code cardIndices} index into {@code pool},
+     * which is sent so the client shows exactly the cards the indices address.
+     */
+    public static InteractionPromptMessage graveyardPoolIndexPick(List<Integer> cardIndices,
+                                                                  List<CardView> pool,
+                                                                  String prompt) {
+        return of(InteractionShape.GRAVEYARD_INDEX_PICK, prompt, cardIndices, pool, null, null,
+                null, null, null, null, null, null, null, true, null);
+    }
+
     public static InteractionPromptMessage libraryIndexPick(List<CardView> cards, String prompt,
                                                             boolean canFailToFind) {
         return of(InteractionShape.LIBRARY_INDEX_PICK, prompt, null, cards, null, null, null,

@@ -1375,8 +1375,23 @@ public class InteractionPromptProjectionRegistry {
 
     private InteractionPromptMessage projectGraveyardChoice(
             GameData gameData, PendingInteraction.GraveyardChoice interaction) {
+        List<Card> pool = interaction.cardPool();
+        if (pool == null) {
+            return InteractionPromptMessage.graveyardIndexPick(
+                    interaction.validIndices(), interaction.prompt(), false);
+        }
+        if (pool.stream().allMatch(card -> inSomeGraveyard(gameData, card))) {
+            return InteractionPromptMessage.graveyardPoolIndexPick(
+                    interaction.validIndices(), cardViews(pool), interaction.prompt());
+        }
         return InteractionPromptMessage.graveyardIndexPick(
-                interaction.validIndices(), interaction.prompt(), interaction.cardPool() != null);
+                interaction.validIndices(), interaction.prompt(), true);
+    }
+
+    /** Whether {@code card} is face up in a graveyard, i.e. public: a pool may also hold hidden cards. */
+    private static boolean inSomeGraveyard(GameData gameData, Card card) {
+        return gameData.playerGraveyards.values().stream()
+                .anyMatch(graveyard -> graveyard.stream().anyMatch(c -> c.getId().equals(card.getId())));
     }
 
     private InteractionPromptMessage projectGraveyardExileCostChoice(

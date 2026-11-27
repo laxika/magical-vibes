@@ -176,6 +176,30 @@ class SpecializedInteractionProjectionTest {
     }
 
     @Test
+    @DisplayName("A graveyard pick over a card pool sends the pool the indices address, an own-graveyard pick does not")
+    void graveyardChoiceOverAPoolSendsThePool() {
+        Card first = card("First");
+        Card second = card("Second");
+        gameData.playerGraveyards.put(controllerId, new ArrayList<>(List.of(first)));
+        gameData.playerGraveyards.put(opponentId, new ArrayList<>(List.of(second)));
+
+        InteractionPromptMessage overPool = prompt(PendingInteraction.GraveyardChoice
+                .builder(controllerId, List.of(1), GraveyardChoiceDestination.HAND, "Choose.")
+                .cardPool(List.of(first, second))
+                .build());
+        InteractionPromptMessage ownGraveyard = prompt(PendingInteraction.GraveyardChoice
+                .builder(controllerId, List.of(1), GraveyardChoiceDestination.HAND, "Choose.")
+                .build());
+
+        assertThat(overPool.shape()).isEqualTo(InteractionShape.GRAVEYARD_INDEX_PICK);
+        assertThat(overPool.allGraveyards()).isTrue();
+        assertThat(overPool.cardIndices()).containsExactly(1);
+        assertThat(overPool.cards()).hasSize(2);
+        assertThat(ownGraveyard.allGraveyards()).isFalse();
+        assertThat(ownGraveyard.cards()).isNull();
+    }
+
+    @Test
     @DisplayName("A mandatory pick among cards tells the client how many have to be chosen")
     void mandatoryMultiGraveyardChoiceProjectsItsMinimum() {
         InteractionPromptMessage exactlyTwo = prompt(new PendingInteraction.MultiGraveyardChoice(

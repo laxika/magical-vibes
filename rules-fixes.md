@@ -57,7 +57,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | PL Each player chooses, then all act | PL-1 | open |
 | MC Single cards | MC-1, MC-2 | open |
 | AI Hard / easy AI | AI-1, AI-2 | AI-1, AI-2 done 2026-11-27 |
-| UI Frontend | UI-1 | open |
+| UI Frontend | UI-1 | UI-1 done 2026-11-27 |
 | LG, CL Logs and non-rules cleanup | LG-1, CL-1 | open |
 | FT Missing features | FT-1, FT-2 | open |
 | Z Close | Z | open |
@@ -927,6 +927,10 @@ return; unverified.
 
 N31 (seen in EB-2): fixed by the orchestrator after EB-2 (the two Tergrid tests no longer answer a pick PY-1 made unasked).
 
+New line N33 (seen in UI-1): a `GraveyardChoice` over a card pool that holds a hidden (face-down exiled) card is projected without cards, so the
+client still guesses the pool as every graveyard's creature and artifact cards and can show the wrong cards or none; the fix is a
+face-down placeholder view per hidden pool card (`CardViewFactory`'s face-down view), then the client's fallback can go.
+
 Outcome:
 
 ### AI. Hard / easy AI (`magical-vibes-ai`)
@@ -983,7 +987,17 @@ ruling). New lines N19 to N23 in MC-2. No effect class added or deleted, so no l
 Lines: O17 (the client ignores `MULTI_PERMANENT_PICK`'s minimum and shows graveyards for an index pick over a pool;
 `GameSimulator` answers a multi-pick with the first maximum).
 
-Outcome:
+Outcome: 2026-11-27. Fixed: O17's client half (deleted from entry 18). `GameChoiceService` kept `MULTI_PERMANENT_PICK`'s `minCount`
+nowhere, so Confirm answered with fewer picks than the minimum; it now keeps it, guards `confirmMultiPermanentChoice` with
+`canConfirmMultiPermanentChoice`, disables both Confirm buttons below it and shows "at least N" in the side prompt (first red:
+`game-choice.service.spec.ts`, new, 3 specs). The graveyard index pick over a card pool: the client guessed the pool as every
+graveyard's creature and artifact cards; the server now sends the pool (`InteractionPromptMessage.graveyardPoolIndexPick`, the
+indices address it) when every card in it is in a graveyard, and the client shows exactly those (owner from the graveyard that
+holds the card); a pool holding a card the server hides (face-down exile) is still sent without cards, as
+`pooledIndexPickSendsNoCard` pins, and the client keeps its old guess for that case only (new line N33, in MC-2). Dropped: the
+`GameSimulator` half (D20 stands: `limit(maxCount)` of the valid ids is a legal answer whenever a legal one exists; a rollout
+fallback, not a rules defect). No effect class added or deleted, so no ledger or ratchet change; no `CONVERSION_VERSION` change.
+
 
 ### LG, CL. Logs and non-rules cleanup
 

@@ -64,6 +64,7 @@ export class GameChoiceService {
     this.multiPermanentSelectedIds.set(new Set());
     this.multiPermanentChoiceCards = [];
     this.multiPermanentChoiceCardIds = [];
+    this.multiPermanentMinCount = 0;
     this.multiPermanentMaxCount = 0;
     this.multiPermanentChoicePrompt = '';
     // Multi-graveyard
@@ -93,6 +94,7 @@ export class GameChoiceService {
     // Choose from graveyard
     this.choosingFromGraveyard = false;
     this.graveyardChoiceIndices = [];
+    this.graveyardChoicePoolCards = null;
     this.graveyardChoicePrompt = '';
     this.graveyardChoiceAllGraveyards = false;
     // X value choice
@@ -156,6 +158,7 @@ export class GameChoiceService {
   multiPermanentSelectedIds = signal(new Set<string>());
   multiPermanentChoiceCards: Card[] = [];
   multiPermanentChoiceCardIds: string[] = [];
+  multiPermanentMinCount = 0;
   multiPermanentMaxCount = 0;
   multiPermanentChoicePrompt = '';
 
@@ -191,6 +194,8 @@ export class GameChoiceService {
   // --- Choose from graveyard state ---
   choosingFromGraveyard = false;
   graveyardChoiceIndices: number[] = [];
+  /** The server's card pool when the indices address one (cross-graveyard picks); null for the own graveyard. */
+  graveyardChoicePoolCards: Card[] | null = null;
   graveyardChoicePrompt = '';
   graveyardChoiceAllGraveyards = false;
 
@@ -258,6 +263,7 @@ export class GameChoiceService {
           ...(msg.cardIds ?? [])
         ]));
         this.multiPermanentSelectedIds.set(new Set());
+        this.multiPermanentMinCount = msg.minCount ?? 0;
         this.multiPermanentMaxCount = msg.maxCount ?? 0;
         this.multiPermanentChoicePrompt = msg.prompt;
         break;
@@ -273,6 +279,7 @@ export class GameChoiceService {
       case 'GRAVEYARD_INDEX_PICK':
         this.choosingFromGraveyard = true;
         this.graveyardChoiceIndices = msg.cardIndices ?? [];
+        this.graveyardChoicePoolCards = msg.cards ?? null;
         this.graveyardChoicePrompt = msg.prompt;
         this.graveyardChoiceAllGraveyards = msg.allGraveyards ?? false;
         break;
@@ -462,8 +469,14 @@ export class GameChoiceService {
     this.toggleMultiPermanentSelection(cardId);
   }
 
+  /** False until the selection reaches the prompt's minimum count. */
+  get canConfirmMultiPermanentChoice(): boolean {
+    return this.choosingMultiplePermanents
+      && this.multiPermanentSelectedIds().size >= this.multiPermanentMinCount;
+  }
+
   confirmMultiPermanentChoice(): void {
-    if (!this.choosingMultiplePermanents) return;
+    if (!this.canConfirmMultiPermanentChoice) return;
     this.websocketService.send({
       type: MessageType.INTERACTION_ANSWER,
       shape: 'MULTI_PERMANENT_PICK',
@@ -474,6 +487,7 @@ export class GameChoiceService {
     this.multiPermanentSelectedIds.set(new Set());
     this.multiPermanentChoiceCards = [];
     this.multiPermanentChoiceCardIds = [];
+    this.multiPermanentMinCount = 0;
     this.multiPermanentMaxCount = 0;
     this.multiPermanentChoicePrompt = '';
   }
@@ -640,15 +654,24 @@ export class GameChoiceService {
   get graveyardChoiceCards(): { card: Card; index: number; owner: string }[] {
     const g = this.gameSignal();
     if (!g) return [];
-    const validIndices = new Set(this.graveyardChoiceIndices);
     const result: { card: Card; index: number; owner: string }[] = [];
+    const pool = this.graveyardChoicePoolCards;
 
-    if (this.graveyardChoiceAllGraveyards) {
+    if (this.graveyardChoiceAllGraveyards && pool) {
+      for (const idx of this.graveyardChoiceIndices) {
+        const card = pool[idx];
+        if (!card) continue;
+        const ownerIdx = g.graveyards.findIndex(gy => gy.some(c => c.id === card.id));
+        result.push({ card, index: idx, owner: g.playerNames[ownerIdx] ?? 'Unknown' });
+      }
+    } else if (this.graveyardChoiceAllGraveyards) {
+      // No pool sent (it holds cards the server keeps hidden): fall back to the creature/artifact
+      // cards of every graveyard, in graveyard order.
+      const validIndices = new Set(this.graveyardChoiceIndices);
       let poolIndex = 0;
       for (let playerIdx = 0; playerIdx < g.graveyards.length; playerIdx++) {
-        const graveyard = g.graveyards[playerIdx];
         const ownerName = g.playerNames[playerIdx] ?? 'Unknown';
-        for (const card of graveyard) {
+        for (const card of g.graveyards[playerIdx]) {
           if (card.type === 'CREATURE' || card.type === 'ARTIFACT') {
             if (validIndices.has(poolIndex)) {
               result.push({ card, index: poolIndex, owner: ownerName });
@@ -681,6 +704,7 @@ export class GameChoiceService {
     });
     this.choosingFromGraveyard = false;
     this.graveyardChoiceIndices = [];
+    this.graveyardChoicePoolCards = null;
     this.graveyardChoicePrompt = '';
     this.graveyardChoiceAllGraveyards = false;
   }

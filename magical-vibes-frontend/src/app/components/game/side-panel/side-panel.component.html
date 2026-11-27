@@ -608,9 +608,9 @@
 
     @if (choice.choosingMultiplePermanents) {
       <div class="side-prompt prompt-permanent-choice">
-        <span class="side-prompt-text">{{ choice.multiPermanentChoicePrompt }} ({{ choice.multiPermanentSelectedIds().size }}/{{ choice.multiPermanentMaxCount }} selected)</span>
+        <span class="side-prompt-text">{{ choice.multiPermanentChoicePrompt }} ({{ choice.multiPermanentSelectedIds().size }}/{{ choice.multiPermanentMaxCount }} selected{{ choice.multiPermanentMinCount > 0 ? ', at least ' + choice.multiPermanentMinCount : '' }})</span>
         <div class="side-prompt-buttons">
-          <button class="btn-side-prompt" (click)="choice.confirmMultiPermanentChoice()">Confirm</button>
+          <button class="btn-side-prompt" [disabled]="!choice.canConfirmMultiPermanentChoice" (click)="choice.confirmMultiPermanentChoice()">Confirm</button>
         </div>
       </div>
     }

@@ -915,7 +915,7 @@
                 (mouseleave)="onCardHoverEnd()" />
             }
           </div>
-          <button class="btn-keep" (click)="choice.confirmMultiPermanentChoice()">Confirm</button>
+          <button class="btn-keep" [disabled]="!choice.canConfirmMultiPermanentChoice" (click)="choice.confirmMultiPermanentChoice()">Confirm</button>
         </div>
       </div>
     </div>

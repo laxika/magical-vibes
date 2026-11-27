@@ -1420,7 +1420,7 @@ Don't commit.
 - `GameViewProjectionFactory.collectFaceDownReveals` decides looks from printed effects while `mayLookAtExiledCard` holds granted looks, so one question is answered twice; `exilesHandsFaceDown` doesn't look inside `MayEffect`. Sure of the code.
 - `ClashSupport`'s log says "opponent reveals" without naming the player. Sure, low.
 
-#### Other (73)
+#### Other (72)
 
 - Casting checks left from runs 40 and 41: Scrycast (Biting Remark; `ScryInteractionHandler`, `ScryAiStrategy`, code: the scry answer casts it with no `canCastDuringResolution` check, and the AI strategies have no `CastingPermissionService`); the may-cast offers don't ask the shared check; an ability leaves the stack before it resolves, where CR 608.2n removes it last. Unverified. FC-2: Knowledge Pool's timing, the split exile cast and suspend's type restriction fixed.
 - Krovikan Vampire's `ReturnDamagedCreaturesThatDiedUnderControlEffect` (a mass return with control and sacrifice links) puts an Aura card that died animated onto the battlefield with no host choice (CR 303.4f, 303.4g); Lim-Dûl's head since rules-fixes EB-1 and `ReturnDyingCreatureToBattlefieldEffect`, `ReturnDyingCreatureToOwnerBattlefieldEffect` since EB-2 go through the entry batch. Unverified.
@@ -1435,7 +1435,6 @@ Don't commit.
 - `hasLukkaExilePermission` matches a name starting "Lukka," and the printed type, not the Lukka subtype. Sure, low.
 - Mug's graveyard and exile permissions don't share "a spell". Sure, rare.
 - Make Your Own Luck puts all three cards into hand, then plots the chosen one (needs a plot library destination).
-- Frontend: the client ignores `MULTI_PERMANENT_PICK`'s minimum (code) and shows graveyards for an index pick over a pool; `GameSimulator` answers a multi-pick with the first maximum.
 - No seeded game random source: about 180 `ThreadLocalRandom` sites, random-target picks included, so tests can't fix a random pick. Sure.
 - Shaman's Trance, Tomik: "from their graveyards" is judged by zone, not by owner, so it also stops a cast from another player's graveyard. Sure of the code, low.
 - Reality Twist: a Volcanic Island offers the unlisted Island type's U; `RealityTwistTest` asserts it and the 2013 ruling is ambiguous for unlisted types. Unsure.
