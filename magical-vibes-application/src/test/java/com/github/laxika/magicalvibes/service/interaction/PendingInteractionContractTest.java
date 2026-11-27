@@ -213,7 +213,7 @@ class PendingInteractionContractTest {
             UUID target = UUID.randomUUID();
 
             PendingInteraction revealedHand = new PendingInteraction.RevealedHandChoice(
-                    chooser, target, List.of(0), 1, true, false, List.of(), null, "p", false, false);
+                    chooser, target, List.of(0), 1, true, false, List.of(), null, "p", false);
             assertThat(revealedHand.decidingPlayerId()).isEqualTo(chooser);
 
             PendingInteraction revealDiscard = new PendingInteraction.RevealCardsDiscardChoice(

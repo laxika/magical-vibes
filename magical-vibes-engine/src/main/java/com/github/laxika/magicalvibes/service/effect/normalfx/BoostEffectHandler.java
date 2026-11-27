@@ -131,9 +131,6 @@ public class BoostEffectHandler implements NormalEffectHandlerBean {
             gameData.addEffectOnPermanent(entry, new GrantKeywordEffect(boost.keywords(), Subjects.target()),
                     boosted.getId(), boost.duration());
         }
-        if (!(boost.subject() instanceof PermanentSubject.Source)) {
-            refreshWaitingAbilitiesOf(gameData, boosted);
-        }
 
         if (logged) {
             gameLogService.append(gameData, GameLog.builder()
@@ -142,23 +139,6 @@ public class BoostEffectHandler implements NormalEffectHandlerBean {
                     .build());
         }
         log.info("Game {} - {} gets {}/{}", gameData.id, boosted.getCard().getName(), powerBoost, toughnessBoost);
-    }
-
-    /**
-     * The abilities of the boosted permanent already on the stack see it with the boost as their last-known source
-     * (Ogre Battledriver's pump of a creature whose own enters ability waits).
-     */
-    private static void refreshWaitingAbilitiesOf(GameData gameData, Permanent boosted) {
-        gameData.stack.stream()
-                .filter(stackEntry -> boosted.getId().equals(stackEntry.getSourcePermanentId()))
-                .forEach(stackEntry -> {
-                    Permanent previous = stackEntry.getSourcePermanentSnapshot();
-                    Permanent refreshed = new Permanent(boosted);
-                    if (previous != null && previous.getId().equals(boosted.getId())) {
-                        refreshed.setTransformationSequence(previous.getTransformationSequence());
-                    }
-                    stackEntry.setSourcePermanentSnapshot(refreshed);
-                });
     }
 
     private static String logText(BoostEffect boost, int powerBoost, int toughnessBoost) {

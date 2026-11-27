@@ -1408,7 +1408,7 @@ Don't commit.
 - `GameViewProjectionFactory.collectFaceDownReveals` decides looks from printed effects while `mayLookAtExiledCard` holds granted looks, so one question is answered twice; `exilesHandsFaceDown` doesn't look inside `MayEffect`. Sure of the code.
 - `ClashSupport`'s log says "opponent reveals" without naming the player. Sure, low.
 
-#### Other (61)
+#### Other (57)
 
 - Casting checks left from runs 40 and 41: Scrycast (Biting Remark; `ScryInteractionHandler`, `ScryAiStrategy`, code: the scry answer casts it with no `canCastDuringResolution` check, and the AI strategies have no `CastingPermissionService`); the may-cast offers don't ask the shared check; an ability leaves the stack before it resolves, where CR 608.2n removes it last. Unverified. FC-2: Knowledge Pool's timing, the split exile cast and suspend's type restriction fixed.
 - Krovikan Vampire's `ReturnDamagedCreaturesThatDiedUnderControlEffect` (a mass return with control and sacrifice links) puts an Aura card that died animated onto the battlefield with no host choice (CR 303.4f, 303.4g); Lim-Dûl's head since rules-fixes EB-1 and `ReturnDyingCreatureToBattlefieldEffect`, `ReturnDyingCreatureToOwnerBattlefieldEffect` since EB-2 go through the entry batch. Unverified.
@@ -1440,7 +1440,6 @@ Don't commit.
 - `PerpetuallyBoostSourceEffect`: the graveyard path rewrites the card's printed P/T instead of using the perpetual store, so a later perpetual base-P/T change overrides the boost. Fairly sure.
 - Rothga (`PerpetuallyBoostTriggeringCardByPowerEffect`): a face-down creature spell's X is read from the real card, not its face-down characteristics (CR 708.2). Unsure.
 - `RemovePerpetualTriggeredAbilityEffect` (Pass the Torch, Racketeer Boss) and `PerpetuallyGrantKeywordsToStationingCreatureEffect` (Monoist Gravliner): the card is found by id in any zone (CR 400.7). Unverified.
-- `RevealedHandChoice.bottomThenDrawMode` / `discardThenDrawMode` have no setter left; the components and their branches in `CardChoiceHandlerService.finishRevealedHandChoice` are dead (17 positional constructor calls; step 11). Sure.
 - A card with both a perpetual evoke and a plain perpetual alternative cost offers only the first granted one (`GameQueryService.findGrantedAlternateCast`) (CR 601.2b).
 - Myr Welder, Territory Forge, Idris, Locus of Enlightenment: their printed exiles record no link, so a card exiled by a borrowed linkless exile ability counts as "exiled with it" (CR 607.2a). Sure of the code.
 - A borrowed "X is the mana value of the exiled card" ability (Prototype Portal) is dropped from exile borrowers instead of granted as one that does nothing. Unsure.
@@ -1464,12 +1463,9 @@ Don't commit.
 - Exile and library-top casts still refuse tap-, blight- and graveyard-exile-or-mana spells (Disruption Protocol, Wild Unraveling, Soaring Stoneglider) as "not supported from this zone"; library top takes only an "[A] or [B]" cost of sacrifice, mana, life and discard alternatives. Sure.
 - Battle cry is built on "creatures you control" (B2 keeps it), but CR 702.91a gives +1/+0 to "each other attacking creature", a teammate's attackers too (Two-Headed Giant).
 - Text-changing effects (CR 612.2) reach a source-reading boost's amounts and target filter only: not a self or named-permanent boost's amounts ("+1/+1 for each black creature"), not `targetPermanent`'s filter (Buccaneer's Bravado's "target Pirate"), not the mass boosts' set filters.
-- `BoostEffectHandler`'s refresh of the boosted permanent's waiting abilities' snapshots changes nothing observable: a departing permanent refreshes every waiting entry's snapshot itself (`PermanentRemovalService`), and a live source is read live. Sure.
 - "Attacking creatures get" / "other attacking creatures get" written as `BoostEffect.creaturesYouControl(…, attacking)` (Iroh, Firebending Instructor, Kangee's Lieutenant, Motivated Pony, Targ Nar, Honored Crop-Captain and others) leaves out a teammate's attackers (Two-Headed Giant), as battle cry does (Q7); `allCreatures(…, attacking)` would say it.
 - `CloneService.exileCopiedCardAbility` (Superior Spider-Man, Activated Sleeper, The Mimeoplasm and the other "enter as a copy of a creature card in a graveyard; when you do, exile that card" cards) names the copied card by `setTriggeringCardId` with no graveyard stay, so a card that left the graveyard and came back before the reflexive ability resolves is still exiled; it is a new object (CR 400.7). Sure of the code, not tested.
-- `ActivatedAbilityExecutionService`'s inline mana-ability branch for `DrawCardEffect` / `ManaAbilityCardDrawingEffect` draws for the activating player only, ignoring `player()`; latent (an ability with a card draw is never a mana ability here, `AbilityActivationService.movesCardToOrFromLibrary`, CR 605.1a), so likely dead code to delete. Sure of the code.
 - `EachOtherPlayerDrawsCardEffectHandler` (the 11 gift cards) draws in seating order from the first seat, not in APNAP order (CR 101.4); fold with the gift opponent. Sure of the code.
-- `TheGrimCaptainsLockerTest.doesNotGrantEscapeToNonCreatureCards` asserts a Grizzly Bears in a graveyard that holds only a Shock and never tries to cast the Shock with escape, so it doesn't test what its name says. Sure.
 - Rikku, Resourceful Guardian: "until end of turn, that creature can't be blocked by creatures your opponents control" floats a granted `CantBeBlockedByCreaturesMatchingPredicateEffect` ability (`MakeCreatureUnblockableEffect.byCreaturesYourOpponentsControl()`), so a later "loses all abilities" ends it, though the effect gives no ability (CR 611.2a, 613.11). Sure of the code and the rule.
 
 ---

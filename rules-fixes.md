@@ -58,7 +58,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | MC Single cards | MC-1, MC-2 | open |
 | AI Hard / easy AI | AI-1, AI-2 | AI-1, AI-2 done 2026-11-27 |
 | UI Frontend | UI-1 | UI-1 done 2026-11-27 |
-| LG, CL Logs and non-rules cleanup | LG-1, CL-1 | open |
+| LG, CL Logs and non-rules cleanup | LG-1, CL-1 | CL-1 done 2026-11-27; LG-1 open |
 | FT Missing features | FT-1, FT-2 | open |
 | Z Close | Z | open |
 
@@ -1135,7 +1135,19 @@ New line N7 (seen in MP-1): about 100 card test classes carry their own copy of 
 helper; they can use `GameTestHarness.addOpponent(name)` instead (Abstract Performance's, Hostile Negotiations' and Threats
 Undetected's older test methods also have no `@DisplayName`).
 
-Outcome:
+Outcome: 2026-11-27. Done (deleted from entry 18): O46 (`RevealedHandChoice`'s `bottomThenDrawMode` and `discardThenDrawMode`
+components, their branches in `CardChoiceHandlerService`, and the 17 positional constructors and callers; no caller ever passed
+`true`), O100 (the `DrawCardEffect` / `ManaAbilityCardDrawingEffect` branches of the inline mana-ability resolution; the marker
+interface `ManaAbilityCardDrawingEffect` deleted, `DrawCardEffect` implements `CardDrawingEffect`; `drawService` and
+`playerInteractionSupport` fields of `ActivatedAbilityExecutionService` went with it), O96 (`BoostEffectHandler`'s snapshot
+refresh; a departing permanent refreshes every waiting entry itself in `PermanentRemovalService`), O104 (the test now holds a
+Shock plus four other cards, mana for the escape cost, and resolves the escape cast through the engine). N3 done: unused fields
+removed from `DamageSupport` (`permanentRemovalService`, `permanentControlSupport`), `MultiPermanentChoiceHandlerService`
+(`waterbendPaymentService`, `animationSupport`, `librarySearchSupport`) and `PermanentChoiceBattlefieldHandlerService`
+(`permanentControlSupport`, `triggerTargetCollector`, `predicateEvaluationService`, `lifeSupport`, `drawService`). N7 partly: the
+`@DisplayName`s of Abstract Performance's, Hostile Negotiations' and Threats Undetected's older methods added (those three
+already use `GameTestHarness.addOpponent`); the 135 card-test classes with a private `addOpponent` / `addThirdPlayer` copy are
+left (over the 30-file limit; many copies differ from the harness's, e.g. a fixed connection name or no session registration).
 
 ### FT. Missing features
 

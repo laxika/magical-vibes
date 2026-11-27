@@ -885,9 +885,9 @@ public class PlayerInteractionSupport {
         // sourcePermanentId tracks exile-until-source-leaves effects or an imprint.
         PendingInteraction.RevealedHandChoice interaction = new PendingInteraction.RevealedHandChoice(
                 casterId, targetPlayerId, validIndices, cardsToChoose, discardMode, exileMode,
-                List.of(), sourcePermanentId, choicePrompt, false, effectiveOptional, false,
+                List.of(), sourcePermanentId, choicePrompt, effectiveOptional, false,
                 declineFallbackDiscardCount, choosableFilterFor(filter, excludedTypes),
-                imprintOnSource, shuffleIntoLibraryMode, false, grantPlayPermission, returnAtNextEndStep,
+                imprintOnSource, shuffleIntoLibraryMode, grantPlayPermission, returnAtNextEndStep,
                 exilePlayOpponentTax, false, declineEffect, chosenCardCondition, chosenCardThenEffect, 0,
                 keepInHand);
         interactionHandlerRegistry.begin(gameData, interaction);

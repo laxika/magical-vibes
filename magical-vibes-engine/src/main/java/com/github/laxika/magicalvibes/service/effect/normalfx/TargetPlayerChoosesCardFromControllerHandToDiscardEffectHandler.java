@@ -64,7 +64,7 @@ public class TargetPlayerChoosesCardFromControllerHandToDiscardEffectHandler
                 choosingPlayerId, controllerId, validIndices, 1, true, false,
                 new ArrayList<>(), entry.getSourcePermanentId(),
                 choosingPlayerName + " chooses a card for " + controllerName + " to discard.",
-                false, false, false));
+                false, false));
 
         log.info("Game {} - {} choosing a card from {}'s hand to discard", gameData.id,
                 choosingPlayerName, controllerName);

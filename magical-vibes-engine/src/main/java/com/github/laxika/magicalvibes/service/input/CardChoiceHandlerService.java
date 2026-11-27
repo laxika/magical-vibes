@@ -1810,7 +1810,7 @@ public class CardChoiceHandlerService {
 
         // A card that stays in a hand, or goes into a library, stays hidden (CR 400.2): the line doesn't name it.
         boolean staysHidden = !revealedHandChoice.discardMode() && !revealedHandChoice.exileMode()
-                && !revealedHandChoice.bottomThenDrawMode() && !revealedHandChoice.shuffleIntoLibraryMode();
+                && !revealedHandChoice.shuffleIntoLibraryMode();
         gameLogService.append(gameData, staysHidden
                 ? GameLog.text(player.getUsername() + " chooses a card from " + targetName + "'s hand.")
                 : GameLog.textCardText(player.getUsername() + " chooses ", chosenCard, " from " + targetName + "'s hand."));
@@ -1819,7 +1819,6 @@ public class CardChoiceHandlerService {
         int remainingChoices = Math.max(revealedHandChoice.remainingCount() - 1, 0);
         boolean discardMode = revealedHandChoice.discardMode();
         boolean exileMode = revealedHandChoice.exileMode();
-        boolean bottomThenDrawMode = revealedHandChoice.bottomThenDrawMode();
         // A choosableFilter (Reap Intellect) keeps its restriction on every follow-up pick.
         CardPredicate choosableFilter = revealedHandChoice.choosableFilter();
         List<Integer> newValidIndices = new ArrayList<>();
@@ -1846,8 +1845,8 @@ public class CardChoiceHandlerService {
             // Matching the legacy mid-flow re-begin, sourcePermanentId is not carried across picks.
             PendingInteraction.RevealedHandChoice nextInteraction = new PendingInteraction.RevealedHandChoice(
                     player.getId(), targetPlayerId, newValidIndices, remainingChoices,
-                    discardMode, exileMode, chosenCards, null, prompt, false, revealedHandChoice.optional(),
-                    false, 0, choosableFilter, false, revealedHandChoice.shuffleIntoLibraryMode(), false,
+                    discardMode, exileMode, chosenCards, null, prompt, revealedHandChoice.optional(),
+                    false, 0, choosableFilter, false, revealedHandChoice.shuffleIntoLibraryMode(),
                     revealedHandChoice.grantPlayPermission(), revealedHandChoice.returnAtNextEndStep(),
                     revealedHandChoice.exilePlayOpponentTax(), revealedHandChoice.chosenCardCondition(),
                     revealedHandChoice.chosenCardThenEffect(), revealedHandChoice.libraryPosition());
@@ -1884,9 +1883,7 @@ public class CardChoiceHandlerService {
         boolean discardMode = revealedHandChoice.discardMode();
         boolean exileMode = revealedHandChoice.exileMode();
         boolean keepInHand = revealedHandChoice.keepInHand();
-        boolean bottomThenDrawMode = revealedHandChoice.bottomThenDrawMode();
         boolean shuffleIntoLibraryMode = revealedHandChoice.shuffleIntoLibraryMode();
-        boolean discardThenDrawMode = revealedHandChoice.discardThenDrawMode();
         int libraryPosition = revealedHandChoice.libraryPosition();
 
         gameData.interaction.clearAwaitingInput();
@@ -1977,10 +1974,6 @@ public class CardChoiceHandlerService {
                     battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, targetPlayerId, replaced, null, false);
                 }
             }
-
-            if (discardThenDrawMode) {
-                drawService.resolveDrawCard(gameData, targetPlayerId);
-            }
         } else if (exileMode) {
             // Exile chosen cards
             UUID sourcePermanentId = revealedHandChoice.sourcePermanentId();
@@ -2054,21 +2047,6 @@ public class CardChoiceHandlerService {
                     appendCards(GameLog.builder().text(targetName + " shuffles "), chosenCards)
                             .text(" into their library.").build());
             log.info("Game {} - {} shuffles {} into their library", gameData.id, targetName, cardNames);
-        } else if (bottomThenDrawMode) {
-            // Vendilion Clique: reveal chosen card, put it on the bottom of the library, then draw a card.
-            List<Card> deck = gameData.playerDecks.get(targetPlayerId);
-            for (Card chosen : chosenCards) {
-                deck.addLast(chosen);
-            }
-
-            String cardNames = String.join(", ", chosenCards.stream().map(Card::getName).toList());
-            gameLogService.append(gameData,
-                    appendCards(GameLog.builder().text(targetName + " reveals "), chosenCards)
-                            .text(", puts it on the bottom of their library, then draws a card.").build());
-            log.info("Game {} - {} bottoms {} from {}'s hand and {} draws", gameData.id,
-                    player.getUsername(), cardNames, targetName, targetName);
-
-            drawService.resolveDrawCard(gameData, targetPlayerId);
         } else {
             List<Card> deck = gameData.playerDecks.get(targetPlayerId);
 

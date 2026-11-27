@@ -58,7 +58,6 @@ import com.github.laxika.magicalvibes.model.effect.DestroyGrantingPermanentIfNoC
 import com.github.laxika.magicalvibes.model.effect.PreventNextDamageToSourceFromCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EmpowerNextCreatureSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceEquipmentCost;
@@ -66,7 +65,6 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToChosenCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
-import com.github.laxika.magicalvibes.model.effect.ManaAbilityCardDrawingEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaColorLandScope;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
@@ -103,7 +101,6 @@ import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetF
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
-import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -125,7 +122,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LandManaTypeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -176,7 +172,6 @@ public class ActivatedAbilityExecutionService {
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport damageSupport;
 
-    private final DrawService drawService;
     private final PermanentRemovalService permanentRemovalService;
     private final com.github.laxika.magicalvibes.service.battlefield.DepartureService departureService;
     private final SpellEvents spellEvents;
@@ -197,7 +192,6 @@ public class ActivatedAbilityExecutionService {
     private final EquipSupport equipSupport;
     private final LandManaTypeSupport landManaTypeSupport;
     private final ManaSourceColorSupport manaSourceColorSupport;
-    private final PlayerInteractionSupport playerInteractionSupport;
     private final GameMutationCoordinator mutationCoordinator;
     private final LandManaReplacementService landManaReplacementService;
 
@@ -1829,20 +1823,6 @@ public class ActivatedAbilityExecutionService {
                 // ability the mana ability creates as it resolves (CR 603.7a), with the permanent as its source.
                 gameData.temporaryGlobalTriggeredAbilities.add(delayed.delayed(playerId,
                         permanent.getCard(), permanent.getId(), gameData.turnNumber));
-            } else if (effect instanceof DrawCardEffect draw) {
-                int amount = amountEvaluationService.evaluate(gameData, draw.amount(),
-                        AmountContext.forManaAbility(permanent, playerId, xValue));
-                if (amount > 0 && drawService.hasQuantumRiddlerDrawReplacement(gameData, playerId)) {
-                    drawService.resolveDrawCards(gameData, playerId, amount);
-                } else {
-                    for (int i = 0; i < amount; i++) {
-                        drawService.resolveDrawCard(gameData, playerId);
-                    }
-                }
-            } else if (effect instanceof ManaAbilityCardDrawingEffect draw) {
-                int amount = amountEvaluationService.evaluate(gameData, draw.drawnCardAmount(),
-                        AmountContext.forManaAbility(permanent, playerId, xValue));
-                playerInteractionSupport.applyDrawCards(gameData, playerId, amount);
             } else if (effect instanceof PutCountersEffect counters
                     && counters.subject() instanceof PermanentSubject.Source
                     && !gameQueryService.cantHaveCounters(gameData, permanent)) {

@@ -58,13 +58,21 @@ class TheGrimCaptainsLockerTest extends BaseCardTest {
     @DisplayName("Does not grant escape to non creature cards")
     void doesNotGrantEscapeToNonCreatureCards() {
         harness.addToBattlefield(player1, new TheGrimCaptainsLocker());
-        harness.setGraveyard(player1, List.of(new Shock()));
+        harness.setGraveyard(player1, List.of(
+                new Shock(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThatThrownBy(() -> harness.castFromGraveyardTargeting(player1, 0, player2.getId()))
+        assertThatThrownBy(() -> gs.playFlashbackSpell(gd, player1, 0, null, player2.getId(), List.of(),
+                List.of(1, 2, 3, 4)))
                 .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Shock");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test

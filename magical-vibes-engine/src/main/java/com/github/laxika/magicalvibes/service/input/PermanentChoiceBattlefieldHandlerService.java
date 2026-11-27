@@ -90,11 +90,9 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.ExileChosenPermane
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSelfAndReturnUnderOpponentControlEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GainControlOfDefendingPlayerCreatureAndAttackEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.MayReturnPermanentToHandAndEnterWithCountersEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoosesPermanentToExileUntilSourceLeavesEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.OpponentChoosesPermanentToSacrificeEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PopulateSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PreventCombatDamageByTargetCreatureIfSharesColorWithChosenPermanentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PutCounterOnEitherTargetPermanentEffectHandler;
@@ -110,12 +108,10 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrif
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrificesPermanentThenDealsManaValueDamageEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TeachSupport;
 import com.github.laxika.magicalvibes.service.effect.turnup.TurnFaceUpCopyService;
-import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import java.util.ArrayList;
@@ -188,7 +184,6 @@ public class PermanentChoiceBattlefieldHandlerService {
 
     private final PermanentRemovalService permanentRemovalService;
 
-    private final PermanentControlSupport permanentControlSupport;
 
     private final UpgradeSupport upgradeSupport;
 
@@ -208,9 +203,7 @@ public class PermanentChoiceBattlefieldHandlerService {
 
     private final StateBasedActionService stateBasedActionService;
 
-    private final TriggerTargetCollector triggerTargetCollector;
 
-    private final PredicateEvaluationService predicateEvaluationService;
 
     private final CreatureControlService creatureControlService;
 
@@ -233,9 +226,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.MaySacrificeForCounterSupport maySacrificeForCounterSupport;
 
 
-    private final LifeSupport lifeSupport;
 
-    private final com.github.laxika.magicalvibes.service.DrawService drawService;
 
     private final SoulbondSupport soulbondSupport;
 

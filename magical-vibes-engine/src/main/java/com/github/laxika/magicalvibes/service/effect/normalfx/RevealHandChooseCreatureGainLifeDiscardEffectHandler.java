@@ -82,7 +82,7 @@ public class RevealHandChooseCreatureGainLifeDiscardEffectHandler implements Nor
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealedHandChoice(
                 casterId, targetPlayerId, validIndices, 1, true, false,
                 new ArrayList<>(), null, "Choose a creature card. You gain life equal to its toughness, then "
-                + targetName + " discards it.", false, false, true));
+                + targetName + " discards it.", false, true));
 
         log.info("Game {} - {} choosing a creature from {}'s hand (gain life = toughness, then discard)",
                 gameData.id, casterName, targetName);

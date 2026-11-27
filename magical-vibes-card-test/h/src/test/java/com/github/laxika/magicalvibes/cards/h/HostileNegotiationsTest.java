@@ -27,6 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class HostileNegotiationsTest extends BaseCardTest {
 
     @Test
+    @DisplayName("An opponent chooses between one face-up and one face-down pile")
     void opponentChoosesBetweenOneFaceUpAndOneFaceDownPile() {
         Card forest = new Forest();
         Card bears = new GrizzlyBears();
@@ -98,6 +99,7 @@ class HostileNegotiationsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An empty pile may be turned face up")
     void anEmptyPileMayBeTurnedFaceUp() {
         Card forest = new Forest();
         Card bears = new GrizzlyBears();
@@ -120,6 +122,7 @@ class HostileNegotiationsTest extends BaseCardTest {
 
     @ParameterizedTest
     @ValueSource(ints = {0, 2, 4, 7})
+    @DisplayName("The opponent can choose the first pile with any library size")
     void opponentCanChooseFirstPileWithAnyLibrarySize(int librarySize) {
         List<Card> cards = java.util.stream.IntStream.range(0, librarySize)
                 .mapToObj(i -> (Card) new Forest()).toList();
@@ -142,6 +145,7 @@ class HostileNegotiationsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The opponent can choose an empty pile")
     void opponentCanChooseEmptyPile() {
         Card forest = new Forest();
         harness.setLibrary(player1, List.of(forest));
@@ -157,6 +161,7 @@ class HostileNegotiationsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The graveyard pile respects Leyline of the Void")
     void graveyardPileRespectsLeylineOfTheVoid() {
         Card forest = new Forest();
         Card swamp = new Swamp();

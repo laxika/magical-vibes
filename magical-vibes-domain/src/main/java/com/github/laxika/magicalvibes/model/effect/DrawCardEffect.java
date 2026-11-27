@@ -29,7 +29,7 @@ import java.util.Objects;
  */
 public record DrawCardEffect(DynamicAmount amount, DynamicAmount castTimeXValue, boolean rememberAmount,
                              PlayerSubject player, boolean amountPerPlayer)
-        implements ManaAbilityCardDrawingEffect, CastTimeXValueEffect {
+        implements CardDrawingEffect, CastTimeXValueEffect {
 
     public DrawCardEffect {
         Objects.requireNonNull(player, "player");

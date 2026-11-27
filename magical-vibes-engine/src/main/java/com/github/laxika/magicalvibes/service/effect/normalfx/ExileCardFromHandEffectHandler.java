@@ -64,7 +64,7 @@ public class ExileCardFromHandEffectHandler implements NormalEffectHandlerBean {
             // its answer records the exile as the hand-exile answer does.
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealedHandChoice(
                     playerId, playerId, validIndices, 1, false, true, List.of(), null,
-                    "You may choose a card to exile.", false, true, false));
+                    "You may choose a card to exile.", true, false));
             return;
         }
         playerInputService.beginExileOneCardFromHandChoice(gameData, playerId, validIndices, e.faceDown());

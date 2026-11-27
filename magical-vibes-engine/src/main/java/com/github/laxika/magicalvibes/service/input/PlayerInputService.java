@@ -2647,8 +2647,8 @@ public class PlayerInputService {
     public void beginPlotFromHandChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt) {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealedHandChoice(
                 playerId, playerId, new ArrayList<>(validIndices), 1, false, true,
-                List.of(), null, prompt, false, true, false,
-                0, null, false, false, false,
+                List.of(), null, prompt, true, false,
+                0, null, false, false,
                 false, false, true));
     }
 

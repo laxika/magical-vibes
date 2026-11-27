@@ -39,7 +39,6 @@ import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.service.combat.CombatResult;
 import com.github.laxika.magicalvibes.service.combat.attack.CombatAttackService;
 import com.github.laxika.magicalvibes.service.combat.block.CombatBlockService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseTwoCreaturesByPowerDifferenceEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseUpToThreeNonlandPermanentsThenOpponentChoosesOneEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CopySpellForEachOtherCreatureWithManaEffectHandler;
@@ -105,7 +104,6 @@ public class MultiPermanentChoiceHandlerService {
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.combat.CombatDamageService combatDamageService;
-    private final com.github.laxika.magicalvibes.service.effect.WaterbendPaymentService waterbendPaymentService;
     private final MayCastHandlerService mayCastHandlerService;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
@@ -126,7 +124,6 @@ public class MultiPermanentChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.SeparateIntoPilesEffectHandler separateIntoPilesEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.RagingRiverEffectHandler ragingRiverEffectHandler;
     private final PermanentCounterSupport permanentCounterSupport;
-    private final AnimationSupport animationSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.FlickerEffectHandler flickerEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ExileFaceDownPileEffectHandler
             exileFaceDownPileEffectHandler;
@@ -167,7 +164,6 @@ public class MultiPermanentChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport tapUntapSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.MakeCreatureUnblockableEffectHandler
             makeCreatureUnblockableEffectHandler;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport librarySearchSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.KillingWaveEffectHandler killingWaveEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .EachPlayerChoosesCreaturesWithTotalPowerAtMostThenSacrificeRestEffectHandler

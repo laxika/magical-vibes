@@ -30,6 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ThreatsUndetectedTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Searches for creatures with different powers and shuffles the chosen cards back")
     void searchesCreaturesWithDifferentPowersAndShufflesChosenCardsBack() {
         Card onePower = new LlanowarElves();
         Card duplicatePower = new LlanowarElves();
@@ -116,6 +117,7 @@ class ThreatsUndetectedTest extends BaseCardTest {
 
     @ParameterizedTest
     @ValueSource(ints = {0, 1, 2, 3})
+    @DisplayName("The search may stop before four cards")
     void mayStopSearchingBeforeFourCards(int count) {
         Card one = new LlanowarElves();
         Card two = new GrizzlyBears();
@@ -146,6 +148,7 @@ class ThreatsUndetectedTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A library without creatures finishes without a choice")
     void libraryWithoutCreaturesFinishesWithoutAChoice() {
         Card forest = new Forest();
         harness.setLibrary(player1, List.of(forest));
@@ -157,6 +160,7 @@ class ThreatsUndetectedTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Characteristic-defined power in the library is compared")
     void comparesCharacteristicDefinedPowerInTheLibrary() {
         Card lhurgoyf = new UrborgLhurgoyf();
         Card spider = new Snarespinner();
@@ -169,6 +173,7 @@ class ThreatsUndetectedTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The library is shuffled only once after the opponent chooses")
     void shufflesOnlyOnceAfterTheOpponentChooses() {
         harness.addToBattlefield(player2, new CosisTrickster());
         Card one = new LlanowarElves();
@@ -185,6 +190,7 @@ class ThreatsUndetectedTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The opponent prompt describes shuffling the chosen cards into the library")
     void opponentPromptDescribesShufflingChosenCardsIntoTheLibrary() {
         Card one = new LlanowarElves();
         Card two = new GrizzlyBears();

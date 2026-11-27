@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class AbstractPerformanceTest extends BaseCardTest {
 
     @Test
+    @DisplayName("An opponent chooses between the fixed face-down pile and the face-up pile")
     void opponentChoosesBetweenFixedFaceDownAndFaceUpPiles() {
         List<Card> faceDown = List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears());
         List<Card> faceUp = List.of(new LlanowarElves(), new LlanowarElves(), new LlanowarElves(), new LlanowarElves());
@@ -37,6 +38,7 @@ class AbstractPerformanceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The chosen pile goes to the graveyard and the other pile offers one free cast")
     void chosenPileGoesToGraveyardAndOtherPileOffersOneFreeSpell() {
         List<Card> faceDown = List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears());
         List<Card> faceUp = List.of(new LlanowarElves(), new GrizzlyBears(), new LlanowarElves(), new GrizzlyBears());
@@ -61,6 +63,7 @@ class AbstractPerformanceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining the free cast puts the other pile into hand")
     void decliningFreeCastPutsTheOtherPileIntoHand() {
         List<Card> faceDown = List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears());
         List<Card> faceUp = List.of(new LlanowarElves(), new LlanowarElves(), new LlanowarElves(), new LlanowarElves());
@@ -107,6 +110,7 @@ class AbstractPerformanceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A short library still lets the opponent choose an empty face-up pile")
     void shortLibraryStillAllowsOpponentToChooseEmptyFaceUpPile() {
         List<Card> cards = List.of(new GrizzlyBears(), new LlanowarElves());
         cast(cards, List.of());
@@ -120,6 +124,7 @@ class AbstractPerformanceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Choosing the only nonempty pile leaves no free cast choice")
     void choosingOnlyNonemptyPileLeavesNoFreeCastChoice() {
         List<Card> cards = List.of(new GrizzlyBears(), new LlanowarElves());
         cast(cards, List.of());
@@ -132,6 +137,7 @@ class AbstractPerformanceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An empty library finishes without a choice")
     void emptyLibraryFinishesWithoutAChoice() {
         cast(List.of(), List.of());
 
@@ -142,6 +148,7 @@ class AbstractPerformanceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A spell whose mandatory sacrifice cannot be paid cannot be cast")
     void cannotCastSpellWhoseMandatorySacrificeCannotBePaid() {
         List<Card> faceDown = List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears());
         Card reap = new AltarsReap();
