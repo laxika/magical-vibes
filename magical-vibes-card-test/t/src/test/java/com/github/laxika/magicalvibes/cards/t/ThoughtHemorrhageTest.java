@@ -141,6 +141,7 @@ class ThoughtHemorrhageTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.handleListChoice(player1, "Blitz Hellion");
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
@@ -158,6 +159,7 @@ class ThoughtHemorrhageTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.handleListChoice(player1, "Blitz Hellion");
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Thought Hemorrhage");

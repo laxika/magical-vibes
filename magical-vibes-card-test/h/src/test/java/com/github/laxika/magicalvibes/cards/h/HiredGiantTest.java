@@ -27,6 +27,9 @@ class HiredGiantTest extends BaseCardTest {
         castHiredGiant();
         resolveEtb();
 
+        assertThat(maySearch().playerId()).isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
+
         PendingInteraction.LibrarySearch search = activeSearch();
         assertThat(search).isNotNull();
         assertThat(search.params().playerId()).isEqualTo(player2.getId());
@@ -42,6 +45,7 @@ class HiredGiantTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(land, new PortInspector()));
         castHiredGiant();
         resolveEtb();
+        harness.handleMayAbilityChosen(player2, true);
 
         PendingInteraction.LibrarySearch search = activeSearch();
         int landIndex = indexOf(search, RishadanPort.class);
@@ -61,10 +65,12 @@ class HiredGiantTest extends BaseCardTest {
         resolveEtb();
 
         int before = gd.playerBattlefields.get(player2.getId()).size();
-        harness.handleCardChosen(player2, -1);
+        assertThat(maySearch().playerId()).isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(before);
         assertThat(activeSearch()).isNull();
+        assertThat(maySearch()).isNull();
         assertThat(gd.gameLog.stream().map(entry -> entry.plainText()))
                 .noneMatch(log -> log.contains("Library is shuffled"));
     }
@@ -88,6 +94,7 @@ class HiredGiantTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(land, new PortInspector()));
         castHiredGiant();
         resolveEtb();
+        harness.handleMayAbilityChosen(player2, true);
 
         harness.handleCardChosen(player2, indexOf(activeSearch(), Forest.class));
 
@@ -114,6 +121,10 @@ class HiredGiantTest extends BaseCardTest {
         return harness.getGameData().interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
     }
 
+    private PendingInteraction.MaySearchLibraryChoice maySearch() {
+        return gd.interaction.activeInteraction(PendingInteraction.MaySearchLibraryChoice.class);
+    }
+
     private int indexOf(PendingInteraction.LibrarySearch search, Class<? extends Card> cardType) {
         for (int i = 0; i < search.params().cards().size(); i++) {
             if (cardType.isInstance(search.params().cards().get(i))) {
@@ -133,9 +144,10 @@ class HiredGiantTest extends BaseCardTest {
         castHiredGiant();
         resolveEtb();
 
-        assertThat(activeSearch().params().playerId()).isEqualTo(player2.getId());
-        assertThat(activeSearch().params().cards()).isEmpty();
-        harness.handleCardChosen(player2, -1);
+        assertThat(maySearch().playerId()).isEqualTo(player2.getId());
+        assertThat(maySearch().search().cards()).isEmpty();
+        harness.handleMayAbilityChosen(player2, false);
+        assertThat(activeSearch()).isNull();
 
         assertThat(gd.gameLog).noneMatch(entry -> entry.plainText().contains("finds no"));
         assertThat(gd.playersWhoSearchedLibraryThisTurn).doesNotContain(player2.getId());

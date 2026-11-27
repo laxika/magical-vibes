@@ -128,6 +128,7 @@ class CrumbleToDustTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         harness.castAndResolveSorcery(player1, 0, target.getId());
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(target.getCard());
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);

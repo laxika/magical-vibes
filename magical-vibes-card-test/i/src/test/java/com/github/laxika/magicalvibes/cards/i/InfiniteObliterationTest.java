@@ -90,6 +90,7 @@ class InfiniteObliterationTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.handleListChoice(player1, "Timberpack Wolf");
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Infinite Obliteration");

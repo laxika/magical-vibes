@@ -66,7 +66,8 @@ class StainTheMindTest extends BaseCardTest {
 
         harness.handleListChoice(player1, "Runeclaw Bear");
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiZoneExileChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiZoneExileChoice.class).validCardIds()).isEmpty();
+        harness.handleMultipleCardsChosen(player1, List.of());
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
         assertThat(gd.stack).isEmpty();
     }

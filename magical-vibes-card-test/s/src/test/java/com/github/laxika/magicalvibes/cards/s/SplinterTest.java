@@ -123,6 +123,7 @@ class SplinterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 4);
 
         harness.castAndResolveSorcery(player1, 0, 0, targetId);
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         harness.assertNotOnBattlefield(player1, "Shuko");
         harness.assertNotInGraveyard(player1, "Shuko");

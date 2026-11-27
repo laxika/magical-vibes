@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.l.LeoninArbiter;
+import com.github.laxika.magicalvibes.cards.p.PsychogenicProbe;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -14,7 +17,8 @@ import java.util.stream.IntStream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TheFiveDoctors.class, TheFourthDoctor.class, TheTenthDoctor.class, Forest.class})
+@CardUsed({TheFiveDoctors.class, TheFourthDoctor.class, TheTenthDoctor.class, Forest.class, LeoninArbiter.class,
+        PsychogenicProbe.class})
 class TheFiveDoctorsTest extends BaseCardTest {
 
     @Test
@@ -120,5 +124,29 @@ class TheFiveDoctorsTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "The Fourth Doctor");
         harness.assertNotInGraveyard(player1, "The Fourth Doctor");
         harness.assertInGraveyard(player1, "The Five Doctors");
+    }
+
+    @Test
+    @DisplayName("Taking no Doctor while library searches are prevented leaves the library unshuffled")
+    void preventedLibrarySearchDoesNotShuffle() {
+        Card graveyardDoctor = new TheFourthDoctor();
+        harness.setLibrary(player1, List.of(new TheTenthDoctor()));
+        harness.setGraveyard(player1, List.of(graveyardDoctor));
+        harness.addToBattlefield(player2, new LeoninArbiter());
+        harness.addToBattlefield(player2, new PsychogenicProbe());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new TheFiveDoctors()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+        PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(graveyardDoctor.getId());
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
     }
 }

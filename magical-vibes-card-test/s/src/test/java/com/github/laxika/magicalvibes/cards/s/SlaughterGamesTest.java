@@ -187,7 +187,7 @@ class SlaughterGamesTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Can name an absent nonland card and finishes without an exile prompt")
+    @DisplayName("Can name an absent nonland card, shows the searched zones and exiles nothing")
     void mayNameCardAbsentFromTheGame() {
         harness.setHand(player2, List.of());
         harness.setGraveyard(player2, List.of());
@@ -201,6 +201,8 @@ class SlaughterGamesTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
         harness.handleListChoice(player1, "Cancel");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiZoneExileChoice.class).validCardIds()).isEmpty();
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Slaughter Games");

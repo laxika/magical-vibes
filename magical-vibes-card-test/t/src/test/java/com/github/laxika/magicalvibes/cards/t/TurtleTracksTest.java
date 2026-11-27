@@ -28,12 +28,16 @@ class TurtleTracksTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(forest));
         harness.setLibrary(player2, List.of(island));
         castTurtleTracks(List.of(player1.getId(), player2.getId()));
+        assertThat(maySearch().playerId()).isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
 
         PendingInteraction.LibrarySearch search = activeSearch();
         assertThat(search.params().playerId()).isEqualTo(player1.getId());
         assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.BATTLEFIELD);
 
         harness.handleCardChosen(player1, 0);
+        assertThat(maySearch().playerId()).isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
 
         search = activeSearch();
         assertThat(search.params().playerId()).isEqualTo(player2.getId());
@@ -54,7 +58,8 @@ class TurtleTracksTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Island()));
         castTurtleTracks(List.of(player2.getId()));
 
-        harness.handleCardChosen(player2, -1);
+        assertThat(maySearch().playerId()).isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(activeSearch()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
@@ -80,7 +85,8 @@ class TurtleTracksTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Island()));
         castTurtleTracks(List.of(player2.getId()));
 
-        harness.handleCardChosen(player2, -1);
+        assertThat(maySearch().playerId()).isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(activeSearch()).isNull();
         assertThat(gd.stack).isEmpty();
@@ -94,7 +100,8 @@ class TurtleTracksTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Island()));
         castTurtleTracks(List.of(player2.getId()));
 
-        harness.handleCardChosen(player2, -1);
+        assertThat(maySearch().playerId()).isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(activeSearch()).isNull();
         assertThat(gd.stack).isEmpty();
@@ -109,7 +116,9 @@ class TurtleTracksTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Island()));
         castTurtleTracks(List.of(player1.getId(), player2.getId()));
 
+harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
+        harness.handleMayAbilityChosen(player2, true);
         harness.handleCardChosen(player2, 0);
 
         assertThat(gd.stack).hasSize(1);
@@ -126,6 +135,8 @@ class TurtleTracksTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(island));
         castTurtleTracks(List.of(player1.getId(), player2.getId()));
 
+        assertThat(maySearch().playerId()).isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
         assertThat(activeSearch().params().playerId()).isEqualTo(player2.getId());
         harness.handleCardChosen(player2, 0);
 
@@ -142,6 +153,7 @@ class TurtleTracksTest extends BaseCardTest {
         Forest forest = new Forest();
         harness.setLibrary(player1, List.of(nonland, forest));
         castTurtleTracks(List.of(player1.getId()));
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(activeSearch().params().cards()).containsExactly(forest);
         harness.handleCardChosen(player1, 0);
@@ -161,6 +173,10 @@ class TurtleTracksTest extends BaseCardTest {
         return gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
     }
 
+    private PendingInteraction.MaySearchLibraryChoice maySearch() {
+        return gd.interaction.activeInteraction(PendingInteraction.MaySearchLibraryChoice.class);
+    }
+
     @Test
     @DisplayName("A targeted player who declines hasn't searched, so doesn't shuffle")
     void decliningIsNotSearching() {
@@ -169,7 +185,8 @@ class TurtleTracksTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Island()));
         castTurtleTracks(List.of(player2.getId()));
 
-        harness.handleCardChosen(player2, -1);
+        assertThat(maySearch().playerId()).isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, false);
         resolveAllTriggers();
 
         assertThat(gd.playersWhoSearchedLibraryThisTurn).doesNotContain(player2.getId());

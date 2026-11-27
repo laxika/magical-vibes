@@ -184,7 +184,7 @@ class MemoricideTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Choosing a name with no matching cards just shuffles library")
+    @DisplayName("Choosing a name with no matching cards shows the searched zones, exiles nothing and shuffles the library")
     void noMatchingCardsResultsInNoExile() {
         Card peek = new TurnAside();
         harness.setHand(player2, new ArrayList<>(List.of(peek)));
@@ -198,8 +198,9 @@ class MemoricideTest extends BaseCardTest {
 
         harness.handleListChoice(player1, "Moriok Reaver");
 
-        // No card selection step â€” resolves immediately when no matches
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiZoneExileChoice.class)).isNull();
+        // The searched zones are still shown, with nothing to exile
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiZoneExileChoice.class).validCardIds()).isEmpty();
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         // No cards exiled (no Moriok Reaver in any zone)
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -351,8 +352,9 @@ class MemoricideTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, player2.getId());
 
-        // No matching cards â€” resolves immediately without selection step
+        // No matching cards — the searched zones are shown with nothing to exile
         harness.handleListChoice(player1, "Moriok Reaver");
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Memoricide");
@@ -399,6 +401,7 @@ class MemoricideTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.handleListChoice(player1, "Plains"))
                 .isInstanceOf(IllegalArgumentException.class);
         harness.handleListChoice(player1, "Memoricide");
+        harness.handleMultipleCardsChosen(player1, List.of());
         harness.assertInGraveyard(player1, "Memoricide");
     }
 

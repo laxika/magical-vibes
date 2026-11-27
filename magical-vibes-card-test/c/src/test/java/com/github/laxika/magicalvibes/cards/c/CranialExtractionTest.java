@@ -101,7 +101,8 @@ class CranialExtractionTest extends BaseCardTest {
 
         harness.handleListChoice(player1, "Sakura-Tribe Elder");
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiZoneExileChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiZoneExileChoice.class).validCardIds()).isEmpty();
+        harness.handleMultipleCardsChosen(player1, List.of());
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore);
         assertThat(gd.stack).isEmpty();

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.l.LeoninArbiter;
+import com.github.laxika.magicalvibes.cards.p.PsychogenicProbe;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -27,7 +29,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({SettleTheWreckage.class, GrizzlyBears.class, HillGiant.class,
-        Plains.class, Forest.class, Island.class, Mountain.class, TreetopVillage.class})
+        Plains.class, Forest.class, Island.class, Mountain.class, TreetopVillage.class, LeoninArbiter.class,
+        PsychogenicProbe.class})
 class SettleTheWreckageTest extends BaseCardTest {
 
 
@@ -73,6 +76,9 @@ class SettleTheWreckageTest extends BaseCardTest {
         castSettleTheWreckage(player1, player2);
         harness.passBothPriorities(); // resolve Settle
 
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MaySearchLibraryChoice.class).playerId()).isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
+
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         // Only basic lands should be offered
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
@@ -87,6 +93,7 @@ class SettleTheWreckageTest extends BaseCardTest {
 
         castSettleTheWreckage(player1, player2);
         harness.passBothPriorities(); // resolve Settle
+        harness.handleMayAbilityChosen(player2, true);
 
         int battlefieldBefore = gd.playerBattlefields.get(player2.getId()).size();
 
@@ -113,6 +120,7 @@ class SettleTheWreckageTest extends BaseCardTest {
 
         castSettleTheWreckage(player1, player2);
         harness.passBothPriorities(); // resolve Settle
+        harness.handleMayAbilityChosen(player2, true);
 
         int battlefieldBefore = gd.playerBattlefields.get(player2.getId()).size();
 
@@ -131,6 +139,7 @@ class SettleTheWreckageTest extends BaseCardTest {
 
         castSettleTheWreckage(player1, player2);
         harness.passBothPriorities(); // resolve Settle
+        harness.handleMayAbilityChosen(player2, true);
 
         // Should be able to pick 3 lands (one per exiled creature)
         harness.handleCardChosen(player2, 0); // pick 1
@@ -180,9 +189,14 @@ class SettleTheWreckageTest extends BaseCardTest {
 
         // Creature is exiled
         assertThat(exiledCardsOwnedBy(player2)).hasSize(1);
-        // No search prompt since no basic lands
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("finds no basic land cards"));
+        // The player may still search, and finds nothing
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MaySearchLibraryChoice.class).playerId()).isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).isEmpty();
+        harness.handleCardChosen(player2, -1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playersWhoSearchedLibraryThisTurn).contains(player2.getId());
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("Library is shuffled"));
     }
 
     @Test
@@ -198,8 +212,13 @@ class SettleTheWreckageTest extends BaseCardTest {
 
         // Creature is exiled
         assertThat(exiledCardsOwnedBy(player2)).hasSize(1);
-        // No search prompt
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        // The player may still search the empty library, and finds nothing
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MaySearchLibraryChoice.class).playerId()).isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).isEmpty();
+        harness.handleCardChosen(player2, -1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("shuffled"));
     }
 
     @Test
@@ -210,6 +229,7 @@ class SettleTheWreckageTest extends BaseCardTest {
 
         castSettleTheWreckage(player1, player2);
         harness.passBothPriorities(); // resolve Settle
+        harness.handleMayAbilityChosen(player2, true);
 
         int battlefieldBefore = gd.playerBattlefields.get(player2.getId()).size();
 
@@ -253,8 +273,9 @@ class SettleTheWreckageTest extends BaseCardTest {
         castSettleTheWreckage(player1, player2);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        harness.handleCardChosen(player2, -1);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MaySearchLibraryChoice.class);
+        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
 
         assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(originalLibrary);
         assertThat(exiledCardsOwnedBy(player2)).hasSize(1);
@@ -276,6 +297,7 @@ class SettleTheWreckageTest extends BaseCardTest {
         assertThat(exiledCardsOwnedBy(player1)).hasSize(1);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(opposingAttacker);
         assertThat(gd.interaction.activeInteraction().decidingPlayerId()).isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().hasType(CardType.LAND) && p.isTapped());
@@ -289,12 +311,31 @@ class SettleTheWreckageTest extends BaseCardTest {
 
         castSettleTheWreckage(player1, player2);
         harness.passBothPriorities();
-        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
-            harness.handleMayAbilityChosen(player2, true);
-        }
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MaySearchLibraryChoice.class).playerId()).isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).isEmpty();
+        harness.handleCardChosen(player2, -1);
 
         assertThat(gd.playersWhoSearchedLibraryThisTurn).contains(player2.getId());
         assertThat(exiledCardsOwnedBy(player2)).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A player who can't search isn't asked and doesn't shuffle")
+    void preventedSearchDoesNotShuffle() {
+        setupAttackingCreatures(player2, 1);
+        setupLibraryWithBasicLands(player2);
+        harness.addToBattlefield(player1, new LeoninArbiter());
+        harness.addToBattlefield(player1, new PsychogenicProbe());
+        harness.setLife(player2, 20);
+
+        castSettleTheWreckage(player1, player2);
+        harness.passBothPriorities();
+
+        assertThat(exiledCardsOwnedBy(player2)).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 20);
     }
 
     private void setupAttackingCreatures(com.github.laxika.magicalvibes.model.Player player, int count) {

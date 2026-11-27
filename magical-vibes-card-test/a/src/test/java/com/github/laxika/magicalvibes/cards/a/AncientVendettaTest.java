@@ -136,6 +136,7 @@ class AncientVendettaTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleListChoice(player1, "Ancient Vendetta");
+        harness.handleMultipleCardsChosen(player1, List.of());
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();

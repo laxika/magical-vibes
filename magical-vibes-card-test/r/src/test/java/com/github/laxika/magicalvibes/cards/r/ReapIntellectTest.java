@@ -111,6 +111,7 @@ class ReapIntellectTest extends BaseCardTest {
         castReapIntellect(2);
         harness.handleCardChosen(player1, 0);
         harness.handleCardChosen(player1, -1);
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId()))

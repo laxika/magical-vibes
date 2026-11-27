@@ -33,13 +33,19 @@ class FromTheAshesTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Island()));
 
         castFromTheAshes();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(activeSearch().params().playerId()).isEqualTo(player1.getId());
         assertThat(activeSearch().params().remainingCount()).isEqualTo(1);
         harness.handleCardChosen(player1, 0);
 
+        assertThat(maySearch().playerId()).isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(activeSearch().params().playerId()).isEqualTo(player1.getId());
         harness.handleCardChosen(player1, 0);
+
+        assertThat(maySearch().playerId()).isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
 
         assertThat(activeSearch().params().playerId()).isEqualTo(player2.getId());
         harness.handleCardChosen(player2, 0);
@@ -71,11 +77,13 @@ class FromTheAshesTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Island()));
 
         castFromTheAshes();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
 
         // Choices in APNAP order, then the action at once (CR 101.4, 608.2e).
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().getName().equals("Forest"));
+        harness.handleMayAbilityChosen(player2, true);
         harness.handleCardChosen(player2, 0);
 
         harness.assertOnBattlefield(player1, "Forest");
@@ -93,13 +101,15 @@ class FromTheAshesTest extends BaseCardTest {
 
         castFromTheAshes();
 
-        harness.handleCardChosen(player1, -1);
-        assertThat(activeSearch().params().playerId()).isEqualTo(player1.getId());
+        assertThat(maySearch().playerId()).isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(maySearch().playerId()).isEqualTo(player1.getId());
 
-        harness.handleCardChosen(player1, -1);
-        assertThat(activeSearch().params().playerId()).isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(maySearch().playerId()).isEqualTo(player2.getId());
 
-        harness.handleCardChosen(player2, -1);
+        harness.handleMayAbilityChosen(player2, false);
+        assertThat(maySearch()).isNull();
         assertThat(activeSearch()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().hasType(CardType.LAND)).isEmpty();
@@ -118,9 +128,12 @@ class FromTheAshesTest extends BaseCardTest {
 
         castFromTheAshes();
 
+        assertThat(maySearch().playerId()).isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
         assertThat(activeSearch().params().playerId()).isEqualTo(player2.getId());
         harness.handleCardChosen(player2, 0);
         assertThat(activeSearch()).isNull();
+        assertThat(maySearch()).isNull();
         harness.assertOnBattlefield(player1, "Savage Lands");
         harness.assertInGraveyard(player2, "Savage Lands");
     }
@@ -135,9 +148,10 @@ class FromTheAshesTest extends BaseCardTest {
 
         int logStart = gd.gameLog.size();
         castFromTheAshes();
-        harness.handleCardChosen(player1, -1);
-        harness.handleCardChosen(player2, -1);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, false);
 
+        assertThat(maySearch()).isNull();
         assertThat(activeSearch()).isNull();
         assertThat(gd.gameLog.subList(logStart, gd.gameLog.size())).extracting(GameLogEntry::plainText)
                 .noneMatch(log -> log.endsWith("'s library is shuffled."));
@@ -178,6 +192,10 @@ class FromTheAshesTest extends BaseCardTest {
 
     private PendingInteraction.LibrarySearch activeSearch() {
         return gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+    }
+
+    private PendingInteraction.MaySearchLibraryChoice maySearch() {
+        return gd.interaction.activeInteraction(PendingInteraction.MaySearchLibraryChoice.class);
     }
 
     private void castFromTheAshes() {

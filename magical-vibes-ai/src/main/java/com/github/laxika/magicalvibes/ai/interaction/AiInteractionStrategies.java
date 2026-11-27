@@ -124,6 +124,7 @@ public final class AiInteractionStrategies {
         register(new PermanentChoiceAiStrategy());
         register(new SylvanLibraryChoiceAiStrategy());
         register(new AdNauseamRepeatChoiceAiStrategy());
+        register(new MaySearchLibraryChoiceAiStrategy());
         register(new ForbiddenRitualRepeatChoiceAiStrategy());
         register(new ExiledPermanentPutOntoBattlefieldChoiceAiStrategy());
         register(new LimDulsVaultRepeatChoiceAiStrategy());

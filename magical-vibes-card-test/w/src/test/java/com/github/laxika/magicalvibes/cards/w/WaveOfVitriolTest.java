@@ -58,6 +58,7 @@ class WaveOfVitriolTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Fountain of Youth");
         harness.assertInGraveyard(player1, "Crusade");
         harness.assertInGraveyard(player2, "Fountain of Youth");
+        harness.handleMayAbilityChosen(player1, true);
 
         PendingInteraction.LibrarySearch search =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
@@ -68,9 +69,11 @@ class WaveOfVitriolTest extends BaseCardTest {
         assertThat(search.params().destination().name()).isEqualTo("BATTLEFIELD_TAPPED");
 
         harness.handleCardChosen(player1, 0);
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().remainingCount())
                 .isEqualTo(1);
         harness.handleCardChosen(player1, 0);
+        harness.handleMayAbilityChosen(player2, true);
 
         search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search).isNotNull();
@@ -124,6 +127,8 @@ class WaveOfVitriolTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Forest");
         harness.assertInGraveyard(player1, "Liquimetal Coating");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MaySearchLibraryChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNotNull();
         harness.handleCardChosen(player1, 0);
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -142,7 +147,7 @@ class WaveOfVitriolTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest(), new Plains()));
 
         cast();
-        harness.handleCardChosen(player1, -1);
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
@@ -159,8 +164,10 @@ class WaveOfVitriolTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest(), new GhostQuarter()));
 
         cast();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
         // The second land's search finds no basic land card.
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, -1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();

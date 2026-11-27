@@ -32,6 +32,10 @@ class VeteranExplorerTest extends BaseCardTest {
         return gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
     }
 
+    private PendingInteraction.MaySearchLibraryChoice maySearch() {
+        return gd.interaction.activeInteraction(PendingInteraction.MaySearchLibraryChoice.class);
+    }
+
     private long landCount(Player player) {
         return gd.playerBattlefields.get(player.getId()).stream()
                 .filter(p -> p.getCard().hasType(CardType.LAND))
@@ -67,6 +71,8 @@ class VeteranExplorerTest extends BaseCardTest {
         killExplorer();
 
         // Active player (player2) is prompted first, and only the basic lands are offered.
+        assertThat(maySearch().playerId()).isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
         assertThat(activeSearch()).isNotNull();
         assertThat(activeSearch().params().playerId()).isEqualTo(player2.getId());
         assertThat(activeSearch().params().remainingCount()).isEqualTo(2);
@@ -74,6 +80,9 @@ class VeteranExplorerTest extends BaseCardTest {
 
         gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0));
         gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0));
+
+        assertThat(maySearch().playerId()).isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(activeSearch()).isNotNull();
         assertThat(activeSearch().params().playerId()).isEqualTo(player1.getId());
@@ -96,6 +105,7 @@ class VeteranExplorerTest extends BaseCardTest {
         harness.setLibrary(player2, List.of());
 
         killExplorer();
+        harness.handleMayAbilityChosen(player1, true);
 
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
@@ -112,10 +122,12 @@ class VeteranExplorerTest extends BaseCardTest {
 
         killExplorer();
 
-        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(landCount(player2)).isZero();
-        assertThat(activeSearch()).isNotNull();
+        assertThat(maySearch()).isNotNull();
+        assertThat(maySearch().playerId()).isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(activeSearch().params().playerId()).isEqualTo(player1.getId());
 
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
@@ -134,9 +146,12 @@ class VeteranExplorerTest extends BaseCardTest {
 
         killExplorer();
 
-        if (activeSearch() != null && activeSearch().params().playerId().equals(player2.getId())) {
-            gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(-1));
-        }
+        assertThat(maySearch().playerId()).isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
+        assertThat(activeSearch().params().cards()).isEmpty();
+        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(-1));
+        assertThat(maySearch().playerId()).isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(activeSearch()).isNotNull();
         assertThat(activeSearch().params().playerId()).isEqualTo(player1.getId());
 
@@ -157,10 +172,12 @@ class VeteranExplorerTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(mine, plains));
 
         killExplorer();
+        harness.handleMayAbilityChosen(player2, true);
 
         assertThat(activeSearch().params().cards()).containsExactly(plains);
 
         gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleMayAbilityChosen(player1, true);
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         assertThat(activeSearch()).isNull();
@@ -191,8 +208,8 @@ class VeteranExplorerTest extends BaseCardTest {
 
         killExplorer();
 
-        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(-1));
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleMayAbilityChosen(player2, false);
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(activeSearch()).isNull();
         assertThat(gd.stack).isEmpty();
@@ -210,10 +227,10 @@ class VeteranExplorerTest extends BaseCardTest {
 
         killExplorer();
 
-        if (activeSearch() != null && activeSearch().params().playerId().equals(player2.getId())) {
-            gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(-1));
-        }
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        assertThat(maySearch().playerId()).isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, false);
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(maySearch()).isNull();
 
         assertThat(activeSearch()).isNull();
         assertThat(gd.stack).isEmpty();
@@ -228,10 +245,12 @@ class VeteranExplorerTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Plains(), new Plains()));
 
         killExplorer();
+        harness.handleMayAbilityChosen(player2, true);
 
         gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0));
         gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0));
         long activePlayersLandsBeforeOtherPlayerChooses = landCount(player2);
+        harness.handleMayAbilityChosen(player1, true);
 
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));

@@ -94,7 +94,8 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
                             + " into their hand."
                     : gameData.playerIdToName.get(playerId) + " searches their library and graveyard but finds no "
                             + interaction.cardLabel() + "."
-                            + (gameData.playerDecks.get(playerId) == null ? "" : " Library is shuffled.")));
+                            + (gameData.playerDecks.get(playerId) == null || !interaction.shuffleAfterSearch()
+                                    || !interaction.librarySearchAllowed() ? "" : " Library is shuffled.")));
         } else if (interaction.maxCount() > 1) {
             if (toBattlefield) {
                 putCardsOntoBattlefield(gameData, playerId, selectedCards, interaction);
@@ -307,8 +308,9 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
             LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(
                     gameData, interaction.playerId());
         }
-        // "If you search your library this way, shuffle": a graveyard-only find neither searches nor shuffles the library.
-        if (interaction.shuffleAfterSearch() && searchedLibrary
+        // "If you search your library this way, shuffle": a graveyard-only find neither searches nor shuffles the library,
+        // and a library that couldn't be searched isn't shuffled (the Leonin Arbiter and Mindlock Orb rulings).
+        if (interaction.shuffleAfterSearch() && interaction.librarySearchAllowed() && searchedLibrary
                 && gameData.playerDecks.get(interaction.playerId()) != null) {
             LibraryShuffleHelper.shuffleLibrary(gameData, interaction.playerId());
         }

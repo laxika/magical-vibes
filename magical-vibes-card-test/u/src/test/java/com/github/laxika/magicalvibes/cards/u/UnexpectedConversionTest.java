@@ -73,6 +73,7 @@ class UnexpectedConversionTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0);
         harness.handleCardChosen(player1, gd.playerHands.get(player1.getId()).indexOf(chosenCard));
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(chosenCard);
         assertThat(gd.playerHands.get(player1.getId()))
@@ -140,6 +141,7 @@ class UnexpectedConversionTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0);
         harness.handleCardChosen(player1, gd.playerHands.get(player1.getId()).indexOf(drawnSorcery));
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(drawnSorcery);
         assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(drawnForest, soughtCard);

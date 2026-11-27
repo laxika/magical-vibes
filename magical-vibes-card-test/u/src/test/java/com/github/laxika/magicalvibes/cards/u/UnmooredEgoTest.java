@@ -149,6 +149,7 @@ class UnmooredEgoTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleListChoice(player1, "Unmoored Ego");
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(handCard);

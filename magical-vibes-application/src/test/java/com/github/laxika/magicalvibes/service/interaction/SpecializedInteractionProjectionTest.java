@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BidLifeEffect;
@@ -43,6 +44,18 @@ class SpecializedInteractionProjectionTest {
         gameData.playerIdToName.put(opponentId, "Bob");
         gameData.playerHands.put(opponentId, new ArrayList<>());
         projections = new InteractionPromptProjectionRegistry(mock(CardViewFactory.class));
+    }
+
+    @Test
+    @DisplayName("Whether to search a library is asked as an accept/decline prompt naming the search")
+    void maySearchLibraryChoiceIsAnAcceptDecline() {
+        InteractionPromptMessage message = prompt(new PendingInteraction.MaySearchLibraryChoice(controllerId,
+                LibrarySearchParams.builder(controllerId, List.of()).canFailToFind(true).build(),
+                "Search your library for up to 2 basic land cards."));
+
+        assertThat(message.shape()).isEqualTo(InteractionShape.ACCEPT_DECLINE);
+        assertThat(message.prompt()).isEqualTo(
+                "Do you search? Search your library for up to 2 basic land cards.");
     }
 
     @Test

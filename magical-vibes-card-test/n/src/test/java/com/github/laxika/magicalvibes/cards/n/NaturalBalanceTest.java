@@ -116,6 +116,7 @@ class NaturalBalanceTest extends BaseCardTest {
         setForestLibrary(player1, 6);
 
         castNaturalBalance();
+        harness.handleMayAbilityChosen(player1, true);
 
         PendingInteraction.LibrarySearch search =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
@@ -141,8 +142,8 @@ class NaturalBalanceTest extends BaseCardTest {
 
         castNaturalBalance();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        harness.handleCardChosen(player1, -1);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MaySearchLibraryChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(landCount(player1)).isEqualTo(3);
@@ -158,8 +159,8 @@ class NaturalBalanceTest extends BaseCardTest {
 
         castNaturalBalance();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        harness.handleCardChosen(player1, -1);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MaySearchLibraryChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
@@ -176,8 +177,8 @@ class NaturalBalanceTest extends BaseCardTest {
 
         castNaturalBalance();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        harness.handleCardChosen(player1, -1);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MaySearchLibraryChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
@@ -201,6 +202,7 @@ class NaturalBalanceTest extends BaseCardTest {
         assertThat(choice.maxCount()).isEqualTo(2);
 
         harness.handleMultiplePermanentsChosen(player1, landIds(player1, 2));
+        harness.handleMayAbilityChosen(player2, true);
 
         // Only then does player2 search for up to four basic lands.
         PendingInteraction.LibrarySearch search =
@@ -256,6 +258,8 @@ class NaturalBalanceTest extends BaseCardTest {
 
         castNaturalBalance();
         // "May search their library": the choice is offered although nothing can be found.
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MaySearchLibraryChoice.class).search().cards()).isEmpty();
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).isEmpty();
         harness.handleCardChosen(player1, -1);
 
@@ -293,6 +297,7 @@ class NaturalBalanceTest extends BaseCardTest {
         setForestLibrary(player1, 4);
 
         castNaturalBalance();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
         harness.handleCardChosen(player1, -1);
 
@@ -311,7 +316,9 @@ class NaturalBalanceTest extends BaseCardTest {
         setForestLibrary(player2, 2);
 
         castNaturalBalance();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
+        harness.handleMayAbilityChosen(player2, true);
 
         PendingInteraction.LibrarySearch search =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
@@ -338,8 +345,8 @@ class NaturalBalanceTest extends BaseCardTest {
 
         castNaturalBalance();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        harness.handleCardChosen(player1, -1);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MaySearchLibraryChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);

@@ -141,6 +141,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.SpellbookCardChoice,
         PendingInteraction.VividCardChoice,
         PendingInteraction.LibrarySearch,
+        PendingInteraction.MaySearchLibraryChoice,
         PendingInteraction.OutsideGameCardChoice,
         PendingInteraction.ExchangeOutsideGameCardChoice,
         PendingInteraction.ExchangeOutsideGameHandChoice,
@@ -5224,6 +5225,26 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             // The answer handler's decline rule reads params.canFailToFind(), not the message flag.
             return new InteractionOptions.LibraryIndexPick(
                     params.cards() != null ? params.cards().size() : 0, params.canFailToFind());
+        }
+    }
+
+    /**
+     * "[Player] may search their library": whether {@code playerId} searches at all, asked before anything is looked at
+     * (CR 701.23a). A player who searches may still find nothing (CR 701.23b) and then has searched; one who doesn't
+     * hasn't, so doesn't shuffle (the Boldwyr Heavyweights ruling). On yes, {@code search} begins with
+     * {@code searchPrompt}; on no, its follow-up goes on without it.
+     */
+    record MaySearchLibraryChoice(UUID playerId, LibrarySearchParams search, String searchPrompt)
+            implements PendingInteraction {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return InteractionOptions.ACCEPT_DECLINE;
         }
     }
 

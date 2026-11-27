@@ -282,6 +282,7 @@ public class InteractionPromptProjectionRegistry {
                 this::projectTwoOpponentOwnedExiledCardsToGraveyardChoice);
         register(PendingInteraction.PermanentChoice.class, this::projectPermanentChoice);
         register(PendingInteraction.AdNauseamRepeatChoice.class, this::projectAdNauseamRepeatChoice);
+        register(PendingInteraction.MaySearchLibraryChoice.class, this::projectMaySearchLibraryChoice);
         register(PendingInteraction.ForbiddenRitualRepeatChoice.class, this::projectForbiddenRitualRepeatChoice);
         register(PendingInteraction.ExiledPermanentPutOntoBattlefieldChoice.class,
                 this::projectExiledPermanentPutOntoBattlefieldChoice);
@@ -1660,6 +1661,11 @@ public class InteractionPromptProjectionRegistry {
             GameData gameData, PendingInteraction.PermanentChoice interaction) {
         return InteractionPromptMessage.permanentPick(
                 interaction.validPermanentIds(), interaction.validPlayerIds(), interaction.prompt());
+    }
+
+    private InteractionPromptMessage projectMaySearchLibraryChoice(
+            GameData gameData, PendingInteraction.MaySearchLibraryChoice interaction) {
+        return InteractionPromptMessage.acceptDecline("Do you search? " + interaction.searchPrompt(), true, null);
     }
 
     private InteractionPromptMessage projectAdNauseamRepeatChoice(

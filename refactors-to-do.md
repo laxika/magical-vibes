@@ -1340,20 +1340,16 @@ Don't commit.
 - Ezuri's Predation: "those creatures" are read at the fight, not when counted (CR 608.2h).
 - `AttackLegalityService.isCantAttackDueToGlobalRestriction`'s planechase branch judges a plane's `CreaturesCantAttackUnlessPredicateEffect` exemption with no filter context (the context it builds is used only by the attack-or-block branch), so a source-relative exemption (Ensnaring Bridge's hand size, `youControl`) on a plane would misjudge; no plane uses one today. Sure of the code, latent.
 
-#### Missing events or records (searches, coin flips, seeks, shuffles, counters, draws) (13)
+#### Missing events or records (searches, coin flips, seeks, shuffles, counters, draws) (9)
 
 - The Ring's level 2–4 abilities aren't implemented, only legendary and can't-be-blocked-by-greater-power (CR 701.54c). Sure.
-- The queue's may-searches (New Frontiers, Natural Balance, ...) have no "do you search?", so a player can't search and find nothing (CR 701.23a, 701.23b). Unverified.
-- A same-name search with no match asks nothing (no look, CR 701.23a); Haunting Echoes with nothing exiled likewise. Unverified.
 - A draw replaced by exactly one draw of the same player (Enduring Renewal, Aladdin's Lamp) still reveals: `DrawService` reports no replacement. Unverified.
 - `DrawCardEffectHandler` records no cards (DRAW outcome amount 0) when a draw is replaced by drawing more (Alhammarret's Archive), so `AmountThisWay(DRAW)` and `HappenedThisWay.drew()` read nothing drawn where cards were drawn because of the instruction; it keeps Malignant Growth on its own handler (CR 614.6). Fairly sure.
 - The library-search flows handled before the generic path (same-name, subtype and colour picks, basic-land queues, held-out pools, `HAND_OR_GRAVEYARD`) record no found cards in SEARCH. Sure of the code.
 - The selection-follow-up drafts (`LibraryRevealChoice`: Support Skyforge, Adaptive Armorer, Dragon Typhoon, Masterpiece Vault) record no CONJURE step.
-- When a library search is prevented, `SearchLibraryAndOrGraveyardForCardToHandEffect` (and the choice handler's `finishSearch`) still shuffles on a fruitless search or a decline ("If you search your library this way, shuffle"). Sure of the code, low.
-- Last Light of Durin's Day's "search your hand and/or library" always searches (and shuffles) the library; the player can't choose to search only the hand. Sure, low.
+- An "and/or" search (`SearchLibraryAndOrGraveyardChoice`: Last Light of Durin's Day's "search your hand and/or library", every "library and/or graveyard" card) has no "do you search your library?": a pick of nothing counts as a library search (search triggers, shuffle) and a pick from another zone as none, so a player can't search only the hand or graveyard and find nothing, or search the library too and take a graveyard card. Needs the zones chosen before the pool is shown (CR 701.23a; `MaySearchLibraryChoice` asks it for a single library). Sure, low; LS-1 left it (about 48 cards' tests).
 - `MayMiscHandlerService.handleLookAtTopCardPutLandOrCreatureChoice`'s Aura put path records no RETURN step, so an "if you didn't put a card onto the battlefield" after an Aura put would misread. Sure.
 - `CombatAttackService` throws "must attack the specified player" for a `MustAttackIfAbleEffect(defenderId)` instead of weighing it against other requirements (CR 508.1d). Sure of the code, low.
-- Journey for the Elixir: taking both cards from the graveyard doesn't shuffle, though its text says "search your library and graveyard … then shuffle". Sure of the code.
 - `CoinFlipService`'s Pokey d20 (the roll that replaces a flip) ignores dice advantage (Pixie Guide). Unverified.
 
 #### Wrong targets and choices (16)

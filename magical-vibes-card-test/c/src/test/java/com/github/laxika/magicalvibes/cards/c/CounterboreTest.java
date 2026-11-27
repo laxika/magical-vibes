@@ -119,6 +119,7 @@ class CounterboreTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
         harness.castAndResolveInstant(player2, 0, castCopy.getId());
+        harness.handleMultipleCardsChosen(player2, List.of());
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player2, "Counterbore");
@@ -169,6 +170,7 @@ class CounterboreTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
         harness.castAndResolveInstant(player2, 0, castCopy.getId());
+        harness.handleMultipleCardsChosen(player2, List.of());
 
         assertThat(gd.stack).anyMatch(entry -> entry.getCard() == castCopy);
         assertThat(gd.getPlayerExiledCards(player1.getId()))

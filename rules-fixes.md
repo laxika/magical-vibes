@@ -47,7 +47,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | EB Entry and leave batches | EB-1, EB-2, EB-3 | EB-1, EB-2 done 2026-11-27; EB-3 open |
 | PY Payments | PY-1, PY-2, PY-3 | PY-1 done 2026-11-27; PY-2, PY-3 open |
 | TR Triggers, subjects and targeting | TR-1, TR-2, TR-3 | TR-1 done 2026-11-27; TR-2, TR-3 open |
-| LS Library searches and reveals | LS-1, LS-2 | open |
+| LS Library searches and reveals | LS-1, LS-2 | LS-1 done 2026-11-27; LS-2 open |
 | TK Tokens and copies | TK-1, TK-2 | open |
 | FD Face-down and hidden reads | FD-1, FD-2 | open |
 | LY Layers, protection, text changes, linked abilities | LY-1 to LY-5 | open |
@@ -690,7 +690,21 @@ Elixir doesn't shuffle after taking both cards from the graveyard).
 Likely touches: `LibraryChoiceHandlerService`, `SearchLibraryAndOrGraveyardForCardToHandEffect`'s handler.
 Avoid: FC-1, FC-2.
 
-Outcome:
+Outcome: 2026-11-27. Fixed: E2, E3, E9, E15 (deleted from entry 18). Left: E10, edited in entry 18 to its general form.
+E2: an optional search of the basic-land queue (New Frontiers, Natural Balance, Weird Harvest, Veteran Explorer, From the
+Ashes, ... 13 cards) and Settle the Wreckage first ask `PendingInteraction.MaySearchLibraryChoice` ("do you search?"): no is
+not searching (no shuffle, Boldwyr Heavyweights ruling), yes then declining the pick is searching and finding nothing, so the
+library is shuffled and search triggers fire (CR 701.23a, 701.23b). Settle the Wreckage no longer shuffles when the search is
+prevented, nor searches automatically an empty library or one with no basic lands (Leonin Arbiter / Mindlock Orb ruling: "You
+may search … then shuffle", you can't choose to search, so you won't shuffle). `LibrarySearchParams.declineSkipsShuffle`
+(Settle's only setter) is deleted. E3: a same-name search for a named card that searches a library or hand with no match still
+shows the searched zones (`MultiZoneExileChoice` with no choosable card, CR 701.23a); Haunting Echoes with nothing exiled is
+dropped, not a defect: "for each card exiled this way, search" makes no search. E9: an "and/or" search with "if you search your
+library this way, shuffle" doesn't shuffle a library that couldn't be searched, on a fruitless search or a decline (the same
+rulings). E15: Journey for the Elixir is the two searches unshuffled plus `ShuffleLibraryEffect(false)`, so "then shuffle"
+shuffles after two graveyard finds and under Leonin Arbiter. E10 left (too big for this run): every "and/or" search needs the
+zones chosen before the pool is shown, which changes about 48 cards' tests. About 125 test methods in 38 card test classes
+answer the new prompts. No effect class added or deleted, so no ledger or ratchet change.
 
 #### LS-2. What a search and a draft record
 
@@ -701,6 +715,13 @@ O32 (Panglacial Wurm can be cast only on the first pick of a multi-pick search),
 card; the AI's search strategy answers only for the searcher).
 
 Avoid: FC-1, FC-2.
+
+New line N35 (seen in LS-1): Journey for the Elixir's "search your library and graveyard" records a library search per
+sub-search (twice, or never when both cards come from the graveyard), though the library is searched once (CR 701.23h).
+
+E10 (left by LS-1, see its Outcome): every "and/or" search (Last Light of Durin's Day's hand and/or library, about 48
+library-and/or-graveyard cards) chooses its zones before the pool is shown, so a pick of nothing isn't a library search and a pick
+from another zone is.
 
 Outcome:
 

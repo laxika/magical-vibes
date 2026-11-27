@@ -16,9 +16,10 @@ import java.util.Set;
  * 701.23b); a card in any other zone has to be taken unless the text says "you may" ({@code optional}).
  *
  * @param filter             the card the search looks for
- * @param shuffleAfterSearch whether the search ends with the library being shuffled; a search that is
- *                           one of several instructions in the same effect (Journey for the Elixir) sets
- *                           this only on the last one, so the library is shuffled once (CR 701.23h)
+ * @param shuffleAfterSearch "if you search your library this way, shuffle": the library is shuffled after a search of
+ *                           it, never when it couldn't be searched; without it nothing is shuffled, and an
+ *                           unconditional "then shuffle" (Journey for the Elixir) is a {@link ShuffleLibraryEffect}
+ *                           after the searches, so the library is shuffled once (CR 701.23h)
  * @param zones              where the card may come from
  * @param optional           "you may": no card has to be taken
  */

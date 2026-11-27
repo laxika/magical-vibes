@@ -36,6 +36,10 @@ class WeirdHarvestTest extends BaseCardTest {
         return gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
     }
 
+    private PendingInteraction.MaySearchLibraryChoice maySearch() {
+        return gd.interaction.activeInteraction(PendingInteraction.MaySearchLibraryChoice.class);
+    }
+
     @Test
     @DisplayName("Casting Weird Harvest puts it on the stack with the paid X")
     void castingPutsOnStackWithX() {
@@ -57,6 +61,8 @@ class WeirdHarvestTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 4);
 
         harness.castAndResolveSorcery(player1, 0, 2);
+        assertThat(maySearch().playerId()).isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(activeSearch()).isNotNull();
         assertThat(activeSearch().params().playerId()).isEqualTo(player1.getId());
@@ -77,10 +83,13 @@ class WeirdHarvestTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 2);
 
         // Active player (player1) takes two creatures
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
         harness.handleCardChosen(player1, 0);
 
         // Now the opponent (player2) is prompted
+        assertThat(maySearch().playerId()).isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
         assertThat(activeSearch()).isNotNull();
         assertThat(activeSearch().params().playerId()).isEqualTo(player2.getId());
 
@@ -108,11 +117,11 @@ class WeirdHarvestTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 2);
 
         // Active player declines immediately
-        harness.handleCardChosen(player1, -1);
+harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(activeSearch()).isNotNull();
-        assertThat(activeSearch().params().playerId()).isEqualTo(player2.getId());
+        assertThat(maySearch()).isNotNull();
+        assertThat(maySearch().playerId()).isEqualTo(player2.getId());
     }
 
     @Test
@@ -125,11 +134,11 @@ class WeirdHarvestTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 1);
 
-        assertThat(activeSearch()).isNotNull();
-        assertThat(activeSearch().params().playerId()).isEqualTo(player1.getId());
-        harness.handleCardChosen(player1, -1);
+        assertThat(maySearch()).isNotNull();
+        assertThat(maySearch().playerId()).isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(activeSearch().params().playerId()).isEqualTo(player2.getId());
+        assertThat(maySearch().playerId()).isEqualTo(player2.getId());
     }
 
     @Test
@@ -163,12 +172,13 @@ class WeirdHarvestTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0);
 
-        assertThat(activeSearch()).isNotNull();
-        assertThat(activeSearch().params().playerId()).isEqualTo(player1.getId());
-        harness.handleCardChosen(player1, -1);
-        assertThat(activeSearch().params().playerId()).isEqualTo(player2.getId());
-        harness.handleCardChosen(player2, -1);
+        assertThat(maySearch()).isNotNull();
+        assertThat(maySearch().playerId()).isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(maySearch().playerId()).isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, false);
 
+        assertThat(maySearch()).isNull();
         assertThat(activeSearch()).isNull();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Weird Harvest");
@@ -185,8 +195,9 @@ class WeirdHarvestTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 3);
 
         harness.castAndResolveSorcery(player1, 0, 1);
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
-        harness.handleCardChosen(player2, -1);
+        harness.handleMayAbilityChosen(player2, false);
         resolveAllTriggers();
 
         harness.assertLife(player1, 10);
@@ -203,11 +214,11 @@ class WeirdHarvestTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 3);
 
         harness.castAndResolveSorcery(player1, 0, 1);
-        assertThat(activeSearch()).isNotNull();
-        assertThat(activeSearch().params().playerId()).isEqualTo(player1.getId());
-        harness.handleCardChosen(player1, -1);
-        assertThat(activeSearch().params().playerId()).isEqualTo(player2.getId());
-        harness.handleCardChosen(player2, -1);
+        assertThat(maySearch()).isNotNull();
+        assertThat(maySearch().playerId()).isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(maySearch().playerId()).isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, false);
         resolveAllTriggers();
 
         harness.assertLife(player1, 20);
@@ -224,9 +235,10 @@ class WeirdHarvestTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 4);
 
         harness.castAndResolveSorcery(player1, 0, 2);
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
         harness.handleCardChosen(player1, 0);
-        harness.handleCardChosen(player2, -1);
+        harness.handleMayAbilityChosen(player2, false);
         resolveAllTriggers();
 
         harness.assertLife(player1, 10);
@@ -242,9 +254,10 @@ class WeirdHarvestTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 4);
 
         harness.castAndResolveSorcery(player1, 0, 2);
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
         harness.handleCardChosen(player1, -1);
-        harness.handleCardChosen(player2, -1);
+        harness.handleMayAbilityChosen(player2, false);
         resolveAllTriggers();
 
         harness.assertLife(player1, 18);
@@ -262,10 +275,13 @@ class WeirdHarvestTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 4);
 
         harness.castAndResolveSorcery(player1, 0, 2);
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(activeSearch().params().cards()).containsExactly(first);
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerDecks.get(player1.getId())).contains(fifth);
+        assertThat(maySearch().playerId()).isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
         assertThat(activeSearch().params().playerId()).isEqualTo(player2.getId());
         harness.handleCardChosen(player2, -1);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(first);
@@ -282,9 +298,9 @@ class WeirdHarvestTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 3);
 
         harness.castAndResolveSorcery(player1, 0, 1);
-        assertThat(activeSearch()).isNotNull();
-        harness.handleCardChosen(player1, -1);
-        harness.handleCardChosen(player2, -1);
+        assertThat(maySearch()).isNotNull();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, false);
         resolveAllTriggers();
 
         harness.assertLife(player1, 20);
@@ -320,12 +336,14 @@ class WeirdHarvestTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 1);
 
+        assertThat(maySearch().playerId()).isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(activeSearch()).isNotNull();
         assertThat(activeSearch().params().playerId()).isEqualTo(player1.getId());
         assertThat(activeSearch().params().cards()).isEmpty();
         harness.handleCardChosen(player1, -1);
-        assertThat(activeSearch().params().playerId()).isEqualTo(player2.getId());
-        harness.handleCardChosen(player2, -1);
+assertThat(maySearch().playerId()).isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, false);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(5);
     }
@@ -340,7 +358,9 @@ class WeirdHarvestTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 3);
 
         harness.castAndResolveSorcery(player1, 0, 1);
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
+        harness.handleMayAbilityChosen(player2, true);
 
         assertThat(activeSearch().params().playerId()).isEqualTo(player2.getId());
         assertThat(gameLogContains("reveals")).isFalse();

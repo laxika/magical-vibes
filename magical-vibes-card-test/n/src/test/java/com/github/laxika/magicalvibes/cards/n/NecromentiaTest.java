@@ -119,6 +119,7 @@ class NecromentiaTest extends BaseCardTest {
 
         addManaAndCast();
         harness.handleListChoice(player1, "Alpine Watchdog");
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         harness.assertInHand(player2, "Plains");
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);

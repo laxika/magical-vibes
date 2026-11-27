@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -18,6 +19,7 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchS
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.ArrayList;
@@ -46,6 +48,7 @@ public class BasicLandSearchQueueSupport {
     private final BattlefieldEntryService battlefieldEntryService;
     private final BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     /** Active player first, then every other player in seating order (CR 101.4 APNAP). */
     public List<UUID> apnapOrder(GameData gameData) {
@@ -221,8 +224,7 @@ public class BasicLandSearchQueueSupport {
         if (!queue.optionalSearch()) {
             LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, playerId);
         }
-        String prompt = (queue.optionalSearch() ? "You may search" : "Search")
-                + " your library for up to " + count + " " + described
+        String prompt = "Search your library for up to " + count + " " + described
                 + (count == 1 ? "" : "s")
                 + (reveals ? " to reveal and put them" : " and put them")
                 + destinationText + " (" + count + " remaining).";
@@ -242,8 +244,11 @@ public class BasicLandSearchQueueSupport {
                         .followUp(followUp)
                         .build();
         if (choosesWhetherToSearch) {
-            librarySearchSupport.sendLibrarySearchToPlayer(gameData, playerId, searchParams, prompt, true,
-                    playerName + " may search their library.");
+            // Whether to search is its own answer, asked before anything is looked at: one who searches and finds
+            // nothing has still searched (CR 701.23b), one who declines hasn't (the Boldwyr Heavyweights ruling).
+            gameLogService.append(gameData, GameLog.text(playerName + " may search their library."));
+            interactionHandlerRegistry.begin(gameData,
+                    new PendingInteraction.MaySearchLibraryChoice(playerId, searchParams, prompt));
         } else {
             librarySearchSupport.sendLibrarySearchToPlayer(gameData, playerId, searchParams, prompt, true);
         }

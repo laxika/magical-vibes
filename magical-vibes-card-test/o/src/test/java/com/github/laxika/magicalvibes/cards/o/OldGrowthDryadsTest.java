@@ -37,7 +37,9 @@ class OldGrowthDryadsTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         GameData gd = harness.getGameData();
-        // Opponent (player2) is prompted to search
+        // Opponent (player2) is asked whether to search
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MaySearchLibraryChoice.class).playerId()).isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player2.getId());
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
@@ -60,8 +62,8 @@ class OldGrowthDryadsTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Opponent gets the search, not the controller
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MaySearchLibraryChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MaySearchLibraryChoice.class).playerId()).isEqualTo(player2.getId());
     }
 
     @Test
@@ -79,6 +81,7 @@ class OldGrowthDryadsTest extends BaseCardTest {
         int battlefieldBefore = gd.playerBattlefields.get(player2.getId()).size();
 
         // Opponent picks a basic land
+        harness.handleMayAbilityChosen(player2, true);
         harness.handleCardChosen(player2, 0);
 
         // Land entered the battlefield tapped
@@ -104,6 +107,7 @@ class OldGrowthDryadsTest extends BaseCardTest {
         int battlefieldBefore = gd.playerBattlefields.get(player2.getId()).size();
 
         // Opponent fails to find a basic land
+        harness.handleMayAbilityChosen(player2, true);
         harness.handleCardChosen(player2, -1);
 
         // No land entered the battlefield
@@ -125,11 +129,8 @@ class OldGrowthDryadsTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger (no basic lands found)
 
-        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
-            harness.handleMayAbilityChosen(player2, false);
-        } else if (gd.interaction.activeInteraction() instanceof PendingInteraction.LibrarySearch) {
-            harness.handleCardChosen(player2, -1);
-        }
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MaySearchLibraryChoice.class).playerId()).isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
@@ -167,11 +168,8 @@ class OldGrowthDryadsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
-            harness.handleMayAbilityChosen(player2, false);
-        } else {
-            harness.handleCardChosen(player2, -1);
-        }
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MaySearchLibraryChoice.class).playerId()).isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
@@ -190,6 +188,8 @@ class OldGrowthDryadsTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player2, new OldGrowthDryads());
         harness.passBothPriorities();
 
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MaySearchLibraryChoice.class).playerId()).isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId())
                 .isEqualTo(player1.getId());
@@ -214,6 +214,7 @@ class OldGrowthDryadsTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
         harness.handleCardChosen(player2, 0);
 
         assertThat(gd.playerDecks.get(player2.getId())).containsExactlyInAnyOrder(forest, creature);

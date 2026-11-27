@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.cards.e.EverybodyLives;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FourKnocks;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LeoninArbiter;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
+import com.github.laxika.magicalvibes.cards.p.PsychogenicProbe;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,6 +16,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -23,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({TheFirstDoctor.class, BloodbraidElf.class, GrizzlyBears.class, Forest.class,
         Tardis.class, FourKnocks.class, ClockworkDroid.class, EverybodyLives.class,
-        MindStone.class, ThroesOfChaos.class})
+        MindStone.class, ThroesOfChaos.class, LeoninArbiter.class, PsychogenicProbe.class})
 class TheFirstDoctorTest extends BaseCardTest {
 
     @Test
@@ -171,5 +174,23 @@ class TheFirstDoctorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(tardis.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isOne();
+    }
+
+    @Test
+    @DisplayName("Finding no TARDIS while library searches are prevented leaves the library unshuffled")
+    void preventedLibrarySearchDoesNotShuffle() {
+        harness.setLibrary(player1, List.of(new Tardis()));
+        harness.setGraveyard(player1, List.of());
+        harness.addToBattlefield(player2, new LeoninArbiter());
+        harness.addToBattlefield(player2, new PsychogenicProbe());
+        harness.setLife(player1, 20);
+
+        harness.castFromHand(player1, new TheFirstDoctor(), "{1}{W}{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
     }
 }

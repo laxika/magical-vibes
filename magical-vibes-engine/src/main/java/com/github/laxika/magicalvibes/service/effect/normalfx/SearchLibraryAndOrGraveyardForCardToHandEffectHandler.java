@@ -106,7 +106,8 @@ public class SearchLibraryAndOrGraveyardForCardToHandEffectHandler implements No
                         + whereNotSearched(zones) + "."));
                 return;
             }
-            boolean shuffled = deck != null && search.shuffleAfterSearch();
+            // "If you search your library this way, shuffle": a library that couldn't be searched isn't shuffled.
+            boolean shuffled = librarySearchAllowed && deck != null && search.shuffleAfterSearch();
             if (librarySearchAllowed) {
                 LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, playerId);
             }

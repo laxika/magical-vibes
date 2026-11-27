@@ -69,6 +69,11 @@ A handler or completion that reaches "an opponent ..." after it has exiled, sear
 Owner: `ChosenOpponentSupport` (Abstract Performance, Brilliant Ultimatum, Hostile Negotiations, Ecological Appreciation, Threats Undetected, Turtles Forever, Verdant Mastery).
 Why: the controller chooses the opponent as the spell resolves (the Abstract Performance and Verdant Mastery rulings), knowing what was exiled or revealed.
 
+### "May search" is asked before the search (CR 701.23a, 701.23b)
+A player who may search is asked whether to search (`PendingInteraction.MaySearchLibraryChoice`, or a `MayEffect` around the search) before anything is shown; declining the pick after a yes is finding nothing, which still searches and shuffles.
+Owner: `MaySearchLibraryChoiceInteractionHandler`, `BasicLandSearchQueueSupport`.
+Why: one decline can't say both "didn't search" (no shuffle, Boldwyr Heavyweights ruling) and "found nothing".
+
 ### Refining a begun prompt is presentation-only
 `InteractionState.replaceActiveInteraction` keeps the decision id and never changes what is decided or the legal answers: a colour greyed by `ManaChoiceNarrowingService` stays answerable. (A `ManaPaymentIntent` also holds the tap's non-mana triggers until the spell or ability is on the stack.)
 Owner: `InteractionState`, `ManaPaymentIntent`.

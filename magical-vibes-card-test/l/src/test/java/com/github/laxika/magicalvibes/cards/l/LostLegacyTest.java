@@ -167,6 +167,7 @@ class LostLegacyTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
         harness.handleListChoice(player1, "Grizzly Bears");
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(peek);

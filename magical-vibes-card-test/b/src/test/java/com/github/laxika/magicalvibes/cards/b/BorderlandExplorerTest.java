@@ -40,6 +40,7 @@ class BorderlandExplorerTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.handleMayAbilityChosen(player2, true);
         harness.handleCardChosen(player2, 0);
+        harness.handleMayAbilityChosen(player1, true);
 
         PendingInteraction.LibrarySearch search =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
@@ -47,6 +48,7 @@ class BorderlandExplorerTest extends BaseCardTest {
         assertThat(search.params().cards()).containsExactly(forest);
 
         harness.handleCardChosen(player1, 0);
+        harness.handleMayAbilityChosen(player2, true);
 
         search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search.params().playerId()).isEqualTo(player2.getId());
@@ -78,6 +80,7 @@ class BorderlandExplorerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
         harness.handleMayAbilityChosen(player2, false);
+        harness.handleMayAbilityChosen(player1, true);
 
         PendingInteraction.LibrarySearch search =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
@@ -142,11 +145,13 @@ class BorderlandExplorerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
 
-        PendingInteraction.LibrarySearch search =
-                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
-        assertThat(search).isNotNull();
-        assertThat(search.params().cards()).isEmpty();
-        harness.handleCardChosen(player1, -1);
+        PendingInteraction.MaySearchLibraryChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MaySearchLibraryChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.search().cards()).isEmpty();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
 
         assertThat(gd.gameLog).noneMatch(entry -> entry.plainText().contains("finds no"));
         assertThat(gd.playersWhoSearchedLibraryThisTurn).doesNotContain(player1.getId());
@@ -171,8 +176,10 @@ class BorderlandExplorerTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.handleMayAbilityChosen(player2, true);
         harness.handleCardChosen(player2, 0);
+        harness.handleMayAbilityChosen(player1, true);
         harness.clearMessages();
         harness.handleCardChosen(player1, 0);
+        harness.handleMayAbilityChosen(player2, true);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId())
                 .isEqualTo(player2.getId());

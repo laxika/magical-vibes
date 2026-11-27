@@ -310,18 +310,6 @@ public class LibraryChoiceHandlerService
             throw new IllegalStateException("Invalid card index: " + cardIndex);
         }
 
-        if (cardIndex == -1 && librarySearch.declineSkipsShuffle()) {
-            shuffleAfterSelection = false;
-        }
-        // An optional search that may be declined begins with the first pick (CR 701.23a), so it is
-        // the first pick that fires "whenever a player searches their library" triggers.
-        if (cardIndex >= 0 && librarySearch.declineSkipsShuffle()
-                && followUp.basicLandSearchQueue() == null
-                && accumulatedCards.isEmpty()
-                && (targetPlayerId == null || targetPlayerId.equals(playerId))) {
-            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, playerId);
-        }
-
         if (cardIndex >= 0
                 && librarySearch.allowCastFromLibraryWhileSearching()
                 && (targetPlayerId == null || targetPlayerId.equals(playerId))

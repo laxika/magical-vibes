@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingAbilityActivation;
+import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -158,6 +159,18 @@ class SpecializedInteractionAiStrategiesTest {
 
         assertThat(capturedAnswer())
                 .isEqualTo(new InteractionAnswer.MayAbilityChosen(false));
+    }
+
+    @Test
+    @DisplayName("Chooses to search its library when asked whether to search")
+    void maySearchLibraryChoiceSearches() throws Exception {
+        var interaction = new PendingInteraction.MaySearchLibraryChoice(aiPlayerId,
+                LibrarySearchParams.builder(aiPlayerId, List.of()).canFailToFind(true).build(),
+                "Search your library for up to 1 basic land card.");
+
+        AiInteractionStrategies.forInteraction(interaction).answer(interaction, context);
+
+        assertThat(capturedAnswer()).isEqualTo(new InteractionAnswer.MayAbilityChosen(true));
     }
 
     @Test
@@ -529,6 +542,7 @@ class SpecializedInteractionAiStrategiesTest {
                 PendingInteraction.KeepCardsInHandChoice.class,
                 PendingInteraction.SylvanLibraryChoice.class,
                 PendingInteraction.AdNauseamRepeatChoice.class,
+                PendingInteraction.MaySearchLibraryChoice.class,
                 PendingInteraction.ActivatedAbilityGraveyardExileCostChoice.class,
                 PendingInteraction.ExileNonlandCardFromTargetHandOrGraveyardChoice.class,
                 PendingInteraction.ExiledCardMayPlayChoice.class,

@@ -119,7 +119,8 @@ class DispossessTest extends BaseCardTest {
 
         harness.handleListChoice(player1, "Ornithopter");
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiZoneExileChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiZoneExileChoice.class).validCardIds()).isEmpty();
+        harness.handleMultipleCardsChosen(player1, List.of());
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore);
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("shuffles their library"));
     }
@@ -134,6 +135,7 @@ class DispossessTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.handleListChoice(player1, "Ornithopter");
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Dispossess");

@@ -109,6 +109,7 @@ class LobotomyTest extends BaseCardTest {
         castLobotomyAt(List.of(new TrainedArmodon()));
 
         chooseFromRevealedHand("Trained Armodon");
+        harness.handleMultipleCardsChosen(player1, List.of());
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class))

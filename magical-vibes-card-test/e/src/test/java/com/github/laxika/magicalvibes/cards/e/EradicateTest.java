@@ -198,6 +198,7 @@ class EradicateTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 4);
 
         harness.castAndResolveSorcery(player1, 0, 0, targetId);
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.stack)
                 .anyMatch(entry -> entry.getCard().getName().equals("Psychogenic Probe"));

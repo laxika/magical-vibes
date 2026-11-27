@@ -210,7 +210,9 @@ class KotoseTheSilentSpiderTest extends BaseCardTest {
         List<Card> found = new ArrayList<>(handCopies);
         found.addAll(libraryCopies);
         if (found.isEmpty()) {
-            assertThat(gd.interaction.activeInteraction()).isNull();
+            // The searched hand and library are still looked at, with nothing to find.
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiZoneExileChoice.class).validCardIds()).isEmpty();
+            harness.handleMultipleCardsChosen(player1, List.of());
         } else {
             harness.handleMultipleCardsChosen(player1, found.stream().map(Card::getId).toList());
             harness.passBothPriorities();

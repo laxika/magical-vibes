@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.m.MindlockOrb;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -56,6 +57,44 @@ class HauntingEchoesTest extends BaseCardTest {
                 .allSatisfy(prompt -> assertThat(prompt)
                         .contains(libraryImp.getId().toString(), "Plains")
                         .doesNotContain("Cabal Pit"));
+    }
+
+    @Test
+    @DisplayName("The caster still looks at the searched library when no card there shares a name")
+    void showsTheSearchedLibraryWhenNothingMatches() {
+        Card libraryPlains = new Plains();
+        harness.setGraveyard(player2, List.of(new DuskImp()));
+        harness.setLibrary(player2, List.of(libraryPlains));
+        harness.setHand(player1, List.of(new HauntingEchoes()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.getConn1().clearMessages();
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiZoneExileChoice.class).validCardIds())
+                .isEmpty();
+        assertThat(harness.getConn1().getMessagesContaining("MULTI_CARD_PICK")).isNotEmpty()
+                .allSatisfy(prompt -> assertThat(prompt).contains("Plains"));
+
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(libraryPlains);
+        assertThat(gameLogContains("shuffles their library")).isTrue();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("With nothing exiled there is no search, so nothing is looked at")
+    void noSearchWithNothingExiled() {
+        harness.setGraveyard(player2, List.of(new Plains()));
+        harness.setLibrary(player2, List.of(new DuskImp()));
+        harness.setHand(player1, List.of(new HauntingEchoes()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gameLogContains("shuffles their library")).isTrue();
     }
 
     @Test
@@ -113,6 +152,7 @@ class HauntingEchoesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 5);
 
         harness.castAndResolveSorcery(player1, 0, player1.getId());
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCopy);
@@ -336,6 +376,7 @@ class HauntingEchoesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 5);
 
         harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gameLogContains("shuffles their library")).isTrue();
     }

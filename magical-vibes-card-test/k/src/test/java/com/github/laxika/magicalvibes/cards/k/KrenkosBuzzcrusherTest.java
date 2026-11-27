@@ -37,11 +37,14 @@ class KrenkosBuzzcrusherTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(ownChosen.getId()));
         harness.handleMultiplePermanentsChosen(player1, List.of(opponentLand.getId()));
 
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MaySearchLibraryChoice.class).playerId()).isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId())
                 .isEqualTo(player1.getId());
 
         harness.handleCardChosen(player1, 0);
+        harness.handleMayAbilityChosen(player2, true);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId())
                 .isEqualTo(player2.getId());
@@ -95,7 +98,7 @@ class KrenkosBuzzcrusherTest extends BaseCardTest {
 
         cast();
         harness.handleMultiplePermanentsChosen(player1, List.of(land.getId()));
-        harness.handleCardChosen(player2, -1);
+        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(land);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
@@ -110,7 +113,9 @@ class KrenkosBuzzcrusherTest extends BaseCardTest {
 
         cast();
         harness.handleMultiplePermanentsChosen(player1, List.of(land.getId()));
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MaySearchLibraryChoice.class);
+        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
     }
 
     @Test
@@ -126,7 +131,9 @@ class KrenkosBuzzcrusherTest extends BaseCardTest {
         cast();
         harness.handleMultiplePermanentsChosen(player1, List.of(ownLand.getId()));
         harness.handleMultiplePermanentsChosen(player1, List.of(opponentLand.getId()));
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
+        harness.handleMayAbilityChosen(player2, true);
 
         PendingInteraction.LibrarySearch search =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
@@ -167,7 +174,7 @@ class KrenkosBuzzcrusherTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(permanent -> permanent.getCard().getName())
                 .doesNotContain("Zombie");
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MaySearchLibraryChoice.class).playerId())
                 .isEqualTo(player1.getId());
     }
 
@@ -194,14 +201,15 @@ class KrenkosBuzzcrusherTest extends BaseCardTest {
         cast();
         harness.handleMultiplePermanentsChosen(player1, List.of(land.getId()));
 
-        PendingInteraction.LibrarySearch search =
-                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
-        assertThat(search).isNotNull();
-        assertThat(search.params().playerId()).isEqualTo(player2.getId());
-        assertThat(search.params().cards()).isEmpty();
+        PendingInteraction.MaySearchLibraryChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MaySearchLibraryChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.search().cards()).isEmpty();
         assertThat(harness.getConn1().getSentMessages()).noneMatch(message -> message.contains("Island"));
 
-        harness.handleCardChosen(player2, -1);
+        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
 
         assertThat(gd.gameLog).noneMatch(entry -> entry.plainText().contains("finds no")
                 || entry.plainText().contains("Island"));
@@ -220,9 +228,11 @@ class KrenkosBuzzcrusherTest extends BaseCardTest {
         cast();
         harness.handleMultiplePermanentsChosen(player1, List.of(ownLand.getId()));
         harness.handleMultiplePermanentsChosen(player1, List.of(opponentLand.getId()));
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
 
         harness.assertNotOnBattlefield(player1, "Forest");
+        harness.handleMayAbilityChosen(player2, true);
         harness.handleCardChosen(player2, 0);
 
         harness.assertOnBattlefield(player1, "Forest");

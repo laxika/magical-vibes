@@ -188,6 +188,43 @@ class JourneyForTheElixirTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("Shuffles the library after taking both cards from the graveyard")
+    void shufflesAfterTakingBothCardsFromGraveyard() {
+        Card forest = new Forest();
+        Card jiangYanggu = new JiangYanggu();
+        harness.setLibrary(player1, List.of(new Forest(), new JiangYanggu()));
+        harness.setGraveyard(player1, List.of(forest, jiangYanggu));
+        harness.addToBattlefield(player2, new PsychogenicProbe());
+        harness.setLife(player1, 20);
+
+        castJourney();
+        harness.handleMultipleCardsChosen(player1, List.of(forest.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(jiangYanggu.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(forest, jiangYanggu);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Still shuffles when library searching is prohibited and nothing is found")
+    void shufflesWhenLibrarySearchIsPreventedAndNothingIsFound() {
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setGraveyard(player1, List.of());
+        harness.addToBattlefield(player2, new LeoninArbiter());
+        harness.addToBattlefield(player2, new PsychogenicProbe());
+        harness.setLife(player1, 20);
+
+        castJourney();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 18);
+    }
+
     private void castJourney() {
         harness.setHand(player1, List.of(new JourneyForTheElixir()));
         harness.addMana(player1, ManaColor.GREEN, 1);

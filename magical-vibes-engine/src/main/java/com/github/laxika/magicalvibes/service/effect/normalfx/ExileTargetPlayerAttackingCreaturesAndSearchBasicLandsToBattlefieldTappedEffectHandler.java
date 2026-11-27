@@ -7,12 +7,12 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerAttackingCreaturesAndSearchBasicLandsToBattlefieldTappedEffect;
-import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
-import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -32,6 +32,7 @@ public class ExileTargetPlayerAttackingCreaturesAndSearchBasicLandsToBattlefield
     private final GameLogService gameLogService;
     private final LibrarySearchSupport librarySearchSupport;
     private final GameQueryService gameQueryService;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -72,46 +73,28 @@ public class ExileTargetPlayerAttackingCreaturesAndSearchBasicLandsToBattlefield
 
         permanentRemovalService.removeOrphanedAuras(gameData);
 
-        // Target player may search their library for that many basic land cards, even when that many is
-        // zero (they may still search, find nothing, and shuffle).
-        if (librarySearchSupport.isSearchPrevented(gameData, targetPlayerId)) return;
+        // "That player may search their library for that many basic land cards ... then shuffle": whether to search is
+        // asked first (MaySearchLibraryChoice). A player who can't search doesn't choose to, so doesn't shuffle (the
+        // Leonin Arbiter and Mindlock Orb rulings); one who searches may find fewer, or none, and still shuffles.
+        if (librarySearchSupport.isSearchPrevented(gameData, targetPlayerId, false)) return;
 
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
+        if (deck == null) return;
         String playerName = gameData.playerIdToName.get(targetPlayerId);
-
-        if (deck == null || deck.isEmpty()) {
-            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, targetPlayerId);
-            String logMsg = playerName + " searches their library but it is empty. Library is shuffled.";
-            gameLogService.append(gameData, GameLog.text(logMsg));
-            return;
-        }
-
-        List<Card> basicLands = deck.stream()
+        List<Card> candidates = exiledCount == 0 ? List.of() : deck.stream()
                 .filter(card -> card.hasType(CardType.LAND)
                         && gameQueryService.cardHasSupertype(
                         card, CardSupertype.BASIC, gameData, targetPlayerId))
                 .toList();
-
-        if (basicLands.isEmpty() && exiledCount > 0) {
-            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, targetPlayerId);
-            LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
-            String logMsg = playerName + " searches their library but finds no basic land cards. Library is shuffled.";
-            gameLogService.append(gameData, GameLog.text(logMsg));
-            return;
-        }
-
-        List<Card> candidates = exiledCount == 0 ? List.of() : new ArrayList<>(basicLands);
-        String prompt = "You may search your library for up to " + exiledCount
+        String prompt = "Search your library for up to " + exiledCount
                 + " basic land card" + (exiledCount != 1 ? "s" : "")
                 + " and put them onto the battlefield tapped (" + exiledCount + " remaining).";
-
-        librarySearchSupport.sendLibrarySearchToPlayer(gameData, targetPlayerId, LibrarySearchParams.builder(targetPlayerId, candidates)
-                .remainingCount(exiledCount)
-                .canFailToFind(true)
-                .destination(LibrarySearchDestination.BATTLEFIELD_TAPPED)
-                .declineSkipsShuffle(exiledCount > 0)
-                .build(), prompt, true, playerName + " may search their library.");
-
-        log.info("Game {} - {} may search library for up to {} basic lands", gameData.id, playerName, exiledCount);
+        gameLogService.append(gameData, GameLog.text(playerName + " may search their library."));
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.MaySearchLibraryChoice(targetPlayerId,
+                LibrarySearchParams.builder(targetPlayerId, new ArrayList<>(candidates))
+                        .remainingCount(exiledCount)
+                        .canFailToFind(true)
+                        .destination(LibrarySearchDestination.BATTLEFIELD_TAPPED)
+                        .build(), prompt));
     }
 }

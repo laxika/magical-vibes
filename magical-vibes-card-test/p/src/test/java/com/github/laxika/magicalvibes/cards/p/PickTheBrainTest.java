@@ -181,6 +181,7 @@ class PickTheBrainTest extends BaseCardTest {
 
         castPickTheBrain();
         chooseFromRevealedHand("Reduce to Ashes");
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);

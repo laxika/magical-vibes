@@ -90,6 +90,9 @@ class DemolitionFieldTest extends BaseCardTest {
 
         GameData gameData = harness.getGameData();
         harness.assertInGraveyard(player2, "Demolition Field");
+        assertThat(gameData.interaction.activeInteraction(PendingInteraction.MaySearchLibraryChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
         assertThat(gameData.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gameData.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId())
                 .isEqualTo(player2.getId());
@@ -101,6 +104,9 @@ class DemolitionFieldTest extends BaseCardTest {
         harness.handleCardChosen(player2, 0);
         harness.assertOnBattlefield(player2, "Plains");
         assertThat(gd.playerBattlefields.get(player2.getId()).getFirst().isTapped()).isFalse();
+        assertThat(gameData.interaction.activeInteraction(PendingInteraction.MaySearchLibraryChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(gameData.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId())
                 .isEqualTo(player1.getId());
         harness.handleCardChosen(player1, 0);
@@ -176,6 +182,9 @@ class DemolitionFieldTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, land.getId());
         harness.passBothPriorities();
 
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MaySearchLibraryChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId())
                 .isEqualTo(player2.getId());
         harness.assertOnBattlefield(player2, "Demolition Field");

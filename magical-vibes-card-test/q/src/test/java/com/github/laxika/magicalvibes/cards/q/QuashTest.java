@@ -88,6 +88,7 @@ class QuashTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passPriority(player1);
         harness.castAndResolveInstant(player2, 0, castCopy.getId());
+        harness.handleMultipleCardsChosen(player2, List.of());
 
         assertThat(harness.getGameData().stack).isEmpty();
         harness.assertLife(player2, 20);
@@ -174,6 +175,7 @@ class QuashTest extends BaseCardTest {
 
         harness.castInstant(player1, 0);
         harness.castAndResolveInstant(player1, 0, castCopy.getId());
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(castCopy);

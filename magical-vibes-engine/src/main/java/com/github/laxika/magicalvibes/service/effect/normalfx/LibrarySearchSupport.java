@@ -726,13 +726,12 @@ public class LibrarySearchSupport {
                                            Set<UUID> singleSearchCardIds) {
         // Universal choke point for every library search that presents cards: fire
         // ON_OPPONENT_SEARCHES_LIBRARY (Ob Nixilis, Unshackled) for a player searching their OWN
-        // library. An optional search that can be declined (declineSkipsShuffle) only begins with the
-        // player's first pick, so its triggers are fired there instead. A search of someone else's library (targetPlayerId set) is not "their library".
+        // library. A search queue's searches are recorded by the queue. A search of someone else's library
+        // (targetPlayerId set) is not "their library".
         if (singleSearchCardIds == null
                 && !gameData.suppressNextLibrarySearchTriggers
                 && (params.targetPlayerId() == null || params.targetPlayerId().equals(params.playerId()))
-                && params.followUp().basicLandSearchQueue() == null
-                && !params.declineSkipsShuffle()) {
+                && params.followUp().basicLandSearchQueue() == null) {
             LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, params.playerId());
         }
 

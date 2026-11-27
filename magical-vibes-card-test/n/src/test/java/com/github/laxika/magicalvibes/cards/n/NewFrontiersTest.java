@@ -51,6 +51,7 @@ class NewFrontiersTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(firstForest, secondForest, new Simplify()));
         harness.setLibrary(player2, List.of(firstPlains, secondPlains, new Simplify()));
         castNewFrontiers(2);
+        harness.handleMayAbilityChosen(player1, true);
 
         PendingInteraction.LibrarySearch search = activeSearch();
         assertThat(search.params().playerId()).isEqualTo(player1.getId());
@@ -64,6 +65,7 @@ class NewFrontiersTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gameLogContains("Library is shuffled.")).isFalse();
 
+harness.handleMayAbilityChosen(player2, true);
         search = activeSearch();
         assertThat(search.params().playerId()).isEqualTo(player2.getId());
         assertThat(search.params().remainingCount()).isEqualTo(2);
@@ -93,9 +95,10 @@ class NewFrontiersTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Forest()));
         castNewFrontiers(2);
 
+harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
         harness.handleCardChosen(player1, 0);
-        harness.handleCardChosen(player2, -1);
+        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(activeSearch()).isNull();
         resolveAllTriggers();
@@ -109,11 +112,12 @@ class NewFrontiersTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Plains()));
         castNewFrontiers(1);
 
-        harness.handleCardChosen(player1, -1);
-        assertThat(activeSearch().params().playerId()).isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(maySearch().playerId()).isEqualTo(player2.getId());
 
-        harness.handleCardChosen(player2, -1);
+        harness.handleMayAbilityChosen(player2, false);
 
+        assertThat(maySearch()).isNull();
         assertThat(activeSearch()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
@@ -127,8 +131,10 @@ class NewFrontiersTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Plains(), new Plains(), new Simplify()));
         castNewFrontiers(2);
 
+harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
         harness.handleCardChosen(player1, -1);
+        harness.handleMayAbilityChosen(player2, true);
         harness.handleCardChosen(player2, 0);
         harness.handleCardChosen(player2, -1);
 
@@ -146,10 +152,12 @@ class NewFrontiersTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Plains()));
         castNewFrontiers(1);
 
-        assertThat(activeSearch()).isNotNull();
-        assertThat(activeSearch().params().playerId()).isEqualTo(player1.getId());
-        harness.handleCardChosen(player1, -1);
+        assertThat(maySearch()).isNotNull();
+        assertThat(maySearch().playerId()).isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, false);
         assertThat(gameLogContains("shuffled.")).isFalse();
+        assertThat(maySearch().playerId()).isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
         assertThat(activeSearch().params().playerId()).isEqualTo(player2.getId());
 
         harness.handleCardChosen(player2, 0);
@@ -169,10 +177,10 @@ class NewFrontiersTest extends BaseCardTest {
         harness.setLibrary(player2, List.of());
         castNewFrontiers(1);
 
-        assertThat(activeSearch()).isNotNull();
-        assertThat(activeSearch().params().playerId()).isEqualTo(player1.getId());
-        harness.handleCardChosen(player1, -1);
-        harness.handleCardChosen(player2, -1);
+        assertThat(maySearch()).isNotNull();
+        assertThat(maySearch().playerId()).isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, false);
         resolveAllTriggers();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
@@ -185,11 +193,12 @@ class NewFrontiersTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Plains()));
         castNewFrontiers(0);
 
-        assertThat(activeSearch()).isNotNull();
-        assertThat(activeSearch().params().playerId()).isEqualTo(player1.getId());
-        harness.handleCardChosen(player1, -1);
-        assertThat(activeSearch().params().playerId()).isEqualTo(player2.getId());
-        harness.handleCardChosen(player2, -1);
+        assertThat(maySearch()).isNotNull();
+        assertThat(maySearch().playerId()).isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(maySearch().playerId()).isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, false);
+        assertThat(maySearch()).isNull();
         assertThat(activeSearch()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
@@ -202,7 +211,9 @@ class NewFrontiersTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Plains(), new Simplify()));
         castNewFrontiers(3);
 
+harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
+        harness.handleMayAbilityChosen(player2, true);
         assertThat(activeSearch().params().playerId()).isEqualTo(player2.getId());
         harness.handleCardChosen(player2, 0);
 
@@ -216,6 +227,28 @@ class NewFrontiersTest extends BaseCardTest {
         assertThat(gd.pendingEffectResolutionEntry).isNull();
     }
 
+    @Test
+    @DisplayName("A player may search and find nothing, and then shuffles; one who doesn't search doesn't")
+    void searchingAndFindingNothingStillShuffles() {
+        harness.addToBattlefield(player2, new PsychogenicProbe());
+        harness.setLibrary(player1, List.of(new Forest(), new Simplify()));
+        harness.setLibrary(player2, List.of(new Plains(), new Simplify()));
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        castNewFrontiers(1);
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, -1);
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playersWhoSearchedLibraryThisTurn).containsExactly(player1.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getCard().getName().equals("Forest"));
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
+
     private void castNewFrontiers(int xValue) {
         harness.setHand(player1, List.of(new NewFrontiers()));
         harness.addMana(player1, ManaColor.GREEN, xValue + 1);
@@ -224,6 +257,10 @@ class NewFrontiersTest extends BaseCardTest {
 
     private PendingInteraction.LibrarySearch activeSearch() {
         return gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+    }
+
+    private PendingInteraction.MaySearchLibraryChoice maySearch() {
+        return gd.interaction.activeInteraction(PendingInteraction.MaySearchLibraryChoice.class);
     }
 
     @Test
@@ -236,9 +273,11 @@ class NewFrontiersTest extends BaseCardTest {
 
         castNewFrontiers(1);
         // "Each player may search": the choice is player 1's, whatever lies in or below the top four.
-        assertThat(activeSearch().params().playerId()).isEqualTo(player1.getId());
-        harness.handleCardChosen(player1, -1);
+        assertThat(maySearch().playerId()).isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, false);
 
+        assertThat(maySearch().playerId()).isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
         assertThat(activeSearch().params().playerId()).isEqualTo(player2.getId());
         harness.handleCardChosen(player2, 0);
         harness.assertOnBattlefield(player2, "Plains");
@@ -298,11 +337,11 @@ class NewFrontiersTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Plains()));
 
         castNewFrontiers(1);
-        harness.handleCardChosen(player1, -1);
+        harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(activeSearch().params().playerId()).isEqualTo(player2.getId());
+        assertThat(maySearch().playerId()).isEqualTo(player2.getId());
         assertThat(gd.playersWhoSearchedLibraryThisTurn).doesNotContain(player1.getId());
-        harness.handleCardChosen(player2, -1);
+        harness.handleMayAbilityChosen(player2, false);
         resolveAllTriggers();
 
         harness.assertLife(player1, 20);
@@ -321,10 +360,12 @@ class NewFrontiersTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 9);
 
         harness.castAndResolveSorcery(player1, 0, 1);
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(activeSearch().params().cards()).containsExactly(wurm);
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playersWhoSearchedLibraryThisTurn).contains(player1.getId());
+harness.handleMayAbilityChosen(player2, true);
         assertThat(activeSearch().params().playerId()).isEqualTo(player2.getId());
         harness.handleCardChosen(player2, 0);
         harness.assertOnBattlefield(player2, "Plains");
@@ -342,9 +383,10 @@ class NewFrontiersTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Plains()));
 
         castNewFrontiers(1);
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(activeSearch().decidingPlayerId()).isEqualTo(player2.getId());
         harness.handleCardChosen(player2, 0);
-        harness.handleCardChosen(player2, -1);
+        harness.handleMayAbilityChosen(player2, false);
         resolveAllTriggers();
 
         harness.assertLife(player1, 18);
@@ -360,13 +402,15 @@ class NewFrontiersTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Plains()));
 
         castNewFrontiers(1);
+        assertThat(maySearch().playerId()).isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(activeSearch().params().playerId()).isEqualTo(player1.getId());
         assertThat(activeSearch().decidingPlayerId()).isEqualTo(player2.getId());
         assertThat(activeSearch().params().cards()).isEmpty();
         assertThat(gd.gameLog).noneMatch(entry -> entry.plainText().contains("finds no"));
         harness.handleCardChosen(player2, -1);
-        assertThat(activeSearch().params().playerId()).isEqualTo(player2.getId());
+        assertThat(maySearch().playerId()).isEqualTo(player2.getId());
     }
 
     private record MaySearchOffer(String prompt, List<String> choices, List<String> log) {
@@ -386,6 +430,8 @@ class NewFrontiersTest extends BaseCardTest {
         int logStart = gd.gameLog.size();
 
         castNewFrontiers(1);
+        assertThat(maySearch().playerId()).isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
 
         PendingInteraction.LibrarySearch offer = activeSearch();
         assertThat(offer.params().playerId()).isEqualTo(player1.getId());

@@ -167,7 +167,11 @@ public class ExileCardsWithSameNameEffectHandler implements NormalEffectHandlerB
                             + gameData.playerIdToName.get(playerId) + "'s library.");
             return;
         }
-        if (!offered.isEmpty()) {
+        // A search looks at every card of the zones searched even when none of them can be found (CR 701.23a), so the
+        // searcher is shown a hidden zone searched for a name with no match; a search for no name is no search here.
+        boolean looksAtHiddenZone = !names.isEmpty()
+                && (searchedZones.contains(Zone.LIBRARY) || searchedZones.contains(Zone.HAND));
+        if (!offered.isEmpty() || looksAtHiddenZone) {
             playerInputService.beginSameNameExileChoice(gameData, searcherId, offered, e.maxCount(), playerId,
                     String.join(", ", names), sourceId, new SearchedZones(searchedZones, libraryTopCards), shuffles,
                     graveyardFoundWithTheRest);

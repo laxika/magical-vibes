@@ -35,6 +35,10 @@ class NobleBenefactorTest extends BaseCardTest {
         return gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
     }
 
+    private PendingInteraction.MaySearchLibraryChoice maySearch() {
+        return gd.interaction.activeInteraction(PendingInteraction.MaySearchLibraryChoice.class);
+    }
+
     /** Kills Noble Benefactor with Aether Flash while player2 is active. */
     private void killBenefactor() {
         harness.forceActivePlayer(player2);
@@ -58,12 +62,16 @@ class NobleBenefactorTest extends BaseCardTest {
         killBenefactor();
 
         // Active player (player2) is prompted first, and any card qualifies — not just creatures.
+        assertThat(maySearch().playerId()).isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
         assertThat(activeSearch()).isNotNull();
         assertThat(activeSearch().params().playerId()).isEqualTo(player2.getId());
         assertThat(activeSearch().params().cards()).containsExactlyElementsOf(player2Library);
         assertThat(activeSearch().params().remainingCount()).isEqualTo(1);
 
         harness.handleCardChosen(player2, 0);
+        assertThat(maySearch().playerId()).isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(activeSearch()).isNotNull();
         assertThat(activeSearch().params().playerId()).isEqualTo(player1.getId());
@@ -87,14 +95,15 @@ class NobleBenefactorTest extends BaseCardTest {
 
         killBenefactor();
 
-        harness.handleCardChosen(player2, -1);
+        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        assertThat(activeSearch()).isNotNull();
-        assertThat(activeSearch().params().playerId()).isEqualTo(player1.getId());
+        assertThat(maySearch()).isNotNull();
+        assertThat(maySearch().playerId()).isEqualTo(player1.getId());
 
-        harness.handleCardChosen(player1, -1);
+        harness.handleMayAbilityChosen(player1, false);
 
+        assertThat(maySearch()).isNull();
         assertThat(activeSearch()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(player1Library);
@@ -133,7 +142,9 @@ class NobleBenefactorTest extends BaseCardTest {
         killBenefactor();
 
         assertThat(gd.playersWhoSearchedLibraryThisTurn).doesNotContain(player2.getId());
-        assertThat(activeSearch()).isNotNull();
+        assertThat(maySearch()).isNotNull();
+        assertThat(maySearch().playerId()).isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(activeSearch().params().playerId()).isEqualTo(player1.getId());
 
         harness.handleCardChosen(player1, 1);
@@ -152,7 +163,8 @@ class NobleBenefactorTest extends BaseCardTest {
         harness.setHand(player2, List.of());
 
         killBenefactor();
-        harness.handleCardChosen(player2, -1);
+        harness.handleMayAbilityChosen(player2, false);
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 1);
 
         assertThat(activeSearch()).isNull();
@@ -183,6 +195,7 @@ class NobleBenefactorTest extends BaseCardTest {
         harness.setLibrary(player1, List.of());
 
         killBenefactor();
+        harness.handleMayAbilityChosen(player2, true);
         assertThat(activeSearch().params().reveals()).isFalse();
         harness.handleCardChosen(player2, 0);
 
