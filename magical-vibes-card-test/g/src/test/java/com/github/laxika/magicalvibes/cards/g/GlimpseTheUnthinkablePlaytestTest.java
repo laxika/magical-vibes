@@ -472,11 +472,9 @@ class GlimpseTheUnthinkablePlaytestTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        var pick = gd.interaction.activeInteraction(
-                com.github.laxika.magicalvibes.model.PendingInteraction.PermanentChoice.class);
-        assertThat(pick.validPermanentIds()).containsExactly(harness.getPermanentId(player1, "Ravenous Vampire"));
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Ravenous Vampire"));
 
+        assertThat(gd.interaction.activeInteraction(
+                com.github.laxika.magicalvibes.model.PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertOnBattlefield(player1, "Glimpse, the Unthinkable");
         harness.assertInGraveyard(player1, "Ravenous Vampire");
