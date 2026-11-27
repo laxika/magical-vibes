@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.s.ShivanFire;
 import com.github.laxika.magicalvibes.cards.w.WarlordsFury;
 import com.github.laxika.magicalvibes.cards.r.Remand;
 import com.github.laxika.magicalvibes.cards.k.KeldonRaider;
+import com.github.laxika.magicalvibes.cards.t.ThinkTwice;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -21,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
-@CardUsed({JayaBallard.class, KeldonRaider.class, ShivanFire.class, WarlordsFury.class})
+@CardUsed({JayaBallard.class, KeldonRaider.class, ShivanFire.class, WarlordsFury.class, ThinkTwice.class})
 class JayaBallardTest extends BaseCardTest {
 
     @Test
@@ -250,5 +251,25 @@ class JayaBallardTest extends BaseCardTest {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;
+    }
+
+    @Test
+    @DisplayName("The emblem casts a spell for its mana cost, not with flashback, even a card with its own flashback")
+    void emblemCastsForTheManaCostNotWithFlashback() {
+        createEmblem();
+        ThinkTwice spell = new ThinkTwice();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new KeldonRaider(), new KeldonRaider()));
+        harness.setGraveyard(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castFromGraveyard(player1, 0);
+
+        assertThat(gd.stack).singleElement()
+                .satisfies(entry -> assertThat(entry.isCastWithFlashback()).isFalse());
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
     }
 }

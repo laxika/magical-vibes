@@ -81,6 +81,11 @@ public class IncreaseSpellCostEffectHandler implements CostModificationHandlerBe
     }
 
     private boolean spellWasCastFromZone(CostModificationContext context, Zone zone) {
+        // A copy waiting in exile is cast from the zone it was created in (CR 707.12): Kefnet's from a hand.
+        Zone copyCreationZone = context.gameData().castCopyCreationZones.get(context.spell().getId());
+        if (copyCreationZone != null) {
+            return copyCreationZone == zone;
+        }
         return switch (zone) {
             case EXILE -> context.gameData().findExiledCard(context.spell().getId()) != null;
             case GRAVEYARD -> context.gameData().playerGraveyards.values().stream()

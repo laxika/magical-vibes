@@ -629,7 +629,8 @@ public class GameActionAvailabilityService {
             pool = flagged;
         }
         if ((gameQueryService.canSpendManaAsAnyColorToCastCard(gameData, playerId, card)
-                || castingPermissionService.canSpendManaAsAnyColorToCastFromBattlefield(gameData, playerId, card))
+                || castingPermissionService.canSpendManaAsAnyColorToCastFromBattlefield(gameData, playerId, card)
+                || castingPermissionService.hasLibraryTopPermissionForCard(gameData, playerId, card))
                 && !pool.isAllManaSpendableAsAnyColor()) {
             ManaPool flagged = pool instanceof VirtualManaPool virtual
                     ? new VirtualManaPool(virtual) : new ManaPool(pool);

@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.b.BenevolentBodyguard;
+import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.c.CrucibleOfWorlds;
 import com.github.laxika.magicalvibes.cards.d.DefyGravity;
 import com.github.laxika.magicalvibes.cards.e.EmberShot;
 import com.github.laxika.magicalvibes.cards.k.KrosanVerge;
+import com.github.laxika.magicalvibes.cards.m.MemoryPlunder;
 import com.github.laxika.magicalvibes.cards.m.MentalNote;
 import com.github.laxika.magicalvibes.cards.m.MirarisWake;
 import com.github.laxika.magicalvibes.cards.r.RayOfRevelation;
@@ -23,7 +25,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BenevolentBodyguard.class, CrucibleOfWorlds.class, DefyGravity.class, EmberShot.class, KrosanVerge.class, MentalNote.class, MirarisWake.class, RayOfRevelation.class, ShamansTrance.class})
+@CardUsed({BenevolentBodyguard.class, CrucibleOfWorlds.class, DefyGravity.class, EmberShot.class, KrosanVerge.class, MentalNote.class, MirarisWake.class, RayOfRevelation.class, ShamansTrance.class,
+        CounselOfTheSoratami.class, MemoryPlunder.class})
 class ShamansTranceTest extends BaseCardTest {
 
     @Test
@@ -268,4 +271,23 @@ class ShamansTranceTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(second);
     }
 
+    @Test
+    @DisplayName("Doesn't stop an opponent casting from another player's graveyard, which isn't their graveyard")
+    void opponentMayStillCastFromAnotherPlayersGraveyard() {
+        CounselOfTheSoratami counsel = new CounselOfTheSoratami();
+        harness.setGraveyard(player1, List.of(counsel));
+        prepareMainPhase(player1);
+        harness.castFromHand(player1, new ShamansTrance(), "{2}{R}");
+        harness.passBothPriorities();
+        harness.setHand(player2, List.of(new MemoryPlunder()));
+        harness.setLibrary(player2, List.of(new KrosanVerge(), new KrosanVerge()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+
+        harness.castAndResolveInstant(player2, 0, counsel.getId());
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard() == counsel);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+    }
 }

@@ -194,7 +194,7 @@ public class CastingPermissionService {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
-                if (gameQueryService.hasLostAllAbilities(gameData, perm)) {
+                if (perm.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, perm)) {
                     continue;
                 }
                 for (CardEffect effect : perm.getCard().getStaticEffects()) {
@@ -230,7 +230,7 @@ public class CastingPermissionService {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
-                if (gameQueryService.hasLostAllAbilities(gameData, perm)) {
+                if (perm.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, perm)) {
                     continue;
                 }
                 for (CardEffect effect : perm.getCard().getStaticEffects()) {
@@ -491,7 +491,7 @@ public class CastingPermissionService {
         for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
-                if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
+                if (permanent.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
                 for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                     if (effect instanceof GlobalLandPlayRestrictionEffect restriction
                             && countMatchingPermanents(gameData, restriction.filter())
@@ -682,7 +682,7 @@ public class CastingPermissionService {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
-                if (gameQueryService.hasLostAllAbilities(gameData, perm)) {
+                if (perm.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, perm)) {
                     continue;
                 }
                 for (CardEffect effect : perm.getCard().getStaticEffects()) {
@@ -757,7 +757,7 @@ public class CastingPermissionService {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
-                if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
+                if (perm.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
                 for (CardEffect effect : perm.getCard().getStaticEffects()) {
                     if (effect instanceof CantCastAdditionalNonartifactSpellsEffect) return true;
                 }
@@ -2696,13 +2696,12 @@ public class CastingPermissionService {
 
     /**
      * Vizier of the Menagerie etc.: returns true if the player controls a permanent that lets them
-     * spend mana of any type to cast spells sharing one of this card's types (e.g. creature spells).
+     * spend mana of any type to cast spells sharing one of this card's types (e.g. creature spells). Xanathar's
+     * library-top grant lets mana be spent only as though it were mana of any color
+     * ({@link #hasLibraryTopPermissionForCard}), so it is not one of these (CR 107.4c).
      */
     public boolean canSpendAnyManaTypeToCast(GameData gameData, UUID playerId, Card card) {
         if (canSpendAnyManaTypeFromCard(card)) {
-            return true;
-        }
-        if (hasLibraryTopPermissionForCard(gameData, playerId, card)) {
             return true;
         }
         if (gameData.hasPendingAnyManaTypeForNextSpellThisTurn(playerId)) {
@@ -3534,14 +3533,20 @@ public class CastingPermissionService {
         };
     }
 
+    /**
+     * Lukka's "you may cast this card from exile as long as you control a Lukka planeswalker": the permission holds
+     * while {@code playerId} controls a permanent that is a planeswalker now, by the layered pass, and is named as a
+     * Lukka. A face-down permanent has neither (CR 708.2a). {@code CardSubtype} has no Lukka type, so the name stands
+     * in for the planeswalker type.
+     */
     private boolean hasLukkaExilePermission(GameData gameData, UUID playerId,
                                             ExiledCardEntry entry) {
         if (!playerId.equals(gameData.lukkaExileCastPermissionHolder(entry.card().getId()))) {
             return false;
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        return battlefield != null && battlefield.stream().anyMatch(permanent ->
-                permanent.getCard().hasType(CardType.PLANESWALKER)
-                        && permanent.getCard().getName().startsWith("Lukka,"));
+        return battlefield != null && battlefield.stream().anyMatch(permanent -> !permanent.isFaceDown()
+                && gameQueryService.isPlaneswalker(gameData, permanent)
+                && String.valueOf(gameQueryService.getEffectiveName(gameData, permanent)).startsWith("Lukka,"));
     }
 }

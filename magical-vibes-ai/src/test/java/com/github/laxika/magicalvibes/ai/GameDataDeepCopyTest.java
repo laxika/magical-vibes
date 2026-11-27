@@ -132,6 +132,21 @@ class GameDataDeepCopyTest {
     }
 
     @Test
+    @DisplayName("Deep copy keeps the graveyard permissions sharing an exile play quota, independently")
+    void deepCopyKeepsSharedGraveyardPermissionsIndependent() {
+        UUID groupId = UUID.randomUUID();
+        GameData.GraveyardCastFilterPermission permission = new GameData.GraveyardCastFilterPermission(
+                UUID.randomUUID(), null);
+        gd.shareExilePlayPermissionGroup(groupId, permission);
+
+        GameData copy = gd.simulationCopy();
+        assertThat(copy.exileGroupSharedGraveyardPermissions).containsEntry(groupId, permission);
+        copy.exileGroupSharedGraveyardPermissions.remove(groupId);
+
+        assertThat(gd.exileGroupSharedGraveyardPermissions).containsEntry(groupId, permission);
+    }
+
+    @Test
     @DisplayName("Deep copy keeps the zones card copies waiting to be cast were created in, independently")
     void deepCopyKeepsCastCopyCreationZonesIndependent() {
         UUID copyId = UUID.randomUUID();

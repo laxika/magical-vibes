@@ -890,4 +890,42 @@ class ManaCostTest {
             assertThat(cost.canPay(two, 0, false, false, false, false, false, null, null)).isTrue();
         }
     }
+
+    @Nested
+    @DisplayName("canPayWithSpending")
+    class CanPayWithSpending {
+
+        @Test
+        @DisplayName("Mana of any type pays a {C} symbol with colored mana")
+        void anyTypePaysColorlessSymbol() {
+            ManaPool pool = new ManaPool();
+            pool.add(ManaColor.GREEN, 3);
+
+            assertThat(new ManaCost("{2}{C}").canPayWithSpending(pool, 0, AnyManaSpending.ANY_TYPE)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Mana spent as though any color leaves a {C} symbol to colorless mana")
+        void asThoughAnyColorLeavesColorlessSymbol() {
+            ManaPool pool = new ManaPool();
+            pool.add(ManaColor.GREEN, 3);
+            ManaCost cost = new ManaCost("{2}{C}");
+
+            assertThat(cost.canPayWithSpending(pool, 0, AnyManaSpending.AS_THOUGH_ANY_COLOR)).isFalse();
+            pool.add(ManaColor.COLORLESS, 1);
+            assertThat(cost.canPayWithSpending(pool, 0, AnyManaSpending.AS_THOUGH_ANY_COLOR)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Mana spent as though any color pays colored symbols, and a tax is added")
+        void asThoughAnyColorPaysColoredSymbolsWithTax() {
+            ManaPool pool = new ManaPool();
+            pool.add(ManaColor.GREEN, 2);
+            ManaCost cost = new ManaCost("{U}{U}");
+
+            assertThat(cost.canPayWithSpending(pool, 0, AnyManaSpending.NONE)).isFalse();
+            assertThat(cost.canPayWithSpending(pool, 0, AnyManaSpending.AS_THOUGH_ANY_COLOR)).isTrue();
+            assertThat(cost.canPayWithSpending(pool, 1, AnyManaSpending.AS_THOUGH_ANY_COLOR)).isFalse();
+        }
+    }
 }

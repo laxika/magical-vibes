@@ -428,6 +428,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentCastFromZonePredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentEnteredOrCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentReturnedWhenSourceLeftPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentWasCastPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromOwnersHandPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastWithAdventurePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastWithTeamworkPredicate;
@@ -5516,8 +5517,8 @@ public class PredicateEvaluationService {
             }
             case StackEntryNotPredicate not ->
                     !matchesSeenEntry(entry, not.predicate(), enchantedPlayerId, gameData, liveSource);
-            case StackEntryCastFromZonePredicate castFrom ->
-                    entry.getSourceZone() == castFrom.sourceZone();
+            case StackEntryCastFromZonePredicate castFrom -> entry.wasCastFrom(castFrom.sourceZone());
+            case StackEntryCastFromOwnersHandPredicate ignored -> entry.getSourceZone() == Zone.HAND;
             case StackEntryCastWithAdventurePredicate ignored -> entry.isCastWithAdventure();
             case StackEntryCardIdPredicate cardId ->
                     entry.getCard() != null && cardId.cardId().equals(entry.getCard().getId());

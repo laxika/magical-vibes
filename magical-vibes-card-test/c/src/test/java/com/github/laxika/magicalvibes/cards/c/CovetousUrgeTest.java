@@ -11,9 +11,11 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import tools.jackson.databind.json.JsonMapper;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -140,5 +142,32 @@ class CovetousUrgeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Matter Reshaper");
+    }
+
+    @Test
+    @DisplayName("The exiled card with a {C} symbol isn't shown castable with colored mana only")
+    void viewDoesNotOfferColorlessSymbolToAnyColorMana() {
+        Card reshaper = new MatterReshaper();
+        harness.setHand(player2, List.of(new Swamp()));
+        harness.setGraveyard(player2, List.of(reshaper));
+        castCovetousUrge();
+        harness.handleMultipleCardsChosen(player1, List.of(reshaper.getId()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        assertThat(playableExileCardsShown()).doesNotContain(reshaper.getId().toString());
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        assertThat(playableExileCardsShown()).contains(reshaper.getId().toString());
+    }
+
+    private String playableExileCardsShown() {
+        harness.clearMessages();
+        harness.publishState();
+        JsonMapper mapper = JsonMapper.builder().build();
+        return harness.getConn1().getSentMessages().stream()
+                .map(message -> mapper.readTree(message).get("playableExileCards"))
+                .filter(Objects::nonNull)
+                .map(Object::toString)
+                .reduce("", String::concat);
     }
 }

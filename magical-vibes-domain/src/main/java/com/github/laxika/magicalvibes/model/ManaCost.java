@@ -4521,6 +4521,25 @@ public class ManaCost {
     }
 
     /**
+     * Whether the pool can pay this cost and {@code additionalGenericCost} with mana spent as {@code spending} lets it:
+     * mana of any type pays every symbol, {C} included (CR 118.14); mana spent as though it were mana of any color pays
+     * the colored symbols but leaves a {C} symbol to colorless mana (CR 107.4c); otherwise the mana is spent as it is.
+     * The castability readers ask this, so they show what the payment then accepts.
+     */
+    public boolean canPayWithSpending(ManaPool pool, int additionalGenericCost, AnyManaSpending spending) {
+        if (spending == AnyManaSpending.ANY_TYPE
+                || spending == AnyManaSpending.AS_THOUGH_ANY_COLOR && !hasColorlessCost()) {
+            return canPayAsGeneric(pool, 0, additionalGenericCost);
+        }
+        if (spending == AnyManaSpending.AS_THOUGH_ANY_COLOR) {
+            ManaPool anyColor = new ManaPool(pool);
+            anyColor.setAllManaSpendableAsAnyColor(true);
+            return canPay(anyColor, additionalGenericCost);
+        }
+        return canPay(pool, additionalGenericCost);
+    }
+
+    /**
      * Pays the full mana value using any mana from the pool, ignoring color requirements
      * (mana of any type can be spent to cast the spell).
      */

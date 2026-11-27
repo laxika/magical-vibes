@@ -116,6 +116,12 @@ public class SpellEvents {
                 spell.setManaSpentToCast(gameData.getSpellCastManaSpent(spellCard.getId()));
                 spell.setCreatureManaSpentToCast(gameData.getSpellCastCreatureManaSpent(spellCard.getId()));
                 spell.setManaSpentByColorToCast(gameData.spellCastManaSpentByColor.get(spellCard.getId()));
+                if (castZone == Zone.HAND && gameData.foreignHandOwnerId != null
+                        && castingPlayerId.equals(gameData.foreignHandPlayPlayerId)) {
+                    // Cast from another player's hand (Sen Triplets): known as the cast triggers are matched, so a
+                    // "from your hand" filter doesn't see it as cast from its caster's hand.
+                    spell.setOwnerIdOverride(gameData.foreignHandOwnerId);
+                }
                 spellEntry = spell;
             }
         }

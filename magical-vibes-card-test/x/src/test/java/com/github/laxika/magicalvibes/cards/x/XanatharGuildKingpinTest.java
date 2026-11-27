@@ -363,4 +363,32 @@ class XanatharGuildKingpinTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
     }
+
+    @Test
+    @DisplayName("A top spell with a {C} symbol isn't shown castable with colored mana only")
+    void viewDoesNotOfferColorlessSymbolToAnyColorMana() {
+        KozilekTheGreatDistortion kozilek = new KozilekTheGreatDistortion();
+        resolveUpkeepTrigger(kozilek);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.WHITE, 10);
+        harness.clearMessages();
+
+        harness.publishState();
+
+        var mapper = JsonMapper.builder().build();
+        assertThat(harness.getConn1().getSentMessages()).noneMatch(message -> {
+            var playable = mapper.readTree(message).get("playableLibraryTopCards");
+            return playable != null && playable.toString().contains(kozilek.getId().toString());
+        });
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.clearMessages();
+        harness.publishState();
+
+        assertThat(harness.getConn1().getSentMessages()).anyMatch(message -> {
+            var playable = mapper.readTree(message).get("playableLibraryTopCards");
+            return playable != null && playable.toString().contains(kozilek.getId().toString());
+        });
+    }
 }

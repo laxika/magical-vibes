@@ -3121,4 +3121,13 @@ public class StackEntry {
     public boolean isBlitzCostPaid() {
         return alternativeCost == AlternativeCostKind.BLITZ;
     }
+
+    /**
+     * Whether this spell was cast from {@code zone}, a hand being its caster's own ("from your hand"): a spell cast from
+     * another player's hand (Sen Triplets) carries {@link #ownerIdOverride} and wasn't cast from its caster's hand.
+     */
+    public boolean wasCastFrom(Zone zone) {
+        return sourceZone == zone
+                && (zone != Zone.HAND || ownerIdOverride == null || ownerIdOverride.equals(controllerId));
+    }
 }

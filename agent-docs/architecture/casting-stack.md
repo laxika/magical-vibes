@@ -15,7 +15,7 @@ Owner: `SpellCastingService` (`playFromHandOf`), `StackResolutionService.keepWit
 Why: the card goes to its owner's zones while the permanent stays with its controller.
 
 ### Every cast asks the shared "can't" checks (CR 101.2, 601.3, 608.2g)
-A casting path asks `isSpellCastingAllowed` (suspend: `isPlayerPreventedFromCasting`); a cast during a resolution asks `canCastDuringResolution(gameData, player, card)` before anything moves (`mayBeginCastDuringResolution` for a whole card offered before a land play or a split half is chosen; `SplitCardCastSupport` judges each half). A "can't cast spells" restriction is never a type set.
+A casting path asks `isSpellCastingAllowed` (suspend: `isPlayerPreventedFromCasting`); a cast during a resolution asks `canCastDuringResolution(gameData, player, card)` before anything moves (`mayBeginCastDuringResolution` for a whole card offered before a land play or a split half is chosen; `SplitCardCastSupport` judges each half). A resolution cast from exile also asks the zone restrictions for the face cast (`ExileFreeCastQueueSupport.castableFromExile`). A "can't cast spells" restriction is never a type set.
 Owner: `CastingPermissionService`.
 Why: resolution casts skipped Rule of Law, Grand Abolisher and Teferi, Time Raveler; each flow refused alone ends as its decline does.
 
@@ -51,7 +51,7 @@ Owner: `ActivatedAbilityExecutionService.completeActivationAfterCosts`, `Ability
 Why: a mid-payment question cannot be undone; separate sacrifices miss each other's dies triggers.
 
 ### "Mana of any type" pays {C}; "as though any color" doesn't (CR 118.14, 107.4c)
-A permission to spend mana on a spell carries its wording as `AnyManaSpending`; payment pays every symbol as generic for `ANY_TYPE` and converts only colored symbols for `AS_THOUGH_ANY_COLOR`.
+A permission to spend mana on a spell carries its wording as `AnyManaSpending`; payment pays every symbol as generic for `ANY_TYPE` and converts only colored symbols for `AS_THOUGH_ANY_COLOR`; castability readers ask `ManaCost.canPayWithSpending`.
 Owner: `CastingPermissionService.anyManaSpending`, `SpellCastingService` (non-hand, exile and graveyard payments).
 Why: one boolean served both wordings, so one of them was always wrong on a {C} cost.
 
@@ -123,8 +123,8 @@ Owner: `CopyTriggeringSpellEffectHandler` (`copyOntoEachPermanent`).
 Why: the Precursor Golem and Ink-Treader Nephilim rulings.
 
 ### A copy of a card is cast from its card's zone (CR 707.12)
-A copy parked in exile for its cast records the zone it was created in (`GameData.castCopyCreationZones`); the cast event and the copy's `sourceZone` read it. A copy of a card in another player's hand records none.
-Owner: the copy-and-cast handlers, `SpellEvents.cast`.
+A copy parked in exile for its cast records the zone it was created in (`GameData.castCopyCreationZones`); the cast event, the copy's `sourceZone`, zone restrictions and cost changes read it (`GameData.exileCastZone`). A copy of a card in another player's hand records none.
+Owner: the copy-and-cast handlers, `SpellEvents.cast`, `ExileFreeCastQueueSupport.castableFromExile`.
 Why: Kefnet's copy is cast from the hand and Spellweaver Volute's from a graveyard, and "cast from" triggers read that.
 
 ## What a stack entry retains

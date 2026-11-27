@@ -1292,11 +1292,9 @@ that turns out not to be a defect is removed with the reason in the report. Run 
 Don't commit.
 ```
 
-#### Face-down and lost-ability reads (CR 613.1f, 708.2a) (3)
+#### Face-down and lost-ability reads (CR 613.1f, 708.2a) (1)
 
 - `CreateTokenCopyOfCardEffect` over `cardsThisWay(EXILE)` would copy a face-down exiled card's hidden face (CR 406.3a); no card exiles face down and then copies (FD-2 fixed the filtered subject; the cast, entry and name / mana-value readers were already right). Latent.
-- Soulless Jailer: `canCastSpellFromZone` reads `card.hasType(CREATURE)`, not the spell (an Adventure, a modal back face). Unsure, low.
-- `CastingPermissionService` spell-limit, Ethersworn Canonist, most-recent-spell and global land-restriction readers skip lost abilities but not face-down sources (CR 708.2a). Sure of the code.
 
 #### Two-player assumptions (`getOpponentId`, first seat) (3)
 
@@ -1329,11 +1327,9 @@ Don't commit.
 - Nowhere to Run: "spells and abilities" are any player's, but it is modelled as its controller's only (multiplayer). Sure.
 - Ulamog's Nullifier (`TwoOpponentOwnedExiledCardsToGraveyardChoiceInteractionHandler`): face-down picks are taken by id, not at random from their pile (2015-08-25 ruling). Fairly sure.
 
-#### Payments and costs (5)
+#### Payments and costs (3)
 
-- Jaya Ballard's emblem grants flashback (an alternative cost, CR 702.34a, 118.9a) where the text permits casting for the mana cost. Fairly sure.
 - The free casts ask for their cost-increase mana before their targets are chosen (the queue also before its modes; since FC-1 none asks for a spell with no legal mode or target): a mana ability activated in that window that removes the only target leaves the mana in the pool and the card uncast, where the target is chosen first and the spell cast (CR 601.2c, 601.2g). Sure of the code.
-- The per-target cost readers have no lost-abilities or face-down check (CR 613.1f, 708.2a). Sure.
 - Development (Research // Development): two or more opponents letting its controller draw in one round draw one card, not one per accepting opponent (CR 118.12a: each paid cost is that player's; its 2006 rulings don't settle it). Sure of the code.
 - Madame Null, Power Broker asks "pay 0 life" for a creature with 0 power (HEAD's behaviour, pinned in U8: `MadameNullPowerBrokerTest.zeroPowerAsksForZeroLife`); the U3b orchestrator's decision (Q4) says it doesn't ask (CR 119.4).
 
@@ -1350,7 +1346,7 @@ Don't commit.
 - `cardsThisWay(REVEAL)` names a card a later step reordered within its library (CR 701.20d); no card reads it so. Unverified.
 - `getRevealedOpponentHand` returns only the first opponent's hand (multiplayer); needs a hand per opponent in `GameStateMessage` and the frontend (owner question in entry 17, MP-2). Sure of the code.
 
-#### Other (40)
+#### Other (38)
 
 - Casting checks left from runs 40 and 41: Scrycast (Biting Remark; `ScryInteractionHandler`, `ScryAiStrategy`, code: the scry answer casts it with no `canCastDuringResolution` check, and the AI strategies have no `CastingPermissionService`); the may-cast offers don't ask the shared check; an ability leaves the stack before it resolves, where CR 608.2n removes it last. Unverified. FC-2: Knowledge Pool's timing, the split exile cast and suspend's type restriction fixed.
 - Krovikan Vampire's `ReturnDamagedCreaturesThatDiedUnderControlEffect` (a mass return with control and sacrifice links) puts an Aura card that died animated onto the battlefield with no host choice (CR 303.4f, 303.4g); Lim-Dûl's head since rules-fixes EB-1 and `ReturnDyingCreatureToBattlefieldEffect`, `ReturnDyingCreatureToOwnerBattlefieldEffect` since EB-2 go through the entry batch. Unverified.
@@ -1361,11 +1357,9 @@ Don't commit.
 - The set exchanges (Reins of Power, Twist Allegiance) and Perplexing Chimera don't check `cantBeControlledByOtherPlayers`; CR 701.12a's set reading unsettled. Unverified.
 - Enduring Angel that can't transform skips its replacement (differs only under "can't lose the game"). Fairly sure, low.
 - Fear of Sleep Paralysis' lock is read only by the untap replacement, not other stun removals. Fairly sure, low.
-- `hasLukkaExilePermission` matches a name starting "Lukka," and the printed type, not the Lukka subtype. Sure, low.
-- Mug's graveyard and exile permissions don't share "a spell". Sure, rare.
+- `hasLukkaExilePermission` matches a name starting "Lukka,", not the Lukka planeswalker type: `CardSubtype` has no LUKKA (adding it bumps `StoredSet.CONVERSION_VERSION`; batch it with another mapping change). CP-1 made it read the live planeswalker type and skip face-down permanents. Sure, low.
 - Make Your Own Luck puts all three cards into hand, then plots the chosen one (needs a plot library destination).
 - No seeded game random source: about 180 `ThreadLocalRandom` sites, random-target picks included, so tests can't fix a random pick. Sure.
-- Shaman's Trance, Tomik: "from their graveyards" is judged by zone, not by owner, so it also stops a cast from another player's graveyard. Sure of the code, low.
 - Reality Twist: a Volcanic Island offers the unlisted Island type's U; `RealityTwistTest` asserts it and the 2013 ruling is ambiguous for unlisted types. Unsure.
 - Boseiju, Hall of the Bandit Lord: when a land-mana replacement applies, the produced mana may lose its rider (CR 106.6a). Unverified.
 - Caged Sun's "a land's ability causes you to add" misses land mana abilities without {T}; `youTapLandForMana` fires only for {T} abilities. Sure, low.

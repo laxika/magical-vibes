@@ -13,7 +13,7 @@ public class ShamansTrance extends Card {
 
     public ShamansTrance() {
         addSpellEffect(PlayerRestrictionEffect.thisTurn(Subjects.eachOpponent(),
-                PlayerRestriction.playingCardsFrom(Zone.GRAVEYARD)));
+                PlayerRestriction.playingCardsFrom(Zone.GRAVEYARD).ofTheirOwn()));
         addSpellEffect(new AllowPlayFromOtherGraveyardsThisTurnEffect());
     }
 }

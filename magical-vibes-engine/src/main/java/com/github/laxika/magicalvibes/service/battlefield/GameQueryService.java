@@ -2810,17 +2810,39 @@ public class GameQueryService {
 
     /**
      * Whether {@code playerId} may cast {@code card} from {@code zone}: no zone-bound restriction stops that spell there
-     * (a noncreature one for Soulless Jailer). A land card is played, not cast (CR 305.1): only a land or card-play
+     * (a noncreature one for Soulless Jailer), one naming the player's own zones only when the card is in one of theirs
+     * (Shaman's Trance's "their graveyards"). A land card is played, not cast (CR 305.1): only a land or card-play
      * restriction covering the zone stops it.
      */
     public boolean canCastSpellFromZone(GameData gameData, Card card, Zone zone, UUID playerId) {
+        boolean ownZone = isInOwnZone(gameData, card, zone, playerId);
         if (card.hasType(CardType.LAND)) {
             return !isPlayerRestricted(gameData, playerId,
-                    restriction -> restriction.isZoneBound() && restriction.stopsLandsFrom(zone));
+                    restriction -> restriction.isZoneBound() && restriction.stopsLandsFrom(zone, ownZone));
         }
         boolean creatureSpell = card.hasType(CardType.CREATURE);
         return !isPlayerRestricted(gameData, playerId,
-                restriction -> restriction.stopsSpellFrom(zone, creatureSpell));
+                restriction -> restriction.stopsSpellFrom(zone, ownZone, creatureSpell));
+    }
+
+    /**
+     * Whether {@code card} in {@code zone} is in a zone of {@code playerId}'s own: their graveyard, hand or library. A
+     * card in exile, or one not found in such a zone, counts as the player's own.
+     */
+    private boolean isInOwnZone(GameData gameData, Card card, Zone zone, UUID playerId) {
+        UUID zoneOwnerId = switch (zone) {
+            case GRAVEYARD -> findGraveyardOwnerById(gameData, card.getId());
+            case HAND -> gameData.orderedPlayerIds.stream()
+                    .filter(id -> gameData.playerHands.getOrDefault(id, List.of()).stream()
+                            .anyMatch(handCard -> handCard.getId().equals(card.getId())))
+                    .findFirst().orElse(null);
+            case LIBRARY -> gameData.orderedPlayerIds.stream()
+                    .filter(id -> gameData.playerDecks.getOrDefault(id, List.of()).stream()
+                            .anyMatch(libraryCard -> libraryCard.getId().equals(card.getId())))
+                    .findFirst().orElse(null);
+            default -> null;
+        };
+        return zoneOwnerId == null || zoneOwnerId.equals(playerId);
     }
 
     /**

@@ -242,4 +242,22 @@ class LukkaCoppercoatOutcastTest extends BaseCardTest {
     private void setLibrary(Card... cards) {
         harness.setLibrary(player1, List.of(cards));
     }
+
+    @Test
+    @DisplayName("+1 permission needs a Lukka planeswalker: a face-down Lukka card is not one")
+    void plusOnePermissionIgnoresFaceDownLukka() {
+        Permanent lukka = addReadyLukka(player1, 5);
+        Card creature = new GrizzlyBears();
+        setLibrary(creature, new Forest(), new Shock());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).remove(lukka);
+        harness.addToBattlefieldAndReturn(player1, new LukkaBoundToRuin())
+                .setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
 }

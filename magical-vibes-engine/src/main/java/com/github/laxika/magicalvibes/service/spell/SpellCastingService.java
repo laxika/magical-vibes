@@ -12207,7 +12207,7 @@ public class SpellCastingService {
             throw new IllegalStateException("Card not found in exile");
         }
         Zone sourceZone = sourceZoneOverride != null
-                ? sourceZoneOverride : fromOutsideGame ? Zone.OUTSIDE_GAME : Zone.EXILE;
+                ? sourceZoneOverride : fromOutsideGame ? Zone.OUTSIDE_GAME : gameData.exileCastZone(exileCardId);
         Card card;
         if (fromOutsideGame) {
             card = com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, playerId).stream()
@@ -12965,7 +12965,7 @@ public class SpellCastingService {
     }
 
     private void payFreeExileCastCostIncrease(GameData gameData, UUID playerId, Card card, int effectiveXValue) {
-        payFreeCastCostIncrease(gameData, playerId, card, effectiveXValue, Zone.EXILE);
+        payFreeCastCostIncrease(gameData, playerId, card, effectiveXValue, gameData.exileCastZone(card.getId()));
     }
 
     /**
@@ -15142,7 +15142,8 @@ public class SpellCastingService {
         if (replacementManaCost != null) {
             baseMana = replacementManaCost;
             hasExileManaCostOverride = true;
-        } else if (sourceZone == Zone.EXILE) {
+        } else if (sourceZone == Zone.EXILE || gameData.castCopyCreationZones.containsKey(card.getId())) {
+            // A copy waiting in exile keeps its cast's replacement cost although it is cast from its creation zone.
             var exilePlayCostModifier = gameData.exilePlayCostModifier(card.getId());
             if (exilePlayCostModifier != null
                     && playerId.equals(exilePlayCostModifier.permittedPlayerId())

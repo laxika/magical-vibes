@@ -32,7 +32,7 @@ public class ExperimentalFrenzy extends Card {
                 CardType.BATTLE,
                 CardType.KINDRED)));
         addStaticEffect(new PlayersCantCastSpellsFromZonesEffect(Subjects.you(),
-                PlayerRestriction.playingCardsFrom(Zone.HAND)));
+                PlayerRestriction.playingCardsFrom(Zone.HAND).ofTheirOwn()));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{R}",

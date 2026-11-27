@@ -41,7 +41,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | 0 Owner and bookkeeping | 0 | moves done; owner questions asked after the last run |
 | DM Damage | DM-1, DM-2, DM-3 | DM-1, DM-2, DM-3 done 2026-11-27 |
 | FC Free casts and casting from other zones | FC-1, FC-2, FC-3, FC-4 | FC-1, FC-2, FC-3 done 2026-11-27 |
-| CP Casting permissions and cost readers | CP-1 | open |
+| CP Casting permissions and cost readers | CP-1 | CP-1 done 2026-11-27 (N11 left: needs N77; O14's Lukka subtype left) |
 | MP Multiplayer opponent choices | MP-1, MP-2 | MP-1, MP-2 done 2026-11-27 (Triskaidekaphobia, H7 for the owner) |
 | CT Counters | CT-1, CT-2 | CT-1, CT-2 done 2026-11-27 |
 | EB Entry and leave batches | EB-1, EB-2, EB-3 | EB-1, EB-2, EB-3 done 2026-11-27 |
@@ -390,6 +390,14 @@ costs move the card with `graveyardService.addCardToGraveyard`, not `discardCard
 them (CR 702.35a, madness applies to any discard); the chosen additional discard and escalate costs use `discardCard`. Sure of the
 code, not tested.
 
+New line N77 (seen in CP-1): no exile cast path casts an Adventure through a play permission (`playCardFromExile` casts the card
+itself; the dispatch's `adventure` flag goes to the hand path), so `ExileTopCardMayPlayThisTurnEffect`'s `castOnly` can't give a
+land card with an Adventure (the FIN towns, N11) a permission without also letting the land be played (CR 716.3, 716.3a).
+
+New line N78 (seen in CP-1): the library free-cast flow (`LibraryChoiceHandlerService.freeCastRefusal`) asks
+`canCastSpellFromZone` of a modal double-faced card's front face for either face, so Soulless Jailer lets cascade cast a
+noncreature back face from exile (CR 712.8b, 601.3); sure of the code, not tested.
+
 Outcome:
 
 ### CP. Casting permissions and cost readers
@@ -422,7 +430,24 @@ New line N53 (seen in TK-2): a copy of a card parked in exile for its cast is st
 cast: `CopyImprintedCardAndMayCastCopyHandler`'s `castableFromExile`, Kefnet's `getCastCostModifier`/`paySpellManaCostFromNonHandZone`
 with `Zone.EXILE`, so an exile restriction or cost change applies to a copy created in a hand or graveyard (CR 707.12).
 
-Outcome:
+Outcome: 2026-11-27. Fixed: F4, F6, O22, O15 (deleted from entry 18), N37, N52, N53; O14 edited down. F6: the spell-limit,
+Rule of Law, Ethersworn Canonist, Mana Maze and Limited Resources readers skip face-down sources (CR 708.2a). F4: a resolution
+cast from exile (`ExileFreeCastQueueSupport.castableFromExile`: the free-cast queue, Chandra, Vaan, the copy casts) now asks the
+zone restrictions, judged by the face cast (Muse Vortex's Adventure under Soulless Jailer, CR 601.3, 716.3a); N78 is the library
+flow's modal back face. N53: a copy waiting in exile is judged by its creation zone (`GameData.exileCastZone`: restrictions, the
+exile cast's source zone, `IncreaseSpellCostEffectHandler`, Kefnet's may-cast, which now checks before paying; CR 707.12, Kefnet
+ruling). O22: `PlayerRestriction.ofTheirOwn()` ("their graveyards", "their/your hand": Shaman's Trance, Avatar's Wrath,
+Experimental Frenzy, Memory Vessel), read with the card's zone owner by `GameQueryService.canCastSpellFromZone`. O15: Mug's
+graveyard permission and exile group share one quota (`GameData.shareExilePlayPermissionGroup`); the exile group was also
+registered before its permissions, so it never applied. O14: Lukka's permission reads the live planeswalker type and skips
+face-down permanents; the Lukka subtype half is left (`CardSubtype.LUKKA` needs a `CONVERSION_VERSION` bump). N37: castability
+views ask `ManaCost.canPayWithSpending`; Xanathar's grant is "as though any color" (CR 107.4c, 609.4b). N52: `StackEntry.wasCastFrom`
+reads a hand as the caster's own and `SpellEvents.cast` marks a spell cast from another player's hand as it becomes cast (Vega the
+Watcher with Sen Triplets); Wash Away's "its owner's hand" is the new `StackEntryCastFromOwnersHandPredicate`. Dropped: P13 (no
+card leaves an attached Aura face down or ability-less: an Aura that becomes a creature falls off, CR 303.4d, 704.5m), P3 (the
+emblem already casts for the mana cost and not with flashback; pinned; the choice against a payable printed flashback is N80).
+Left: N11 (needs N77, an exile Adventure cast). No effect class added or deleted, so no ledger or ratchet change; no
+`CONVERSION_VERSION` change. New lines N77, N78 (FC-4), N79, N80 (MC-2).
 
 ### MP. Multiplayer opponent choices
 
@@ -1412,6 +1437,15 @@ as the Oracle text says; the card should name the cast-time change directly, and
 New line N76 (seen in PP-1): `PerpetuallyGrantCardCharacteristicsEffect` without `cards` grants to the source's card by id after the
 source permanent left the battlefield (Second Little Pig bounced in response still becomes a Boar Spirit; Heir to Dragonfire), not
 only while it is still that object (CR 400.7); `.to(Subjects.sourceObjectCard())` is the fix. Unverified by a test.
+
+New line N79 (seen in CP-1): the card-less hand readers (`CastingPermissionService.isSpellCastingFromHandRestricted`,
+`isLandPlayFromHandRestricted`) and Drannith Magistrate's `PlayersCantCastSpellsFromZonesEffect(nonHandZones)` can't tell another
+player's hand, so a spell cast from it (Sen Triplets) is stopped by Experimental Frenzy and Memory Vessel ("your hand") and not by
+Avatar's Wrath or Drannith ("anywhere other than their hands"); the zone owner must reach those readers. Unverified.
+
+New line N80 (seen in CP-1): with Jaya Ballard's emblem, a card whose printed flashback cost can be paid is always cast with
+flashback: the graveyard request can't choose the emblem's cast for its mana cost (CR 601.2b, 118.9a). Needs a request field and
+the client.
 
 Outcome:
 

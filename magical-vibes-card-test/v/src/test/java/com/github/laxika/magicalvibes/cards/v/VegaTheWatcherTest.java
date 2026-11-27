@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.a.AncientGrudge;
 import com.github.laxika.magicalvibes.cards.b.BattleMammoth;
 import com.github.laxika.magicalvibes.cards.g.GoldveinPick;
+import com.github.laxika.magicalvibes.cards.s.SenTriplets;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -14,7 +16,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({VegaTheWatcher.class, AncientGrudge.class, GoldveinPick.class, BattleMammoth.class})
+@CardUsed({VegaTheWatcher.class, AncientGrudge.class, GoldveinPick.class, BattleMammoth.class, SenTriplets.class,
+        Shock.class})
 class VegaTheWatcherTest extends BaseCardTest {
 
     @Test
@@ -104,5 +107,22 @@ class VegaTheWatcherTest extends BaseCardTest {
 
         assertThat(countPermanents(player1, "Battle Mammoth")).isEqualTo(1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore);
+    }
+
+    @Test
+    @DisplayName("Casting a spell from an opponent's hand is casting it from somewhere other than your hand")
+    void castingFromOpponentsHandTriggers() {
+        harness.addToBattlefield(player1, new VegaTheWatcher());
+        harness.addToBattlefield(player1, new SenTriplets());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new Shock()));
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        gs.playFromHandOf(gd, player1, player2.getId(), () -> harness.castInstant(player1, 0, player2.getId()));
+
+        assertThat(gd.stack).hasSize(2);
     }
 }

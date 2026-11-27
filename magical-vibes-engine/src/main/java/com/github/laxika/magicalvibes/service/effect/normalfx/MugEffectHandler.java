@@ -59,15 +59,21 @@ public class MugEffectHandler implements NormalEffectHandlerBean {
                 .filter(card -> gameData.findExiledCard(card.getId()) != null)
                 .map(Card::getId)
                 .toList();
-        if (!graveyardSpellIds.isEmpty()) {
-            gameData.addPlayerEffect(entry, new GameData.GraveyardCastFilterPermission(
-                            controllerId, new CardIdSetPredicate(graveyardSpellIds), true, null, null,
-                            true, false, null, null, 0), controllerId, Duration.UNTIL_END_OF_TURN);
+        // "A spell from among those cards": one spell in all, whether it is cast from a graveyard or from exile.
+        GameData.GraveyardCastFilterPermission graveyardPermission = graveyardSpellIds.isEmpty() ? null
+                : new GameData.GraveyardCastFilterPermission(controllerId, new CardIdSetPredicate(graveyardSpellIds),
+                true, null, null, true, false, null, null, 0);
+        if (graveyardPermission != null) {
+            gameData.addPlayerEffect(entry, graveyardPermission, controllerId, Duration.UNTIL_END_OF_TURN);
         }
         if (!exiledSpellIds.isEmpty()) {
-            gameData.registerExilePlayPermissionGroup(UUID.randomUUID(), 1, exiledSpellIds);
+            UUID groupId = UUID.randomUUID();
             for (UUID cardId : exiledSpellIds) {
                 gameData.grantExilePlayPermission(cardId, controllerId, Duration.UNTIL_END_OF_TURN);
+            }
+            gameData.registerExilePlayPermissionGroup(groupId, 1, exiledSpellIds);
+            if (graveyardPermission != null) {
+                gameData.shareExilePlayPermissionGroup(groupId, graveyardPermission);
             }
         }
         if (!spells.isEmpty()) {

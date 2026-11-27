@@ -27,7 +27,10 @@ import java.util.stream.Collectors;
  * cards from graveyards" (Tomik), "can't cast noncreature spells from graveyards or exile" (Soulless Jailer). A
  * restriction with zones names no types and no filter, and a restriction with a filter names no types. A zone-free,
  * type-free, filter-free spell restriction stops every spell ({@link #stopsEverySpell()}); the readers of a zone-free
- * kind ({@code GameData.isRestricted}) don't see a zone-bound one.
+ * kind ({@code GameData.isRestricted}) don't see a zone-bound one. With {@link #ofTheirOwn} the zones are the
+ * restricted player's own ("can't cast spells from their graveyards", Shaman's Trance): a card in another player's
+ * graveyard isn't covered, and with {@code exceptZones} only the player's own zones stay allowed ("anywhere other than
+ * their hands"). A reader that doesn't know the card judges the player's own zone.
  *
  * @param kind        which action is restricted
  * @param spellTypes  for {@link Kind#CAST_SPELLS}, the card types of the spells that can't be cast, in the order the card
@@ -40,9 +43,10 @@ import java.util.stream.Collectors;
  * @param abilitySourceTypes for {@link Kind#ACTIVATE_ABILITIES}, the card types of the permanents whose abilities can't
  *                    be activated ("abilities of artifacts, creatures, or enchantments": permanents only), in the order
  *                    the card names them; empty for every ability in every zone, and for every other kind
+ * @param ownZones    whether {@code zones} are the restricted player's own zones ("their graveyards")
  */
 public record PlayerRestriction(Kind kind, List<CardType> spellTypes, CardPredicate spellFilter, Set<Zone> zones,
-                                boolean exceptZones, List<CardType> abilitySourceTypes) {
+                                boolean exceptZones, List<CardType> abilitySourceTypes, boolean ownZones) {
 
     /** The action a {@link PlayerRestriction} stops. */
     public enum Kind {
@@ -99,6 +103,15 @@ public record PlayerRestriction(Kind kind, List<CardType> spellTypes, CardPredic
         if (exceptZones && zones == null) {
             throw new IllegalArgumentException("No zones to except");
         }
+        if (ownZones && zones == null) {
+            throw new IllegalArgumentException("No zones to own");
+        }
+    }
+
+    /** A restriction whose zones, if any, are every player's. */
+    public PlayerRestriction(Kind kind, List<CardType> spellTypes, CardPredicate spellFilter, Set<Zone> zones,
+                             boolean exceptZones, List<CardType> abilitySourceTypes) {
+        this(kind, spellTypes, spellFilter, zones, exceptZones, abilitySourceTypes, false);
     }
 
     /** A restriction naming no ability source types. */
@@ -181,6 +194,11 @@ public record PlayerRestriction(Kind kind, List<CardType> spellTypes, CardPredic
                 abilitySourceTypes);
     }
 
+    /** This zone-bound restriction, its zones being the restricted player's own ("from their graveyards"). */
+    public PlayerRestriction ofTheirOwn() {
+        return new PlayerRestriction(kind, spellTypes, spellFilter, zones, exceptZones, abilitySourceTypes, true);
+    }
+
     /** Whether this stops every spell, from every zone. */
     public boolean stopsEverySpell() {
         return kind == Kind.CAST_SPELLS && spellTypes.isEmpty() && spellFilter == null && zones == null;
@@ -191,28 +209,53 @@ public record PlayerRestriction(Kind kind, List<CardType> spellTypes, CardPredic
         return zones != null;
     }
 
-    /** Whether this restriction covers an action taken from {@code zone}. */
+    /** Whether this restriction covers an action taken from the restricted player's own {@code zone}. */
     public boolean appliesFrom(Zone zone) {
-        return zones == null || zones.contains(zone) != exceptZones;
+        return appliesFrom(zone, true);
     }
 
     /**
-     * Whether this zone-bound restriction stops casting every spell from {@code zone} (lands aside, unless it stops
-     * playing cards).
+     * Whether this restriction covers an action taken from {@code zone}, {@code ownZone} telling whether the card is in
+     * the restricted player's own zone of that kind (a graveyard, hand or library of theirs).
+     */
+    public boolean appliesFrom(Zone zone, boolean ownZone) {
+        return zones == null || (zones.contains(zone) && (ownZone || !ownZones)) != exceptZones;
+    }
+
+    /**
+     * Whether this zone-bound restriction stops casting every spell from the player's own {@code zone} (lands aside,
+     * unless it stops playing cards).
      */
     public boolean stopsSpellsFrom(Zone zone) {
-        return zones != null && (kind == Kind.CAST_SPELLS || kind == Kind.PLAY_CARDS) && appliesFrom(zone);
+        return stopsSpellsFrom(zone, true);
     }
 
-    /** Whether this zone-bound restriction stops casting a spell from {@code zone}, judged by whether it is a creature. */
-    public boolean stopsSpellFrom(Zone zone, boolean creatureSpell) {
-        return stopsSpellsFrom(zone)
-                || zones != null && kind == Kind.CAST_NONCREATURE_SPELLS && !creatureSpell && appliesFrom(zone);
+    /** As {@link #stopsSpellsFrom(Zone)}, {@code ownZone} telling whether the zone is the player's own. */
+    public boolean stopsSpellsFrom(Zone zone, boolean ownZone) {
+        return zones != null && (kind == Kind.CAST_SPELLS || kind == Kind.PLAY_CARDS) && appliesFrom(zone, ownZone);
     }
 
-    /** Whether this stops playing lands from {@code zone}: a land or card-play restriction covering that zone. */
+    /**
+     * Whether this zone-bound restriction stops casting a spell from {@code zone}, judged by whether it is a creature and
+     * whether the zone is the player's own.
+     */
+    public boolean stopsSpellFrom(Zone zone, boolean ownZone, boolean creatureSpell) {
+        return stopsSpellsFrom(zone, ownZone)
+                || zones != null && kind == Kind.CAST_NONCREATURE_SPELLS && !creatureSpell
+                && appliesFrom(zone, ownZone);
+    }
+
+    /**
+     * Whether this stops playing lands from the player's own {@code zone}: a land or card-play restriction covering
+     * that zone.
+     */
     public boolean stopsLandsFrom(Zone zone) {
-        return (kind == Kind.PLAY_LANDS || kind == Kind.PLAY_CARDS) && appliesFrom(zone);
+        return stopsLandsFrom(zone, true);
+    }
+
+    /** As {@link #stopsLandsFrom(Zone)}, {@code ownZone} telling whether the zone is the player's own. */
+    public boolean stopsLandsFrom(Zone zone, boolean ownZone) {
+        return (kind == Kind.PLAY_LANDS || kind == Kind.PLAY_CARDS) && appliesFrom(zone, ownZone);
     }
 
     /** The restricted action as a log line says it after "can't": "cast instant or sorcery spells", "play lands". */

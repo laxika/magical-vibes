@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
@@ -130,7 +129,8 @@ public class ExileNormalCostCopySupport {
         if (!cost.hasX()) {
             return false;
         }
-        int tax = castingCostService.getCastCostModifier(gameData, player.getId(), copy, 0, Zone.EXILE);
+        int tax = castingCostService.getCastCostModifier(gameData, player.getId(), copy, 0,
+                gameData.exileCastZone(copy.getId()));
         int maxX = cost.calculateMaxX(potentialManaService.buildVirtualManaPool(gameData, player.getId()), tax);
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.XValueChoice(
                 player.getId(), 0, Math.max(0, maxX), "Choose a value for X to cast "

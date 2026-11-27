@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -195,5 +196,46 @@ class LockeTreasureHunterTest extends BaseCardTest {
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+    }
+
+    @Test
+    @DisplayName("After a spell is cast from the milled card in a graveyard, the one in exile can't be cast too")
+    void graveyardCastUsesUpTheExiledCardsPermission() {
+        Shock own = new Shock();
+        Shock exiled = new Shock();
+        harness.setLibrary(player1, List.of(own));
+        harness.setLibrary(player2, List.of(exiled));
+        addReadyLocke();
+        harness.addToBattlefield(player1, new LeylineOfTheVoid());
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        gs.playFlashbackSpell(gd, player1, own.getId(), null, player2.getId(), List.of(), null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, exiled.getId(), player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("After a spell is cast from the milled card in exile, the one in a graveyard can't be cast too")
+    void exileCastUsesUpTheGraveyardCardsPermission() {
+        Shock own = new Shock();
+        Shock exiled = new Shock();
+        harness.setLibrary(player1, List.of(own));
+        harness.setLibrary(player2, List.of(exiled));
+        addReadyLocke();
+        harness.addToBattlefield(player1, new LeylineOfTheVoid());
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castFromExile(player1, exiled.getId(), player2.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> gs.playFlashbackSpell(
+                gd, player1, own.getId(), null, player2.getId(), List.of(), null, null))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

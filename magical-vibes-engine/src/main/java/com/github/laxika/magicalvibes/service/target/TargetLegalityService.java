@@ -104,6 +104,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCardIdPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCardTypeInPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromOwnersHandPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastWithAdventurePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastWithTeamworkPredicate;
@@ -5854,7 +5855,10 @@ public class TargetLegalityService {
             return true;
         }
         if (predicate instanceof StackEntryCastFromZonePredicate castFrom) {
-            return stackEntry.getSourceZone() == castFrom.sourceZone();
+            return stackEntry.wasCastFrom(castFrom.sourceZone());
+        }
+        if (predicate instanceof StackEntryCastFromOwnersHandPredicate) {
+            return stackEntry.getSourceZone() == Zone.HAND;
         }
         if (predicate instanceof StackEntryCastWithAdventurePredicate) {
             return stackEntry.isCastWithAdventure();

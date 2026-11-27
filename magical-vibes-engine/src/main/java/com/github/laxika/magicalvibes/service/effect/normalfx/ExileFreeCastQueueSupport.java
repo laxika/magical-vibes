@@ -268,13 +268,16 @@ public class ExileFreeCastQueueSupport {
 
     /**
      * Whether a card, or a copy of one, in exile may begin to be cast now as a resolution cast (CR 601.3, CR 608.2g):
-     * no casting prohibition applies and its own "cast this spell only during ..." restriction holds. The effect
-     * ignores the timing of the card's type, not that restriction (the Chandra, Torch of Defiance, Elite Arcanist and
-     * Mizzix's Mastery rulings). The free-cast queue, the may-cast-a-copy accept paths and the other resolution casts
-     * from exile ask this before they begin.
+     * no casting prohibition applies, no zone restriction stops it from the zone it is cast from
+     * ({@link GameData#exileCastZone}: Soulless Jailer, Drannith Magistrate), and its own "cast this spell only during
+     * ..." restriction holds. {@code card} is the face cast: an Adventure is judged as the Adventure (CR 716.3a). The
+     * effect ignores the timing of the card's type, not that restriction (the Chandra, Torch of Defiance, Elite Arcanist
+     * and Mizzix's Mastery rulings). The free-cast queue, the may-cast-a-copy accept paths and the other resolution
+     * casts from exile ask this before they begin.
      */
     public boolean castableFromExile(GameData gameData, UUID playerId, Card card) {
         return !card.isCastOnlyFromGraveyard()
+                && gameQueryService.canCastSpellFromZone(gameData, card, gameData.exileCastZone(card.getId()), playerId)
                 && castingPermissionService.canCastDuringResolution(gameData, playerId, card)
                 && castingPermissionService.canCastWithSpellTimingRestriction(gameData, playerId, card);
     }
@@ -315,7 +318,7 @@ public class ExileFreeCastQueueSupport {
             if (!gameData.interaction.isAwaitingInput()) castNextFromQueue(gameData, playerId);
             return;
         }
-        if (!castableFromExile(gameData, playerId, card)) {
+        if (!castableFromExile(gameData, playerId, queuedFace(gameData, exiledEntry))) {
             if (asCopy) {
                 gameData.removeFromExile(cardId);
             }
@@ -1209,13 +1212,13 @@ public class ExileFreeCastQueueSupport {
         ExiledCardEntry exiled = gameData.findExiledCard(cardId);
         if (exiled == null || exiled.card().hasType(CardType.LAND)
                 || spellCastingService.canPayFreeCastCostIncreases(gameData, playerId, queuedFace(gameData, exiled),
-                Zone.EXILE)
-                || !castableFromExile(gameData, playerId, exiled.card())
+                gameData.exileCastZone(cardId))
+                || !castableFromExile(gameData, playerId, queuedFace(gameData, exiled))
                 || !hasLegalModeOrTarget(gameData, playerId, queuedFace(gameData, exiled))) {
             return false;
         }
         return freeCastCostIncreaseSupport.payOrAsk(gameData, playerId, queuedFace(gameData, exiled), cardId,
-                Zone.EXILE, new PayFreeCastCostIncreaseEffect.QueueCast())
+                gameData.exileCastZone(cardId), new PayFreeCastCostIncreaseEffect.QueueCast())
                 == FreeCastCostIncreaseSupport.Payment.ASKED;
     }
 
@@ -1328,7 +1331,8 @@ public class ExileFreeCastQueueSupport {
      */
     private boolean payCostIncreasesOrSkip(GameData gameData, UUID playerId, Card physicalCard, Card cardToCast,
                                            boolean asCopy) {
-        if (spellCastingService.payFreeCastCostIncreases(gameData, playerId, cardToCast, Zone.EXILE)) {
+        if (spellCastingService.payFreeCastCostIncreases(gameData, playerId, cardToCast,
+                gameData.exileCastZone(physicalCard.getId()))) {
             return true;
         }
         logUnpaidCostIncrease(gameData, physicalCard, asCopy);

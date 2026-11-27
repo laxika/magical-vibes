@@ -15,6 +15,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.CardType;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -206,6 +208,22 @@ class ManaMazeTest extends BaseCardTest {
         harness.activateAbility(player1, 1, 0, null, spellId, Zone.STACK);
         harness.passBothPriorities();
         harness.handleListChoice(player1, "BLUE");
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A face-down Mana Maze has no abilities, so a spell sharing the last spell's color can be cast")
+    void faceDownManaMazeDoesNotRestrict() {
+        harness.addToBattlefieldAndReturn(player1, new ManaMaze())
+                .setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player1, new GoblinSpy(), "{R}");
+        harness.passBothPriorities();
+
+        harness.castFromHand(player1, new GoblinSpy(), "{R}");
 
         assertThat(gd.stack).hasSize(1);
     }

@@ -659,6 +659,23 @@ class CastingPermissionServiceTest {
         }
 
         @Test
+        @DisplayName("A face-down spell-limit source has no abilities and limits nothing")
+        void faceDownSpellLimitSourceLimitsNothing() {
+            Card ruleOfLaw = new Card();
+            ruleOfLaw.addStaticEffect(new LimitSpellsPerTurnEffect(1, SpellLimitScope.EACH_PLAYER));
+            Permanent source = new Permanent(ruleOfLaw);
+            source.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+            gd.playerBattlefields.get(player2Id).add(source);
+            Card spell = new Card();
+            spell.setName("Test instant");
+            spell.setType(CardType.INSTANT);
+            gd.recordSpellCast(player1Id, spell);
+
+            assertThat(svc.isSpellLimitReached(gd, player1Id, spell)).isFalse();
+            assertThat(svc.getMaxSpellsPerTurn(gd, player1Id)).isGreaterThan(1);
+        }
+
+        @Test
         @DisplayName("Rejects spell when per-turn spell limit is reached")
         void rejectsWhenSpellLimitReached() {
             Card ruleOfLaw = new Card();

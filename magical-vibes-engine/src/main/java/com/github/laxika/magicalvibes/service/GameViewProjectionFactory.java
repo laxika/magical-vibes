@@ -863,9 +863,8 @@ public class GameViewProjectionFactory {
                     if (anyManaTypeIds.contains(card.getId())) {
                         int additionalCost = castingCostService.getCastCostModifier(
                                 gameData, playerId, card, 0, Zone.EXILE);
-                        canAfford = foretellPermission
-                                ? cost.canPayAsGeneric(cardPool, 0, additionalCost)
-                                : cost.canPayAsGeneric(cardPool);
+                        canAfford = cost.canPayWithSpending(cardPool, additionalCost,
+                                castingPermissionService.anyManaSpending(gameData, playerId, card.getId()));
                     } else {
                         int additionalCost = castingCostService.getCastCostModifier(
                                 gameData, playerId, card, 0, Zone.EXILE);
@@ -1142,8 +1141,9 @@ public class GameViewProjectionFactory {
             if (!canAfford && castingPermissionService.canSpendAnyManaTypeToCast(gameData, playerId, topCard)) {
                 canAfford = cost.canPayAsGeneric(cardPool, 0, additionalCost);
             }
-            if (!canAfford && castingPermissionService.canSpendManaAsAnyColorToCastFromBattlefield(
-                    gameData, playerId, topCard)) {
+            if (!canAfford && (castingPermissionService.canSpendManaAsAnyColorToCastFromBattlefield(
+                    gameData, playerId, topCard)
+                    || castingPermissionService.hasLibraryTopPermissionForCard(gameData, playerId, topCard))) {
                 ManaPool anyColorPool = new ManaPool(cardPool);
                 anyColorPool.setAllManaSpendableAsAnyColor(true);
                 canAfford = cost.canPay(anyColorPool, additionalCost);

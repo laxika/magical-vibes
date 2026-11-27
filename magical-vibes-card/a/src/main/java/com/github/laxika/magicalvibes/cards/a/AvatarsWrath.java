@@ -22,7 +22,7 @@ public class AvatarsWrath extends Card {
                         Subjects.except(Subjects.allCreatures(), Subjects.targetDeclaredElsewhere()),
                         TargetSpec.harmful(TargetPredicates.creature())));
         addSpellEffect(new PlayerRestrictionEffect(Subjects.eachOpponent(),
-                PlayerRestriction.castingSpells().fromAnywhereBut(Zone.HAND), Duration.UNTIL_YOUR_NEXT_TURN));
+                PlayerRestriction.castingSpells().fromAnywhereBut(Zone.HAND).ofTheirOwn(), Duration.UNTIL_YOUR_NEXT_TURN));
         addSpellEffect(new ExileSpellEffect());
     }
 }

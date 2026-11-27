@@ -62,6 +62,16 @@ public class CopyDrawnInstantOrSorceryAndMayCastCopyHandler implements MayEffect
             return;
         }
 
+        // "The copy is created in and cast from your hand" (ruling, CR 707.12): restrictions and cost changes judge
+        // that zone, and nothing is paid for a copy that can't be cast.
+        Zone castZone = gameData.exileCastZone(copy.getId());
+        if (!exileFreeCastQueueSupport.castableFromExile(gameData, player.getId(), copy)) {
+            gameData.removeFromExile(copy.getId());
+            gameLogService.append(gameData, GameLog.textCardText("The copy of ", copy, " can't be cast."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         if (EffectResolution.needsTarget(copy)) {
             boolean hasLegalTargets = copy.getMaxTargets() > 1
                     ? exileCastTargetSupport.hasLegalTargetSet(gameData, copy, player.getId())
@@ -76,7 +86,7 @@ public class CopyDrawnInstantOrSorceryAndMayCastCopyHandler implements MayEffect
         }
 
         if (chosenX == null && copy.getParsedManaCost() != null && copy.getParsedManaCost().hasX()) {
-            int tax = castingCostService.getCastCostModifier(gameData, player.getId(), copy, 0, Zone.EXILE);
+            int tax = castingCostService.getCastCostModifier(gameData, player.getId(), copy, 0, castZone);
             int maxX = copy.getParsedManaCost().calculateMaxX(
                     potentialManaService.buildVirtualManaPool(gameData, player.getId()), tax);
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.XValueChoice(
@@ -87,7 +97,7 @@ public class CopyDrawnInstantOrSorceryAndMayCastCopyHandler implements MayEffect
         }
         int xValue = chosenX == null ? 0 : chosenX;
         try {
-            spellCastingService.paySpellManaCostFromNonHandZone(gameData, player.getId(), copy, xValue, Zone.EXILE);
+            spellCastingService.paySpellManaCostFromNonHandZone(gameData, player.getId(), copy, xValue, castZone);
         } catch (IllegalStateException ex) {
             gameData.removeFromExile(copy.getId());
             gameLogService.append(gameData,

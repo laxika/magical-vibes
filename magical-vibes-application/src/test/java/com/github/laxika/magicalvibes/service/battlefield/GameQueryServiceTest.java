@@ -4526,6 +4526,25 @@ class GameQueryServiceTest {
             assertThat(gqs.canCastSpellFromZone(gd, instant, Zone.HAND, player2Id)).isTrue();
             assertThat(gqs.canCastSpellFromZone(gd, creature, Zone.GRAVEYARD, player2Id)).isTrue();
         }
+
+        @Test
+        @DisplayName("a restriction on the player's own graveyard doesn't cover another player's graveyard")
+        void ownGraveyardRestrictionSkipsOtherGraveyards() {
+            addPermanent(player1Id, createEnchantmentWithStaticEffect("Shaman's Trance",
+                    new PlayersCantCastSpellsFromZonesEffect(Subjects.eachPlayer(),
+                            PlayerRestriction.playingCardsFrom(Zone.GRAVEYARD).ofTheirOwn())));
+            Card own = new Card();
+            own.setName("Own Instant");
+            own.setType(CardType.INSTANT);
+            Card other = new Card();
+            other.setName("Other Instant");
+            other.setType(CardType.INSTANT);
+            gd.playerGraveyards.put(player2Id, new ArrayList<>(List.of(own)));
+            gd.playerGraveyards.put(player1Id, new ArrayList<>(List.of(other)));
+
+            assertThat(gqs.canCastSpellFromZone(gd, own, Zone.GRAVEYARD, player2Id)).isFalse();
+            assertThat(gqs.canCastSpellFromZone(gd, other, Zone.GRAVEYARD, player2Id)).isTrue();
+        }
     }
 
     @Nested

@@ -24,7 +24,7 @@ public class MemoryVessel extends Card {
                         new ExileSelfCost(),
                         new EachPlayerExilesTopCardsMayPlayUntilNextTurnEffect(7),
                         new PlayerRestrictionEffect(Subjects.eachPlayer(),
-                                PlayerRestriction.playingCardsFrom(Zone.HAND), Duration.UNTIL_YOUR_NEXT_TURN)),
+                                PlayerRestriction.playingCardsFrom(Zone.HAND).ofTheirOwn(), Duration.UNTIL_YOUR_NEXT_TURN)),
                 "{T}, Exile this artifact: Each player exiles the top seven cards of their library. "
                         + "Until your next turn, players may play cards they exiled from their library "
                         + "this way, and they can't play cards from their hand. Activate only as a sorcery.",

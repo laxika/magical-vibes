@@ -1982,6 +1982,14 @@ public class GameData {
      */
     public final Map<UUID, Zone> castCopyCreationZones = new ConcurrentHashMap<>();
 
+    /**
+     * The zone the card {@code cardId}, waiting in exile to be cast, is cast from: a copy's creation zone
+     * ({@link #castCopyCreationZones}), else exile. Zone restrictions and cost changes judge the cast by it (CR 707.12).
+     */
+    public Zone exileCastZone(UUID cardId) {
+        return castCopyCreationZones.getOrDefault(cardId, Zone.EXILE);
+    }
+
 
     /** Mana choices awaiting completion whose chosen mana carries a {@link ManaCopyRider} (Primal
      *  Wellspring's color choice; Sunken Palace's mana after a land-mana replacement prompt), keyed by
@@ -2092,6 +2100,12 @@ public class GameData {
 
     /** Remaining plays for each shared limited exile-play permission group. */
     public final Map<UUID, Integer> exilePlayPermissionGroupUsesRemaining = new ConcurrentHashMap<>();
+    /**
+     * The single-use graveyard cast permission that shares an exile play-permission group's quota, by group id: "you
+     * may cast a spell from among those cards" with some of them in a graveyard and some in exile (Mug). A cast through
+     * either uses up the other.
+     */
+    public final Map<UUID, GraveyardCastFilterPermission> exileGroupSharedGraveyardPermissions = new ConcurrentHashMap<>();
     /** Spell type choices already used by permissions allowing one spell of each card type. */
     public final Map<UUID, List<Set<CardType>>> exileSpellTypePermissionHistory = new ConcurrentHashMap<>();
     public final Set<UUID> plottedCardIds = ConcurrentHashMap.newKeySet();
@@ -5414,10 +5428,20 @@ public class GameData {
                 .map(fe -> (GraveyardCastFilterPermission) fe.effect()).toList();
     }
 
-    /** Uses up the single-use permission {@code permission}: its effect ends. */
+    /**
+     * Uses up the single-use permission {@code permission}: its effect ends, and so does the quota of an exile
+     * play-permission group it shares ({@link #shareExilePlayPermissionGroup}).
+     */
     public final void endGraveyardCastFilterPermission(GraveyardCastFilterPermission permission) {
         floatingEffectsOfTypes(GraveyardCastFilterPermission.class).stream()
                 .filter(fe -> fe.effect().equals(permission)).findFirst().ifPresent(this::endFloatingEffect);
+        exileGroupSharedGraveyardPermissions.entrySet().removeIf(shared -> {
+            if (!shared.getValue().equals(permission)) {
+                return false;
+            }
+            exilePlayPermissionGroupUsesRemaining.put(shared.getKey(), 0);
+            return true;
+        });
     }
 
     /** The turn-wide permissions to play cards matching a filter from graveyards, oldest first. */
@@ -9040,6 +9064,14 @@ public class GameData {
         }
     }
 
+    /**
+     * Makes the single-use graveyard cast permission {@code permission} share the quota of the exile play-permission
+     * group {@code groupId}: casting a spell through either ends the other.
+     */
+    public synchronized void shareExilePlayPermissionGroup(UUID groupId, GraveyardCastFilterPermission permission) {
+        exileGroupSharedGraveyardPermissions.put(groupId, permission);
+    }
+
     /** Returns whether a card's shared limited exile-play permission still has a use available. */
     public synchronized boolean hasExilePlayPermissionRemaining(UUID cardId) {
         UUID groupId = exilePlayPermissionGroupId(cardId);
@@ -9103,6 +9135,12 @@ public class GameData {
             return false;
         }
         exilePlayPermissionGroupUsesRemaining.put(groupId, remaining - 1);
+        if (remaining - 1 <= 0) {
+            GraveyardCastFilterPermission shared = exileGroupSharedGraveyardPermissions.remove(groupId);
+            if (shared != null) {
+                endGraveyardCastFilterPermission(shared);
+            }
+        }
         return true;
     }
 
@@ -9125,6 +9163,7 @@ public class GameData {
                     .anyMatch(other -> groupId.equals(((ExilePlayPermissionEffect) other.effect()).groupId()))) {
                 exilePlayPermissionGroupUsesRemaining.remove(groupId);
                 exileSpellTypePermissionHistory.remove(groupId);
+                exileGroupSharedGraveyardPermissions.remove(groupId);
             }
         }
     }
@@ -11080,6 +11119,7 @@ public class GameData {
                 copy.exileSpellTypePermissionHistory.put(groupId, history.stream()
                         .map(types -> Set.copyOf(types)).collect(java.util.stream.Collectors.toCollection(ArrayList::new))));
         copy.exilePlayPermissionGroupUsesRemaining.putAll(this.exilePlayPermissionGroupUsesRemaining);
+        copy.exileGroupSharedGraveyardPermissions.putAll(this.exileGroupSharedGraveyardPermissions);
         copy.discordCopySourcePermanents.putAll(this.discordCopySourcePermanents);
         copy.playersWhoForetoldThisTurn.addAll(this.playersWhoForetoldThisTurn);
         copy.graveyardLeaveNotificationDepth = this.graveyardLeaveNotificationDepth;

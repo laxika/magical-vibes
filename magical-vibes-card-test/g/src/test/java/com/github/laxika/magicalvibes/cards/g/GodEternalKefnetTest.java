@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.a.AvenInterrupter;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FinaleOfRevelation;
 import com.github.laxika.magicalvibes.cards.h.Heartfire;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.s.SoullessJailer;
 import com.github.laxika.magicalvibes.cards.s.SwordsToPlowshares;
 import com.github.laxika.magicalvibes.cards.v.VegaTheWatcher;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
@@ -24,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({GodEternalKefnet.class, Divination.class, Forest.class, Mountain.class, Plains.class,
         SwordsToPlowshares.class, WrathOfGod.class, FinaleOfRevelation.class, Heartfire.class,
-        VegaTheWatcher.class})
+        VegaTheWatcher.class, SoullessJailer.class, AvenInterrupter.class})
 class GodEternalKefnetTest extends BaseCardTest {
 
     @Test
@@ -326,5 +328,40 @@ class GodEternalKefnetTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getId)
                 .containsExactly(top.getId(), second.getId(), kefnet.getId(), third.getId());
+    }
+
+    @Test
+    @DisplayName("The copy is cast from the hand, so Soulless Jailer's exile restriction doesn't stop it")
+    void copyIsNotJudgedAsCastFromExile() {
+        harness.addToBattlefield(player1, new GodEternalKefnet());
+        harness.addToBattlefield(player2, new SoullessJailer());
+        harness.setLibrary(player1, List.of(new Divination(), new Forest(), new Mountain(), new Plains()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).singleElement()
+                .satisfies(entry -> assertThat(entry.isCopy()).isTrue());
+    }
+
+    @Test
+    @DisplayName("The copy is cast from the hand, so an opponent's exile-cast tax doesn't apply to it")
+    void copyPaysNoExileCastTax() {
+        harness.addToBattlefield(player1, new GodEternalKefnet());
+        harness.addToBattlefield(player2, new AvenInterrupter());
+        harness.setLibrary(player1, List.of(new Divination(), new Forest(), new Mountain(), new Plains()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).singleElement()
+                .satisfies(entry -> assertThat(entry.isCopy()).isTrue());
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
     }
 }

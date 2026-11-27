@@ -14,6 +14,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.CardType;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -298,5 +300,23 @@ class RuleOfLawTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A face-down Rule of Law has no abilities, so a second spell can be cast")
+    void faceDownRuleOfLawDoesNotLimitSpells() {
+        harness.addToBattlefieldAndReturn(player1, new RuleOfLaw())
+                .setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
     }
 }

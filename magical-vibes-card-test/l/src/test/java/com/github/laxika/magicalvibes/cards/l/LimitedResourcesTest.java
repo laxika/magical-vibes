@@ -11,6 +11,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.CardType;
+import java.util.Set;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -23,7 +26,7 @@ class LimitedResourcesTest extends BaseCardTest {
         }
     }
 
-    private List<java.util.UUID> landIds(Player player, int count) {
+    private List<UUID> landIds(Player player, int count) {
         return findPermanents(player, "City of Traitors").stream()
                 .limit(count)
                 .map(Permanent::getId)
@@ -181,5 +184,16 @@ class LimitedResourcesTest extends BaseCardTest {
         for (Player player : List.of(player1, player2)) {
             assertThat(playableLandIndices(player)).contains(0);
         }
+    }
+
+    @Test
+    @DisplayName("A face-down Limited Resources has no abilities, so lands can be played at ten lands")
+    void faceDownLimitedResourcesDoesNotRestrict() {
+        addLands(player1, 5);
+        addLands(player2, 5);
+        harness.addToBattlefieldAndReturn(player1, new LimitedResources())
+                .setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+        assertThat(playableLandIndices(player1)).contains(0);
     }
 }
