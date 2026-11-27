@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -783,6 +784,51 @@ class LookAtTopCardsEffectHandlerTest {
 
             assertThat(gd.interaction.activeInteraction()).isNull();
             assertThat(gd.playerDecks.get(player1Id)).containsExactlyInAnyOrder(first, second);
+        }
+    }
+
+    @Nested
+    @DisplayName("May exile one matching card, the rest into hand")
+    class MayExileOneRestToHand {
+
+        @Test
+        @DisplayName("Offers only the matching looked-at cards for an optional exile, the rest going to hand")
+        void offersMatchingCardsForExileWithRestToHand() {
+            stubCardViewFactory();
+            Card forest = createCard("Forest");
+            Card bears = createCard("Grizzly Bears");
+            gd.playerDecks.get(player1Id).addAll(List.of(forest, bears));
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                    .thenAnswer(inv -> inv.getArgument(0) == bears);
+
+            LookAtTopCardsEffect effect = LookAtTopCardsEffect.mayExileOneMatchingRestToHand(
+                    3, new CardTypePredicate(CardType.CREATURE));
+            handler.resolve(gd, entryFor("Make Your Own Luck", effect), effect);
+
+            LibrarySearchParams params = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params();
+            assertThat(params.cards()).containsExactly(bears);
+            assertThat(params.sourceCards()).containsExactly(forest, bears);
+            assertThat(params.destination()).isEqualTo(LibrarySearchDestination.EXILE);
+            assertThat(params.restToHand()).isTrue();
+            assertThat(params.canFailToFind()).isTrue();
+            assertThat(gd.playerDecks.get(player1Id)).isEmpty();
+        }
+
+        @Test
+        @DisplayName("With no matching card, puts every looked-at card into hand without a prompt")
+        void noMatchPutsAllIntoHand() {
+            Card forest = createCard("Forest");
+            Card island = createCard("Island");
+            gd.playerDecks.get(player1Id).addAll(List.of(forest, island));
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                    .thenReturn(false);
+
+            LookAtTopCardsEffect effect = LookAtTopCardsEffect.mayExileOneMatchingRestToHand(
+                    3, new CardTypePredicate(CardType.CREATURE));
+            handler.resolve(gd, entryFor("Make Your Own Luck", effect), effect);
+
+            assertThat(gd.interaction.activeInteraction()).isNull();
+            assertThat(gd.playerHands.get(player1Id)).containsExactly(forest, island);
         }
     }
 }

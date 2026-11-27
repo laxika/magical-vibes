@@ -1341,7 +1341,7 @@ Don't commit.
 - `cardsThisWay(REVEAL)` names a card a later step reordered within its library (CR 701.20d); no card reads it so. Unverified.
 - `getRevealedOpponentHand` returns only the first opponent's hand (multiplayer); needs a hand per opponent in `GameStateMessage` and the frontend (owner question in entry 17, MP-2). Sure of the code.
 
-#### Other (32)
+#### Other (31)
 
 - Casting checks left from runs 40 and 41: Scrycast (Biting Remark; `ScryInteractionHandler`, `ScryAiStrategy`, code: the scry answer casts it with no `canCastDuringResolution` check, and the AI strategies have no `CastingPermissionService`); the may-cast offers don't ask the shared check; an ability leaves the stack before it resolves, where CR 608.2n removes it last. Unverified. FC-2: Knowledge Pool's timing, the split exile cast and suspend's type restriction fixed.
 - Krovikan Vampire's `ReturnDamagedCreaturesThatDiedUnderControlEffect` (a mass return with control and sacrifice links) puts an Aura card that died animated onto the battlefield with no host choice (CR 303.4f, 303.4g); Lim-Dûl's head since rules-fixes EB-1 and `ReturnDyingCreatureToBattlefieldEffect`, `ReturnDyingCreatureToOwnerBattlefieldEffect` since EB-2 go through the entry batch. Unverified.
@@ -1352,7 +1352,6 @@ Don't commit.
 - The set exchanges (Reins of Power, Twist Allegiance) and Perplexing Chimera don't check `cantBeControlledByOtherPlayers`; CR 701.12a's set reading unsettled. Unverified.
 - Fear of Sleep Paralysis' lock (`GameQueryService.stunCountersLocked`) is read by the untap replacement and `PermanentCounterSupport`'s and `DestructionSupport`'s shared removals since MC-1, not by the removals that set counts directly (remove-counter costs in `ActivatedAbilityExecutionService` and `ResolutionCostPaymentService`, the counter-kind choice lists of `removableCounterKinds`, handlers calling `setCounterCount`). Fairly sure, low.
 - `hasLukkaExilePermission` matches a name starting "Lukka,", not the Lukka planeswalker type: `CardSubtype` has no LUKKA (adding it bumps `StoredSet.CONVERSION_VERSION`; batch it with another mapping change). CP-1 made it read the live planeswalker type and skip face-down permanents. Sure, low.
-- Make Your Own Luck puts all three cards into hand, then plots the chosen one (needs a plot library destination).
 - No seeded game random source: about 180 `ThreadLocalRandom` sites, random-target picks included, so tests can't fix a random pick. Sure.
 - Reality Twist: a Volcanic Island offers the unlisted Island type's U; `RealityTwistTest` asserts it and the 2013 ruling is ambiguous for unlisted types. Unsure.
 - Boseiju, Hall of the Bandit Lord: when a land-mana replacement applies, the produced mana may lose its rider (CR 106.6a). Unverified.

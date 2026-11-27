@@ -59,7 +59,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | AI Hard / easy AI | AI-1, AI-2 | AI-1, AI-2 done 2026-11-27 |
 | UI Frontend | UI-1 | UI-1 done 2026-11-27 |
 | LG, CL Logs and non-rules cleanup | LG-1, CL-1 | CL-1, LG-1 done 2026-11-27 |
-| FT Missing features | FT-1, FT-2 | FT-1 done 2026-11-27 (N86 to MC-2e) |
+| FT Missing features | FT-1, FT-2 | FT-1, FT-2 done 2026-11-27 (N86 to MC-2e) |
 | Z Close | Z | open |
 
 ## Ground rules for every run
@@ -1678,7 +1678,16 @@ No owner questions.
 
 Lines: O16 (Make Your Own Luck puts all three cards into hand, then plots the chosen one).
 
-Outcome:
+Outcome: O16 fixed (2026-11-27). Oracle: "You may exile a nonland card from among them. If you do, it becomes plotted. Put
+the rest into your hand." The card is exiled from among the looked-at cards (from the library) and becomes plotted there
+(CR 702.170c); only the rest go to hand. Make Your Own Luck is now `LookAtTopCardsEffect.mayExileOneMatchingRestToHand(3,
+nonland)` then `PlotExiledCardsEffect(Subjects.cardsThisWay(StepKind.EXILE))`: a new chosen-`EXILE` / rest-`HAND` branch of
+`LookAtTopCardsEffectHandler` opens a held-out `LibrarySearch` with the new `LibrarySearchParams.restToHand`, and
+`LibraryChoiceHandlerService` now records a held-out look's chosen `EXILE` pick as the `EXILE` step (Psychic Surgery's and
+Sealed Fate's picks included). `LookAtTopCardsAndPlotEffect` and its handler deleted (ledger row, ratchet 2851/2238 to
+2850/2237). Test first failing: `MakeYourOwnLuckTest` "The plotted card is exiled from the library, not from the hand"
+(Laelia, the Blade Reforged's library-exile trigger got no counter). No other card plots from a look (swept the card data
+for "becomes plotted"). No owner questions, no new lines.
 
 ### Z. Close (orchestrator)
 

@@ -255,6 +255,7 @@ public class LibraryChoiceHandlerService
         boolean reorderRemainingToTop = librarySearch.reorderRemainingToTop();
         boolean restToGraveyard = librarySearch.restToGraveyard();
         boolean restToExile = librarySearch.restToExile();
+        boolean restToHand = librarySearch.restToHand();
         boolean shuffleAfterSelection = librarySearch.shuffleAfterSelection();
         LibrarySearchFollowUp followUp = librarySearch.followUp();
         LibrarySearchDestination destination = librarySearch.destination() != null
@@ -455,7 +456,7 @@ public class LibraryChoiceHandlerService
             return;
         }
 
-        if (reorderRemainingToBottom || reorderRemainingToTop || restToGraveyard || restToExile
+        if (reorderRemainingToBottom || reorderRemainingToTop || restToGraveyard || restToExile || restToHand
                 || destination == LibrarySearchDestination.HOLD_OUT
                 || destination == LibrarySearchDestination.HOLD_OUT_THEN_HAND
                 || destination == LibrarySearchDestination.HOLD_OUT_THEN_BATTLEFIELD_OR_HAND
@@ -614,6 +615,10 @@ public class LibraryChoiceHandlerService
                     }
                 } else if (destination == LibrarySearchDestination.EXILE) {
                     exileService.exileCard(gameData, deckOwnerId, chosenCard);
+                    if (gameData.pendingEffectResolutionEntry != null) {
+                        gameData.pendingEffectResolutionEntry.addToStep(StepKind.EXILE,
+                                StepOutcome.ofObjects(List.of(chosenCard.getId()), List.of(deckOwnerId)));
+                    }
                 } else if (toGraveyard) {
                     if (remainingCount > 1 || !accumulatedCards.isEmpty()) {
                         accumulatedCards.add(chosenCard);
@@ -793,7 +798,11 @@ public class LibraryChoiceHandlerService
 
             // If ETB or legend rule caused awaiting input, defer remaining card reorder
             if (gameData.interaction.isAwaitingInput()) {
-                if (!sourceCards.isEmpty()) {
+                if (restToHand) {
+                    for (Card card : new ArrayList<>(sourceCards)) {
+                        gameData.addCardToHand(deckOwnerId, card);
+                    }
+                } else if (!sourceCards.isEmpty()) {
                     if (toBattlefield && reorderRemainingToBottom && sourceCards.size() > 1
                             && gameData.interaction.activeInteraction() instanceof PendingInteraction.PermanentChoice) {
                         // The rest go to the bottom while the spell resolves, before the entering
@@ -936,6 +945,18 @@ public class LibraryChoiceHandlerService
                         }
                     }
                     gameLogService.append(gameData, exileLog.build());
+                }
+                finishSearchAndResume(gameData);
+                return;
+            }
+
+            if (restToHand) {
+                for (Card card : new ArrayList<>(sourceCards)) {
+                    gameData.addCardToHand(deckOwnerId, card);
+                }
+                if (!sourceCards.isEmpty()) {
+                    gameLogService.append(gameData, GameLog.text(player.getUsername()
+                            + " puts the rest into their hand."));
                 }
                 finishSearchAndResume(gameData);
                 return;

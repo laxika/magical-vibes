@@ -128,6 +128,9 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 == LibrarySearchDestination.EXILE_FACE_DOWN_AND_MAY_CAST_OR_PUT_INTO_HAND) {
             resolveOneToExileFaceDownRestToBottomRandomAndMayCast(
                     gameData, entry, lookCount, chooseManaValueAtMost);
+        } else if (e.chosenDestination() == LibrarySearchDestination.EXILE
+                && e.restDestination() == LookDestination.HAND) {
+            resolveOneToExileRestToHand(gameData, entry, e, lookCount);
         } else if (e.optional()) {
             resolveMayRevealToHand(gameData, entry, e, lookCount, chooseCount, chooseManaValueAtMost);
         } else if (e.restDestination() == LookDestination.GRAVEYARD) {
@@ -465,6 +468,46 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                         .build(),
                 prompt,
                 false));
+    }
+
+    /**
+     * One matching looked-at card exiled straight from among them, the rest into hand (Make Your Own Luck). The exile is
+     * recorded as the {@link com.github.laxika.magicalvibes.model.StepKind#EXILE} step, so a later step reads the card
+     * as {@code Subjects.cardsThisWay(StepKind.EXILE)}.
+     */
+    private void resolveOneToExileRestToHand(GameData gameData, StackEntry entry, LookAtTopCardsEffect e,
+            int lookCount) {
+        LibraryRevealSupport.TopCardsResult result =
+                libraryRevealSupport.takeTopCardsFromLibrary(gameData, entry, lookCount, false);
+        if (result == null) {
+            return;
+        }
+        UUID controllerId = result.controllerId();
+        List<Card> topCards = result.topCards();
+        gameLogService.append(gameData, GameLog.text(result.playerName() + " looks at the top "
+                + LibraryRevealSupport.pluralCards(topCards.size()) + " of their library."));
+
+        List<Card> matchingCards = filterEligibleCards(topCards, e.choosePredicate(), e, entry, gameData, controllerId);
+        if (matchingCards.isEmpty()) {
+            topCards.forEach(card -> gameData.addCardToHand(controllerId, card));
+            gameLogService.append(gameData, GameLog.text(result.playerName() + " puts the cards into their hand."));
+            return;
+        }
+
+        String description = CardPredicateUtils.describeFilter(e.choosePredicate());
+        String prompt = (e.optional() ? "You may exile a " : "Exile a ") + description
+                + " from among them. Put the rest into your hand.";
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                LibrarySearchParams.builder(controllerId, matchingCards)
+                        .canFailToFind(e.optional())
+                        .sourceCards(new ArrayList<>(topCards))
+                        .restToHand(true)
+                        .shuffleAfterSelection(false)
+                        .prompt(prompt)
+                        .destination(LibrarySearchDestination.EXILE)
+                        .build(),
+                prompt,
+                e.optional()));
     }
 
     /**

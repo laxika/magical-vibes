@@ -2,8 +2,12 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GiantBeaver;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.l.LaeliaTheBladeReforged;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -15,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MakeYourOwnLuck.class, GiantBeaver.class, Forest.class})
+@CardUsed({MakeYourOwnLuck.class, GiantBeaver.class, Forest.class, LaeliaTheBladeReforged.class})
 class MakeYourOwnLuckTest extends BaseCardTest {
 
     @Test
@@ -29,7 +33,7 @@ class MakeYourOwnLuckTest extends BaseCardTest {
         addMana();
 
         harness.castAndResolveSorcery(player1, 0, 0);
-        harness.handleCardChosen(player1, 1);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(beaver);
         assertThat(gd.plottedCardIds).contains(beaver.getId());
@@ -74,6 +78,26 @@ class MakeYourOwnLuckTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The plotted card is exiled from the library, not from the hand")
+    void plottedCardIsExiledFromLibrary() {
+        Permanent laelia = addCreatureReady(player1, new LaeliaTheBladeReforged());
+        GiantBeaver beaver = new GiantBeaver();
+        Forest firstForest = new Forest();
+        Forest secondForest = new Forest();
+        harness.setHand(player1, List.of(new MakeYourOwnLuck()));
+        harness.setLibrary(player1, List.of(firstForest, beaver, secondForest));
+        addMana();
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.plottedCardIds).contains(beaver.getId());
+        assertThat(laelia.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An empty library puts nothing anywhere and causes no loss")
     void emptyLibraryDoesNotCauseADrawOrLoss() {
         harness.setHand(player1, List.of(new MakeYourOwnLuck()));
         harness.setLibrary(player1, List.of());
@@ -89,6 +113,7 @@ class MakeYourOwnLuckTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With fewer than three cards in the library, still plots from among them")
     void shortLibraryStillAllowsPlotting() {
         GiantBeaver beaver = new GiantBeaver();
         Forest forest = new Forest();
@@ -106,6 +131,7 @@ class MakeYourOwnLuckTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Only a nonland card among the top three can be plotted")
     void onlyTopThreeCardsCanBePlottedAndLandsCannotBeSelected() {
         GiantBeaver existingCard = new GiantBeaver();
         GiantBeaver topCard = new GiantBeaver();
@@ -117,11 +143,11 @@ class MakeYourOwnLuckTest extends BaseCardTest {
         addMana();
 
         harness.castAndResolveSorcery(player1, 0, 0);
-        assertThatThrownBy(() -> harness.handleCardChosen(player1, 0))
-                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+                .containsExactly(topCard);
         assertThatThrownBy(() -> harness.handleCardChosen(player1, 1))
                 .isInstanceOf(IllegalStateException.class);
-        harness.handleCardChosen(player1, 2);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(topCard);
         assertThat(gd.playerHands.get(player1.getId()))
@@ -130,6 +156,7 @@ class MakeYourOwnLuckTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The plotted card can be cast for free only on a later turn at sorcery speed")
     void plottedCardCanBeCastForFreeOnlyOnALaterTurnAtSorcerySpeed() {
         GiantBeaver beaver = new GiantBeaver();
         harness.setHand(player1, List.of(new MakeYourOwnLuck()));

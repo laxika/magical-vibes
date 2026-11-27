@@ -1016,6 +1016,59 @@ class LibraryChoiceHandlerServiceTest {
     // =========================================================================
 
     @Nested
+    @DisplayName("handleLibraryCardChosen exiling one looked-at card with the rest into hand")
+    class ExileOneRestToHand {
+
+        private void beginExileOneRestToHand(Card eligible, List<Card> lookedAt) {
+            gd.interaction.beginInteraction(new PendingInteraction.LibrarySearch(
+                    LibrarySearchParams.builder(player1Id, List.of(eligible))
+                            .canFailToFind(true)
+                            .sourceCards(new ArrayList<>(lookedAt))
+                            .restToHand(true)
+                            .shuffleAfterSelection(false)
+                            .destination(LibrarySearchDestination.EXILE)
+                            .build(),
+                    "You may exile a card. Put the rest into your hand.", true));
+            gd.pendingEffectResolutionEntry = new StackEntry(StackEntryType.SORCERY_SPELL,
+                    createCard("Look source"), player1Id, "Look source", List.of(new DrawCardEffect(1)));
+            gd.pendingEffectResolutionIndex = 1;
+        }
+
+        @Test
+        @DisplayName("Exiles the chosen card as the EXILE step and puts the rest into hand")
+        void exilesChosenCardAndPutsRestIntoHand() {
+            Card chosen = createCard("Chosen", CardType.CREATURE);
+            Card firstRest = createCard("First rest", CardType.LAND);
+            Card secondRest = createCard("Second rest", CardType.LAND);
+            beginExileOneRestToHand(chosen, List.of(firstRest, chosen, secondRest));
+            StackEntry entry = gd.pendingEffectResolutionEntry;
+
+            service.handleLibraryCardChosen(gd, player1, 0);
+
+            verify(exileService).exileCard(gd, player1Id, chosen);
+            assertThat(entry.getResolutionResults().outcome(StepKind.EXILE).objectIds())
+                    .containsExactly(chosen.getId());
+            assertThat(gd.playerHands.get(player1Id)).containsExactly(firstRest, secondRest);
+            verify(effectResolutionService).resolveEffectsFrom(gd, entry, 1);
+        }
+
+        @Test
+        @DisplayName("Declining exiles nothing and puts every looked-at card into hand")
+        void decliningPutsEveryCardIntoHand() {
+            Card eligible = createCard("Eligible", CardType.CREATURE);
+            Card rest = createCard("Rest", CardType.LAND);
+            beginExileOneRestToHand(eligible, List.of(eligible, rest));
+            StackEntry entry = gd.pendingEffectResolutionEntry;
+
+            service.handleLibraryCardChosen(gd, player1, -1);
+
+            verify(exileService, never()).exileCard(any(), any(), any(Card.class));
+            assertThat(entry.getResolutionResults().outcome(StepKind.EXILE).objectIds()).isEmpty();
+            assertThat(gd.playerHands.get(player1Id)).containsExactly(eligible, rest);
+        }
+    }
+
+    @Nested
     @DisplayName("handleLibraryCardChosen resuming effects after the search")
     class HandleLibraryCardChosenResumesRemainingEffects {
 

@@ -25,6 +25,7 @@ public record LibrarySearchParams(
         boolean reorderRemainingToTop,
         boolean restToGraveyard,
         boolean restToExile,
+        boolean restToHand,
         boolean shuffleAfterSelection,
         String prompt,
         LibrarySearchDestination destination,
@@ -92,7 +93,7 @@ public record LibrarySearchParams(
     public LibrarySearchParams withCards(List<Card> newCards) {
         return new LibrarySearchParams(playerId, decisionPlayerId, newCards, reveals, canFailToFind, targetPlayerId,
                 remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
-                restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, topLibraryPosition, topLibraryCardLimit, discoverValue, filterCardTypes,
+                restToGraveyard, restToExile, restToHand, shuffleAfterSelection, prompt, destination, topLibraryPosition, topLibraryCardLimit, discoverValue, filterCardTypes,
                 accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                 battlefieldControllerId,
                 filterPredicate, sourcePermanentId, followUp, requireDifferentNames, requireDifferentPowers,
@@ -109,7 +110,7 @@ public record LibrarySearchParams(
     public LibrarySearchParams withFollowUp(LibrarySearchFollowUp updatedFollowUp) {
         return new LibrarySearchParams(playerId, decisionPlayerId, cards, reveals, canFailToFind, targetPlayerId,
                 remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
-                restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, topLibraryPosition,
+                restToGraveyard, restToExile, restToHand, shuffleAfterSelection, prompt, destination, topLibraryPosition,
                 topLibraryCardLimit, discoverValue, filterCardTypes, accumulatedCards, filterCardName,
                 attachToPlayerId, attachToPermanentId, battlefieldControllerId, filterPredicate,
                 sourcePermanentId, updatedFollowUp, requireDifferentNames, requireDifferentPowers,
@@ -127,7 +128,7 @@ public record LibrarySearchParams(
     public LibrarySearchParams withCastOnlyCardIds(Set<UUID> ids) {
         return new LibrarySearchParams(playerId, decisionPlayerId, cards, reveals, canFailToFind, targetPlayerId,
                 remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
-                restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, topLibraryPosition, topLibraryCardLimit, discoverValue, filterCardTypes,
+                restToGraveyard, restToExile, restToHand, shuffleAfterSelection, prompt, destination, topLibraryPosition, topLibraryCardLimit, discoverValue, filterCardTypes,
                 accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                 battlefieldControllerId,
                 filterPredicate, sourcePermanentId, followUp, requireDifferentNames, requireDifferentPowers,
@@ -144,7 +145,7 @@ public record LibrarySearchParams(
     public LibrarySearchParams withAllowCastFromLibraryWhileSearching(boolean allow) {
         return new LibrarySearchParams(playerId, decisionPlayerId, cards, reveals, canFailToFind, targetPlayerId,
                 remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
-                restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, topLibraryPosition, topLibraryCardLimit, discoverValue, filterCardTypes,
+                restToGraveyard, restToExile, restToHand, shuffleAfterSelection, prompt, destination, topLibraryPosition, topLibraryCardLimit, discoverValue, filterCardTypes,
                 accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                 battlefieldControllerId,
                 filterPredicate, sourcePermanentId, followUp, requireDifferentNames, requireDifferentPowers,
@@ -160,7 +161,7 @@ public record LibrarySearchParams(
     public LibrarySearchParams withRemainingCount(int count) {
         return new LibrarySearchParams(playerId, decisionPlayerId, cards, reveals, canFailToFind, targetPlayerId,
                 count, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
-                restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, topLibraryPosition, topLibraryCardLimit, discoverValue, filterCardTypes,
+                restToGraveyard, restToExile, restToHand, shuffleAfterSelection, prompt, destination, topLibraryPosition, topLibraryCardLimit, discoverValue, filterCardTypes,
                 accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                 battlefieldControllerId, filterPredicate, sourcePermanentId, followUp, requireDifferentNames, requireDifferentPowers,
                 manaValueBoundValue, manaValueExact, totalManaValueBound, excludedCardNames, grantHaste, sacrificeAtEndStep, exileAtEndStep,
@@ -175,7 +176,7 @@ public record LibrarySearchParams(
     public LibrarySearchParams withDecisionPlayerId(UUID decisionPlayerId) {
         return new LibrarySearchParams(playerId, decisionPlayerId, cards, reveals, canFailToFind, targetPlayerId,
                 remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
-                restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, topLibraryPosition, topLibraryCardLimit, discoverValue, filterCardTypes,
+                restToGraveyard, restToExile, restToHand, shuffleAfterSelection, prompt, destination, topLibraryPosition, topLibraryCardLimit, discoverValue, filterCardTypes,
                 accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                 battlefieldControllerId, filterPredicate, sourcePermanentId, followUp, requireDifferentNames, requireDifferentPowers,
                 manaValueBoundValue, manaValueExact, totalManaValueBound, excludedCardNames, grantHaste, sacrificeAtEndStep, exileAtEndStep,
@@ -190,7 +191,7 @@ public record LibrarySearchParams(
     public LibrarySearchParams withExcludedCardNames(List<String> names) {
         return new LibrarySearchParams(playerId, decisionPlayerId, cards, reveals, canFailToFind, targetPlayerId,
                 remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
-                restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, topLibraryPosition, topLibraryCardLimit, discoverValue, filterCardTypes,
+                restToGraveyard, restToExile, restToHand, shuffleAfterSelection, prompt, destination, topLibraryPosition, topLibraryCardLimit, discoverValue, filterCardTypes,
                 accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                 battlefieldControllerId, filterPredicate, sourcePermanentId, followUp, requireDifferentNames, requireDifferentPowers,
                 manaValueBoundValue, manaValueExact, totalManaValueBound, names, grantHaste, sacrificeAtEndStep, exileAtEndStep,
@@ -206,7 +207,7 @@ public record LibrarySearchParams(
     public LibrarySearchParams withAccumulatedCards(List<Card> newAccumulatedCards) {
         return new LibrarySearchParams(playerId, decisionPlayerId, cards, reveals, canFailToFind, targetPlayerId,
                 remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
-                restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, topLibraryPosition, topLibraryCardLimit, discoverValue, filterCardTypes,
+                restToGraveyard, restToExile, restToHand, shuffleAfterSelection, prompt, destination, topLibraryPosition, topLibraryCardLimit, discoverValue, filterCardTypes,
                 newAccumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                 battlefieldControllerId, filterPredicate, sourcePermanentId, followUp, requireDifferentNames, requireDifferentPowers,
                 manaValueBoundValue, manaValueExact, totalManaValueBound, excludedCardNames, grantHaste, sacrificeAtEndStep, exileAtEndStep,
@@ -231,6 +232,7 @@ public record LibrarySearchParams(
         private boolean reorderRemainingToTop;
         private boolean restToGraveyard;
         private boolean restToExile;
+        private boolean restToHand;
         private boolean shuffleAfterSelection = true;
         private String prompt;
         private LibrarySearchDestination destination = LibrarySearchDestination.HAND;
@@ -329,6 +331,12 @@ public record LibrarySearchParams(
 
         public Builder restToExile(boolean restToExile) {
             this.restToExile = restToExile;
+            return this;
+        }
+
+        /** Puts the looked-at {@code sourceCards} left after the pick into the searcher's hand ("put the rest into your hand"). */
+        public Builder restToHand(boolean restToHand) {
+            this.restToHand = restToHand;
             return this;
         }
 
@@ -573,7 +581,7 @@ public record LibrarySearchParams(
         public LibrarySearchParams build() {
             return new LibrarySearchParams(playerId, decisionPlayerId, cards, reveals, canFailToFind, targetPlayerId,
                     remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
-                    restToGraveyard, restToExile, shuffleAfterSelection, prompt, destination, topLibraryPosition, topLibraryCardLimit, discoverValue, filterCardTypes,
+                    restToGraveyard, restToExile, restToHand, shuffleAfterSelection, prompt, destination, topLibraryPosition, topLibraryCardLimit, discoverValue, filterCardTypes,
                     accumulatedCards, filterCardName, attachToPlayerId, attachToPermanentId,
                     battlefieldControllerId,
                     filterPredicate, sourcePermanentId, followUp, requireDifferentNames, requireDifferentPowers,

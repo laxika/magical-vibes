@@ -26,6 +26,10 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *   <li>{@link #chooseOneToHandRestOnTop(int)} — one to hand, the rest back on top of the library
  *       in any order (Diabolic Vision).</li>
  *   <li>{@link #chooseOneToHandRestToExile(DynamicAmount)} — one to hand, exile the rest (Browse).</li>
+ *   <li>{@link #mayExileOneMatchingRestToHand(int, CardPredicate)} — you may exile one matching card
+ *       straight from among them, the rest into your hand; the exile is the resolution's
+ *       {@code StepKind.EXILE} step, so a later step names the card with
+ *       {@code Subjects.cardsThisWay(StepKind.EXILE)} (Make Your Own Luck + {@code PlotExiledCardsEffect}).</li>
  *   <li>{@link #mayRevealOneToHandRestOnBottom(int, CardPredicate)} /
  *       {@link #mayRevealAnyNumberToHandRestOnBottom(int, CardPredicate)} /
  *       {@link #mayRevealUpToToHandRestOnBottom(int, CardPredicate, int)} — optional ("may")
@@ -558,6 +562,15 @@ public record LookAtTopCardsEffect(
     public static LookAtTopCardsEffect chooseOneToHandRestToExile(DynamicAmount lookCount) {
         return new LookAtTopCardsEffect(lookCount, new Fixed(1), null,
                 LookDestination.EXILE, false);
+    }
+
+    /**
+     * You may exile one matching looked-at card, the rest into your hand. The exiled card is the resolution's
+     * {@code StepKind.EXILE} step for a later step to read (Make Your Own Luck's "it becomes plotted").
+     */
+    public static LookAtTopCardsEffect mayExileOneMatchingRestToHand(int lookCount, CardPredicate choosePredicate) {
+        return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(1), choosePredicate,
+                LookDestination.HAND, false, LibrarySearchDestination.EXILE, true);
     }
 
     /** Exile one looked-at card face up with permission to play it this turn; rest go to the bottom randomly. */
