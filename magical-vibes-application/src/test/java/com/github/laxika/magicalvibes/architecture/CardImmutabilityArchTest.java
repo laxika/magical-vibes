@@ -42,6 +42,7 @@ class CardImmutabilityArchTest {
             "SpellCastingService",     // mutates the modal runtime copy it just created
             "ReduceCastCostForMatchingSpellsEffectHandler", // assembles a fresh face-down card for cost evaluation
             "AbilityActivationService", // records effective sacrificed-land types on a fresh runtime copy
+            "DestructionSupport",      // records a sacrificed permanent's effective types on a fresh runtime copy, then freezes it
             "StackResolutionService",  // marks a fresh runtime copy of a resolving copied permanent spell as a token
             "AiDecisionEngine",        // mutates the evaluation runtime copy it just created
             "PermanentCopierService",  // assembles fresh clone-copy cards
