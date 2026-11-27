@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.effect.MayEffectHandlerRegistry;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ChosenOpponentSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CelestialJudgmentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AttachCurseToOpponentAndDrawEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AllureOfTheUnknownEffectHandler;
@@ -106,6 +107,7 @@ public class PermanentChoiceHandlerService {
             avenCourierEffectHandler;
     private final RiskyMoveEffectHandler riskyMoveEffectHandler;
     private final MemoriesReturningEffectHandler memoriesReturningEffectHandler;
+    private final ChosenOpponentSupport chosenOpponentSupport;
     private final TurnOwnCreatureFaceUpEffectHandler turnOwnCreatureFaceUpEffectHandler;
     private final RemoveCounterFromControlledCreatureThenDrawEffectHandler
             removeCounterFromControlledCreatureThenDrawEffectHandler;
@@ -689,6 +691,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleExileChosenPermanents(gameData, permanentId, exileChoice);
         } else if (context instanceof PermanentChoiceContext.AllureOfTheUnknownOpponentChoice allureChoice) {
             allureOfTheUnknownEffectHandler.completeOpponentChoice(gameData, permanentId, allureChoice);
+        } else if (context instanceof PermanentChoiceContext.ChooseOpponentThen chooseOpponent) {
+            chosenOpponentSupport.complete(gameData, permanentId, chooseOpponent);
         } else if (context instanceof PermanentChoiceContext.MemoriesReturningOpponentChoice memoriesChoice) {
             memoriesReturningEffectHandler.completeOpponentChoice(gameData, permanentId, memoriesChoice);
         } else if (context instanceof PermanentChoiceContext.OpponentChoosesCreatureTheyControlToCopy echoChamberChoice) {

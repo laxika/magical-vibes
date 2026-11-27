@@ -84,17 +84,12 @@ public class TurtlesForeverEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        UUID opponentId = gameData.orderedPlayerIds.stream()
-                .filter(id -> !id.equals(controllerId))
-                .findFirst()
-                .orElse(null);
-        if (opponentId == null) {
+        if (ChoosePlayerEffectHandler.onlyOpponent(gameData, controllerId) == null) {
             return;
         }
 
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.TurtlesForeverSearchChoice(
                 controllerId,
-                opponentId,
                 pool,
                 libraryCandidates.stream().map(Card::getId).toList(),
                 outsideGameCandidates.stream().map(Card::getId).toList()));

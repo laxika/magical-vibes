@@ -46,11 +46,7 @@ public class ThreatsUndetectedEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        UUID opponentId = gameData.orderedPlayerIds.stream()
-                .filter(playerId -> !playerId.equals(controllerId))
-                .findFirst()
-                .orElse(null);
-        if (opponentId == null) {
+        if (ChoosePlayerEffectHandler.onlyOpponent(gameData, controllerId) == null) {
             return;
         }
 
@@ -69,7 +65,8 @@ public class ThreatsUndetectedEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        gameData.queueInteraction(new PendingPileSeparation(controllerId, opponentId, List.of(),
+        // The opponent who chooses is chosen once the cards are revealed (LibraryChoiceHandlerService).
+        gameData.queueInteraction(new PendingPileSeparation(controllerId, null, List.of(),
                 List.of(), Map.of(), List.of(), List.of(),
                 com.github.laxika.magicalvibes.model.CardPileDisposition.THREATS_UNDETECTED));
 

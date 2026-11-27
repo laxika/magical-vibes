@@ -10,10 +10,12 @@ import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -59,6 +61,39 @@ class HostileNegotiationsTest extends BaseCardTest {
                 .extracting(Card::getId)
                 .containsExactlyInAnyOrder(forest.getId(), bears.getId(), swamp.getId());
         assertThat(gd.exiledCards).isEmpty();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(17);
+    }
+
+    @Test
+    @DisplayName("With two opponents, the caster chooses after turning a pile face up which opponent chooses")
+    void casterChoosesTheOpponentAfterTurningAPileFaceUp() {
+        Player player3 = harness.addOpponent("Charlie");
+        Card forest = new Forest();
+        Card bears = new GrizzlyBears();
+        Card swamp = new Swamp();
+        Card island = new Island();
+        Card plains = new Plains();
+        Card elves = new LlanowarElves();
+        harness.setLibrary(player1, List.of(forest, bears, swamp, island, plains, elves));
+        harness.castFromHand(player1, new HostileNegotiations(), "{3}{B}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.HostileNegotiationsFaceUpChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        PendingInteraction.PermanentChoice opponentChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(opponentChoice.playerId()).isEqualTo(player1.getId());
+        assertThat(opponentChoice.validPlayerIds()).containsExactlyInAnyOrder(player2.getId(), player3.getId());
+        harness.handlePermanentChosen(player1, player3.getId());
+
+        assertThat(gd.interaction.activeInteraction(
+                PendingInteraction.HostileNegotiationsOpponentPileChoice.class).playerId())
+                .isEqualTo(player3.getId());
+        harness.handleMayAbilityChosen(player3, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(forest, bears, swamp);
         assertThat(gd.getLife(player1.getId())).isEqualTo(17);
     }
 

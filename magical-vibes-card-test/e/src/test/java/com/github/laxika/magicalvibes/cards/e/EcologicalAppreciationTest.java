@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -51,6 +52,35 @@ class EcologicalAppreciationTest extends BaseCardTest {
                 .extracting(permanent -> permanent.getCard().getId())
                 .containsExactlyInAnyOrder(elves.getId(), ornithopter.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
+    }
+
+    @Test
+    @DisplayName("With two opponents, the caster chooses after the reveal which opponent chooses two cards")
+    void casterChoosesTheOpponentAfterTheReveal() {
+        Player player3 = harness.addOpponent("Charlie");
+        Card bears = new GrizzlyBears();
+        Card elves = new LlanowarElves();
+        Card goblin = new RagingGoblin();
+        Card ornithopter = new Ornithopter();
+        setUpAndCast(new EcologicalAppreciation(), 2, List.of(bears, elves, goblin), List.of(ornithopter));
+
+        harness.handleMultipleCardsChosen(player1,
+                List.of(bears.getId(), elves.getId(), goblin.getId(), ornithopter.getId()));
+
+        PendingInteraction.PermanentChoice opponentChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(opponentChoice.playerId()).isEqualTo(player1.getId());
+        assertThat(opponentChoice.validPlayerIds()).containsExactlyInAnyOrder(player2.getId(), player3.getId());
+        harness.handlePermanentChosen(player1, player3.getId());
+
+        assertThat(gd.interaction.activeInteraction(
+                PendingInteraction.EcologicalAppreciationOpponentChoice.class).playerId())
+                .isEqualTo(player3.getId());
+        harness.handleMultipleCardsChosen(player3, List.of(bears.getId(), goblin.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getId())
+                .containsExactlyInAnyOrder(elves.getId(), ornithopter.getId());
     }
 
     @Test

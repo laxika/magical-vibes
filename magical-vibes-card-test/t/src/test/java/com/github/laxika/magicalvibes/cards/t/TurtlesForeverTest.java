@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.l.LeonardoBigBrother;
 import com.github.laxika.magicalvibes.cards.m.MichelangeloGameMaster;
 import com.github.laxika.magicalvibes.cards.r.RaphaelMostAttitude;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -57,6 +58,35 @@ class TurtlesForeverTest extends BaseCardTest {
         assertThat(gd.playerSideboards.get(player1.getId())).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player1, "Turtles Forever");
+    }
+
+    @Test
+    @DisplayName("With two opponents, the caster chooses after the reveal which opponent chooses two cards")
+    void casterChoosesTheOpponentAfterTheReveal() {
+        Player player3 = harness.addOpponent("Charlie");
+        Card arvad = new ArvadTheCursed();
+        Card kamahl = new KamahlPitFighter();
+        Card kokusho = new KokushoTheEveningStar();
+        Card squee = new SqueeTheImmortal();
+        harness.setLibrary(player1, List.of(arvad, kamahl, kokusho, squee));
+        castSpell();
+
+        harness.handleMultipleCardsChosen(player1, gd.interaction.activeInteraction(
+                PendingInteraction.TurtlesForeverSearchChoice.class).validCardIds());
+
+        PendingInteraction.PermanentChoice opponentChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(opponentChoice.playerId()).isEqualTo(player1.getId());
+        assertThat(opponentChoice.validPlayerIds()).containsExactlyInAnyOrder(player2.getId(), player3.getId());
+        harness.handlePermanentChosen(player1, player3.getId());
+
+        assertThat(gd.interaction.activeInteraction(
+                PendingInteraction.TurtlesForeverOpponentChoice.class).playerId())
+                .isEqualTo(player3.getId());
+        harness.handleMultipleCardsChosen(player3, List.of(arvad.getId(), squee.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(arvad, squee);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(kamahl, kokusho);
     }
 
     @Test

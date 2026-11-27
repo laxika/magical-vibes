@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.p.PrismariCampus;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -82,6 +83,34 @@ class VerdantMasteryTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId()))
                 .extracting(Card::getId)
                 .containsExactlyInAnyOrder(plains.getId());
+    }
+
+    @Test
+    @DisplayName("With two opponents, the caster chooses after the reveal which opponent gets the land")
+    void casterChoosesTheOpponentAfterTheReveal() {
+        Player player3 = harness.addOpponent("Charlie");
+        Card forest = new Forest();
+        Card island = new Island();
+        Card mountain = new Mountain();
+        Card plains = new Plains();
+        cast(List.of(forest, island, mountain, plains), true);
+
+        harness.handleMultipleCardsChosen(player1,
+                List.of(forest.getId(), island.getId(), mountain.getId(), plains.getId()));
+
+        PendingInteraction.PermanentChoice opponentChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(opponentChoice.playerId()).isEqualTo(player1.getId());
+        assertThat(opponentChoice.validPlayerIds()).containsExactlyInAnyOrder(player2.getId(), player3.getId());
+        harness.handlePermanentChosen(player1, player3.getId());
+
+        harness.handleMultipleCardsChosen(player1, List.of(forest.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(island.getId(), mountain.getId()));
+
+        assertThat(gd.playerBattlefields.get(player3.getId()))
+                .extracting(permanent -> permanent.getCard().getId())
+                .containsExactly(forest.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
     }
 
     @Test

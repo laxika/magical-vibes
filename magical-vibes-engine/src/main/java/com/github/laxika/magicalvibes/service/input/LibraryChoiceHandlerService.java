@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.model.ChosenOpponentFollowUp;
 import com.github.laxika.magicalvibes.model.MovedCard;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.StepOutcome;
@@ -123,7 +124,9 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class LibraryChoiceHandlerService {
+public class LibraryChoiceHandlerService
+        implements com.github.laxika.magicalvibes.service.effect.normalfx.ChosenOpponentContinuation<
+                ChosenOpponentFollowUp.ThreatsUndetectedReveal> {
 
     public static final String HELD_TO_BATTLEFIELD = "Put the chosen cards onto the battlefield";
 
@@ -185,6 +188,8 @@ public class LibraryChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ManifestService manifestService;
 
     private final com.github.laxika.magicalvibes.service.cast.CastingPermissionService castingPermissionService;
+
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.ChosenOpponentSupport chosenOpponentSupport;
 
     @Autowired @Lazy
     private com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService triggeredAbilityStackService;
@@ -2595,21 +2600,53 @@ public class LibraryChoiceHandlerService {
         }
 
         gameData.recordPileGroupingOrGuess();
+        if (state.disposition() == CardPileDisposition.THREATS_UNDETECTED) {
+            // "An opponent chooses two of those cards" names its opponent once the cards are revealed.
+            chosenOpponentSupport.chooseThen(gameData, controllerId, "Threats Undetected",
+                    new ChosenOpponentFollowUp.ThreatsUndetectedReveal(controllerId, pool));
+            return;
+        }
+        beginGiftsStyleChoice(gameData, controllerId, state.targetPlayerId(), pool, state.disposition());
+    }
+
+    @Override
+    public Class<ChosenOpponentFollowUp.ThreatsUndetectedReveal> followUpType() {
+        return ChosenOpponentFollowUp.ThreatsUndetectedReveal.class;
+    }
+
+    /**
+     * Threats Undetected's "an opponent chooses two of those cards": the chosen opponent chooses them. With no
+     * opponent left the revealed cards go to the hand, as nothing is chosen.
+     */
+    @Override
+    public void continueWithOpponent(GameData gameData, UUID opponentId,
+                                     ChosenOpponentFollowUp.ThreatsUndetectedReveal reveal) {
+        if (opponentId == null) {
+            reveal.revealedCards().forEach(card -> gameData.addCardToHand(reveal.controllerId(), card));
+            LibraryShuffleHelper.shuffleLibrary(gameData, reveal.controllerId());
+            finishSearchAndResume(gameData);
+            return;
+        }
+        beginGiftsStyleChoice(gameData, reveal.controllerId(), opponentId, reveal.revealedCards(),
+                CardPileDisposition.THREATS_UNDETECTED);
+    }
+
+    private void beginGiftsStyleChoice(GameData gameData, UUID controllerId, UUID chooserId, List<Card> pool,
+                                       CardPileDisposition disposition) {
         Map<UUID, UUID> cardOwners = new HashMap<>();
         for (Card card : pool) {
             cardOwners.put(card.getId(), controllerId);
         }
-        gameData.queueInteraction(new PendingPileSeparation(controllerId, state.targetPlayerId(),
-                List.of(), List.copyOf(pool), cardOwners, List.of(), List.of(),
-                state.disposition()));
+        gameData.queueInteraction(new PendingPileSeparation(controllerId, chooserId,
+                List.of(), List.copyOf(pool), cardOwners, List.of(), List.of(), disposition));
 
         int count = Math.min(2, pool.size());
         String controllerName = gameData.playerIdToName.get(controllerId);
-        String destination = state.disposition() == CardPileDisposition.THREATS_UNDETECTED
+        String destination = disposition == CardPileDisposition.THREATS_UNDETECTED
                 ? "shuffle into " + controllerName + "'s library"
                 : "put into " + controllerName + "'s graveyard";
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiGraveyardChoice(
-                state.targetPlayerId(), List.copyOf(pool), count,
+                chooserId, List.copyOf(pool), count,
                 "Choose " + (count == 1 ? "a card" : count + " cards") + " to " + destination
                         + ". The rest go to their hand.", count));
     }

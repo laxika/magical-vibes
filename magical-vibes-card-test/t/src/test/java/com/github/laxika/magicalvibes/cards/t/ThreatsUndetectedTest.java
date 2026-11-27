@@ -12,8 +12,10 @@ import com.github.laxika.magicalvibes.cards.u.UrborgLhurgoyf;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -65,6 +67,40 @@ class ThreatsUndetectedTest extends BaseCardTest {
                 .containsExactlyInAnyOrder(duplicatePower, nonCreature, onePower, threePower);
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player1, "Threats Undetected");
+    }
+
+    @Test
+    @DisplayName("With two opponents, the caster chooses after the reveal which opponent chooses two cards")
+    void casterChoosesTheOpponentAfterTheReveal() {
+        Player player3 = harness.addOpponent("Charlie");
+        Card onePower = new LlanowarElves();
+        Card twoPower = new GrizzlyBears();
+        Card threePower = new HillGiant();
+        Card fourPower = new AirElemental();
+        harness.setLibrary(player1, List.of(onePower, twoPower, threePower, fourPower));
+        harness.setHand(player1, List.of(new ThreatsUndetected()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+
+        pick(onePower);
+        pick(twoPower);
+        pick(threePower);
+        pick(fourPower);
+
+        PendingInteraction.PermanentChoice opponentChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(opponentChoice.playerId()).isEqualTo(player1.getId());
+        assertThat(opponentChoice.validPlayerIds()).containsExactlyInAnyOrder(player2.getId(), player3.getId());
+        harness.handlePermanentChosen(player1, player3.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).playerId())
+                .isEqualTo(player3.getId());
+        harness.handleMultipleCardsChosen(player3, List.of(onePower.getId(), threePower.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(twoPower, fourPower);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(onePower, threePower);
     }
 
     private List<Card> offeredCards() {

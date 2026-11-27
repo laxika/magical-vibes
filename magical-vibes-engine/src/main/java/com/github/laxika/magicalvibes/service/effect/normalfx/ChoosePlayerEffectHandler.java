@@ -75,7 +75,8 @@ public class ChoosePlayerEffectHandler implements NormalEffectHandlerBean {
         return opponents.isEmpty() ? null : opponents.getFirst();
     }
 
-    private static List<UUID> opponents(GameData gameData, UUID controllerId) {
+    /** {@code controllerId}'s opponents still in the game, in turn order. */
+    static List<UUID> opponents(GameData gameData, UUID controllerId) {
         return gameData.orderedPlayerIds.stream()
                 .filter(playerId -> !playerId.equals(controllerId) && gameData.playerIds.contains(playerId))
                 .toList();

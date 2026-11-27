@@ -298,7 +298,8 @@ triggered ability is a `TemporaryGlobalTriggeredAbility`. Never a `Permanent` or
   `ChoosePermanentsEffect` (`exactly`, `upTo`, `anyNumber`, `atRandom`, `chosenBy(player)`, `oneForEach`, `forEachVote`, `toSacrifice()`
   (only candidates the chooser could sacrifice, CR 608.2d, 701.21a), `thatCanBeAttachedTo` / `thatCanHost`,
   `thatTheTriggeringSpellCouldTarget()`) over permanents; `ChoosePlayerEffect` (`opponent()`, `chosenBy(player)`) /
-  `ChoosePlayerAtRandomEffect` (`playersThisWay(CHOOSE)`); `ChooseCardNameAtResolutionEffect` + `CardHasNameChosenThisResolutionPredicate`;
+  `ChoosePlayerAtRandomEffect` (`playersThisWay(CHOOSE)`); in a bespoke handler or completion, "an opponent" after an exile or reveal is
+  `ChosenOpponentSupport.chooseThen` (a `ChosenOpponentFollowUp` record and its `ChosenOpponentContinuation`; CR 608.2d); `ChooseCardNameAtResolutionEffect` + `CardHasNameChosenThisResolutionPredicate`;
   `ChooseDamageSourceEffect.any()` / `.youControl()` (CR 609.7a candidates); `ChooseOneAtRandomEffect`; `ChooseOneEffect.anOpponentChooses`
   (announced before priority, CR 700.2e; targets after the mode, CR 601.2c; `Subjects.modeChooser()`); `ChoosePermanentOnEnterEffect`.
 - Step kinds beyond Design's list, each with its readers: TAP (`TapPermanentsEffect`), GOAD (`GoadTargetCreatureUntilNextTurnEffect.of`),

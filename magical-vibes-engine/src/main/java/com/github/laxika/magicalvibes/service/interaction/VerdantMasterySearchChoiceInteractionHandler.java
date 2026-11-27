@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ChosenOpponentFollowUp;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ChosenOpponentContinuation;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ChosenOpponentSupport;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
@@ -22,12 +24,13 @@ import java.util.stream.Collectors;
 @Component
 @RequiredArgsConstructor
 public class VerdantMasterySearchChoiceInteractionHandler
-        implements InteractionHandler<PendingInteraction.VerdantMasterySearchChoice> {
+        implements InteractionHandler<PendingInteraction.VerdantMasterySearchChoice>,
+        ChosenOpponentContinuation<ChosenOpponentFollowUp.VerdantMasteryReveal> {
 
     private final GameLogService gameLogService;
-    private final GameQueryService gameQueryService;
     private final InputCompletionService inputCompletionService;
     private final VerdantMasteryLandChoiceInteractionHandler landChoiceHandler;
+    private final ChosenOpponentSupport chosenOpponentSupport;
 
     @Override
     public Class<PendingInteraction.VerdantMasterySearchChoice> handledType() {
@@ -90,15 +93,35 @@ public class VerdantMasterySearchChoiceInteractionHandler
                         + selected.stream().map(Card::getName).collect(Collectors.joining(", "))
                         + " with Verdant Mastery."));
 
-        UUID opponentId = interaction.alternateCost()
-                ? gameQueryService.getOpponentId(gameData, interaction.playerId())
-                : null;
-        if (interaction.alternateCost() && opponentId != null) {
-            landChoiceHandler.beginOpponentChoice(gameData, interaction.playerId(), opponentId, selected);
-        } else if (selected.size() > 2) {
-            landChoiceHandler.beginControllerChoice(gameData, interaction.playerId(), null, null, selected);
+        if (interaction.alternateCost()) {
+            chosenOpponentSupport.chooseThen(gameData, interaction.playerId(), "Verdant Mastery",
+                    new ChosenOpponentFollowUp.VerdantMasteryReveal(interaction.playerId(), selected));
         } else {
-            landChoiceHandler.resolveDistribution(gameData, interaction.playerId(), null, null, selected, List.of());
+            distributeToController(gameData, interaction.playerId(), selected);
+        }
+    }
+
+    @Override
+    public Class<ChosenOpponentFollowUp.VerdantMasteryReveal> followUpType() {
+        return ChosenOpponentFollowUp.VerdantMasteryReveal.class;
+    }
+
+    /** "Put one of them onto the battlefield tapped under an opponent's control": that opponent is chosen. */
+    @Override
+    public void continueWithOpponent(GameData gameData, UUID opponentId,
+                                     ChosenOpponentFollowUp.VerdantMasteryReveal reveal) {
+        if (opponentId != null) {
+            landChoiceHandler.beginOpponentChoice(gameData, reveal.controllerId(), opponentId, reveal.revealedLands());
+        } else {
+            distributeToController(gameData, reveal.controllerId(), reveal.revealedLands());
+        }
+    }
+
+    private void distributeToController(GameData gameData, UUID controllerId, List<Card> lands) {
+        if (lands.size() > 2) {
+            landChoiceHandler.beginControllerChoice(gameData, controllerId, null, null, lands);
+        } else {
+            landChoiceHandler.resolveDistribution(gameData, controllerId, null, null, lands, List.of());
         }
     }
 }

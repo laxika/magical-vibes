@@ -1307,23 +1307,21 @@ Don't commit.
 - The static-set filter reads in `GameQueryService.layeredQueryReads` (`matchesLeaf`) use printed keywords and types ("creatures with flying" in static locks other than the tap lock; Katabatic Winds' attack/block half unverified). Fairly sure.
 - Painter's Servant doesn't colour cards that aren't on the battlefield, or spells (Oracle text). Sure.
 
-#### Two-player assumptions (`getOpponentId`, first seat) (17)
+#### Two-player assumptions (`getOpponentId`, first seat) (15)
 
 - Notion Thief, Hullbreacher, Alms Collector (`DrawService`), Elesh Norn (`areOpponentPermanentETBTriggersSuppressed`) look at one opponent; Distant Memories asks the first opponent by seat and finds its controller as "the other player"; Infernal Denizen offers the first opponent. Sure.
-- Shared Fate exiles from `getOpponentId` (the drawer chooses); Abstract Performance, Brilliant Ultimatum, Burning-Rune Demon, Captivating Glance's clash take the first other player. Sure.
-- Death or Glory, Ecological Appreciation take the first other seat; Deliver Unto Evil, Fateseal use `getOpponentId` (the controller chooses, CR 700.2e's reading); Covenant of Minds takes the first non-opponent seat as controller; Triskaidekaphobia declares the first survivor the winner (CR 800.4a). Sure.
+- Shared Fate exiles from `getOpponentId` (the drawer chooses); Burning-Rune Demon, Captivating Glance's clash take the first other player. Sure.
+- Death or Glory takes the first other seat; Deliver Unto Evil, Fateseal use `getOpponentId` (the controller chooses, CR 700.2e's reading); Covenant of Minds takes the first non-opponent seat as controller; Triskaidekaphobia declares the first survivor the winner (CR 800.4a). Sure.
 - Galactus forces the first opponent on a tie; Norn's Annex's tax and Nahiri's `MustAttackPlayerEffect` count use `getOpponentId`. Sure.
 - Stand or Fall serves only `getOpponentId` ("each defending player") and floats `OnlyChosenCreaturesCanBlockEffect` on every player; Favored Enemy reads the first opponent's library. Sure.
-- Hostile Negotiations (always the first other seat), Memories Returning, Murmurs from Beyond pick the opponent by seat or ask the controller. Sure.
-- Zur's Weirding offers the payment only to `getOpponentId` ("any other player"); Verdant Mastery likewise. Sure.
-- Threats Undetected, Turtles Forever: "an opponent chooses" takes the first opponent. Fairly sure.
+- Memories Returning, Murmurs from Beyond pick the opponent by seat or ask the controller. Sure.
+- Zur's Weirding offers the payment only to `getOpponentId` ("any other player"). Sure.
 - `TargetOpponentCreatesTokenEffect` derives "target opponent"; `OpponentGainsControlOfSourceCreatureEffect` picks by seat. Unverified.
 - `MayEffect`'s `DEFENDING_PLAYER` doesn't read the recorded defending player (CR 508.5; Harbor Guardian's kind); Soldevi Heretic derives "target opponent" and targets nobody. Unverified.
 - `CombatBlockService.handleDeclareBlockersStep`, `getBlockableAttackerIndices` and `ConditionEvaluationService.defendingPlayerControlsMatchingPermanent` take the defending player as `getOpponentId` (CR 506.2, 508.5) (CR 509.1). Sure.
 - Ingenious Mastery: "an opponent creates two Treasures and they scry 2" gives the tokens to the first seat and has every opponent scry.
 - `DrawService`: two Notion Thief / Hullbreacher / Alms Collector sources under different opponents apply in seat order; the affected player should choose (CR 616.1). Sure, low.
 - `ReturnCardExiledWithSourceToBattlefieldEffectHandler` puts a creature onto the battlefield attacking with no attack target; its controller should choose one (CR 508.4). Fairly sure.
-- Seven cards choose "an opponent" after an exile, search or reveal inside a handler or interaction (Abstract Performance, Brilliant Ultimatum, Hostile Negotiations, Ecological Appreciation, Threats Undetected, Turtles Forever, Verdant Mastery): they need one prompt mid-flow. Sure.
 - Wake to Slaughter's opponent choice (`opponentChoosesOneForHand`, its own `wakeToSlaughterChosenCardId` state) is unchecked for multiplayer. Fairly sure from the code.
 - Vislor Turlough with 3+ players: whether the goad step resolves after the opponent prompt, with the new controller. Unverified.
 

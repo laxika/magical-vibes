@@ -6,7 +6,7 @@ import java.util.UUID;
 /**
  * Carries the two face-down piles while Hostile Negotiations waits for its two player choices.
  */
-public record PendingHostileNegotiations(UUID controllerId, UUID opponentId,
+public record PendingHostileNegotiations(UUID controllerId,
                                          List<Card> pile1Cards, List<Card> pile2Cards)
         implements PendingInteraction {
 

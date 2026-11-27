@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ChosenOpponentFollowUp;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingHostileNegotiations;
@@ -18,14 +19,16 @@ import org.springframework.stereotype.Component;
 /** Completes the two player choices that resolve Hostile Negotiations. */
 @Component
 @RequiredArgsConstructor
-public class HostileNegotiationsSupport {
+public class HostileNegotiationsSupport
+        implements ChosenOpponentContinuation<ChosenOpponentFollowUp.HostileNegotiationsPiles> {
 
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final InputCompletionService inputCompletionService;
     private final GraveyardService graveyardService;
+    private final ChosenOpponentSupport chosenOpponentSupport;
 
-    /** Prompts the opponent after the controller has selected the pile to turn face up. */
+    /** Turns the controller's pile face up, then the controller chooses the opponent who chooses a pile. */
     public void revealPileAndPromptOpponent(
             GameData gameData, PendingInteraction.HostileNegotiationsFaceUpChoice choice,
             boolean pile1FaceUp) {
@@ -37,9 +40,31 @@ public class HostileNegotiationsSupport {
         String controllerName = gameData.playerIdToName.get(state.controllerId());
         gameLogService.append(gameData, GameLog.text(controllerName + " turns "
                 + (pile1FaceUp ? "Pile 1" : "Pile 2") + " face up with Hostile Negotiations."));
+        chosenOpponentSupport.chooseThen(gameData, state.controllerId(), "Hostile Negotiations",
+                new ChosenOpponentFollowUp.HostileNegotiationsPiles(pile1FaceUp));
+    }
+
+    @Override
+    public Class<ChosenOpponentFollowUp.HostileNegotiationsPiles> followUpType() {
+        return ChosenOpponentFollowUp.HostileNegotiationsPiles.class;
+    }
+
+    /**
+     * "An opponent chooses one of those piles": the chosen opponent is asked. With no opponent left, nobody chooses,
+     * so neither pile is put into the hand or the graveyard and the cards stay exiled.
+     */
+    @Override
+    public void continueWithOpponent(GameData gameData, UUID opponentId,
+                                     ChosenOpponentFollowUp.HostileNegotiationsPiles piles) {
+        if (opponentId == null) {
+            gameData.pollPendingInteraction(PendingHostileNegotiations.class);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+        PendingHostileNegotiations state = gameData.peekPendingInteraction(PendingHostileNegotiations.class);
         interactionHandlerRegistry.begin(gameData,
                 new PendingInteraction.HostileNegotiationsOpponentPileChoice(
-                        state.opponentId(), state.pile1Cards(), state.pile2Cards(), pile1FaceUp));
+                        opponentId, state.pile1Cards(), state.pile2Cards(), piles.pile1FaceUp()));
     }
 
     /** Moves the opponent's chosen pile to hand, the other pile to the graveyard, and resumes the spell. */

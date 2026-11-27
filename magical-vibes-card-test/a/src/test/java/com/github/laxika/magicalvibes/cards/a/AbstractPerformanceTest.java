@@ -5,8 +5,10 @@ import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -72,6 +74,30 @@ class AbstractPerformanceTest extends BaseCardTest {
                 .anyMatch(card -> card instanceof AbstractPerformance);
         assertThat(gd.playerHands.get(player1.getId())).containsAll(faceDown);
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("With two opponents, the caster chooses after the exile which opponent chooses the pile")
+    void casterChoosesTheOpponentAfterTheExile() {
+        Player player3 = harness.addOpponent("Charlie");
+        List<Card> faceDown = List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears());
+        List<Card> faceUp = List.of(new LlanowarElves(), new LlanowarElves(), new LlanowarElves(), new LlanowarElves());
+        cast(faceDown, faceUp);
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        PendingInteraction.PermanentChoice opponentChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(opponentChoice.playerId()).isEqualTo(player1.getId());
+        assertThat(opponentChoice.validPlayerIds()).containsExactlyInAnyOrder(player2.getId(), player3.getId());
+        harness.handlePermanentChosen(player1, player3.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player3.getId());
+        harness.handleMayAbilityChosen(player3, true);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsAll(faceDown);
+        assertThat(gd.playerHands.get(player1.getId())).containsAll(faceUp);
     }
 
     private void cast(List<Card> faceDown, List<Card> faceUp) {

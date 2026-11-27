@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ChosenOpponentFollowUp;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ChosenOpponentContinuation;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ChosenOpponentSupport;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -24,11 +27,13 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class TurtlesForeverSearchChoiceInteractionHandler
-        implements InteractionHandler<PendingInteraction.TurtlesForeverSearchChoice> {
+        implements InteractionHandler<PendingInteraction.TurtlesForeverSearchChoice>,
+        ChosenOpponentContinuation<ChosenOpponentFollowUp.TurtlesForeverReveal> {
 
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final InputCompletionService inputCompletionService;
+    private final ChosenOpponentSupport chosenOpponentSupport;
 
     @Override
     public Class<PendingInteraction.TurtlesForeverSearchChoice> handledType() {
@@ -107,11 +112,33 @@ public class TurtlesForeverSearchChoiceInteractionHandler
             return;
         }
 
-        interactionHandlerRegistry.begin(gameData,
-                new PendingInteraction.TurtlesForeverOpponentChoice(
-                        interaction.opponentId(), interaction.playerId(), new ArrayList<>(chosen)));
         log.info("Game {} - {} revealed four Turtles Forever cards; opponent chooses two",
                 gameData.id, controllerName);
+        chosenOpponentSupport.chooseThen(gameData, interaction.playerId(), "Turtles Forever",
+                new ChosenOpponentFollowUp.TurtlesForeverReveal(interaction.playerId(), chosen));
+    }
+
+    @Override
+    public Class<ChosenOpponentFollowUp.TurtlesForeverReveal> followUpType() {
+        return ChosenOpponentFollowUp.TurtlesForeverReveal.class;
+    }
+
+    /**
+     * "An opponent chooses two of them": the chosen opponent chooses them. With no opponent left nothing is chosen,
+     * so every revealed card is shuffled into the library.
+     */
+    @Override
+    public void continueWithOpponent(GameData gameData, UUID opponentId,
+                                     ChosenOpponentFollowUp.TurtlesForeverReveal reveal) {
+        if (opponentId == null) {
+            gameData.playerDecks.get(reveal.controllerId()).addAll(reveal.revealedCards());
+            LibraryShuffleHelper.shuffleLibrary(gameData, reveal.controllerId());
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+        interactionHandlerRegistry.begin(gameData,
+                new PendingInteraction.TurtlesForeverOpponentChoice(
+                        opponentId, reveal.controllerId(), new ArrayList<>(reveal.revealedCards())));
     }
 
     private void validateSourceContainsCard(GameData gameData,

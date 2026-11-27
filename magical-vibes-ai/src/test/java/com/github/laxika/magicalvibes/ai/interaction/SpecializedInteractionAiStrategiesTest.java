@@ -124,7 +124,7 @@ class SpecializedInteractionAiStrategiesTest {
         Card fourth = card("Fourth", "{4}");
         Card fifth = card("Fifth", "{5}");
         var interaction = new PendingInteraction.TurtlesForeverSearchChoice(
-                aiPlayerId, UUID.randomUUID(), List.of(first, duplicate, second, third, fourth, fifth),
+                aiPlayerId, List.of(first, duplicate, second, third, fourth, fifth),
                 List.of(first.getId(), duplicate.getId(), second.getId()),
                 List.of(third.getId(), fourth.getId(), fifth.getId()));
 

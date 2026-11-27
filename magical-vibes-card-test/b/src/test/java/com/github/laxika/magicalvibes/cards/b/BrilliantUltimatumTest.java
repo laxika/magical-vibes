@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -57,6 +58,33 @@ class BrilliantUltimatumTest extends BaseCardTest {
         assertThat(gd.stack).noneMatch(entry -> entry.getCard() == shatter);
         assertThat(gd.findExiledCard(shatter.getId())).isNotNull();
         assertThat(mountain.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("With two opponents, the caster chooses after the exile which opponent separates the piles")
+    void casterChoosesTheOpponentAfterTheExile() {
+        Player player3 = harness.addOpponent("Charlie");
+        Card forest = new Forest();
+        List<Card> library = List.of(forest, new GrizzlyBears(), new Swamp(), new Island(), new Plains());
+        harness.setLibrary(player1, library);
+        harness.setHand(player1, List.of(new BrilliantUltimatum()));
+        addCastingMana();
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.findExiledCard(forest.getId())).isNotNull();
+        PendingInteraction.PermanentChoice opponentChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(opponentChoice.playerId()).isEqualTo(player1.getId());
+        assertThat(opponentChoice.validPlayerIds()).containsExactlyInAnyOrder(player2.getId(), player3.getId());
+        harness.handlePermanentChosen(player1, player3.getId());
+
+        assertThat(gd.interaction.activeInteraction(
+                PendingInteraction.BrilliantUltimatumPileSeparationChoice.class).playerId())
+                .isEqualTo(player3.getId());
+        assertThat(gd.peekPendingInteraction(PendingPileSeparation.class).targetPlayerId())
+                .isEqualTo(player3.getId());
     }
 
     @Test

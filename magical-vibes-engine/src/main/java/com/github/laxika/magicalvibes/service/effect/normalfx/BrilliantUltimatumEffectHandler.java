@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardPileDisposition;
+import com.github.laxika.magicalvibes.model.ChosenOpponentFollowUp;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -30,14 +31,21 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class BrilliantUltimatumEffectHandler implements NormalEffectHandlerBean {
+public class BrilliantUltimatumEffectHandler implements NormalEffectHandlerBean,
+        ChosenOpponentContinuation<ChosenOpponentFollowUp.BrilliantUltimatumPiles> {
 
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final ChosenOpponentSupport chosenOpponentSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
         return BrilliantUltimatumEffect.class;
+    }
+
+    @Override
+    public Class<ChosenOpponentFollowUp.BrilliantUltimatumPiles> followUpType() {
+        return ChosenOpponentFollowUp.BrilliantUltimatumPiles.class;
     }
 
     @Override
@@ -50,12 +58,10 @@ public class BrilliantUltimatumEffectHandler implements NormalEffectHandlerBean 
         List<Card> deck = gameData.playerDecks.get(controllerId);
 
         List<Card> exiledCards = new ArrayList<>();
-        Map<UUID, UUID> cardOwners = new HashMap<>();
         for (int i = 0; i < e.count() && deck != null && !deck.isEmpty(); i++) {
             Card card = deck.removeFirst();
             gameData.addToExile(controllerId, card);
             exiledCards.add(card);
-            cardOwners.put(card.getId(), controllerId);
         }
 
         if (exiledCards.isEmpty()) {
@@ -66,22 +72,31 @@ public class BrilliantUltimatumEffectHandler implements NormalEffectHandlerBean 
         String exiledNames = exiledCards.stream().map(Card::getName).collect(Collectors.joining(", "));
         gameLogService.append(gameData, GameLog.text(playerName + " exiles " + exiledNames + " (" + sourceName + ")."));
 
-        UUID opponentId = gameData.orderedPlayerIds.stream()
-                .filter(id -> !id.equals(controllerId))
-                .findFirst()
-                .orElse(null);
-        if (opponentId == null) {
+        if (ChoosePlayerEffectHandler.onlyOpponent(gameData, controllerId) == null) {
             log.info("Game {} - {} has no opponent to separate the piles", gameData.id, sourceName);
             return;
         }
 
         gameData.recordPileGroupingOrGuess(entry);
-        gameData.queueInteraction(new PendingPileSeparation(controllerId, opponentId,
-                List.of(), exiledCards, cardOwners, List.of(), List.of(), CardPileDisposition.PLAY_FROM_EXILE));
+        chosenOpponentSupport.chooseThen(gameData, controllerId, sourceName,
+                new ChosenOpponentFollowUp.BrilliantUltimatumPiles(controllerId, exiledCards));
+    }
+
+    /** "An opponent separates those cards into two piles": the chosen opponent separates them. */
+    @Override
+    public void continueWithOpponent(GameData gameData, UUID opponentId,
+                                     ChosenOpponentFollowUp.BrilliantUltimatumPiles piles) {
+        if (opponentId == null) {
+            return;
+        }
+        Map<UUID, UUID> cardOwners = new HashMap<>();
+        piles.exiledCards().forEach(card -> cardOwners.put(card.getId(), piles.controllerId()));
+        gameData.queueInteraction(new PendingPileSeparation(piles.controllerId(), opponentId,
+                List.of(), piles.exiledCards(), cardOwners, List.of(), List.of(), CardPileDisposition.PLAY_FROM_EXILE));
 
         interactionHandlerRegistry.begin(
                 gameData,
                 new PendingInteraction.BrilliantUltimatumPileSeparationChoice(
-                        opponentId, exiledCards.stream().map(Card::getId).toList()));
+                        opponentId, piles.exiledCards().stream().map(Card::getId).toList()));
     }
 }

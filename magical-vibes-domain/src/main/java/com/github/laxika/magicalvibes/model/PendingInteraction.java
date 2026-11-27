@@ -2081,7 +2081,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     }
 
     /** Turtles Forever's combined library and outside-the-game search. */
-    record TurtlesForeverSearchChoice(UUID playerId, UUID opponentId, java.util.List<Card> pool,
+    record TurtlesForeverSearchChoice(UUID playerId, java.util.List<Card> pool,
                                       java.util.List<UUID> libraryCardIds,
                                       java.util.List<UUID> outsideGameCardIds)
             implements PendingInteraction {

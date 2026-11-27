@@ -34,11 +34,7 @@ public class HostileNegotiationsEffectHandler implements NormalEffectHandlerBean
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
-        UUID opponentId = gameData.orderedPlayerIds.stream()
-                .filter(id -> !id.equals(controllerId))
-                .findFirst()
-                .orElse(null);
-        if (opponentId == null) {
+        if (ChoosePlayerEffectHandler.onlyOpponent(gameData, controllerId) == null) {
             return;
         }
 
@@ -54,7 +50,7 @@ public class HostileNegotiationsEffectHandler implements NormalEffectHandlerBean
         if (!pile1.isEmpty() || !pile2.isEmpty()) {
             gameData.recordPileGroupingOrGuess(entry);
         }
-        gameData.queueInteraction(new PendingHostileNegotiations(controllerId, opponentId, pile1, pile2));
+        gameData.queueInteraction(new PendingHostileNegotiations(controllerId, pile1, pile2));
         gameLogService.append(gameData, GameLog.text(
                 gameData.playerIdToName.get(controllerId) + " exiles two piles face down with Hostile Negotiations."));
         interactionHandlerRegistry.begin(gameData,

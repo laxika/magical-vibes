@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.model.ChosenOpponentFollowUp;
+import com.github.laxika.magicalvibes.model.CardPileDisposition;
+import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.testutil.DelayedPermanentMoves;
 import com.github.laxika.magicalvibes.testutil.TestStackDoor;
@@ -61,6 +64,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -93,6 +97,7 @@ class LibraryChoiceHandlerServiceTest {
     @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.MemoriesReturningEffectHandler memoriesReturningEffectHandler;
     @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
     @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport librarySearchSupport;
+    @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.ChosenOpponentSupport chosenOpponentSupport;
 
     private LibraryChoiceHandlerService service;
 
@@ -128,7 +133,8 @@ class LibraryChoiceHandlerServiceTest {
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardExiledWithSourceToBattlefieldEffectHandler.class),
                 permanentCounterSupport,
                 mock(com.github.laxika.magicalvibes.service.effect.normalfx.ManifestService.class),
-                mock(com.github.laxika.magicalvibes.service.cast.CastingPermissionService.class));
+                mock(com.github.laxika.magicalvibes.service.cast.CastingPermissionService.class),
+                chosenOpponentSupport);
         org.springframework.test.util.ReflectionTestUtils.setField(service, "landEquilibriumSupport",
                 mock(com.github.laxika.magicalvibes.service.effect.LandEquilibriumSupport.class));
         registry.register(new LibraryRevealChoiceInteractionHandler(service));
@@ -298,6 +304,28 @@ class LibraryChoiceHandlerServiceTest {
         Card card = createCard(name);
         card.setType(type);
         return card;
+    }
+
+    @Test
+    @DisplayName("A finished Threats Undetected search hands the revealed cards to the controller's opponent choice")
+    void threatsUndetectedSearchAsksForTheOpponentAfterTheReveal() {
+        Card chosen = createCard("Revealed creature", CardType.CREATURE);
+        gd.playerDecks.get(player1Id).add(chosen);
+        gd.queueInteraction(new PendingPileSeparation(player1Id, null, List.of(), List.of(), Map.of(),
+                List.of(), List.of(), CardPileDisposition.THREATS_UNDETECTED));
+        LibrarySearchParams params = LibrarySearchParams.builder(player1Id, List.of(chosen))
+                .remainingCount(1)
+                .reveals(true)
+                .canFailToFind(true)
+                .destination(LibrarySearchDestination.THREATS_UNDETECTED_POOL)
+                .build();
+        gd.interaction.beginInteraction(new PendingInteraction.LibrarySearch(params, "Choose a card", true));
+
+        service.handleLibraryCardChosen(gd, player1, 0);
+
+        verify(chosenOpponentSupport).chooseThen(gd, player1Id, "Threats Undetected",
+                new ChosenOpponentFollowUp.ThreatsUndetectedReveal(player1Id, List.of(chosen)));
+        assertThat(gd.playerDecks.get(player1Id)).doesNotContain(chosen);
     }
 
     @Test

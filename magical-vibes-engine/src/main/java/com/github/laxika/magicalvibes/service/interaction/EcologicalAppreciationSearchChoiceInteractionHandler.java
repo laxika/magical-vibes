@@ -1,6 +1,10 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ChosenOpponentFollowUp;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ChoosePlayerEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ChosenOpponentContinuation;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ChosenOpponentSupport;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -25,13 +29,15 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 public class EcologicalAppreciationSearchChoiceInteractionHandler
-        implements InteractionHandler<PendingInteraction.EcologicalAppreciationSearchChoice> {
+        implements InteractionHandler<PendingInteraction.EcologicalAppreciationSearchChoice>,
+        ChosenOpponentContinuation<ChosenOpponentFollowUp.EcologicalAppreciationReveal> {
 
     private final ExileService exileService;
     private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
     private final InputCompletionService inputCompletionService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final ChosenOpponentSupport chosenOpponentSupport;
 
     @Override
     public Class<PendingInteraction.EcologicalAppreciationSearchChoice> handledType() {
@@ -108,24 +114,40 @@ public class EcologicalAppreciationSearchChoiceInteractionHandler
             return;
         }
 
-        UUID opponentId = gameData.orderedPlayerIds.stream()
-                .filter(id -> !id.equals(controllerId))
-                .findFirst()
-                .orElse(null);
-        if (opponentId == null) {
-            gameData.playerDecks.computeIfAbsent(controllerId, ignored -> new ArrayList<>())
-                    .addAll(selected);
-            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
-            finishResolution(gameData);
+        if (ChoosePlayerEffectHandler.onlyOpponent(gameData, controllerId) == null) {
+            shuffleIntoLibrary(gameData, controllerId, selected);
             return;
         }
 
         gameLogService.append(gameData, GameLog.text(
                 gameData.playerIdToName.get(controllerId) + " reveals " + selected.size()
                         + " creature cards for Ecological Appreciation."));
+        chosenOpponentSupport.chooseThen(gameData, controllerId, "Ecological Appreciation",
+                new ChosenOpponentFollowUp.EcologicalAppreciationReveal(controllerId, selected, graveyardCardIds));
+    }
+
+    @Override
+    public Class<ChosenOpponentFollowUp.EcologicalAppreciationReveal> followUpType() {
+        return ChosenOpponentFollowUp.EcologicalAppreciationReveal.class;
+    }
+
+    /** "An opponent chooses two of those cards": the chosen opponent chooses them. */
+    @Override
+    public void continueWithOpponent(GameData gameData, UUID opponentId,
+                                     ChosenOpponentFollowUp.EcologicalAppreciationReveal reveal) {
+        if (opponentId == null) {
+            shuffleIntoLibrary(gameData, reveal.controllerId(), reveal.revealedCards());
+            return;
+        }
         interactionHandlerRegistry.begin(gameData,
                 new PendingInteraction.EcologicalAppreciationOpponentChoice(
-                        opponentId, controllerId, selected, graveyardCardIds));
+                        opponentId, reveal.controllerId(), reveal.revealedCards(), reveal.graveyardCardIds()));
+    }
+
+    private void shuffleIntoLibrary(GameData gameData, UUID controllerId, List<Card> cards) {
+        gameData.playerDecks.computeIfAbsent(controllerId, ignored -> new ArrayList<>()).addAll(cards);
+        LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+        finishResolution(gameData);
     }
 
     private Set<UUID> removeFromSourceZones(GameData gameData, UUID controllerId, List<Card> selected) {

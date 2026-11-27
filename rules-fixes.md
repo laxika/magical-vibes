@@ -42,7 +42,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | DM Damage | DM-1, DM-2, DM-3 | DM-1 done 2026-11-27; DM-2, DM-3 open |
 | FC Free casts and casting from other zones | FC-1, FC-2, FC-3 | FC-1 done 2026-11-27; FC-2, FC-3 open |
 | CP Casting permissions and cost readers | CP-1 | open |
-| MP Multiplayer opponent choices | MP-1, MP-2 | open |
+| MP Multiplayer opponent choices | MP-1, MP-2 | MP-1 done 2026-11-27; MP-2 open |
 | CT Counters | CT-1, CT-2 | open |
 | EB Entry and leave batches | EB-1, EB-2, EB-3 | open |
 | PY Payments | PY-1, PY-2, PY-3 | open |
@@ -339,7 +339,15 @@ Notes: This needs a step that chooses an opponent between two halves of a resolu
 `ChoosePlayerEffect`, `playersThisWay(CHOOSE)` and entry 16's "first half prompts mid-step" cause. If the halves are
 `blocked-step-model`, the piece built here should unblock them too: list those rows in the report. Test with three players.
 
-Outcome:
+Outcome: 2026-11-27. Fixed: M15 and M8 (deleted from entry 18), and the seven cards' parts of M2, M3, M6 and M7 (edited down;
+what is left there is MP-2's). With two or more opponents the controller now chooses the opponent when the "an opponent"
+instruction is applied (CR 608.2d; the Abstract Performance and Verdant Mastery rulings), after the exile, search, reveal or
+face-up choice, through the new `ChosenOpponentSupport.chooseThen` (`ChosenOpponentFollowUp` records,
+`ChosenOpponentContinuation` beans, `PermanentChoiceContext.ChooseOpponentThen`); with one opponent nothing is asked. The
+stale first-seat `opponentId` fields of `PendingHostileNegotiations` and `TurtlesForeverSearchChoice` are gone;
+`GameTestHarness.addOpponent(name)` seats a third player. None of the seven halves is a `blocked-step-model` row (they are
+bespoke handlers and interactions), so no entry 16 row is unblocked. No effect class added or deleted, so no ledger or ratchet
+change.
 
 #### MP-2. `getOpponentId` and first-seat readers
 
@@ -758,6 +766,10 @@ inline mana-ability draw branch is likely dead), O96 (`BoostEffectHandler`'s sna
 
 New line N3 (seen in DM-1): unused fields left in `DamageSupport`, `MultiPermanentChoiceHandlerService` and
 `PermanentChoiceBattlefieldHandlerService`.
+
+New line N7 (seen in MP-1): about 100 card test classes carry their own copy of a private `addOpponent` / `addThirdPlayer`
+helper; they can use `GameTestHarness.addOpponent(name)` instead (Abstract Performance's, Hostile Negotiations' and Threats
+Undetected's older test methods also have no `@DisplayName`).
 
 Outcome:
 

@@ -2586,6 +2586,28 @@ public class GameTestHarness {
         return player2;
     }
 
+    /**
+     * Seats one more player, named {@code name}, after the other seats in turn order: an opponent of every player,
+     * with empty zones and 20 life (a three-player game for "an opponent" choices).
+     */
+    public Player addOpponent(String name) {
+        UUID playerId = UUID.randomUUID();
+        Player opponent = new Player(playerId, name);
+        gameData.playerIds.add(playerId);
+        gameData.orderedPlayerIds.add(playerId);
+        gameData.playerNames.add(name);
+        gameData.playerIdToName.put(playerId, name);
+        gameData.playerDecks.put(playerId, new ArrayList<>());
+        gameData.playerHands.put(playerId, new ArrayList<>());
+        gameData.playerBattlefields.put(playerId, new ArrayList<>());
+        gameData.playerGraveyards.put(playerId, new ArrayList<>());
+        gameData.playerCommandZones.put(playerId, new ArrayList<>());
+        gameData.playerManaPools.put(playerId, new ManaPool());
+        gameData.playerLifeTotals.put(playerId, 20);
+        sessionManager.registerPlayer(new FakeConnection("conn-" + gameData.orderedPlayerIds.size()), playerId, name);
+        return opponent;
+    }
+
     public FakeConnection getConn1() {
         return conn1;
     }

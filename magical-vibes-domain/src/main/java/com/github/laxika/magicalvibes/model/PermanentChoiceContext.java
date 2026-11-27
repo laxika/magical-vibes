@@ -101,6 +101,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** {@code ChoosePlayerEffect}: the chosen player becomes the resolving entry's CHOOSE step. */
     record RecordChosenPlayer(java.util.List<UUID> playerIds) implements PermanentChoiceContext {}
 
+    /**
+     * The controller chooses which opponent "an opponent" is in the middle of a resolution (CR 608.2d);
+     * {@code followUp} carries what the flow needs to go on with the chosen player.
+     */
+    record ChooseOpponentThen(ChosenOpponentFollowUp followUp) implements PermanentChoiceContext {}
+
     record BackdraftPlayerChoice() implements PermanentChoiceContext {}
     record BackdraftSorceryChoice() implements PermanentChoiceContext {}
 
