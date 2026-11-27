@@ -890,8 +890,9 @@ public class LayerSystemService {
      * <li>the perpetual changes to cards (P/T, keywords, card types, subtypes, a replaced creature type), read as
      *     part of the cards' own characteristics;</li>
      * <li>recorded ownership of permanents that changed control, read by ownership filters;</li>
-     * <li>graveyard and exile contents (CDA inputs: the Cairn Wanderer family scans
-     *     graveyards, {@code GainActivatedAbilitiesOfExiledCards} scans exile) and hand sizes
+     * <li>graveyard and exile contents, with each exile's source, linked ability and face-down state (CDA inputs:
+     *     the Cairn Wanderer family scans graveyards, {@code GainActivatedAbilitiesOfExiledCards} scans exile) and
+     *     hand sizes
      *     (cheap insurance — no L4-L6 input reads hands today);</li>
      * <li>player life totals and turns taken, which dynamic base P/T setters may read while
      *     producing layer-7b entries;</li>
@@ -1028,6 +1029,8 @@ public class LayerSystemService {
                 h = mix(h, System.identityHashCode(entry.card()));
                 h = mix(h, entry.ownerId() == null ? 0 : entry.ownerId().hashCode());
                 h = mix(h, entry.sourcePermanentId() == null ? 0 : entry.sourcePermanentId().hashCode());
+                h = mix(h, entry.abilityLink() == null ? 0 : entry.abilityLink().hashCode());
+                h = mix(h, entry.faceDown() ? 1 : 0);
             }
         }
         h = mix(h, gameData.exiledCardCounters.hashCode());

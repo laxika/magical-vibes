@@ -2,12 +2,18 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.c.ConjurersBauble;
 import com.github.laxika.magicalvibes.cards.g.GrindingStation;
+import com.github.laxika.magicalvibes.cards.m.MyrWelder;
+import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
 import com.github.laxika.magicalvibes.cards.r.RiverSong;
 import com.github.laxika.magicalvibes.cards.s.SolRing;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -16,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({IdrisSoulOfTheTARDIS.class, ConjurersBauble.class, GrindingStation.class,
-        RiverSong.class, SolRing.class})
+        RiverSong.class, SolRing.class, MyrWelder.class, RodOfRuin.class})
 class IdrisSoulOfTheTARDISTest extends BaseCardTest {
 
     @Test
@@ -158,6 +164,29 @@ class IdrisSoulOfTheTARDISTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Sol Ring")).isEmpty();
         assertThat(gqs.getEffectivePower(gd, idris)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, idris)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A card exiled by a borrowed imprint ability is not the exiled card: no abilities, no bonus")
+    void cardExiledByBorrowedImprintIsNotTheExiledCard() {
+        Permanent welder = harness.addToBattlefieldAndReturn(player1, new MyrWelder());
+        castIdris(welder.getId());
+        Permanent idris = findPermanent(player1, "Idris, Soul of the TARDIS");
+        assertThat(gqs.getEffectivePower(gd, idris)).isEqualTo(6);
+        idris.setSummoningSick(false);
+        Card rod = new RodOfRuin();
+        harness.setGraveyard(player1, new java.util.ArrayList<>(List.of(rod)));
+
+        int idrisIndex = gd.playerBattlefields.get(player1.getId()).indexOf(idris);
+        harness.activateAbility(player1, idrisIndex, 0, null, rod.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+
+        assertThat(gd.getCardsExiledByPermanent(idris.getId())).contains(rod);
+        assertThat(gqs.computeStaticBonus(gd, idris).grantedActivatedAbilities())
+                .extracting(ActivatedAbility::getDescription)
+                .containsExactly("{T}: Exile target artifact card from a graveyard.");
+        assertThat(gqs.getEffectivePower(gd, idris)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, idris)).isEqualTo(6);
     }
 
     private void castIdris(java.util.UUID artifactId) {

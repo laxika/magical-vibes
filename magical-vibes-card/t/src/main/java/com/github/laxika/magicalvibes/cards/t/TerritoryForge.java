@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndTrackWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfExiledCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -19,6 +20,7 @@ import java.util.List;
 public class TerritoryForge extends Card {
 
     public TerritoryForge() {
+        String exileAbilityLink = "printed-exile";
         target(new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
@@ -27,8 +29,9 @@ public class TerritoryForge extends Card {
                 "Target must be an artifact or land"
         )).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT.withInterveningIf(new WasCast(true)),
-                new ExileTargetPermanentAndTrackWithSourceEffect());
+                new ExileTargetPermanentAndTrackWithSourceEffect(exileAbilityLink));
 
-        addStaticEffect(new GainActivatedAbilitiesOfExiledCardsEffect());
+        addStaticEffect(new GainActivatedAbilitiesOfExiledCardsEffect(
+                Subjects.exiledWithSourceBy(exileAbilityLink, null)));
     }
 }

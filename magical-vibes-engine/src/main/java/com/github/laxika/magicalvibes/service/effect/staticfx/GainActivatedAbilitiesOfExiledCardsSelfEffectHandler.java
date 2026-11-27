@@ -7,8 +7,10 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CardSubject;
+import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintedCardXCostEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -20,6 +22,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -48,7 +51,6 @@ public class GainActivatedAbilitiesOfExiledCardsSelfEffectHandler implements Sta
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         GainActivatedAbilitiesOfExiledCardsEffect gainEffect = (GainActivatedAbilitiesOfExiledCardsEffect) effect;
         GameData gameData = context.gameData();
-        boolean exiledWithSource = gainEffect.cards() instanceof CardSubject.ExiledWithSource;
         for (LocatedCard located : lendingCards(gameData, gameQueryService, predicateEvaluationService,
                 context.source(), context.sourceControllerId(), gainEffect.cards())) {
             Card card = located.card();
@@ -56,27 +58,42 @@ public class GainActivatedAbilitiesOfExiledCardsSelfEffectHandler implements Sta
                     gainEffect.filter(), context.source().getCard().getId(), gameData, located.ownerId())) {
                 continue;
             }
+            String link = "gained:" + card.getId();
             for (ActivatedAbility ability : ManaAbilities.withIntrinsic(card)) {
-                // "X is the mana value of the exiled card" refers to a card exiled by the ability's own
-                // source, so a copy borrowed from a card exiled with this has no such card (Prototype Portal)
-                // and is left out.
-                if (exiledWithSource && ability.getEffects().stream().anyMatch(e -> e instanceof ImprintedCardXCostEffect imprinted
-                        && imprinted.requiresImprintedXCost())) {
-                    continue;
-                }
-                // A pair of linked abilities gained together stays linked on the gainer, to each other only
-                // (CR 607.5): the gained exile and return abilities use a link of their own.
-                String link = "gained:" + card.getId();
-                List<CardEffect> gainedEffects = ability.getEffects().stream()
-                        .map(gainedEffect -> GainAbilitiesOfLastChosenExiledCardSelfEffectHandler
-                                .linkGainedEffect(gainedEffect, link))
-                        .toList();
-                ActivatedAbility gainedAbility = ability.withEffects(gainedEffects);
+                ActivatedAbility gainedAbility = borrowedAbility(ability, link);
                 accumulator.addActivatedAbility(gainEffect.oncePerTurn()
                         ? gainedAbility.withMaxActivationsPerTurn(1)
                         : gainedAbility);
             }
         }
+    }
+
+    /**
+     * {@code ability} of a card the borrower doesn't have the other abilities of, as the borrower has it. A pair of
+     * linked abilities gained together stays linked on the borrower, to each other only (CR 607.5): their exile tracks
+     * under {@code link}. An imprint exile in it is not the borrower's imprint, so the borrower's own "cards exiled
+     * with it" don't count what it exiles (CR 607.2a). "The exiled card" of the lender's imprint, without an exile
+     * cost in the same ability to link it to, refers to no card on the borrower (CR 607.1): with "X is the mana value
+     * of that card" X is undefined, so the ability can't be activated (Prototype Portal's ruling); otherwise that part
+     * does nothing (Mimic Vat, Isochron Scepter).
+     */
+    static ActivatedAbility borrowedAbility(ActivatedAbility ability, String link) {
+        boolean linkedToOwnExileCost = ability.getEffects().stream().anyMatch(effect ->
+                effect instanceof ExileCardFromGraveyardCost cost && cost.imprintOnSource());
+        boolean undefinedX = false;
+        List<CardEffect> gainedEffects = new ArrayList<>();
+        for (CardEffect effect : ability.getEffects()) {
+            if (!linkedToOwnExileCost && effect instanceof ImprintedCardXCostEffect imprinted) {
+                undefinedX |= imprinted.requiresImprintedXCost();
+                continue;
+            }
+            gainedEffects.add(GainAbilitiesOfLastChosenExiledCardSelfEffectHandler.linkGainedEffect(effect, link));
+        }
+        ActivatedAbility gained = ability.withEffects(gainedEffects);
+        // A condition of no alternatives is never met.
+        return undefinedX
+                ? gained.withActivationCondition(new AnyOf(List.of()), "No card was exiled with its linked ability")
+                : gained;
     }
 
     /**

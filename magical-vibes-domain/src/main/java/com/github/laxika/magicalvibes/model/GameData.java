@@ -8747,6 +8747,17 @@ public class GameData {
         notifyCardsExiled(card, false);
     }
 
+    /**
+     * Records the exile of {@code cardId} as made by the source's ability of {@code abilityLink}, so only that ability's
+     * linked readers ({@code Subjects.exiledWithSourceBy}) count it among the cards exiled with the source (CR 607.2a).
+     */
+    public void linkExiledCardToAbility(UUID cardId, String abilityLink) {
+        synchronized (exiledCards) {
+            exiledCards.replaceAll(exiled -> exiled.card().getId().equals(cardId)
+                    ? exiled.withAbilityLink(abilityLink) : exiled);
+        }
+    }
+
     /** Associates an already-exiled card with a source permanent without creating a second exile event. */
     public boolean associateExiledCardWithSource(UUID cardId, UUID sourcePermanentId) {
         synchronized (exiledCards) {

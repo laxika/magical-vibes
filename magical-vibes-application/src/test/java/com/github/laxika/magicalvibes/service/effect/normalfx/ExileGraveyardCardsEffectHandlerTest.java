@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.CardSubject;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
@@ -41,6 +42,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -316,6 +318,38 @@ class ExileGraveyardCardsEffectHandlerTest {
 
             verify(exileService).exileCard(eq(gd), eq(player2Id), eq(card), eq(sourcePermanentId));
             verify(exileService).setImprintedCardOnPermanent(gd, sourcePermanentId, card);
+        }
+
+        @Test
+        @DisplayName("An imprint exile records the imprint link; the same exile not imprinting records none")
+        void imprintRecordsTheImprintLink() {
+            Card imprinted = createCard("Grizzly Bears");
+            Card tracked = createCard("Hill Giant");
+            gd.playerGraveyards.get(player2Id).addAll(List.of(imprinted, tracked));
+            UUID sourcePermanentId = UUID.randomUUID();
+            for (Card card : List.of(imprinted, tracked)) {
+                when(gameQueryService.findCardInGraveyardById(gd, card.getId())).thenReturn(card);
+                when(gameQueryService.findGraveyardOwnerById(gd, card.getId())).thenReturn(player2Id);
+                doAnswer(invocation -> {
+                    gd.addToExile(player2Id, card, sourcePermanentId);
+                    return null;
+                }).when(exileService).exileCard(gd, player2Id, card, sourcePermanentId);
+            }
+            ExileGraveyardCardsEffect imprint = ExileGraveyardCardsEffect
+                    .exactTargetedFromAnyGraveyard(1, null, true).imprintingOnSource();
+
+            handler.resolve(gd, TestStackDoor.triggered(createCard("Myr Welder"), player1Id, "Myr Welder",
+                    List.of(imprint), imprinted.getId(), Zone.GRAVEYARD, sourcePermanentId), imprint);
+            handler.resolve(gd, TestStackDoor.triggered(createCard("Myr Welder"), player1Id, "Myr Welder",
+                    List.of(imprint.notImprinting()), tracked.getId(), Zone.GRAVEYARD, sourcePermanentId),
+                    imprint.notImprinting());
+
+            assertThat(gd.findExiledCard(imprinted.getId()).abilityLink())
+                    .isEqualTo(CardSubject.ExiledWithSource.IMPRINT);
+            assertThat(gd.findExiledCard(tracked.getId()).sourcePermanentId()).isEqualTo(sourcePermanentId);
+            assertThat(gd.findExiledCard(tracked.getId()).abilityLink()).isNull();
+            verify(exileService).setImprintedCardOnPermanent(gd, sourcePermanentId, imprinted);
+            verify(exileService, never()).setImprintedCardOnPermanent(gd, sourcePermanentId, tracked);
         }
 
         @Test

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.CardSubject;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -22,7 +23,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MyrWelder.class, RodOfRuin.class, GrizzlyBears.class, PrototypePortal.class})
+@CardUsed({MyrWelder.class, RodOfRuin.class, GrizzlyBears.class, PrototypePortal.class, MimicVat.class})
 class MyrWelderTest extends BaseCardTest {
 
 
@@ -157,7 +158,7 @@ class MyrWelderTest extends BaseCardTest {
 
         // Directly set up exiled card tracking (simulating after imprint)
         Card rod = new RodOfRuin();
-        gd.addToExile(player1.getId(), rod, welder.getId());
+        exileWithImprint(rod, welder);
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, player2.getId()))
@@ -178,13 +179,13 @@ class MyrWelderTest extends BaseCardTest {
         // Simulate two exiled artifacts (two copies of Rod of Ruin)
         Card rod1 = new RodOfRuin();
         Card rod2 = new RodOfRuin();
-        gd.addToExile(player1.getId(), rod1, welder.getId());
+        exileWithImprint(rod1, welder);
 
         List<ActivatedAbility> granted = gqs.computeStaticBonus(gd, welder).grantedActivatedAbilities();
         assertThat(granted).hasSize(1);
 
         // Add a second Rod of Ruin
-        gd.addToExile(player1.getId(), rod2, welder.getId());
+        exileWithImprint(rod2, welder);
 
         granted = gqs.computeStaticBonus(gd, welder).grantedActivatedAbilities();
         assertThat(granted).hasSize(2);
@@ -208,7 +209,7 @@ class MyrWelderTest extends BaseCardTest {
 
         // Set up exiled Rod of Ruin (has {3}, {T}: deal 1 damage to any target)
         Card rod = new RodOfRuin();
-        gd.addToExile(player1.getId(), rod, welder.getId());
+        exileWithImprint(rod, welder);
 
         // Rod's ability needs {3} mana and tap
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -229,7 +230,7 @@ class MyrWelderTest extends BaseCardTest {
 
         // Set up exiled Rod of Ruin
         Card rod = new RodOfRuin();
-        gd.addToExile(player1.getId(), rod, welder.getId());
+        exileWithImprint(rod, welder);
 
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
@@ -320,6 +321,67 @@ class MyrWelderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("A card exiled by a borrowed copy of the imprint ability lends Myr Welder nothing")
+    void cardExiledByBorrowedImprintLendsNothing() {
+        Permanent welder = addWelderReady(player1);
+        Card otherWelder = new MyrWelder();
+        Card rod = new RodOfRuin();
+        harness.setGraveyard(player1, new ArrayList<>(List.of(otherWelder, rod)));
+        harness.activateAbility(player1, 0, 0, null, otherWelder.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+        welder.untap();
+
+        harness.activateAbility(player1, 0, 1, null, rod.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+
+        assertThat(gd.getCardsExiledByPermanent(welder.getId())).containsExactlyInAnyOrder(otherWelder, rod);
+        assertThat(gqs.computeStaticBonus(gd, welder).grantedActivatedAbilities())
+                .extracting(ActivatedAbility::getDescription)
+                .containsExactly("{T}: Exile target artifact card from a graveyard.");
+    }
+
+    @Test
+    @DisplayName("Has a borrowed Prototype Portal ability, which it can't activate")
+    void hasBorrowedPortalAbilityItCannotActivate() {
+        Permanent welder = addWelderReady(player1);
+        Card portal = new PrototypePortal();
+        harness.setGraveyard(player1, new ArrayList<>(List.of(portal)));
+        harness.activateAbility(player1, 0, 0, null, portal.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+        welder.untap();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThat(gqs.computeStaticBonus(gd, welder).grantedActivatedAbilities()).hasSize(1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, 4, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A borrowed Mimic Vat ability makes no token: no card was exiled with its linked ability")
+    void borrowedMimicVatAbilityMakesNoToken() {
+        Permanent welder = addWelderReady(player1);
+        Card vat = new MimicVat();
+        harness.setGraveyard(player1, new ArrayList<>(List.of(vat)));
+        harness.activateAbility(player1, 0, 0, null, vat.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+        welder.untap();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(welder);
+        assertThat(gd.getCardsExiledByPermanent(welder.getId())).containsExactly(vat);
+    }
+
+    /** {@code card} exiled with {@code welder} as its imprint ability exiles it. */
+    private void exileWithImprint(Card card, Permanent welder) {
+        gd.addToExile(player1.getId(), card, welder.getId());
+        gd.linkExiledCardToAbility(card.getId(), CardSubject.ExiledWithSource.IMPRINT);
     }
 
     private Permanent addWelderReady(Player player) {

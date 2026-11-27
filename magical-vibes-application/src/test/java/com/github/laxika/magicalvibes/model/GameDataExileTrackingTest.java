@@ -54,6 +54,21 @@ class GameDataExileTrackingTest {
     }
 
     @Test
+    @DisplayName("linkExiledCardToAbility records the exiling ability's link on that card only")
+    void linkExiledCardToAbilityMarksOnlyThatCard() {
+        Card linked = card("Linked");
+        Card other = card("Other");
+        gd.addToExile(ownerId, linked, sourcePermanentId);
+        gd.addToExile(ownerId, other, sourcePermanentId);
+
+        gd.linkExiledCardToAbility(linked.getId(), "imprint");
+
+        assertThat(gd.findExiledCard(linked.getId()).abilityLink()).isEqualTo("imprint");
+        assertThat(gd.findExiledCard(linked.getId()).sourcePermanentId()).isEqualTo(sourcePermanentId);
+        assertThat(gd.findExiledCard(other.getId()).abilityLink()).isNull();
+    }
+
+    @Test
     @DisplayName("clearAllSourceTracking drops the source link but keeps the face-down status")
     void clearAllSourceTrackingPreservesFaceDown() {
         Card hidden = card("Hidden");

@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainAbilitiesOfLastChosenExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndTrackWithSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardExiledWithSourceToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
@@ -54,7 +56,8 @@ public class GainAbilitiesOfLastChosenExiledCardSelfEffectHandler implements Sta
     /**
      * An exile ability gained from the chosen card tracks its cards under a link of its own, and the gained
      * ability that returns them looks only at that link, so neither touches cards exiled by the
-     * gaining permanent's own abilities.
+     * gaining permanent's own abilities. A gained imprint exile doesn't imprint: the gaining permanent's own
+     * imprint readers ("all abilities of the exiled card") read only what its own imprint exiled (CR 607.2a).
      */
     static CardEffect linkGainedEffect(CardEffect effect, String link) {
         if (effect instanceof ExileTargetPermanentAndTrackWithSourceEffect) {
@@ -62,6 +65,14 @@ public class GainAbilitiesOfLastChosenExiledCardSelfEffectHandler implements Sta
         }
         if (effect instanceof ReturnCardExiledWithSourceToBattlefieldEffect returnEffect) {
             return returnEffect.withAbilityLink(link);
+        }
+        if (effect instanceof ExileGraveyardCardsEffect exile && exile.imprint()) {
+            return exile.notImprinting();
+        }
+        if (effect instanceof ExileTargetPermanentUntilSourceLeavesEffect exile && exile.imprint()) {
+            return new ExileTargetPermanentUntilSourceLeavesEffect(false, exile.targetPredicate(),
+                    exile.exileIfSourceAlreadyLeft(), exile.returnsOnSourceLeavesTrigger(),
+                    exile.controllerMayCastWithAnyMana(), exile.permanents());
         }
         return effect;
     }

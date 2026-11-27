@@ -59,6 +59,7 @@ import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellIfManaValueEqualsXEffect;
+import com.github.laxika.magicalvibes.model.effect.CardSubject;
 import com.github.laxika.magicalvibes.model.effect.CraftMaterialCost;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
@@ -8175,8 +8176,10 @@ public class AbilityActivationService {
         }
 
         if (cardIds.size() > 0) {
+            List<Card> exiledMaterials = new ArrayList<>(graveyardChoices);
             for (Permanent chosen : battlefieldChoices) {
                 int stackBeforeCraftMaterial = gameData.stack.size();
+                exiledMaterials.addAll(chosen.cardsLeavingBattlefield());
                 permanentRemovalService.removePermanentToExileAsCraftMaterial(gameData, chosen, source.getId());
                 if (gameData.stack.size() > stackBeforeCraftMaterial) {
                     gameData.pendingActivatedAbilityCostTriggers.addAll(
@@ -8192,6 +8195,10 @@ public class AbilityActivationService {
                 exileService.exileCard(gameData, playerId, chosen, source.getId());
                 gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " exiles ", chosen, " from graveyard as a craft material."));
+            }
+            // "The exiled cards used to craft it" are only these (CR 702.167c).
+            for (Card material : exiledMaterials) {
+                gameData.linkExiledCardToAbility(material.getId(), CardSubject.ExiledWithSource.CRAFT);
             }
         }
     }

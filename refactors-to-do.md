@@ -1337,14 +1337,14 @@ Don't commit.
 
 - Esix's copies keep none of the replaced copy's instructions (Faerie Artisans); Dance of Many waits for it. Sure of the code.
 - Thought Partition and Hydroponics Architect write colour, mana cost, supertype and subtype into runtime copies (layer 1, CR 613). Sure of the code.
-- Ability borrowers in a CR 613.8b dependency loop are approximated by assembly order, so a three-borrower cycle can miss a lender's borrowed abilities. Sure of the code, rare.
+- Ability borrowers in a CR 613.8b dependency loop are approximated by assembly order: a borrower being assembled supplies only its card's abilities, so an earlier lender in the loop is right, but a later one supplies its own borrowed abilities too (by the code, two Experiment Kraj: the earlier one gets a second copy of its own ability; no test), and a three-borrower cycle can miss a lender's borrowed abilities. Needs the lender graph of every borrower to find the loop and apply it in timestamp order (LY-5: left). Sure of the code, rare.
 
 #### Logs and hidden information (2)
 
 - `cardsThisWay(REVEAL)` names a card a later step reordered within its library (CR 701.20d); no card reads it so. Unverified.
 - `getRevealedOpponentHand` returns only the first opponent's hand (multiplayer); needs a hand per opponent in `GameStateMessage` and the frontend (owner question in entry 17, MP-2). Sure of the code.
 
-#### Other (37)
+#### Other (35)
 
 - Casting checks left from runs 40 and 41: Scrycast (Biting Remark; `ScryInteractionHandler`, `ScryAiStrategy`, code: the scry answer casts it with no `canCastDuringResolution` check, and the AI strategies have no `CastingPermissionService`); the may-cast offers don't ask the shared check; an ability leaves the stack before it resolves, where CR 608.2n removes it last. Unverified. FC-2: Knowledge Pool's timing, the split exile cast and suspend's type restriction fixed.
 - Krovikan Vampire's `ReturnDamagedCreaturesThatDiedUnderControlEffect` (a mass return with control and sacrifice links) puts an Aura card that died animated onto the battlefield with no host choice (CR 303.4f, 303.4g); Lim-Dûl's head since rules-fixes EB-1 and `ReturnDyingCreatureToBattlefieldEffect`, `ReturnDyingCreatureToOwnerBattlefieldEffect` since EB-2 go through the entry batch. Unverified.
@@ -1361,12 +1361,10 @@ Don't commit.
 - Reality Twist: a Volcanic Island offers the unlisted Island type's U; `RealityTwistTest` asserts it and the 2013 ruling is ambiguous for unlisted types. Unsure.
 - Boseiju, Hall of the Bandit Lord: when a land-mana replacement applies, the produced mana may lose its rider (CR 106.6a). Unverified.
 - Caged Sun's "a land's ability causes you to add" misses land mana abilities without {T}; `youTapLandForMana` fires only for {T} abilities. Sure, low.
-- Valki (and any "becomes a copy" of a card with an exile/return pair): the copied return reads cards the copier exiled with its own abilities; it should read only cards its copied exile ability exiled (CR 607.1, 607.2a). Fairly sure.
+- Valki (and any "becomes a copy" of a card with an exile/return pair): a copied reader of every link (`exiledWithSource()`, about 200 cards) still reads the cards the copier exiled with its own abilities, where it should read only what its copied exile ability exiled (CR 607.1, 607.2a); Valki's hand exile records no link, so with two or more opponents a copied unlinked reader (Lazav, Wearer of Faces) sees it too. Needs every printed exile to record its own link. LY-5 fixed the borrowers (Myr Welder, Territory Forge, Idris, Locus read their own exile's link). Fairly sure.
 - Eumidian Wastewaker's discard branch counts a land that a replacement exiled instead of discarding into the graveyard (`lastDiscardedCardTypes`; ruling). Unverified.
 - `PerpetuallyGrantKeywordsToTriggeringCardEffect` over `Subjects.sourceObjectCard()` (Heir to Dragonfire, PP-1): an ability of a card in a hand records no hand stay, so `SubjectResolutionService.sourceObjectCard` looks in the hand, exile and graveyard, and a card that went from the hand to a graveyard before the ability resolved still gains flying (CR 400.7).
 - A card with both a perpetual evoke and a plain perpetual alternative cost offers only the first granted one (`GameQueryService.findGrantedAlternateCast`) (CR 601.2b).
-- Myr Welder, Territory Forge, Idris, Locus of Enlightenment: their printed exiles record no link, so a card exiled by a borrowed linkless exile ability counts as "exiled with it" (CR 607.2a). Sure of the code.
-- A borrowed "X is the mana value of the exiled card" ability (Prototype Portal) is dropped from exile borrowers instead of granted as one that does nothing. Unsure.
 - Combat damage's protection is applied by `CombatDamageService.protectionPreventsCombatDamage` before the recipient's pool, which orders it only beside Phantom Centaur's counter prevention, so protection and another prevention of combat damage aren't ordered (CR 702.16e, 616.1). Sure of the code.
 - "May pay" mana paid from the pool without the tax-paid event (Tax Taker): Reflect (`ReflectMayEffectHandler`) still pays with `payResolutionCost`; its only card, Mirrored Lotus, reflects for {0}, so no mana and no event. The others were fixed in PY-1 (`TaxTakerTest.EffectPromptTaxes`). Latent.
 - Perplex's discard-hand ransom names the payer as the discard's cause, so an opponent's Perplex doesn't count as "a spell or ability an opponent controls causes you to discard" for Obstinate Baloth or Wilt-Leaf Liege: not settled by the rules (an owner question in entry 17, CT-1). Unsure.

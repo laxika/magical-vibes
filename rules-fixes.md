@@ -50,7 +50,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | LS Library searches and reveals | LS-1, LS-2, LS-3 | LS-1 done 2026-11-27; LS-2 done 2026-11-27 (N35, E10 left) |
 | TK Tokens and copies | TK-1, TK-2 | TK-1 done 2026-11-27; TK-2 done 2026-11-27 (T1 left: choices keyed by their linking ability) |
 | FD Face-down and hidden reads | FD-1, FD-2 | FD-1, FD-2 done 2026-11-27 (FD-2: H1 left, latent) |
-| LY Layers, protection, text changes, linked abilities | LY-1 to LY-5 | LY-1, LY-2, LY-3, LY-4 done 2026-11-27 |
+| LY Layers, protection, text changes, linked abilities | LY-1 to LY-5 | LY-1 to LY-5 done 2026-11-27 (LY-5: L11 left, O33's copied readers of every link left) |
 | DR Draws | DR-1 | DR-1 done 2026-11-27 (E6's plural "one of them" readers: owner question) |
 | CB Combat | CB-1 | CB-1 done 2026-11-27 (M11's block half left: it needs multi-defender combat damage) |
 | PP Perpetual changes | PP-1 | PP-1 done 2026-11-27 (L8, O47 left; O41's hand half left) |
@@ -1128,7 +1128,25 @@ Lines: L11 (ability borrowers in a dependency loop are approximated by assembly 
 the copied return reads cards the copier exiled with its own abilities), O48 (Myr Welder, Territory Forge, Idris, Locus of
 Enlightenment: printed exiles record no link), O49 (Prototype Portal's borrowed "X is the mana value of the exiled card").
 
-Outcome:
+Outcome: done 2026-11-27. O48 fixed (deleted from entry 18): each borrower reads only its own exile's cards (CR 607.2a). An
+imprint exile (`ExileGraveyardCardsEffect.imprintingOnSource()`, `ExileTargetPermanentUntilSourceLeavesEffect(imprint)`) records
+the new `CardSubject.ExiledWithSource.IMPRINT` link, the craft cost `ExiledWithSource.CRAFT` (CR 702.167c), Territory Forge its
+printed exile's own link; Myr Welder, Territory Forge and Locus of Enlightenment read `exiledWithSourceBy(link, null)`, Idris's
+handler only its imprint's card. A borrowed imprint exile doesn't imprint (`ExileGraveyardCardsEffect.notImprinting()`, in
+`linkGainedEffect`), and Idris's activated abilities now go through the borrowers' linking. Myr Welder borrowing another Myr
+Welder's imprint, Territory Forge and Idris borrowing Myr Welder's, and Locus crafted from a Myr Welder all gained Rod of Ruin's
+ability from a card the borrowed ability exiled (Idris's +X/+X kept, 6/6). The layered board fingerprint lacked each exile's link
+and face-down state, so a link written after the exile served a stale borrow; both are in it now. O49 fixed (deleted): a borrowed
+ability's "the exiled card" of the lender's imprint refers to no card on the borrower (CR 607.1): with "X is its mana value" it is
+granted but can't be activated (Prototype Portal's ruling: X undefined), otherwise that part does nothing; an imprinting exile
+cost in the same ability links it to itself (Dollhouse of Horrors). Territory Forge and Myr Welder now have Prototype Portal's
+ability (they had none), and Myr Welder's borrowed Mimic Vat ability no longer copies Myr Welder's own imprint (a token Mimic
+Vat). O33 partly fixed (edited down in entry 18): Valki as a copy of Myr Welder borrowed Myr Welder's own ability from the card
+Valki's enter ability exiled; the borrowers' links fix it. Left: a copied reader of every link (`exiledWithSource()`, about 200
+cards) still sees the copier's own exiles, which needs every printed exile to record its own link; no two-player case was found
+where a copied non-borrower reader observes it. L11 left (edited in entry 18): a later lender in a borrower loop supplies its
+own borrowed abilities; a fix needs every borrower's lender graph to find the loop (CR 613.8b), more than this run. New lines
+N82, N83 (MC-2). No effect class added or deleted, so no ledger or ratchet change.
 
 ### DR. Draws
 
@@ -1462,6 +1480,15 @@ New line N81 (seen in LY-4): text changes (CR 612.2) reach a battlefield trigger
 intervening "if" (Sea Serpent's "when you control no Islands", Noggle Hedge-Mage's "if you control two or more Islands"), and not
 the effects of state-triggered abilities (`StateTriggerService`) or activation-watching ones (`SpellTriggers.activated`), which list
 `TriggerIndex.permanentAbilities` unchanged. Of the code, unverified by a test.
+
+New line N82 (seen in LY-5): Idris's borrowed triggered abilities are granted verbatim (`GrantTriggeredAbilityEffect`): a borrowed
+imprint trigger (Mimic Vat's) imprints Idris, changing its +X/+X, and a borrowed activated and triggered pair isn't linked to each
+other (CR 607.5). Of the code, unverified by a test.
+
+New line N83 (seen in LY-5): an exile that records a constant link (`ExileTargetCreatureCardFromGraveyardPutCounterOnSourceEffect.
+ABILITY_LINK`, `ExileTopCardOfOwnLibraryEffectHandler`'s) records it from a borrowed copy too, so Patchwork Crawler borrowing
+another Patchwork Crawler's ability counts what that ability exiles as its own (CR 607.2a); `linkGainedEffect` can't rewrite it.
+Of the code.
 
 Outcome:
 

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MaskedVandal;
+import com.github.laxika.magicalvibes.cards.m.MyrWelder;
 import com.github.laxika.magicalvibes.cards.t.TibaltCosmicImpostor;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -22,7 +23,8 @@ import java.util.ArrayList;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ValkiGodOfLies.class, TibaltCosmicImpostor.class, Forest.class, GrizzlyBears.class, MaskedVandal.class})
+@CardUsed({ValkiGodOfLies.class, TibaltCosmicImpostor.class, Forest.class, GrizzlyBears.class, MaskedVandal.class,
+        MyrWelder.class})
 class ValkiGodOfLiesTest extends BaseCardTest {
 
     @Test
@@ -65,6 +67,29 @@ class ValkiGodOfLiesTest extends BaseCardTest {
         assertThat(valki.getCard().getName()).isEqualTo(exiledCreature.getName());
         assertThat(gqs.getEffectivePower(gd, valki)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, valki)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("As a copy of Myr Welder, borrows nothing from the card its own enter ability exiled")
+    void copyOfMyrWelderBorrowsNothingFromValkisOwnExile() {
+        MyrWelder welderCard = new MyrWelder();
+        harness.setHand(player1, List.of(new ValkiGodOfLies()));
+        harness.setHand(player2, List.of(welderCard));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        Permanent valki = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(gd.getCardsExiledByPermanent(valki.getId())).containsExactly(welderCard);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, 0, 3, null);
+        harness.passBothPriorities();
+
+        assertThat(valki.getCard().getName()).isEqualTo("Myr Welder");
+        assertThat(gqs.computeStaticBonus(gd, valki).grantedActivatedAbilities()).isEmpty();
     }
 
     @Test

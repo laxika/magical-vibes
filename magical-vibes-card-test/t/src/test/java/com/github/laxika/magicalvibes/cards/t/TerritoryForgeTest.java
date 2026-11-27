@@ -3,20 +3,27 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.c.Commandeer;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MyrWelder;
+import com.github.laxika.magicalvibes.cards.p.PrototypePortal;
 import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TerritoryForge.class, Forest.class, GrizzlyBears.class, RodOfRuin.class, Commandeer.class})
+@CardUsed({TerritoryForge.class, Forest.class, GrizzlyBears.class, RodOfRuin.class, Commandeer.class,
+        MyrWelder.class, PrototypePortal.class})
 class TerritoryForgeTest extends BaseCardTest {
 
     @Test
@@ -124,6 +131,36 @@ class TerritoryForgeTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Forest");
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A card exiled by a borrowed exile ability isn't the exiled card it borrows from")
+    void cardExiledByBorrowedAbilityLendsNothing() {
+        Permanent welder = harness.addToBattlefieldAndReturn(player1, new MyrWelder());
+        Card rod = new RodOfRuin();
+        harness.setGraveyard(player1, new ArrayList<>(List.of(rod)));
+        Permanent forge = castForge(welder);
+
+        harness.activateAbility(player1, 0, 0, null, rod.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+
+        assertThat(gd.getCardsExiledByPermanent(forge.getId())).contains(rod);
+        assertThat(gqs.computeStaticBonus(gd, forge).grantedActivatedAbilities())
+                .extracting(ActivatedAbility::getDescription)
+                .containsExactly("{T}: Exile target artifact card from a graveyard.");
+    }
+
+    @Test
+    @DisplayName("Has the exiled Prototype Portal's ability, which it can't activate with no card exiled by its imprint")
+    void hasPortalAbilityItCannotActivate() {
+        Permanent portal = harness.addToBattlefieldAndReturn(player1, new PrototypePortal());
+        Permanent forge = castForge(portal);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThat(gqs.computeStaticBonus(gd, forge).grantedActivatedAbilities()).hasSize(1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, 4, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent castForge(Permanent target) {

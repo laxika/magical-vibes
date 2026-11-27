@@ -287,6 +287,19 @@ public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubjec
         /** The {@code abilityLink} naming the cards exiled with the source under no link. */
         public static final String UNLINKED = "unlinked";
 
+        /**
+         * The link an imprint exile records ("Imprint — exile target artifact card from a graveyard", "exile another
+         * artifact you control"), so "all cards exiled with it" of the same object reads only what that ability exiled,
+         * not a card a borrowed or copier's exile put there (CR 607.2a).
+         */
+        public static final String IMPRINT = "imprint";
+
+        /**
+         * The link the craft cost records on the cards it exiles: "the exiled cards used to craft it" are only those
+         * (CR 702.167c).
+         */
+        public static final String CRAFT = "craft";
+
         public ExiledWithSource {
             if (owners != null && owners.declaresTarget()) {
                 throw new IllegalArgumentException("The effect reading the cards declares a player target: " + owners);

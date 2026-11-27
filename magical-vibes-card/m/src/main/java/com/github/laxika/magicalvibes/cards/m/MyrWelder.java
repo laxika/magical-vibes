@@ -4,8 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.effect.CardSubject;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfExiledCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
@@ -25,6 +27,7 @@ public class MyrWelder extends Card {
         ));
 
         // Myr Welder has all activated abilities of all cards exiled with it.
-        addStaticEffect(new GainActivatedAbilitiesOfExiledCardsEffect());
+        addStaticEffect(new GainActivatedAbilitiesOfExiledCardsEffect(
+                Subjects.exiledWithSourceBy(CardSubject.ExiledWithSource.IMPRINT, null)));
     }
 }

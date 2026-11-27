@@ -299,6 +299,16 @@ public record ExileGraveyardCardsEffect(
                 returnExiledCardsToGraveyardOnSourceLeave, defendingPlayerOnly, true, cards);
     }
 
+    /**
+     * This exile, still tracked with its source, without imprinting: a borrowed copy of an imprint ability, whose
+     * cards are not the borrower's imprint (CR 607.2a).
+     */
+    public ExileGraveyardCardsEffect notImprinting() {
+        return new ExileGraveyardCardsEffect(count, scope, filter, exactTargetCount, trackWithSource,
+                fromBattlefieldThisTurn, eventValueFilter, grantPlayPermissionUntilEndOfTurn, allowZeroTargets,
+                putKickCounters, returnExiledCardsToGraveyardOnSourceLeave, defendingPlayerOnly, false, cards);
+    }
+
     public static ExileGraveyardCardsEffect upToOneTargetFromOpponentGraveyard() {
         return new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_OPPONENT_GRAVEYARD,
                 null, false, false, false, null, false, true);

@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.CardSubject;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -185,6 +186,30 @@ class ExileTargetPermanentUntilSourceLeavesEffectHandlerTest {
                             assertThat(per.card().getName()).isEqualTo("Spellbook");
                             assertThat(per.controllerId()).isEqualTo(player2Id);
                         });
+            }
+
+            @Test
+            @DisplayName("An imprint exile is imprinted on the source and recorded under the imprint link")
+            void imprintExileRecordsTheImprintLink() {
+                Card targetCard = createCard("Sol Ring");
+                Permanent target = new Permanent(targetCard);
+                Card sourceCard = createCreatureCard("Idris, Soul of the TARDIS");
+                Permanent source = addPermanent(player1Id, sourceCard);
+                StackEntry entry = createEntry(sourceCard, player1Id, target.getId());
+                when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+                when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player1Id);
+                doAnswer(invocation -> {
+                    gd.addToExile(player1Id, targetCard);
+                    return true;
+                }).when(permanentRemovalService).removePermanentToExile(gd, target);
+
+                exileTargetPermanentUntilSourceLeavesHandler.resolve(gd, entry,
+                        new ExileTargetPermanentUntilSourceLeavesEffect(true, null));
+
+                assertThat(gd.findExiledCard(targetCard.getId()).sourcePermanentId()).isEqualTo(source.getId());
+                assertThat(gd.findExiledCard(targetCard.getId()).abilityLink())
+                        .isEqualTo(CardSubject.ExiledWithSource.IMPRINT);
+                assertThat(gd.getImprintedCard(sourceCard)).isSameAs(targetCard);
             }
 
             @Test

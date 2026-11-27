@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.CardSubject;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
@@ -645,14 +646,17 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
     }
 
     /**
-     * An imprinting exile makes the card the source permanent's imprinted card ("the exiled card"); a resolving spell
-     * with no source permanent remembers it on its own card, for its delayed trigger (Surge to Victory).
+     * An imprinting exile makes the card the source permanent's imprinted card ("the exiled card") and records it under
+     * the {@link CardSubject.ExiledWithSource#IMPRINT} link, so the source's "cards exiled with it" reads only what its
+     * imprint exiled (CR 607.2a); a resolving spell with no source permanent remembers it on its own card, for its
+     * delayed trigger (Surge to Victory).
      */
     private void imprint(GameData gameData, StackEntry entry, ExileGraveyardCardsEffect e, Card card) {
         if (!e.imprint()) {
             return;
         }
         if (entry.getSourcePermanentId() != null) {
+            gameData.linkExiledCardToAbility(card.getId(), CardSubject.ExiledWithSource.IMPRINT);
             exileService.setImprintedCardOnPermanent(gameData, entry.getSourcePermanentId(), card);
         } else {
             gameData.setImprintedCard(entry.getCard(), card);

@@ -9,6 +9,10 @@ import com.github.laxika.magicalvibes.cards.q.QuintoriusKand;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LocusOfEnlightenment;
+import com.github.laxika.magicalvibes.cards.m.MyrWelder;
+import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -26,7 +30,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({TheEnigmaJewel.class, LocusOfEnlightenment.class, CutthroatCenturion.class,
-        Forest.class, GrizzlyBears.class, CaptivatingCave.class, IronhoofBoar.class, OakenSiren.class, QuintoriusKand.class})
+        Forest.class, GrizzlyBears.class, CaptivatingCave.class, IronhoofBoar.class, OakenSiren.class, QuintoriusKand.class,
+        MyrWelder.class, RodOfRuin.class})
 class TheEnigmaJewelTest extends BaseCardTest {
 
     @Test
@@ -286,6 +291,38 @@ class TheEnigmaJewelTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 3, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Only one loyalty ability");
+    }
+
+    @Test
+    @DisplayName("Locus has no ability of a card a borrowed exile ability exiled: it wasn't used to craft Locus")
+    void cardExiledByBorrowedAbilityWasNotUsedToCraft() {
+        harness.addToBattlefield(player1, new TheEnigmaJewel());
+        harness.addToBattlefield(player1, new CutthroatCenturion());
+        harness.addToBattlefield(player1, new CutthroatCenturion());
+        harness.addToBattlefield(player1, new CutthroatCenturion());
+        harness.addToBattlefield(player1, new MyrWelder());
+        addCraftMana();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        Permanent locus = findPermanent(player1, "Locus of Enlightenment");
+        Card rod = new RodOfRuin();
+        harness.setGraveyard(player1, new java.util.ArrayList<>(List.of(rod)));
+        List<ActivatedAbility> borrowed = gqs.computeStaticBonus(gd, locus).grantedActivatedAbilities();
+        int imprintIndex = locus.getCard().getActivatedAbilities(Zone.BATTLEFIELD).size()
+                + borrowed.stream().map(ActivatedAbility::getDescription).toList()
+                .indexOf("{T}: Exile target artifact card from a graveyard.");
+
+        harness.clearPriorityPassed();
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(locus), imprintIndex,
+                null, rod.getId(), Zone.GRAVEYARD);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(gd.getCardsExiledByPermanent(locus.getId())).contains(rod);
+        assertThat(gqs.computeStaticBonus(gd, locus).grantedActivatedAbilities())
+                .extracting(ActivatedAbility::getDescription)
+                .doesNotContain("{3}, {T}: Rod of Ruin deals 1 damage to any target.");
     }
 
     private Permanent craftWithSirens() {
