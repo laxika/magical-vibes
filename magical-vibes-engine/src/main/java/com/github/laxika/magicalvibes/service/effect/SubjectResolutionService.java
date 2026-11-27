@@ -1138,7 +1138,7 @@ public class SubjectResolutionService {
         if (exiled == null || exiled.faceDown() || gameData.antedCardIds.contains(cardId)) {
             return List.of();
         }
-        if (target.exiledWithSource() && !linkedSourceId(entry).equals(exiled.sourcePermanentId())) {
+        if (target.exiledWithSource() && !linkedSourceId(gameData, entry).equals(exiled.sourcePermanentId())) {
             return List.of();
         }
         boolean ownCard = entry.getControllerId().equals(exiled.ownerId());
@@ -1150,8 +1150,19 @@ public class SubjectResolutionService {
                 ? List.of(new LocatedCard(exiled.card(), Zone.EXILE, exiled.ownerId())) : List.of();
     }
 
-    /** The permanent the source is or last was, as the entry or its snapshot has it, else the source card. */
-    private static UUID linkedSourceId(StackEntry entry) {
+    /**
+     * The permanent the source is or last was, as the entry or its snapshot has it, else the source card; or the
+     * permanent whose exile link that permanent shares ({@link Permanent#getLinkedExileSourceId()}).
+     */
+    private UUID linkedSourceId(GameData gameData, StackEntry entry) {
+        Permanent source = entry.getSourcePermanentId() == null ? null
+                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
+        if (source != null && source.getLinkedExileSourceId() != null) {
+            return source.getLinkedExileSourceId();
+        }
         if (entry.getSourcePermanentId() != null) {
             return entry.getSourcePermanentId();
         }
@@ -1176,7 +1187,7 @@ public class SubjectResolutionService {
      */
     private List<LocatedCard> exiledWithSource(GameData gameData, StackEntry entry, CardEffect effect,
                                                CardSubject.ExiledWithSource with) {
-        UUID sourceId = linkedSourceId(entry);
+        UUID sourceId = linkedSourceId(gameData, entry);
         List<UUID> owners = with.owners() == null ? null : players(gameData, entry, effect, with.owners());
         List<ExiledCardEntry> inZone;
         synchronized (gameData.exiledCards) {
@@ -1581,7 +1592,9 @@ public class SubjectResolutionService {
                 filter = in.filter();
             }
             case CardSubject.ExiledWithSource with -> {
-                if (source == null || !exiledWithSourceBy(exiled, source.getId(), with.abilityLink())) {
+                UUID linkId = source == null ? null
+                        : source.getLinkedExileSourceId() != null ? source.getLinkedExileSourceId() : source.getId();
+                if (linkId == null || !exiledWithSourceBy(exiled, linkId, with.abilityLink())) {
                     return false;
                 }
                 owners = with.owners();

@@ -265,6 +265,15 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
      * @return {@code true} when the creation was replaced or waits for the answer
      */
     public boolean replaceFirstTokenCreation(GameData gameData, StackEntry entry, int amount) {
+        return replaceFirstTokenCreation(gameData, entry, amount, entry.getControllerId());
+    }
+
+    /**
+     * {@link #replaceFirstTokenCreation(GameData, StackEntry, int)} for {@code amount} tokens {@code creatorId} would
+     * create ("target opponent creates a token that's a copy of it"): the replacements are that player's, offered to
+     * them (CR 111.2), and that player creates the substitutes.
+     */
+    public boolean replaceFirstTokenCreation(GameData gameData, StackEntry entry, int amount, UUID creatorId) {
         PendingTokenCreationReplacement pending = gameData.pendingTokenCreationReplacement;
         if (pending != null) {
             gameData.pendingTokenCreationReplacement = null;
@@ -274,15 +283,16 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
                 return false;
             }
             if (pending.copyChosenCreature()) {
-                chosenCreatureCopyHandler.getObject().resolve(gameData, entry,
-                        new CreateTokenCopyOfChosenCreatureEffect(pending.amount(), pending.replacementPermanentId()));
+                chosenCreatureCopyHandler.getObject().resolveFor(gameData, entry,
+                        new CreateTokenCopyOfChosenCreatureEffect(pending.amount(), pending.replacementPermanentId()),
+                        creatorId);
             } else {
-                createCopiesOfHost(gameData, entry, pending.replacementPermanentId(), pending.amount());
+                createCopiesOfHost(gameData, entry, pending.replacementPermanentId(), pending.amount(), creatorId);
             }
             return true;
         }
-        return esixTokenReplacementSupport.offerAttachedCopy(gameData, entry.getControllerId(), amount, 0, 0)
-                || esixTokenReplacementSupport.offer(gameData, entry.getControllerId(), amount, 0, 0);
+        return esixTokenReplacementSupport.offerAttachedCopy(gameData, creatorId, amount, 0, 0)
+                || esixTokenReplacementSupport.offer(gameData, creatorId, amount, 0, 0);
     }
 
     /**

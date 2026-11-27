@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.a.AnointedProcession;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.c.CacklingCounterpart;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -23,7 +24,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({TimotharBaronOfBats.class, VampireNoble.class, GrizzlyBears.class, Shock.class,
-        Standardize.class, CacklingCounterpart.class})
+        Standardize.class, CacklingCounterpart.class, AnointedProcession.class, TippyToeTerrificPartner.class})
 class TimotharBaronOfBatsTest extends BaseCardTest {
 
     @Test
@@ -101,6 +102,7 @@ class TimotharBaronOfBatsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Ward counters a spell whose controller can't discard")
     void wardCountersSpellWhenOpponentCannotDiscard() {
         Permanent timothar = harness.addToBattlefieldAndReturn(player1, new TimotharBaronOfBats());
         harness.forceActivePlayer(player2);
@@ -114,6 +116,7 @@ class TimotharBaronOfBatsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Ward lets a spell resolve once its controller discards")
     void wardAllowsSpellAfterDiscarding() {
         Permanent timothar = harness.addToBattlefieldAndReturn(player1, new TimotharBaronOfBats());
         harness.forceActivePlayer(player2);
@@ -129,6 +132,7 @@ class TimotharBaronOfBatsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent-owned Vampire returns under the Bat controller's control")
     void returnsOpponentOwnedVampireUnderBatControllersControl() {
         harness.addToBattlefield(player1, new TimotharBaronOfBats());
         Permanent vampire = harness.addToBattlefieldAndReturn(player1, new VampireNoble());
@@ -149,6 +153,7 @@ class TimotharBaronOfBatsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The Vampire returns even if the Bat leaves before its trigger resolves")
     void returnsExiledVampireEvenIfBatDiesBeforeItsTriggerResolves() {
         Permanent bat = createBat();
         dealBatCombatDamage(bat);
@@ -163,6 +168,7 @@ class TimotharBaronOfBatsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can't pay when the dying card has already left the graveyard")
     void cannotPayWhenDyingCardHasAlreadyLeftGraveyard() {
         addTimotharAndVampire();
         Permanent vampire = findPermanent(player1, "Vampire Noble");
@@ -182,6 +188,7 @@ class TimotharBaronOfBatsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Reads the creature's types as it last existed")
     void usesCreatureTypeImmediatelyBeforeDeath() {
         harness.addToBattlefield(player1, new TimotharBaronOfBats());
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -201,6 +208,7 @@ class TimotharBaronOfBatsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Ignores a printed Vampire that wasn't a Vampire as it died")
     void ignoresPrintedVampireThatWasNotVampireAtDeath() {
         addTimotharAndVampire();
         harness.castFromHand(player1, new Standardize(), "{U}{U}");
@@ -214,6 +222,7 @@ class TimotharBaronOfBatsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A copy of the Bat returns nothing")
     void copiedBatSacrificesItselfWithoutReturningOriginalsExiledCard() {
         Permanent original = createBat();
         harness.forceActivePlayer(player1);
@@ -233,6 +242,7 @@ class TimotharBaronOfBatsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The Bat is sacrificed even when the linked card is no longer in exile")
     void sacrificesBatEvenWhenLinkedCardIsNoLongerExiled() {
         Permanent bat = createBat();
         Card vampire = gd.getPlayerExiledCards(player1.getId()).getFirst();
@@ -248,6 +258,7 @@ class TimotharBaronOfBatsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Ignores an opponent's Vampire dying")
     void ignoresOpponentsVampireDeath() {
         harness.addToBattlefield(player1, new TimotharBaronOfBats());
         Permanent vampire = harness.addToBattlefieldAndReturn(player2, new VampireNoble());
@@ -258,6 +269,7 @@ class TimotharBaronOfBatsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Ignores a token Vampire dying")
     void ignoresTokenVampireDeath() {
         addTimotharAndVampire();
         Permanent original = findPermanent(player1, "Vampire Noble");
@@ -275,6 +287,7 @@ class TimotharBaronOfBatsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Ignores Timothar's own death")
     void ignoresTimotharsOwnDeath() {
         Permanent timothar = harness.addToBattlefieldAndReturn(player1, new TimotharBaronOfBats());
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
@@ -284,6 +297,31 @@ class TimotharBaronOfBatsTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.assertInGraveyard(player1, "Timothar, Baron of Bats");
         assertThat(findPermanents(player1, "Bat")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("When a doubler and an addition make more than one Bat, every Bat is linked and returns the card")
+    void everyBatAReplacementMadeIsLinked() {
+        harness.addToBattlefield(player1, new AnointedProcession());
+        harness.addToBattlefield(player1, new TippyToeTerrificPartner());
+        addTimotharAndVampire();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        killCreatureWithShock(findPermanent(player1, "Vampire Noble").getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        PendingInteraction.ColorChoice order = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(order).isNotNull();
+        harness.handleListChoice(player1, order.options().stream()
+                .filter(option -> option.startsWith("Anointed Procession")).findFirst().orElseThrow());
+
+        List<Permanent> bats = findPermanents(player1, "Bat");
+        assertThat(bats).hasSize(2);
+        dealBatCombatDamage(bats.getLast());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Bat")).containsExactly(bats.getFirst());
+        harness.assertOnBattlefield(player1, "Vampire Noble");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
 
     private Permanent createBat() {

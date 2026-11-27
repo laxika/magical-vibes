@@ -3,8 +3,11 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BeastWithin;
 import com.github.laxika.magicalvibes.cards.d.DressDown;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MirrormindCrown;
 import com.github.laxika.magicalvibes.cards.s.SakuraTribeElder;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -15,7 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LifeOfTheParty.class, SakuraTribeElder.class, BeastWithin.class, DressDown.class})
+@CardUsed({LifeOfTheParty.class, SakuraTribeElder.class, BeastWithin.class, DressDown.class, GrizzlyBears.class,
+        MirrormindCrown.class})
 class LifeOfThePartyTest extends BaseCardTest {
 
     @Test
@@ -111,6 +115,27 @@ class LifeOfThePartyTest extends BaseCardTest {
 
         assertThat(PermanentGrants.powerBoostOf(gd, token)).isEqualTo(3);
         assertThat(PermanentGrants.toughnessBoostOf(gd, token)).isZero();
+    }
+
+    @Test
+    @DisplayName("An opponent's Mirrormind Crown may replace the copy that opponent creates")
+    void opponentsFirstCreationReplacementApplies() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent crown = harness.addToBattlefieldAndReturn(player2, new MirrormindCrown());
+        crown.setAttachedTo(bears.getId());
+
+        castLifeOfThePartyWithPendingTrigger();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class))
+                .isNotNull()
+                .satisfies(choice -> assertThat(choice.playerId()).isEqualTo(player2.getId()));
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(findPermanents(player2, "Life of the Party")).isEmpty();
+        assertThat(findPermanents(player2, "Grizzly Bears"))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .hasSize(1);
     }
 
     private void castLifeOfThePartyWithPendingTrigger() {

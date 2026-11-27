@@ -15,13 +15,18 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-/** Resolves a source copy created under the target player's control. */
+/**
+ * Resolves "target player creates a token that's a copy of it" (Wedding Ring). That player creates the token, so their
+ * "the first time you would create one or more tokens" replacements (Mirrormind Crown, Moonlit Meditation) are offered
+ * to them first (CR 111.2).
+ */
 @Component
 @RequiredArgsConstructor
 public class CreateTokenCopyOfSourceForTargetPlayerEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
     private final TokenCopySupport tokenCopySupport;
+    private final CreateTokenCopyOfTargetPermanentEffectHandler tokenCopyHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -39,6 +44,9 @@ public class CreateTokenCopyOfSourceForTargetPlayerEffectHandler implements Norm
                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         Card sourceCard = sourcePermanent != null ? PermanentCopierService.cardToCopy(sourcePermanent) : entry.getCard();
         if (sourceCard == null) {
+            return;
+        }
+        if (tokenCopyHandler.replaceFirstTokenCreation(gameData, entry, 1, entry.getTargetId())) {
             return;
         }
 

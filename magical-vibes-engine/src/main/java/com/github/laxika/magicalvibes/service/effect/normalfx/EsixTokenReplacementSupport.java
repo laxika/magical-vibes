@@ -45,7 +45,7 @@ public class EsixTokenReplacementSupport {
         }
         gameData.tokenCreationReplacementUsedThisTurn.add(esix.getId());
         gameData.pendingTokenCreationReplacement = new PendingTokenCreationReplacement(
-                esix.getId(), amount, power, toughness, true);
+                esix.getId(), amount, power, toughness, true, controllerId);
         gameData.resolvingMayEffectFromStack = true;
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 esix.getCard(),
@@ -80,7 +80,7 @@ public class EsixTokenReplacementSupport {
         Permanent attached = gameQueryService.findPermanentById(gameData, source.getAttachedTo());
         gameData.tokenCreationReplacementUsedThisTurn.add(source.getId());
         gameData.pendingTokenCreationReplacement = new PendingTokenCreationReplacement(
-                source.getId(), amount, power, toughness, false);
+                source.getId(), amount, power, toughness, false, controllerId);
         gameData.resolvingMayEffectFromStack = true;
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 source.getCard(),

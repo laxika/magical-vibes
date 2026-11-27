@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.function.BiPredicate;
 import java.util.function.UnaryOperator;
 
@@ -101,12 +102,21 @@ public class TokenKindReplacements implements ReplacementCandidateSource<TokenCr
         return result.withAddedTokens(groups);
     }
 
+    /**
+     * The player the tokens would be created under, whose effects these are ("under your control", "if you would
+     * create"): Crafty Cutpurse's change applies first; Gather Specimens' change of who they enter under applies after
+     * (the Chatterfang ruling).
+     */
+    private UUID creatorOf(GameData gameData, TokenCreationEvent event) {
+        return gameQueryService.resolveTokenCreationController(gameData, event.controllerId(), false);
+    }
+
     private List<Instance> instances(GameData gameData, TokenCreationEvent event) {
         if (event.amount() <= 0) {
             return List.of();
         }
         List<Instance> instances = new ArrayList<>();
-        for (Permanent permanent : gameData.playerBattlefields.getOrDefault(event.controllerId(), List.of())) {
+        for (Permanent permanent : gameData.playerBattlefields.getOrDefault(creatorOf(gameData, event), List.of())) {
             if (permanent.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, permanent)) {
                 continue;
             }

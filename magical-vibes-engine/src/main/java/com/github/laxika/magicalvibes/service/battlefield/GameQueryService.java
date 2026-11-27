@@ -12665,28 +12665,13 @@ public class GameQueryService {
     }
 
     /**
-     * Returns the token creation multiplier for a specific player based on
-     * {@link MultiplyTokenCreationEffect} permanents they control.
-     * Unlike {@link #getDamageMultiplier} which is global, this is controller-specific:
-     * only permanents controlled by the given player contribute to the multiplier.
-     * Multiple instances stack multiplicatively (e.g. two Parallel Lives = 4x tokens).
-     */
-    public int getTokenMultiplier(GameData gameData, UUID controllerId) {
-        return getTokenCreationAmount(gameData, controllerId, 1, null);
-    }
-
-    /**
      * Applies the token-count replacements controlled by the player creating the given token
-     * profile. The no-profile multiplier method remains for callers that only need the legacy
-     * all-token multipliers.
+     * profile, in a fixed order: a prediction only, since a creation lets its creating player order
+     * them (CR 616.1) through {@code PermanentControlSupport.applyCreateToken} or {@code TokenCopySupport}.
      */
     public int getTokenCreationAmount(GameData gameData, UUID controllerId, int amount,
                                       Collection<CardSubtype> tokenSubtypes) {
         return getTokenCreationAmount(gameData, controllerId, amount, tokenSubtypes, false);
-    }
-
-    public int getTokenMultiplier(GameData gameData, UUID controllerId, boolean creatureToken) {
-        return getTokenCreationAmount(gameData, controllerId, 1, null, creatureToken);
     }
 
     public int getTokenCreationAmount(GameData gameData, UUID controllerId, int amount,
@@ -12725,13 +12710,15 @@ public class GameQueryService {
      * The token-count replacements that apply to a creation of tokens with the given profile by
      * {@code controllerId}, one per effect instance, in battlefield, planar, then turn-scoped order.
      * The player creating the tokens orders them (CR 616.1); {@link #getTokenCreationAmount} applies
-     * them in a fixed order instead.
+     * them in a fixed order instead. They are the effects of the player the tokens would be created under: a change
+     * of who creates them (Crafty Cutpurse) applies first, a change of who they enter under (Gather Specimens) only
+     * after the creation's replacements (the Chatterfang ruling).
      */
     public List<TokenCreationReplacement> tokenCreationReplacements(GameData gameData, UUID controllerId,
                                                                     Collection<CardSubtype> tokenSubtypes,
                                                                     boolean creatureToken,
                                                                     Predicate<TokenCreationReplacementEffect> applicableReplacements) {
-        UUID effectiveControllerId = resolveTokenCreationController(gameData, controllerId, creatureToken);
+        UUID effectiveControllerId = resolveTokenCreationController(gameData, controllerId, false);
         List<TokenCreationReplacement> replacements = new ArrayList<>();
         gameData.forEachPermanent((playerId, p) -> {
             List<CardEffect> statics = getActiveStaticEffects(gameData, p, playerId);
@@ -12820,7 +12807,12 @@ public class GameQueryService {
         return null;
     }
 
-    /** Resolves control-changing replacement effects before a token is created. */
+    /**
+     * The player a token {@code controllerId} would create is created or enters under: Crafty Cutpurse's "created
+     * under your control instead", and for a creature token ({@code creatureToken}) Gather Specimens' "enters under
+     * your control instead" too. Whose token-creation replacements apply is asked without Gather Specimens, since a
+     * change of who a token enters under applies after them (the Chatterfang ruling).
+     */
     public UUID resolveTokenCreationController(GameData gameData, UUID controllerId, boolean creatureToken) {
         UUID effectiveControllerId = controllerId;
         List<UUID> creatureGatherers = gatherersOf(gameData, GatherSpecimensEffect.Kind.CREATURES_ENTERING);

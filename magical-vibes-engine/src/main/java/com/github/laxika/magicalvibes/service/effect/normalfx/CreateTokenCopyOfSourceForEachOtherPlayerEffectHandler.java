@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingTokenCreationReplacement;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceForEachOtherPlayerEffect;
@@ -14,12 +15,19 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Resolves "each opponent creates a token that's a copy of it" (Life of the Party). Each of those players creates their
+ * token, so their "the first time you would create one or more tokens" replacements (Mirrormind Crown, Moonlit
+ * Meditation) are offered to them (CR 111.2), one player at a time in turn order: the effect is resolved again after
+ * each answer and goes on with the players after the one who answered, whose tokens are not yet created.
+ */
 @Component
 @RequiredArgsConstructor
 public class CreateTokenCopyOfSourceForEachOtherPlayerEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
     private final TokenCopySupport tokenCopySupport;
+    private final CreateTokenCopyOfTargetPermanentEffectHandler tokenCopyHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -45,12 +53,24 @@ public class CreateTokenCopyOfSourceForEachOtherPlayerEffectHandler implements N
         if (sourceControllerId == null) return;
 
         Card copied = PermanentCopierService.cardToCopy(source);
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            if (!playerId.equals(sourceControllerId)) {
-                tokenCopySupport.createTokenCopies(
-                        gameData, entry, List.of(copied), source, playerId,
-                        copyEffect.copyProfile());
+        List<UUID> creators = gameData.orderedPlayerIds.stream()
+                .filter(playerId -> !playerId.equals(sourceControllerId))
+                .toList();
+        int next = 0;
+        PendingTokenCreationReplacement answered = gameData.pendingTokenCreationReplacement;
+        if (answered != null && creators.contains(answered.creatorId())) {
+            next = creators.indexOf(answered.creatorId());
+        }
+        for (int i = next; i < creators.size(); i++) {
+            UUID creatorId = creators.get(i);
+            if (tokenCopyHandler.replaceFirstTokenCreation(gameData, entry, 1, creatorId)) {
+                if (gameData.pendingTokenCreationReplacement != null || gameData.interaction.isAwaitingInput()) {
+                    return;
+                }
+                continue;
             }
+            tokenCopySupport.createTokenCopies(gameData, entry, List.of(copied), source, creatorId,
+                    copyEffect.copyProfile());
         }
     }
 }

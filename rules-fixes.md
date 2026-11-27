@@ -48,7 +48,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | PY Payments | PY-1, PY-2, PY-3 | PY-1, PY-2 done 2026-11-27; PY-3 open |
 | TR Triggers, subjects and targeting | TR-1, TR-2, TR-3 | TR-1, TR-2 done 2026-11-27; TR-3 open |
 | LS Library searches and reveals | LS-1, LS-2, LS-3 | LS-1 done 2026-11-27; LS-2 done 2026-11-27 (N35, E10 left) |
-| TK Tokens and copies | TK-1, TK-2 | open |
+| TK Tokens and copies | TK-1, TK-2 | TK-1 done 2026-11-27; TK-2 open |
 | FD Face-down and hidden reads | FD-1, FD-2 | open |
 | LY Layers, protection, text changes, linked abilities | LY-1 to LY-5 | open |
 | DR Draws | DR-1 | open |
@@ -820,7 +820,20 @@ replacement), L4 (a token copy of a source reads `cardToCopy`, not `copiableCard
 Avoid: EB-1, EB-2.
 Notes: L2 (Esix's instructions) is the owner's. Don't change the rider exclusions T1 kept.
 
-Outcome:
+Outcome: 2026-11-27. Fixed (deleted from entry 18): S15, S16, L3, L4, L5, O68. S15: whose token-creation replacements apply is
+judged after Crafty Cutpurse but before Gather Specimens (`tokenCreationReplacements` resolves the creator without the
+entering-control change; the Chatterfang ruling), and `TokenKindReplacements` / `JinnieFayTokenReplacements` read that creator's
+battlefield, Jinnie Fay asking that player. S16: Supplant Form's copy goes through `TokenCopySupport` (one ordered event; a
+Chatterfang Squirrel now comes with it); `getTokenMultiplier` is gone. L5 and S16's other half: Asinine Antics and Twisted
+Sewer-Witch create through the ordered event and insert the new internal step `AttachCreatedTokensToHostsEffect`, which attaches
+the Roles once the creation finished, a doubler's to the same creature (Asinine Antics ruling). L4: `cardToCopy` returns the
+copiable values (`copiableCard`'s logic, CR 707.2), so every token-copy and duplicate reader skips a became-a-creature, bestowed
+or Licid form (Supplant Form on an animated Veiled Serpent makes an enchantment). L3: Wedding Ring's target and Life of the
+Party's opponents are offered their own Mirrormind Crown / Moonlit Meditation / Esix (`replaceFirstTokenCreation` with a
+creator, `PendingTokenCreationReplacement.creatorId`; CR 111.2, the line's 701.7a doesn't say who creates). O68: the new internal
+step `LinkCreatedTokensToExiledCardsEffect` links every Bat the creation made (`Permanent.linkedExileSourceId`, read by
+`exiledWithSource`). New owner question in entry 17 (Roles under Halving Season); new lines N43 to N47 (TK-2). Ratchet 2853/2237
+to 2855/2239, two ledger rows.
 
 #### TK-2. Copies of spells and permanents
 
@@ -831,6 +844,28 @@ targets), O99 (`CloneService.exileCopiedCardAbility` exiles a card that left the
 (`ChoosePermanentsEffect` keeps a lone chosen permanent as the source's chosen permanent).
 
 Avoid: DM-2.
+
+New line N43 (seen in TK-1): Timothar, Baron of Bats puts the Bat's "When this token deals combat damage to a player, sacrifice
+it and return the exiled card" on the token's blueprint, so a copy of a Bat has it and sacrifices itself; the ruling says a copy
+won't have the ability Timothar grants ("It gains"). `TimotharBaronOfBatsTest` "A copy of the Bat returns nothing" pins the
+sacrifice.
+
+New line N44 (seen in TK-1): `CreateTokenAttachedToTargetEffectHandler` and `CreateTokensAndAttachEquipmentEffectHandler` attach
+nothing when their token creation stops for the replacement order (CR 616.1): `applyCreateToken` returns no ids then. The
+fix TK-1 used for Asinine Antics is an inserted `AttachCreatedTokensToHostsEffect` step; the per-target loop of the first one
+also starts the next target's creation while the order prompt is open.
+
+New line N45 (seen in TK-1): a token creation Crafty Cutpurse redirects is still ordered by the original creator
+(`TokenCreationEvent.chooserId()` is `controllerId`), though the Cutpurse ruling makes the tokens' would-be controller choose
+among the effects (CR 616.1). Jinnie Fay's choice already goes to the would-be controller since TK-1.
+
+New line N46 (seen in TK-1): Roles a doubler creates attached to one creature get one timestamp each as they are attached, so
+CR 704.5z keeps the last one; the Asinine Antics ruling says that player chooses which Role to keep when two or more become
+attached at the same time.
+
+New line N47 (seen in TK-1): Life of the Party with three or more players: when an opponent accepts Esix's replacement (only on
+their own turn), Esix's creature choice ends the resolution, so the copies of the opponents after them are never created
+(`CreateTokenCopyOfSourceForEachOtherPlayerEffectHandler`).
 
 Outcome:
 

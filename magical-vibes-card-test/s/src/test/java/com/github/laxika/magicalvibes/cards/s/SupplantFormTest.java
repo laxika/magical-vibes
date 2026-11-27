@@ -6,6 +6,11 @@ import com.github.laxika.magicalvibes.cards.a.ArashinCleric;
 import com.github.laxika.magicalvibes.cards.a.AbzanSkycaptain;
 import com.github.laxika.magicalvibes.cards.o.OjerTaqDeepestFoundation;
 import com.github.laxika.magicalvibes.cards.t.TempleOfCivilization;
+import com.github.laxika.magicalvibes.cards.c.ChatterfangSquirrelGeneral;
+import com.github.laxika.magicalvibes.cards.v.VeiledSerpent;
+import com.github.laxika.magicalvibes.cards.w.WornPowerstone;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -20,7 +25,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SupplantForm.class, GrizzlyBears.class, Forest.class, ArashinCleric.class, AbzanSkycaptain.class,
-        OjerTaqDeepestFoundation.class, TempleOfCivilization.class})
+        OjerTaqDeepestFoundation.class, TempleOfCivilization.class, ChatterfangSquirrelGeneral.class,
+        VeiledSerpent.class, WornPowerstone.class})
 class SupplantFormTest extends BaseCardTest {
 
     @Test
@@ -54,6 +60,7 @@ class SupplantFormTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The token copy of a returned own creature triggers its copied enter ability")
     void canReturnOwnCreatureAndCopiedEnterAbilityTriggers() {
         var target = harness.addToBattlefieldAndReturn(player1, new ArashinCleric());
         harness.setLife(player1, 20);
@@ -70,6 +77,7 @@ class SupplantFormTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A target that became illegal before resolution gets no token copy")
     void illegalTargetAtResolutionCreatesNoToken() {
         var target = harness.addToBattlefieldAndReturn(player2, new AbzanSkycaptain());
         harness.setHand(player1, List.of(new SupplantForm()));
@@ -89,6 +97,7 @@ class SupplantFormTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A copy of a face-down creature has no enter ability of the hidden card")
     void copyOfFaceDownCreatureDoesNotCopyPrintedEnterAbility() {
         var target = harness.addToBattlefieldAndReturn(player2, new ArashinCleric());
         target.setFaceDown(2, 2, Set.of(CardType.CREATURE));
@@ -110,6 +119,7 @@ class SupplantFormTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Ojer Taq triples the creature token copy")
     void creatureTokenCopyIsTripledByOjerTaq() {
         harness.addToBattlefield(player1, new OjerTaqDeepestFoundation());
         var target = harness.addToBattlefieldAndReturn(player2, new AbzanSkycaptain());
@@ -121,5 +131,45 @@ class SupplantFormTest extends BaseCardTest {
         harness.assertInHand(player2, "Abzan Skycaptain");
         assertThat(findPermanents(player1, "Abzan Skycaptain")).hasSize(3)
                 .allSatisfy(permanent -> assertThat(permanent.getCard().isToken()).isTrue());
+    }
+
+    @Test
+    @DisplayName("The token copy is one ordered creation event, so Chatterfang adds a Squirrel")
+    void tokenAdditionAppliesToTheCopy() {
+        harness.addToBattlefield(player1, new ChatterfangSquirrelGeneral());
+        var target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new SupplantForm()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(findPermanents(player1, "Grizzly Bears")).singleElement()
+                .satisfies(permanent -> assertThat(permanent.getCard().isToken()).isTrue());
+        assertThat(findPermanents(player1, "Squirrel")).singleElement()
+                .satisfies(permanent -> assertThat(permanent.getCard().isToken()).isTrue());
+    }
+
+    @Test
+    @DisplayName("A copy of a creature that only became one is the enchantment it is printed as (CR 707.2)")
+    void copyOfAnimatedEnchantmentIsNotACreature() {
+        Permanent serpent = harness.addToBattlefieldAndReturn(player1, new VeiledSerpent());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player2, new WornPowerstone(), "{3}");
+        harness.passBothPriorities();
+        assertThat(gqs.isCreature(gd, serpent)).isTrue();
+
+        harness.setHand(player1, List.of(new SupplantForm()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+        harness.castAndResolveInstant(player1, 0, serpent.getId());
+
+        harness.assertInHand(player1, "Veiled Serpent");
+        assertThat(findPermanents(player1, "Veiled Serpent")).singleElement()
+                .satisfies(copy -> {
+                    assertThat(copy.getCard().isToken()).isTrue();
+                    assertThat(gqs.isCreature(gd, copy)).isFalse();
+                    assertThat(gqs.isEnchantment(gd, copy)).isTrue();
+                });
     }
 }

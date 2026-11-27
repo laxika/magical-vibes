@@ -378,6 +378,10 @@ public class Permanent {
     /** The permanent whose leaving the battlefield returned this one from the exile it was in "until" that permanent
      *  left (Lagrella, the Magpie: "when an exiled card enters under your control this way"), or {@code null}. */
     @Setter private UUID returnedWhenSourceLeftId;
+    /** The permanent whose cards "exiled with" it this one's linked abilities name instead of its own, or {@code null}:
+     *  every token one ability created linked to the cards it exiled shares the first one's link (Timothar, Baron of
+     *  Bats: each Bat a replacement added returns the card, its ruling). Not copiable, so a copy of the token has none. */
+    @Setter private UUID linkedExileSourceId;
     /** Land permanent ids that this Cyclopean Tomb put mire counters onto while it was on the battlefield. */
     private final Set<UUID> mireCounterLandIds = new HashSet<>();
     /** Accumulated damage marked on this creature (CR 704.5g). Reset during cleanup step. */
@@ -728,6 +732,7 @@ public class Permanent {
         this.enteredFromGraveyardOwnerId = source.enteredFromGraveyardOwnerId;
         this.enteredFromExile = source.enteredFromExile;
         this.returnedWhenSourceLeftId = source.returnedWhenSourceLeftId;
+        this.linkedExileSourceId = source.linkedExileSourceId;
         this.exileIfLeavesBattlefield = source.exileIfLeavesBattlefield;
         this.exileIfDying = source.exileIfDying;
         this.exileIfDyingTimestamp = source.exileIfDyingTimestamp;

@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MirrormindCrown;
 import com.github.laxika.magicalvibes.cards.r.Revitalize;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,7 +16,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WeddingRing.class, Revitalize.class, GrizzlyBears.class})
+@CardUsed({WeddingRing.class, Revitalize.class, GrizzlyBears.class, MirrormindCrown.class})
 class WeddingRingTest extends BaseCardTest {
 
     private void advanceToDraw(Player activePlayer) {
@@ -44,6 +46,45 @@ class WeddingRingTest extends BaseCardTest {
         List<Permanent> opponentRings = findPermanents(player2, "Wedding Ring");
         assertThat(opponentRings).hasSize(1);
         assertThat(opponentRings.getFirst().getCard().isToken()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The targeted opponent's Mirrormind Crown may replace the copy they create")
+    void targetedOpponentsFirstCreationReplacementApplies() {
+        equipCrownToBears(player2);
+
+        castWeddingRingPair();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class))
+                .isNotNull()
+                .satisfies(choice -> assertThat(choice.playerId()).isEqualTo(player2.getId()));
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(findPermanents(player2, "Wedding Ring")).isEmpty();
+        assertThat(findPermanents(player2, "Grizzly Bears"))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Declining the opponent's Mirrormind Crown gives them the Wedding Ring copy")
+    void decliningTheReplacementCreatesTheCopy() {
+        equipCrownToBears(player2);
+
+        castWeddingRingPair();
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(findPermanents(player2, "Wedding Ring")).singleElement()
+                .satisfies(ring -> assertThat(ring.getCard().isToken()).isTrue());
+        assertThat(findPermanents(player2, "Grizzly Bears"))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .isEmpty();
+    }
+
+    private void equipCrownToBears(Player player) {
+        Permanent bears = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
+        Permanent crown = harness.addToBattlefieldAndReturn(player, new MirrormindCrown());
+        crown.setAttachedTo(bears.getId());
     }
 
     @Test

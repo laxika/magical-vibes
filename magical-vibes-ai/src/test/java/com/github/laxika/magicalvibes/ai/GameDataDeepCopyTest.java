@@ -359,6 +359,19 @@ class GameDataDeepCopyTest {
     }
 
     @Test
+    @DisplayName("Deep copy keeps the exile link a token shares with the first token of its creation")
+    void deepCopyKeepsSharedExileLink() {
+        Permanent linked = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        UUID anchorId = UUID.randomUUID();
+        linked.setLinkedExileSourceId(anchorId);
+
+        GameData copy = gd.simulationCopy();
+
+        assertThat(copy.playerBattlefields.get(player1.getId()).getFirst().getLinkedExileSourceId())
+                .isEqualTo(anchorId);
+    }
+
+    @Test
     @DisplayName("Deep copy and snapshots keep which alternative cost a permanent and a spell were cast for")
     void deepCopyKeepsAlternativeCostKind() {
         Permanent dashed = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());

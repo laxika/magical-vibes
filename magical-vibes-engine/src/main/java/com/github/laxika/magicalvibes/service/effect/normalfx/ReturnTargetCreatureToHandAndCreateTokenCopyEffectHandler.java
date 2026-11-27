@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,14 +10,12 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureToHandAndCreateTokenCopyEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /** Resolves Supplant Form's bounce followed by a token copy. */
@@ -27,8 +24,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ReturnTargetCreatureToHandAndCreateTokenCopyEffectHandler implements NormalEffectHandlerBean {
 
-    private final BattlefieldEntryService battlefieldEntryService;
     private final GameQueryService gameQueryService;
+    private final TokenCopySupport tokenCopySupport;
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
 
@@ -56,26 +53,9 @@ public class ReturnTargetCreatureToHandAndCreateTokenCopyEffectHandler implement
                 gameData.id, sourceCard.getName(), entry.getCard().getName());
         permanentRemovalService.removeOrphanedAuras(gameData);
 
-        CreateTokenCopyOfTargetPermanentEffect copyEffect =
-                new CreateTokenCopyOfTargetPermanentEffect();
-        int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, entry.getControllerId(), true);
-        var enterTappedTypesSnapshot = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
-        List<Permanent> simultaneouslyEntered = new ArrayList<>();
-        for (int copy = 0; copy < tokenMultiplier; copy++) {
-            Card tokenCard = CreateTokenCopyOfTargetPermanentEffectHandler.buildTokenCopyCard(
-                    copySource, copyEffect);
-            Permanent tokenPermanent = new Permanent(tokenCard);
-            battlefieldEntryService.putPermanentOntoBattlefield(
-                    gameData, entry.getControllerId(), tokenPermanent,
-                    enterTappedTypesSnapshot, simultaneouslyEntered);
-            simultaneouslyEntered.add(tokenPermanent);
-
-            gameLogService.append(gameData, GameLog.textCardText(
-                    "A token copy of ", sourceCard, " is created."));
-            log.info("Game {} - Token copy of {} created via {}",
-                    gameData.id, sourceCard.getName(), entry.getCard().getName());
-            battlefieldEntryService.handleCreatureEnteredBattlefield(
-                    gameData, entry.getControllerId(), tokenCard, null, false);
-        }
+        // One ordered token creation event (CR 616.1): the creating player orders its doublers, additions and kind
+        // replacements; the token copies the creature's copiable values as it last existed (CR 707.2).
+        tokenCopySupport.createTokenCopies(gameData, entry, List.of(copySource), null,
+                new CreateTokenCopyOfTargetPermanentEffect());
     }
 }

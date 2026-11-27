@@ -1211,6 +1211,7 @@ questions under "The owner's open questions", the decisions under "The owner's d
 - 2026-11-27, DM-1 (entry 18, line O9): Bomb Squad's "destroy it. That creature deals 4 damage to its controller": the creature deals the damage as it last existed (CR 608.2h). Does a "prevent all damage that creature would deal this turn" effect on it (Soul Parry) still prevent that damage once it has left the battlefield (CR 400.7)? The handler asks before the destruction, so today it does; moving the check into the player's damage pool needs the answer.
 - 2026-11-27, CT-1 (entry 18, line O65): Perplex's "unless its controller discards their hand": the payer discards as a cost (CR 118.12a). Is that discard caused by a spell an opponent controls, so the payer's Obstinate Baloth or Wilt-Leaf Liege enters the battlefield? Their rulings speak of "a spell or ability an opponent controls causes you to discard" but not of a ransom. Today the payer is named as the cause, so they don't.
 - 2026-11-27, EB-3 (entry 18, line S19): CR 404.3 lets the owner arrange two or more cards put into their graveyard at once. The engine asks it only for the graveyard and library exchange; mill, discard, destroy-all and `PutExiledCardsIntoOwnersGraveyardEffect` (Covenant of Minds' three revealed cards) keep their own order unasked. Should every multi-card move into one graveyard ask (a prompt in many places, and the AI answers it), or is the unasked order accepted? Dakra Mystic puts at most one card into each graveyard, so it needs no prompt.
+- 2026-11-27, TK-1 (entry 18, lines S16 and L5): Asinine Antics and Twisted Sewer-Witch create one Role "attached to" each creature; when a replacement creates fewer Roles than creatures (the caster's Halving Season), which creatures get them? The engine spreads the Roles over the creatures in battlefield order (`AttachCreatedTokensToHostsEffectHandler`: Role i goes to creature i × creatures / Roles); neither CR 616.1 nor the Asinine Antics rulings say whether the creating player chooses.
 
 #### Orchestrator decisions for the owner to review
 
@@ -1321,15 +1322,13 @@ Don't commit.
 - Wake to Slaughter's opponent choice (`opponentChoosesOneForHand`, its own `wakeToSlaughterChosenCardId` state) is unchecked for multiplayer. Fairly sure from the code.
 - Vislor Turlough with 3+ players: whether the goad step resolves after the opponent prompt, with the new controller. Unverified.
 
-#### Simultaneity and APNAP (CR 101.4, 603.10a, 608.2e) (12)
+#### Simultaneity and APNAP (CR 101.4, 603.10a, 608.2e) (10)
 
 - Disorienting Choice exiles, Eumidian Wastewaker sacrifices or discards at each player's answer. Sure.
 - Ezuri's Predation pairs by battlefield order and fights one at a time (rulings: you choose the pairs, fights are simultaneous). Sure.
 - Ol Rin's Searing Light, Gilded Ambusher exile each opponent's choice before the next chooses; Dispersal returns and discards one opponent at a time; The Second Doctor, Kwain draw before the next player chooses (CR 121.2c). Unverified.
 - Mythweaver Poq's simultaneous duplicates are one conjure event each (unsettled). Unverified.
 - Tribute's "paid" check is `placed >= N`, so a halved tribute (an opponent's Halving Season) reads as unpaid (CR 702.104b: "as specified").
-- `TokenKindReplacements` and `JinnieFayTokenReplacements` read `event.controllerId()`'s battlefield, not the tokens' creator after Crafty Cutpurse; the count replacements resolve with Gather Specimens for creature tokens, though Chatterfang's ruling applies entering-control changes after (CR 616.1). Fairly sure.
-- The two remaining fixed-order `getTokenMultiplier` callers (`CreateTokensAttachedToControlledCreaturesEffectHandler`, `ReturnTargetCreatureToHandAndCreateTokenCopyEffectHandler`) skip the ordered token event.
 - Precursor Golem, Ink-Treader Nephilim: the copies' controller doesn't choose the order they go on the stack (rulings). Sure.
 - `PutExiledCardsIntoOwnersGraveyardEffect` (Covenant of Minds) gives no CR 404.3 order prompt for the cards it puts into one graveyard; an engine-wide policy, see entry 17 (EB-3). Sure, low.
 - Eumidian Wastewaker counts a sacrificed land token, or a permanent that is a land only on the battlefield (Ashaya), as a land card put into a graveyard (ruling). Sure.
@@ -1370,13 +1369,10 @@ Don't commit.
 - Development (Research // Development): two or more opponents letting its controller draw in one round draw one card, not one per accepting opponent (CR 118.12a: each paid cost is that player's; its 2006 rulings don't settle it). Sure of the code.
 - Madame Null, Power Broker asks "pay 0 life" for a creature with 0 power (HEAD's behaviour, pinned in U8: `MadameNullPowerBrokerTest.zeroPowerAsksForZeroLife`); the U3b orchestrator's decision (Q4) says it doesn't ask (CR 119.4).
 
-#### Layers and copy values (14)
+#### Layers and copy values (11)
 
 - Wickerwing Effigy's "becomes a black Bird ... Fairly sure, low.
 - Esix's copies keep none of the replaced copy's instructions (Faerie Artisans); Dance of Many waits for it. Sure of the code.
-- Step 10 run T1: `CreateTokenCopyOfSourceForEachOtherPlayerEffect` (Life of the Party) and `…ForTargetPlayerEffect` (Wedding Ring) offer no first-token-creation replacement to the players who create (another player's Mirrormind Crown, Moonlit Meditation; CR 701.7a). Sure of the code.
-- Step 10 run T1 (the plan's note): a token copy of a source reads `PermanentCopierService.cardToCopy`, not `copiableCard`, so a bestowed, Licid or became-a-creature source is copied with non-copiable values (CR 707.2). Unverified on a real card.
-- `CreateTokensAttachedToControlledCreaturesEffect` pairs tokens by `getTokenMultiplier`; an order prompt returns no ids. Unverified.
 - Thought Partition and Hydroponics Architect write colour, mana cost, supertype and subtype into runtime copies (layer 1, CR 613). Sure of the code.
 - Starfield of Nyx: `isAnimatedByStarfield` makes a battlefield enchantment a creature ignoring later layer-4 type removals, and `wouldEnterAsCreature` ignores Starfield (Torpor Orb). Sure of the code, low.
 - Ability borrowers in a CR 613.8b dependency loop are approximated by assembly order, so a three-borrower cycle can miss a lender's borrowed abilities. Sure of the code, rare.
@@ -1398,7 +1394,7 @@ Don't commit.
 - `GameViewProjectionFactory.collectFaceDownReveals` decides looks from printed effects while `mayLookAtExiledCard` holds granted looks, so one question is answered twice; `exilesHandsFaceDown` doesn't look inside `MayEffect`. Sure of the code.
 - `ClashSupport`'s log says "opponent reveals" without naming the player. Sure, low.
 
-#### Other (54)
+#### Other (53)
 
 - Casting checks left from runs 40 and 41: Scrycast (Biting Remark; `ScryInteractionHandler`, `ScryAiStrategy`, code: the scry answer casts it with no `canCastDuringResolution` check, and the AI strategies have no `CastingPermissionService`); the may-cast offers don't ask the shared check; an ability leaves the stack before it resolves, where CR 608.2n removes it last. Unverified. FC-2: Knowledge Pool's timing, the split exile cast and suspend's type restriction fixed.
 - Krovikan Vampire's `ReturnDamagedCreaturesThatDiedUnderControlEffect` (a mass return with control and sacrifice links) puts an Aura card that died animated onto the battlefield with no host choice (CR 303.4f, 303.4g); Lim-Dûl's head since rules-fixes EB-1 and `ReturnDyingCreatureToBattlefieldEffect`, `ReturnDyingCreatureToOwnerBattlefieldEffect` since EB-2 go through the entry batch. Unverified.
@@ -1436,7 +1432,6 @@ Don't commit.
 - Library of Leng's "if an effect causes you to discard a card" offers its top-of-library replacement for a discard paid as a cost (a ward or "unless" discard ransom, `ResolutionCostPaymentService`'s discard prompt); its ruling: "You can't use the Library of Leng ability  (CR 118.12). Sure of the ruling, fairly sure of the code.
 - Perplex's discard-hand ransom names the payer as the discard's cause, so an opponent's Perplex doesn't count as "a spell or ability an opponent controls causes you to discard" for Obstinate Baloth or Wilt-Leaf Liege: not settled by the rules (an owner question in entry 17, CT-1). Unsure.
 - Gix, Yawgmoth Praetor: "whenever a creature deals combat damage to one of your opponents, its controller may pay 1 life. Sure of the Oracle text and the code.
-- Timothar, Baron of Bats: when a replacement creates more than one Bat, only the last one is linked to the exiled card (`CreateTokenLinkedToCardsExiledThisWayEffectHandler` gives each exile entry one source); the ruling says every such Bat has the linked ability and any of them returns the card. Sure of the ruling and the code.
 - Mana abilities that work from the graveyard, exile or the command zone count as mana sources for `couldPossiblyPay` but can't be activated during a may-pay prompt (only hand abilities can, step 10 run U3a); no implemented card has one today. Sure, harmless today.
 - Quenchable Fire, Glass Asp, Nafs Asp, Sabertooth Cobra: the special action that pays before the delayed trigger (`AbilityActivationService.payDelayedTriggerCost`, CR 116.2c) raises no tax-paid event, so Tax Taker doesn't see mana an opponent pays for your spell's or creature's delayed ability; it changes play only with Tax Taker and the rules don't say whether it is a "tax". Sure of the code.
 - `UnlessPaysEffectHandler.nextStep` now sets the entry's accepted players to the payers who chose to pay before every branch (for `eachUnless`); an entry that also had a `TemptingOfferEffect` or Snort's discard set them before its "unless" would lose that list. Sure of the code.

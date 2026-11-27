@@ -1,16 +1,15 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.rules.AttachmentEvent;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.AttachCreatedTokensToHostsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensAttachedToControlledCreaturesEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
@@ -22,12 +21,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Resolves {@link CreateTokensAttachedToControlledCreaturesEffect}: one token for each matching creature that its
+ * token could enchant, created as one ordered event and attached by an {@link AttachCreatedTokensToHostsEffect} step
+ * inserted after this one.
+ */
 @Component
 @RequiredArgsConstructor
 public class CreateTokensAttachedToControlledCreaturesEffectHandler implements NormalEffectHandlerBean {
 
     private final PermanentControlSupport permanentControlSupport;
-    private final DurationClock durationClock;
+    private final AttachCreatedTokensToHostsEffectHandler attachCreatedTokensToHostsEffectHandler;
     private final GameQueryService gameQueryService;
     private final SubjectResolutionService subjectResolutionService;
     private final AmountEvaluationService amountEvaluationService;
@@ -80,29 +84,19 @@ public class CreateTokensAttachedToControlledCreaturesEffectHandler implements N
             return;
         }
 
-        int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, entry.getControllerId(), false);
+        // The Roles are one creation event whose replacements the creating player orders (CR 616.1), so it may stop
+        // for that choice; they are attached by the next step, once the event has made them.
+        int createdFrom = entry.getCreatedPermanentIds().size();
         List<UUID> createdIds = permanentControlSupport.applyCreateToken(
                 gameData, entry.getControllerId(), e.token(), eligibleCreatures.size(),
                 entry.getCard().getSetCode(), power, toughness);
         entry.getCreatedPermanentIds().addAll(createdIds);
-
-        int tokenIndex = 0;
-        for (Permanent creature : eligibleCreatures) {
-            for (int copy = 0; copy < tokenMultiplier && tokenIndex < createdIds.size(); copy++) {
-                attachToken(gameData, entry, createdIds.get(tokenIndex++), creature);
-            }
+        AttachCreatedTokensToHostsEffect attach = new AttachCreatedTokensToHostsEffect(createdFrom,
+                eligibleCreatures.stream().map(Permanent::getId).toList());
+        if (entry.getResolvingEffectIndex() >= 0) {
+            entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, List.of(attach));
+        } else {
+            attachCreatedTokensToHostsEffectHandler.resolve(gameData, entry, attach);
         }
-    }
-
-    private void attachToken(GameData gameData, StackEntry entry, UUID tokenId, Permanent creature) {
-        Permanent role = gameQueryService.findPermanentById(gameData, tokenId);
-        if (role == null || !auraAttachmentService.canEnchant(
-                gameData, role.getCard(), entry.getControllerId(), creature)) {
-            return;
-        }
-        durationClock.sourceUnattached(gameData, role.getId());
-        role.setAttachedTo(creature.getId());
-        role.setTimestamp(gameData.nextTimestamp());
-        gameData.rulesEvents.occur(new AttachmentEvent.AuraAttached(role, creature.getId()));
     }
 }

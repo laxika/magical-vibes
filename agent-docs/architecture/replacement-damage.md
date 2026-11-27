@@ -59,9 +59,14 @@ Why: False Dawn's color change must not apply twice.
 ## Token creation
 
 ### Token creation is one ordered event (CR 616.1)
-The creating player orders count, addition, kind and Jinnie Fay replacements; create through `applyCreateToken` or `TokenCopySupport`, never multiply a count yourself. Tokens of an ordered event are marked `Permanent.tokenKindReplacementsApplied` so entering doesn't replace them again (CR 614.5). Known gap: two handlers still call `GameQueryService.getTokenMultiplier` in a fixed order.
+The creating player orders count, addition, kind and Jinnie Fay replacements; create through `applyCreateToken` or `TokenCopySupport`, never multiply a count yourself. Tokens of an ordered event are marked `Permanent.tokenKindReplacementsApplied` so entering doesn't replace them again (CR 614.5).
 Owner: `PermanentControlSupport` (`applyCreateToken`), `TokenCopySupport`.
 Why: a doubler applied after an addition doubles the added tokens too.
+
+### The replacements are those of the player the tokens are created under
+A change of who creates them (Crafty Cutpurse) applies first; a change of who they enter under (Gather Specimens) applies after the creation's replacements, so it never decides whose doublers, additions or kind replacements apply.
+Owner: `GameQueryService` (`resolveTokenCreationController`, `tokenCreationReplacements`), the `replacement/token` candidate sources.
+Why: the Crafty Cutpurse and Chatterfang rulings.
 
 ### Applicability is judged against the event as it stands (CR 616.1f)
 A replacement that didn't apply becomes an option once another adds a token it applies to; added blueprints share constants so equal outcomes need no prompt.
@@ -74,7 +79,7 @@ Owner: `TokenCopySupport` (`createCopiesAfterReplacementOrder`), `TokenCopyBatch
 Why: they aren't copies, but "those tokens gain haste" applies (rulings).
 
 ### Follow-ups on created tokens run after the creation finishes
-Pass the follow-up as `TokenCopyBatch.afterEntry` or splice it as the next step, and look permanents up through the game given.
+Pass the follow-up as `TokenCopyBatch.afterEntry` or splice it as the next step (`AttachCreatedTokensToHostsEffect`, `LinkCreatedTokensToExiledCardsEffect` read the entry's created permanents), and look permanents up through the game given.
 Owner: `TokenCopySupport` (`createTokenCopiesThen`), `StackEntry` (`insertEffectsToResolve`).
 Why: a creation may pause; the follow-up must see every token once.
 

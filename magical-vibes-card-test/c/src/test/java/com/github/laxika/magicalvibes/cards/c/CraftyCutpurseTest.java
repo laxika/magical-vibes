@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.t.TippyToeTerrificPartner;
 import com.github.laxika.magicalvibes.cards.a.AnointedProcession;
+import com.github.laxika.magicalvibes.cards.d.DivineVisitation;
+import com.github.laxika.magicalvibes.cards.j.JinnieFayJetmirsSecond;
 import com.github.laxika.magicalvibes.cards.g.GatherTheTownsfolk;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninWarleader;
@@ -21,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({CraftyCutpurse.class, AnointedProcession.class, GatherTheTownsfolk.class,
         GrizzlyBears.class, LeoninWarleader.class, SailorOfMeans.class, ChatterfangSquirrelGeneral.class,
-        TippyToeTerrificPartner.class})
+        TippyToeTerrificPartner.class, DivineVisitation.class, JinnieFayJetmirsSecond.class})
 class CraftyCutpurseTest extends BaseCardTest {
 
     @Test
@@ -169,6 +171,63 @@ class CraftyCutpurseTest extends BaseCardTest {
         assertThat(tokenCount(player1, "Squirrel")).isEqualTo(2);
         assertThat(tokenCount(player1, "Food")).isZero();
         assertThat(tokenCount(player2, "Food")).isZero();
+    }
+
+    @Test
+    @DisplayName("Redirected creature tokens get the receiving controller's Divine Visitation")
+    void appliesReceivingControllersTokenKindReplacement() {
+        harness.addToBattlefield(player1, new DivineVisitation());
+        resolveCraftyCutpurse();
+
+        castGatherTheTownsfolk(player2);
+
+        assertThat(tokenCount(player1, "Angel")).isEqualTo(2);
+        assertThat(tokenCount(player1, "Human")).isZero();
+    }
+
+    @Test
+    @DisplayName("The creating player's Divine Visitation does not apply to tokens created under Cutpurse's controller")
+    void ignoresCreatingPlayersTokenKindReplacement() {
+        harness.addToBattlefield(player2, new DivineVisitation());
+        resolveCraftyCutpurse();
+
+        castGatherTheTownsfolk(player2);
+
+        assertThat(tokenCount(player1, "Human")).isEqualTo(2);
+        assertThat(tokenCount(player1, "Angel")).isZero();
+    }
+
+    @Test
+    @DisplayName("Redirected tokens offer the receiving controller's Jinnie Fay to that player")
+    void offersReceivingControllersJinnieFay() {
+        harness.addToBattlefield(player1, new JinnieFayJetmirsSecond());
+        resolveCraftyCutpurse();
+
+        castGatherTheTownsfolk(player2);
+        harness.handleListChoice(player1, "Dog");
+
+        assertThat(tokenCount(player1, "Dog")).isEqualTo(2);
+        assertThat(tokenCount(player1, "Human")).isZero();
+    }
+
+    @Test
+    @DisplayName("The creating player's Jinnie Fay is not offered for tokens created under Cutpurse's controller")
+    void ignoresCreatingPlayersJinnieFay() {
+        harness.addToBattlefield(player2, new JinnieFayJetmirsSecond());
+        resolveCraftyCutpurse();
+
+        castGatherTheTownsfolk(player2);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(tokenCount(player1, "Human")).isEqualTo(2);
+    }
+
+    private void castGatherTheTownsfolk(Player player) {
+        harness.forceActivePlayer(player);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player, List.of(new GatherTheTownsfolk()));
+        harness.addMana(player, ManaColor.WHITE, 2);
+        harness.castAndResolveSorcery(player, 0, 0);
     }
 
     private void castSailorOfMeans(Player player) {

@@ -134,7 +134,7 @@ class CreateTokenEffectHandlerTest {
         when(amountEvaluationService.evaluate(eq(gd), any(), any())).thenReturn(1);
         when(esixTokenReplacementSupport.offerAttachedCopy(gd, playerId, 1, 1, 1)).thenAnswer(invocation -> {
             gd.pendingTokenCreationReplacement = new com.github.laxika.magicalvibes.model.PendingTokenCreationReplacement(
-                    moonlit.getId(), 1, 1, 1, false);
+                    moonlit.getId(), 1, 1, 1, false, playerId);
             return true;
         });
 

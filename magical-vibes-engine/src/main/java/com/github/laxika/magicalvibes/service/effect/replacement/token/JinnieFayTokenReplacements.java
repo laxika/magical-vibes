@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Jinnie Fay, Jetmir's Second's "you may instead create that many 2/2 green Cat creature tokens with haste or that
@@ -26,7 +27,7 @@ import java.util.List;
  * Dogs. Applying it asks the creating player for Cat, Dog or the original tokens, so it is not pure; the event
  * continues through {@code ChoiceHandlerService} once they answer. In a token-copy event
  * ({@link TokenCreationEvent#copyBatch()}) her Cats or Dogs replace the copies and keep the creating effect's
- * instructions for them.
+ * instructions for them. Her controller answers: the player the tokens would be created under, after Crafty Cutpurse.
  */
 @Component
 public class JinnieFayTokenReplacements implements ReplacementCandidateSource<TokenCreationEvent> {
@@ -75,8 +76,17 @@ public class JinnieFayTokenReplacements implements ReplacementCandidateSource<To
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("Jinnie Fay replacement source left: " + option.key()));
         playerInputService.beginJinnieFayTokenChoice(gameData,
-                new ChoiceContext.JinnieFayTokenChoice(event.controllerId(), source.getCard(), event));
+                new ChoiceContext.JinnieFayTokenChoice(creatorOf(gameData, event), source.getCard(), event));
         return new ApplyResult.Suspended<>(event);
+    }
+
+    /**
+     * The player the tokens would be created under, whose effects these are ("under your control", "if you would
+     * create"): Crafty Cutpurse's change applies first; Gather Specimens' change of who they enter under applies after
+     * (the Chatterfang ruling).
+     */
+    private UUID creatorOf(GameData gameData, TokenCreationEvent event) {
+        return gameQueryService.resolveTokenCreationController(gameData, event.controllerId(), false);
     }
 
     private List<Instance> instances(GameData gameData, TokenCreationEvent event) {
@@ -84,7 +94,7 @@ public class JinnieFayTokenReplacements implements ReplacementCandidateSource<To
             return List.of();
         }
         List<Instance> instances = new ArrayList<>();
-        for (Permanent permanent : gameData.playerBattlefields.getOrDefault(event.controllerId(), List.of())) {
+        for (Permanent permanent : gameData.playerBattlefields.getOrDefault(creatorOf(gameData, event), List.of())) {
             if (permanent.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, permanent)
                     || gameData.removesOwnStaticAbility(permanent.getId(), JinnieFayTokenReplacementEffect.class)) {
                 continue;

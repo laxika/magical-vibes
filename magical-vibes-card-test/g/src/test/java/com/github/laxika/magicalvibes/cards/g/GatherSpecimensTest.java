@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.a.AladdinsRing;
+import com.github.laxika.magicalvibes.cards.a.AnointedProcession;
 import com.github.laxika.magicalvibes.cards.c.Clone;
 import com.github.laxika.magicalvibes.cards.z.Zombify;
 import com.github.laxika.magicalvibes.model.Card;
@@ -19,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({GatherSpecimens.class, GrizzlyBears.class, AladdinsRing.class, GatherTheTownsfolk.class, Clone.class,
-        Zombify.class})
+        Zombify.class, AnointedProcession.class})
 class GatherSpecimensTest extends BaseCardTest {
 
     private void castGatherSpecimens() {
@@ -103,6 +104,45 @@ class GatherSpecimensTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().isToken() && "Human".equals(nameOf(p)))
                 .count()).isZero();
+    }
+
+    @Test
+    @DisplayName("The creating player's token doubler applies to creature tokens Gather Specimens takes")
+    void creatingPlayersDoublerApplies() {
+        harness.addToBattlefield(player2, new AnointedProcession());
+        castGatherSpecimens();
+
+        castGatherTheTownsfolk(player2);
+
+        assertThat(tokenCount(player1, "Human")).isEqualTo(4);
+        assertThat(tokenCount(player2, "Human")).isZero();
+    }
+
+    @Test
+    @DisplayName("The gatherer's token doubler does not apply to an opponent's creature tokens it takes")
+    void gatherersDoublerDoesNotApply() {
+        harness.addToBattlefield(player1, new AnointedProcession());
+        castGatherSpecimens();
+
+        castGatherTheTownsfolk(player2);
+
+        assertThat(tokenCount(player1, "Human")).isEqualTo(2);
+        assertThat(tokenCount(player2, "Human")).isZero();
+    }
+
+    private void castGatherTheTownsfolk(Player player) {
+        harness.forceActivePlayer(player);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player, List.of(new GatherTheTownsfolk()));
+        harness.addMana(player, ManaColor.WHITE, 2);
+        harness.castSorcery(player, 0, 0);
+        harness.passBothPriorities();
+    }
+
+    private long tokenCount(Player player, String name) {
+        return gd.playerBattlefields.get(player.getId()).stream()
+                .filter(p -> p.getCard().isToken() && name.equals(nameOf(p)))
+                .count();
     }
 
     @Test

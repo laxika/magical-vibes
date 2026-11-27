@@ -79,12 +79,12 @@ public class PermanentCopierService {
     }
 
     /**
-     * The card a copy of {@code permanent}, live or as it last existed, copies when the copying effect reads the
-     * permanent's card: the face-down copiable values while it is face down ({@link #faceDownCopiableCard}), else its
-     * card.
+     * The card a copy of {@code permanent}, live or as it last existed, copies: its copiable values (CR 707.2), the
+     * face-down ones while it is face down ({@link #faceDownCopiableCard}), as {@link #copiableCard} gives them, so a
+     * bestowed, Licid-become-Aura or became-a-creature permanent is copied without those non-copiable changes.
      */
     public static Card cardToCopy(Permanent permanent) {
-        return permanent.isFaceDown() ? faceDownCopiableCard(permanent) : permanent.getCard();
+        return printedCopiableCard(permanent);
     }
 
     /**
@@ -130,7 +130,7 @@ public class PermanentCopierService {
         return lastKnown != null ? copiableCard(lastKnown) : entry.lastKnownPermanentCard(permanentId);
     }
 
-    private Card printedCopiableCard(Permanent permanent) {
+    private static Card printedCopiableCard(Permanent permanent) {
         if (permanent.isFaceDown()) {
             return faceDownCopiableCard(permanent);
         }
