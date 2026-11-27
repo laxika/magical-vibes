@@ -6,8 +6,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantKeywordToMatchingCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantKeywordToSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantKeywordsToTriggeringCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -42,7 +43,7 @@ public class MarduThunderkite extends Card {
                                                  CardNotPredicate noCardsInHand,
                                                  PermanentIsCreaturePredicate creaturesYouControl) {
         return SequenceEffect.of(
-                new PerpetuallyGrantKeywordToSourceEffect(keyword),
+                PerpetuallyGrantKeywordsToTriggeringCardEffect.toCards(Subjects.sourceObjectCard(), keyword),
                 new PerpetuallyGrantKeywordToMatchingCardsEffect(
                         noCardsInHand, creaturesYouControl, Set.of(keyword)));
     }

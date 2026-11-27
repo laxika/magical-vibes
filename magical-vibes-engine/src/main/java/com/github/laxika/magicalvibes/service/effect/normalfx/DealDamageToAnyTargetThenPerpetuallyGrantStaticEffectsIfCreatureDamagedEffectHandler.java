@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetThenPerpetuallyGrantStaticEffectsIfCreatureDamagedEffect;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
@@ -62,16 +64,10 @@ public class DealDamageToAnyTargetThenPerpetuallyGrantStaticEffectsIfCreatureDam
                 continue;
             }
 
-            var copy = damagedPermanent.getCard().createRuntimeCopy();
-            boolean changed = false;
+            Card physical = damagedPermanent.getOriginalCard() != null
+                    ? damagedPermanent.getOriginalCard() : damagedPermanent.getCard();
             for (CardEffect staticEffect : damageEffect.staticEffects()) {
-                if (!copy.getStaticEffects().contains(staticEffect)) {
-                    copy.addStaticEffect(staticEffect);
-                    changed = true;
-                }
-            }
-            if (changed) {
-                damagedPermanent.exchangeCard(copy);
+                gameData.grantPerpetualAbilityOnce(physical.getId(), StaticAbility.of(staticEffect));
             }
         }
 

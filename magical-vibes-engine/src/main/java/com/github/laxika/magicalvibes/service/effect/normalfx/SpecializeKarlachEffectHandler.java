@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
@@ -108,9 +109,9 @@ public class SpecializeKarlachEffectHandler implements NormalEffectHandlerBean {
 
         TargetFilter targetFilter = KarlachRagingTiefling.specializedTargetFilter(color);
         permanentRemovalService.removeCardFromGraveyardById(gameData, specialized.getId());
-        // The graveyard card was frozen when its trigger was put on the stack; the returned card perpetually gains "can't block".
-        Card returnedCard = specialized.createRuntimeCopy();
-        returnedCard.addStaticEffect(new CantBlockEffect());
+        // The returned card perpetually gains "This creature can't block": a change to the card, not a copiable value.
+        Card returnedCard = specialized;
+        gameData.grantPerpetualAbility(returnedCard.getId(), StaticAbility.of(new CantBlockEffect()));
         Permanent returned = new Permanent(returnedCard);
         returned.setEnteredFromGraveyardOwnerId(ownerId);
         battlefieldEntryService.putPermanentOntoBattlefield(

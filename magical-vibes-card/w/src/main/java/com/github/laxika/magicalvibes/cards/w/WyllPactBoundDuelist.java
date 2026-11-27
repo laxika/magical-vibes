@@ -12,13 +12,13 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatMainPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantKeywordsToTriggeringCardEffect;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantKeywordToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
@@ -113,7 +113,7 @@ public class WyllPactBoundDuelist extends Card {
                     new AdditionalCombatMainPhaseEffect(1));
             case GREEN -> SequenceEffect.of(
                     PerpetuallyBoostCardEffect.toCards(Subjects.sourceObjectCard(), 3, 3),
-                    new PerpetuallyGrantKeywordToSourceEffect(Keyword.TRAMPLE));
+                    PerpetuallyGrantKeywordsToTriggeringCardEffect.toCards(Subjects.sourceObjectCard(), Keyword.TRAMPLE));
         };
     }
 

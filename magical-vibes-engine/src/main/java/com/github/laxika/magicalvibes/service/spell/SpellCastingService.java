@@ -210,6 +210,7 @@ import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.effect.HandCastCardCharacteristicsService;
 import com.github.laxika.magicalvibes.service.effect.WaterbendPaymentService;
 import com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PerpetuallyBecomeCreatureEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SplitCardCastSupport;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
@@ -11261,22 +11262,22 @@ public class SpellCastingService {
                     castingPermissionService.consumeGraveyardCastFilterPermission(gameData, permission);
                 }
             }
-            Card perpetuallyChangedSpell = null;
+            boolean perpetuallyBecameCreature = false;
             if (isGrantedCyclingGraveyardCast && filteredGraveyardPermission.isPresent()
                     && castHalf.getType().isPermanentType() && castHalf.getType() != CardType.LAND
                     && filteredGraveyardPermission.get().permission().entryTriggeredAbilityGrant() != null
                     && filteredGraveyardPermission.get().permission().entryTriggeredAbilityGrant().grantedEffect()
                     instanceof PerpetuallyBecomeCreatureEffect become) {
-                perpetuallyChangedSpell = perpetuallyBecomeCreature(gameData, card, become);
+                // The change is made as the spell is cast, so it is in place on the stack and stays with the card if
+                // the spell is countered.
+                PerpetuallyBecomeCreatureEffectHandler.become(
+                        gameData, card.getId(), become.power(), become.toughness(), become.subtype());
+                perpetuallyBecameCreature = true;
             }
-            Card stackCard = perpetuallyChangedSpell != null ? perpetuallyChangedSpell : card;
             StackEntry stackEntry = new StackEntry(
-                    entryType, stackCard, playerId, stackCard.getName(),
+                    entryType, card, playerId, card.getName(),
                     List.of(), effectiveXValue, targetId, null
             );
-            if (perpetuallyChangedSpell != null) {
-                stackEntry.setPhysicalCard(perpetuallyChangedSpell);
-            }
             stackEntry.setSourceZone(Zone.GRAVEYARD);
             stackEntry.setCastWithWarp(castWithWarp);
             stackEntry.setCastTransformed(graveyardModalBackFace);
@@ -11321,7 +11322,7 @@ public class SpellCastingService {
                 }
                 if (castHalf.getType().isPermanentType() && castHalf.getType() != CardType.LAND
                         && permission.entryTriggeredAbilityGrant() != null
-                        && perpetuallyChangedSpell == null) {
+                        && !perpetuallyBecameCreature) {
                     var grant = permission.entryTriggeredAbilityGrant();
                     stackEntry.addPersistentAbilityOnEntry(grant.grantedAbility());
                 }
@@ -18290,46 +18291,6 @@ public class SpellCastingService {
      * @param castModalBackFace the spell was cast as the back face of a modal double-faced card, so
      *                          its spell-cast triggers see the back face's characteristics
      */
-    /**
-     * Applies "it perpetually becomes a creature" to a spell as it is cast, so the change is in place
-     * on the stack and stays with the card if the spell is countered. The new characteristics are
-     * recorded against the card's identity as well, matching every other perpetual card change.
-     */
-    private Card perpetuallyBecomeCreature(GameData gameData, Card card, PerpetuallyBecomeCreatureEffect become) {
-        Card copy = card.createRuntimeCopy();
-        EnumSet<CardType> retainedTypes = EnumSet.noneOf(CardType.class);
-        retainedTypes.add(copy.getType());
-        retainedTypes.addAll(copy.getAdditionalTypes());
-        retainedTypes.remove(CardType.CREATURE);
-        EnumSet<CardType> allTypes = EnumSet.copyOf(retainedTypes);
-        allTypes.add(CardType.CREATURE);
-        copy.setType(CardType.CREATURE);
-        copy.setAdditionalTypes(retainedTypes);
-        List<CardSubtype> subtypes = new ArrayList<>(copy.getSubtypes());
-        if (!subtypes.contains(become.subtype())) {
-            subtypes.add(become.subtype());
-        }
-        copy.setSubtypes(subtypes);
-        copy.setPower(become.power());
-        copy.setToughness(become.toughness());
-        copy.freeze();
-
-        gameData.perpetualCardTypes.merge(card.getId(), Set.copyOf(allTypes), (existing, added) -> {
-            EnumSet<CardType> merged = EnumSet.copyOf(allTypes);
-            merged.addAll(existing);
-            return Set.copyOf(merged);
-        });
-        gameData.perpetualCardSubtypes.merge(card.getId(), Set.of(become.subtype()), (existing, added) -> {
-            EnumSet<CardSubtype> merged = EnumSet.of(become.subtype());
-            merged.addAll(existing);
-            return Set.copyOf(merged);
-        });
-        gameData.perpetualCardBasePowerToughness.put(card.getId(),
-                new GameData.PerpetualBasePowerToughness(become.power(), become.toughness(),
-                        gameData.nextTimestamp()));
-        return copy;
-    }
-
     private void finishSpellCast(GameData gameData, UUID playerId, Player player, List<Card> hand, Card card,
                                  boolean castFromHand, boolean castModalBackFace) {
         StackEntry castEntry = null;

@@ -405,7 +405,11 @@ triggered ability is a `TemporaryGlobalTriggeredAbility`. Never a `Permanent` or
   / `PerpetualCardCastCostSupport`, `PerpetuallyBoostCardEffect.toCards`, `PerpetuallyGrantAlternateCastEffect` (`perpetualAlternateCasts`),
   `PerpetuallyGrantAnyColorManaToCastEffect`, `GameData.grantPerpetualKeywords`; `GrantGraveyardAbilityToCardsEffect` (`PerCard`, scavenge
   included), `GrantSupertypeEffect` (`(T, attached())` for "enchanted permanent is"). "This card perpetually gets" is
-  `PerpetuallyBoostCardEffect(this, …)` or `.toCards(sourceObjectCard(), …)`, a layer-7c modifier in every zone (run PO).
+  `PerpetuallyBoostCardEffect(this, …)` or `.toCards(sourceObjectCard(), …)`, a layer-7c modifier in every zone (run PO). "This creature
+  perpetually gains [keyword]" is `PerpetuallyGrantKeywordsToTriggeringCardEffect.toCards(sourceObjectCard(), …)`, "this card perpetually
+  gains "[static ability]"" `PerpetuallyGrantAbilitiesEffect(sourceObjectCard(), List.of(StaticAbility.of(…)))`; a handler with a
+  permanent in hand writes its physical card's store (`grantPerpetualAbility`, `PerpetuallyBecomeCreatureEffectHandler.become`), never a
+  runtime copy that a copy would copy (CR 707.2).
 
 **Damage, prevention, redirection:**
 

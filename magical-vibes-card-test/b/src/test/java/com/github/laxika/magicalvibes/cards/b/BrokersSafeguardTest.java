@@ -16,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BrokersSafeguard.class, GrizzlyBears.class, Memnite.class, Shock.class})
+@CardUsed({com.github.laxika.magicalvibes.cards.c.Clone.class, BrokersSafeguard.class, GrizzlyBears.class, Memnite.class, Shock.class})
 class BrokersSafeguardTest extends BaseCardTest {
 
     @Test
@@ -62,6 +62,27 @@ class BrokersSafeguardTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(returned);
         assertThat(returned.getCounterCount(CounterType.SHIELD)).isZero();
         assertThat(returned.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("A copy of the returned creature doesn't enter with a shield counter")
+    void copyOfReturnedCreatureHasNoShieldCounter() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        castBrokersSafeguard();
+        Permanent returned = findPermanent(player1, "Grizzly Bears");
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new com.github.laxika.magicalvibes.cards.c.Clone()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handlePermanentChosen(player2, returned.getId());
+
+        assertThat(findPermanent(player2, "Grizzly Bears").getCounterCount(CounterType.SHIELD)).isZero();
     }
 
     @Test

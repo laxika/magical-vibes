@@ -61,6 +61,8 @@ public class ReturnSourceFromGraveyardAttachedToTargetEffectHandler implements N
         Permanent auraPerm = new Permanent(auraCard);
         auraPerm.setAttachedTo(target.getId());
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, auraOwnerId, auraPerm);
+        // "Craving of Yeenoghu perpetually gains ..." after the return is about the returned permanent (CR 400.7j).
+        entry.rememberReturnedPermanent(auraPerm.getId());
 
         String ownerName = gameData.playerIdToName.get(auraOwnerId);
         gameLogService.append(gameData, GameLog.builder()

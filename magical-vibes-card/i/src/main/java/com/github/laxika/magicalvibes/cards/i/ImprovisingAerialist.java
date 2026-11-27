@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantKeywordToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantKeywordsToTriggeringCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -26,7 +25,7 @@ public class ImprovisingAerialist extends Card {
         addTrigger(Triggers.secondMainPhase(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceIsTapped()),
                 SequenceEffect.of(
-                        new PerpetuallyGrantKeywordToSourceEffect(Keyword.FLYING),
+                        PerpetuallyGrantKeywordsToTriggeringCardEffect.toCards(Subjects.sourceObjectCard(), Keyword.FLYING),
                         PerpetuallyGrantKeywordsToTriggeringCardEffect.toCards(
                                 Subjects.topmostCardInYourLibrary(new CardAllOfPredicate(List.of(
                                         new CardTypePredicate(CardType.CREATURE),

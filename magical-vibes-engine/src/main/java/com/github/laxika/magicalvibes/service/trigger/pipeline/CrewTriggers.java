@@ -64,9 +64,11 @@ public class CrewTriggers {
             }
             case CrewEvent.CreatureStations stations -> holdForActivation(gameData, () -> {
                 Permanent spacecraft = stations.spacecraft();
-                UUID stationingCardId = stations.creature().getCard().getId();
-                putOwnAbilities(gameData, spacecraft, stations.controllerId(), BECOMES_STATIONED,
-                        entry -> entry.setTargetId(stationingCardId));
+                Permanent stationing = stations.creature();
+                putOwnAbilities(gameData, spacecraft, stations.controllerId(), BECOMES_STATIONED, entry -> {
+                    entry.setTriggeringPermanent(stationing);
+                    entry.setTriggeringPermanentId(stationing.getId());
+                });
             });
             case CrewEvent.BecameCrewed crewed -> putOwnAbilities(gameData, crewed.vehicle(), crewed.controllerId(),
                     BECOMES_CREWED, TriggerRecord.NONE);

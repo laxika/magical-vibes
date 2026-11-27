@@ -23,7 +23,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({VexyrIchTekiksHeir.class, KarlachRagingTiefling.class, Plains.class, Island.class, Swamp.class,
+@CardUsed({com.github.laxika.magicalvibes.cards.c.Clone.class, VexyrIchTekiksHeir.class, KarlachRagingTiefling.class, Plains.class, Island.class, Swamp.class,
         Mountain.class, Forest.class, HobgoblinCaptain.class, ShockingGrasp.class})
 class KarlachRagingTieflingTest extends BaseCardTest {
 
@@ -60,6 +60,33 @@ class KarlachRagingTieflingTest extends BaseCardTest {
         Permanent karlach = findPermanent(player1, "Karlach, Tiefling Zealot");
         assertThat(karlach).isNotNull();
         harness.assertNotInGraveyard(player1, "Karlach, Raging Tiefling");
+        assertThat(bls.canBlock(gd, karlach)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A copy of Karlach returned from the graveyard doesn't copy its perpetual \"can't block\"")
+    void copyOfReturnedKarlachCanBlock() {
+        harness.setGraveyard(player1, List.of(new KarlachRagingTiefling()));
+        harness.setHand(player1, List.of(new Plains()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.activateGraveyardAbility(player1, 0);
+        payDiscardIfRequested();
+        resolveAllTriggers();
+        Permanent karlach = findPermanent(player1, "Karlach, Tiefling Zealot");
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new com.github.laxika.magicalvibes.cards.c.Clone()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handlePermanentChosen(player2, karlach.getId());
+
+        Permanent copy = findPermanent(player2, "Karlach, Tiefling Zealot");
+        assertThat(bls.canBlock(gd, copy)).isTrue();
         assertThat(bls.canBlock(gd, karlach)).isFalse();
     }
 

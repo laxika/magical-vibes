@@ -53,7 +53,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | LY Layers, protection, text changes, linked abilities | LY-1 to LY-5 | LY-1, LY-2, LY-3 done 2026-11-27 |
 | DR Draws | DR-1 | DR-1 done 2026-11-27 (E6's plural "one of them" readers: owner question) |
 | CB Combat | CB-1 | CB-1 done 2026-11-27 (M11's block half left: it needs multi-defender combat damage) |
-| PP Perpetual changes | PP-1 | open |
+| PP Perpetual changes | PP-1 | PP-1 done 2026-11-27 (L8, O47 left; O41's hand half left) |
 | PL Each player chooses, then all act | PL-1 | open |
 | MC Single cards | MC-1, MC-2 | open |
 | AI Hard / easy AI | AI-1, AI-2 | AI-1, AI-2 done 2026-11-27 |
@@ -1180,7 +1180,24 @@ New line N15 (seen in EB-1): Karlach's graveyard specialize return (`SpecializeK
 gives "perpetually can't block" as a static on a runtime copy of the card, so the card loses it when it changes zones (O2's
 Karlach part; its entry outside the entry batch has no observable effect).
 
-Outcome:
+Outcome: done 2026-11-27. Perpetual changes are written to the physical card's perpetual stores, not to a runtime copy a copy then
+copies (CR 707.2; perpetual changes are digital-only, so the project rule in effect-building-blocks.md, not the CR, says what a copy
+copies). Fixed, each with a test that failed first: L16 and O42 (Brokers' Safeguard's entry counter is a perpetual
+`StaticAbility` the entry replacement reads; Switchgrass Grazer's two riders the same; Mischievous Lookout's cast-time change and
+`PerpetuallyBecomeCreatureEffect` through `PerpetuallyBecomeCreatureEffectHandler.become`; Cogwork Progenitor's sought card keeps its
+identity in hand; Gale and Craving of Yeenoghu are `PerpetuallyGrantAbilitiesEffect(sourceObjectCard(), StaticAbility.of(…))`, the
+returned aura found as the entry's returned permanent, CR 400.7j; a granted `StaticBoostEffect` now boosts its own permanent once,
+not twice), O41's battlefield half (the six cards on `PerpetuallyGrantKeywordsToTriggeringCardEffect.toCards(sourceObjectCard(), …)`,
+a printed keyword counted as an instance already had, CR 113.2c), O44 (a face-down spell's power is 2, CR 702.37c, 708.2), O45
+(Racketeer Boss and Pass the Torch lose the ability only while the spell or permanent is still that object; Monoist Gravliner's
+stationing creature is the trigger's triggering permanent, CR 400.7), N15 (Karlach's "can't block" is a perpetual `StaticAbility`).
+Dropped: O43 (fixed in run PO: `PerpetuallyBoostSourceEffect` folded into `PerpetuallyBoostCardEffect`, a layer-7c modifier, pinned by
+`TomakulPhoenixTest`). Left: L8 (needs perpetual colour, set-mana-cost and supertype stores and every reader of a card's colour,
+mana cost and supertypes outside the battlefield; Hydroponics Architect's subtype and trigger already have stores), O47 (the caster
+choosing among several granted alternative costs needs a cast-request field naming the chosen one through `GameService`, the
+websocket, the frontend and the AI; reachable: Aquatic Subtlety's evoke on a blue artifact creature duplicate Flames of Moradin conjured with its {R} cost), O41's hand half (N73). New lines N73 to
+N76 (MC-2). `PerpetuallyGrantKeywordToSourceEffect` and `PerpetuallyGrantStaticEffectToSourceEffect` deleted with their handlers:
+ledger rows added, ratchet 2,855 / 2,241 to 2,853 / 2,239.
 
 ### PL. Each player chooses, then all act
 
@@ -1379,6 +1396,22 @@ returned card a Food by swapping in a runtime copy (`Permanent.becomeCreatureBas
 N72 (seen in LY-3): fixed by the orchestrator after LY-3. Not a Ward of Piety defect: LS-1's same-name search shows the searched zones
 when nothing matches, and `WardOfPietyTest` and `ArcheryTrainingTest` cast Scour as a helper without answering that prompt; both
 now answer it.
+
+New line N73 (seen in PP-1): an ability of a card in a hand records no hand stay, so `SubjectResolutionService.sourceObjectCard`
+looks in the hand, exile and graveyard; Heir to Dragonfire's card that went from the hand to a graveyard before its hand ability
+resolved still gains its perpetual changes (O41's rest, CR 400.7). Sure of the code.
+
+New line N74 (seen in PP-1): Switchgrass Grazer's attack trigger has `withInterveningIf(new SourceIsSaddled())`, but its Oracle text
+deals the 1 damage on every attack and makes only the perpetual rider depend on "is saddled" (a plain "if", not one right after the
+trigger condition, CR 603.4); `SwitchgrassGrazerTest.unsaddledAttackDoesNotTrigger` asserts the wrong behaviour. Sure.
+
+New line N75 (seen in PP-1): Mischievous Lookout is wired with an entry-trigger grant (`GrantTriggeredAbilityToCastSpellEffect` of
+`PerpetuallyBecomeCreatureEffect`) that `SpellCastingService` special-cases and never adds, making the change as the spell is cast,
+as the Oracle text says; the card should name the cast-time change directly, and `PerpetuallyBecomeCreatureEffect` then has no user.
+
+New line N76 (seen in PP-1): `PerpetuallyGrantCardCharacteristicsEffect` without `cards` grants to the source's card by id after the
+source permanent left the battlefield (Second Little Pig bounced in response still becomes a Boar Spirit; Heir to Dragonfire), not
+only while it is still that object (CR 400.7); `.to(Subjects.sourceObjectCard())` is the fix. Unverified by a test.
 
 Outcome:
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.c.Clone;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -14,6 +15,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -21,7 +23,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GaleConduitOfTheArcane.class, HolyDay.class, CounselOfTheSoratami.class,
+@CardUsed({GaleConduitOfTheArcane.class, Clone.class, HolyDay.class, CounselOfTheSoratami.class,
         Mountain.class, Shock.class, GrizzlyBears.class, Swamp.class})
 class GaleConduitOfTheArcaneTest extends BaseCardTest {
 
@@ -81,6 +83,40 @@ class GaleConduitOfTheArcaneTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, gale)).isEqualTo(5);
         assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A copy of Gale, Storm Conduit doesn't copy the anthem it perpetually gained")
+    void copyOfStormFaceDoesNotCopyItsPerpetualAnthem() {
+        harness.setHand(player1, List.of(new GaleConduitOfTheArcane(), new Mountain(), new Shock()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 3, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        Permanent gale = findPermanent(player1, "Gale, Storm Conduit");
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Clone()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handlePermanentChosen(player2, gale.getId());
+
+        Permanent copy = findPermanent(player2, "Gale, Storm Conduit");
+        assertThat(gqs.getEffectivePower(gd, copy)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, gale)).isEqualTo(5);
     }
 
     @Test

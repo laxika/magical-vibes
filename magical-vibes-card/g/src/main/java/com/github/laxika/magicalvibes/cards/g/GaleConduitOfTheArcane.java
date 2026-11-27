@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -17,7 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantStaticEffectToSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SpecializeEffect;
@@ -90,8 +91,8 @@ public class GaleConduitOfTheArcane extends Card {
             case BLACK -> card.addTrigger(instantOrSorcery,
                     new LoseLifeEffect(2, Subjects.eachOpponent()));
             case RED -> card.addTrigger(instantOrSorcery,
-                    new PerpetuallyGrantStaticEffectToSourceEffect(
-                            new StaticBoostEffect(1, 0, Subjects.creaturesYouControl())));
+                    new PerpetuallyGrantAbilitiesEffect(Subjects.sourceObjectCard(),
+                            List.of(StaticAbility.of(new StaticBoostEffect(1, 0, Subjects.creaturesYouControl())))));
             case GREEN -> card.target(TargetFilters.creature()).addTrigger(instantOrSorcery,
                     new PutCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, 2));
             default -> throw new IllegalArgumentException("Gale doesn't specialize into " + color);

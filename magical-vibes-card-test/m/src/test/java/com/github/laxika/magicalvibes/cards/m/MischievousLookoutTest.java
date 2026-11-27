@@ -19,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MischievousLookout.class, SolRing.class, Shatter.class, WalkingCorpse.class, Pacifism.class, Counterspell.class})
+@CardUsed({com.github.laxika.magicalvibes.cards.c.Clone.class, MischievousLookout.class, SolRing.class, Shatter.class, WalkingCorpse.class, Pacifism.class, Counterspell.class})
 class MischievousLookoutTest extends BaseCardTest {
 
     @Test
@@ -37,7 +37,7 @@ class MischievousLookoutTest extends BaseCardTest {
         Permanent ringPermanent = findPermanent(player1, "Sol Ring");
         assertThat(gqs.isArtifact(gd, ringPermanent)).isTrue();
         assertThat(gqs.isCreature(gd, ringPermanent)).isTrue();
-        assertThat(ringPermanent.getCard().getSubtypes()).contains(CardSubtype.RAT);
+        assertThat(gqs.hasEffectiveSubtype(gd, ringPermanent, CardSubtype.RAT)).isTrue();
         assertThat(gqs.getEffectivePower(gd, ringPermanent)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, ringPermanent)).isEqualTo(1);
 
@@ -48,13 +48,8 @@ class MischievousLookoutTest extends BaseCardTest {
         harness.castInstant(player1, 0, ringPermanent.getId());
         resolveAllTriggers();
 
-        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(card ->
-                card.getId().equals(ring.getId())
-                        && card.hasType(CardType.ARTIFACT)
-                        && card.hasType(CardType.CREATURE)
-                        && card.getSubtypes().contains(CardSubtype.RAT)
-                        && card.getPower() == 2
-                        && card.getToughness() == 1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(card -> card.getId().equals(ring.getId()));
+        assertPerpetualRat(ring);
     }
 
     @Test
@@ -86,11 +81,7 @@ class MischievousLookoutTest extends BaseCardTest {
         var spell = gd.stack.stream()
                 .filter(entry -> entry.getCard().getId().equals(ring.getId()))
                 .findFirst().orElseThrow();
-        assertThat(spell.getCard().hasType(CardType.ARTIFACT)).isTrue();
-        assertThat(spell.getCard().hasType(CardType.CREATURE)).isTrue();
-        assertThat(spell.getCard().getSubtypes()).contains(CardSubtype.RAT);
-        assertThat(spell.getCard().getPower()).isEqualTo(2);
-        assertThat(spell.getCard().getToughness()).isEqualTo(1);
+        assertPerpetualRat(spell.getCard());
     }
 
     @Test
@@ -111,11 +102,7 @@ class MischievousLookoutTest extends BaseCardTest {
         var returnedCard = gd.playerGraveyards.get(player1.getId()).stream()
                 .filter(card -> card.getId().equals(ring.getId()))
                 .findFirst().orElseThrow();
-        assertThat(returnedCard.hasType(CardType.ARTIFACT)).isTrue();
-        assertThat(returnedCard.hasType(CardType.CREATURE)).isTrue();
-        assertThat(returnedCard.getSubtypes()).contains(CardSubtype.RAT);
-        assertThat(returnedCard.getPower()).isEqualTo(2);
-        assertThat(returnedCard.getToughness()).isEqualTo(1);
+        assertPerpetualRat(returnedCard);
     }
 
     @Test
@@ -144,6 +131,42 @@ class MischievousLookoutTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @org.junit.jupiter.api.DisplayName("A copy of the perpetual Rat copies the printed card, not the creature change")
+    @Test
+    void copyOfPerpetualRatIsNotACreature() {
+        harness.addToBattlefield(player1, new MischievousLookout());
+        SolRing ring = new SolRing();
+        harness.setGraveyard(player1, List.of(ring));
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        prepareMainPhase();
+        harness.castFromGraveyard(player1, 0);
+        resolveAllTriggers();
+        Permanent ringPermanent = findPermanent(player1, "Sol Ring");
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new com.github.laxika.magicalvibes.cards.c.Clone()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handlePermanentChosen(player2, ringPermanent.getId());
+
+        assertThat(gqs.isCreature(gd, findPermanent(player2, "Sol Ring"))).isFalse();
+        assertThat(gqs.isCreature(gd, ringPermanent)).isTrue();
+    }
+
+    private void assertPerpetualRat(com.github.laxika.magicalvibes.model.Card card) {
+        assertThat(gqs.cardHasType(card, CardType.ARTIFACT, gd, player1.getId())).isTrue();
+        assertThat(gqs.cardHasType(card, CardType.CREATURE, gd, player1.getId())).isTrue();
+        assertThat(gqs.cardHasSubtype(card, CardSubtype.RAT, gd, player1.getId())).isTrue();
+        assertThat(gqs.getEffectiveCardPower(gd, card)).isEqualTo(2);
+        assertThat(gqs.getEffectiveCardToughness(gd, card)).isEqualTo(1);
     }
 
     private void prepareMainPhase() {

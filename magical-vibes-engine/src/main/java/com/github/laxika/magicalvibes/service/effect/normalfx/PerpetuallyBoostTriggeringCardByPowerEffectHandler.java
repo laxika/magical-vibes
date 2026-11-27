@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostTriggeringCardByPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -30,9 +31,13 @@ public class PerpetuallyBoostTriggeringCardByPowerEffectHandler implements Norma
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         for (var spell : subjectResolutionService.locatedCards(gameData, entry, effect,
                 Subjects.cardsOf(Subjects.triggeringSpell()))) {
-            // The card's current power, including characteristic-defining power while it is still a spell
-            // (Maro) and any perpetual modifiers it already carries.
-            Integer currentPower = gameQueryService.getEffectiveCardPower(gameData, spell.card());
+            // The spell's current power: a face-down spell's is the 2 listed for it (CR 708.2, 702.37c); otherwise
+            // the card's, including characteristic-defining power while it is still a spell (Maro) and any perpetual
+            // modifiers it already carries.
+            StackEntry onStack = CopySupport.triggeringSpell(gameData, entry);
+            Integer currentPower = onStack != null && onStack.isCastFaceDown()
+                    ? CastingPermissionService.spellAsEffectsSeeIt(onStack).getCard().getPower()
+                    : gameQueryService.getEffectiveCardPower(gameData, spell.card());
             int power = Math.max(0, currentPower == null ? 0 : currentPower);
             PerpetualCardPowerToughnessSupport.remember(gameData, spell.card(), power, power);
         }

@@ -529,7 +529,8 @@ departed permanent's last-known copy records whether it had lost its printed abi
 (`Permanent.lastKnownLostPrintedAbilities`) and the departure the abilities granted it as the layers left them. Cipher's grant
 lasts while the encoded card stays exiled (`WHILE_SOURCE_CARD_EXILED`, CR 702.99c). Perpetual abilities and keywords
 (`GameData.perpetualAbilities`, one store of every ability kind, and `perpetualCardKeywords`) are part of the card: the pass seeds
-them, so any "loses all abilities" removes them, and seeds none while the permanent is face down (CR 708.2a). Tests give and read these through `testutil.PermanentGrants`
+them, so any "loses all abilities" removes them, and seeds none while the permanent is face down (CR 708.2a). A seeded or granted
+`StaticBoostEffect` affects other permanents through the source pass and its own permanent once, through its self pass. Tests give and read these through `testutil.PermanentGrants`
 (`abilityUntilEndOfTurn`, `ability`, `loseAllAbilitiesUntilEndOfTurn`, `grantedTriggerEffects`,
 `grantedActivatedAbilities`).
 

@@ -9,7 +9,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantCardCharacteristicsEffect;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantKeywordToSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantKeywordsToTriggeringCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 import java.util.Set;
@@ -31,7 +32,7 @@ public class HeirToDragonfire extends Card {
                         PerpetuallyGrantCardCharacteristicsEffect.becomingCreatureTypes(
                                 Set.of(CardSubtype.DRAGON)),
                         new PerpetuallyBoostCardEffect(this, 3, 3),
-                        new PerpetuallyGrantKeywordToSourceEffect(Keyword.FLYING)
+                        PerpetuallyGrantKeywordsToTriggeringCardEffect.toCards(Subjects.sourceObjectCard(), Keyword.FLYING)
                 ),
                 "{2}{R}, Reveal Heir to Dragonfire from your hand: Heir to Dragonfire perpetually becomes a Dragon, "
                         + "gets +3/+3, and gains flying."

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.c.Cancel;
+import com.github.laxika.magicalvibes.cards.e.ExaltedAngel;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Maro;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RothgaBondedEngulfer.class, Cancel.class, GiantSpider.class, GrizzlyBears.class, Maro.class})
+@CardUsed({RothgaBondedEngulfer.class, Cancel.class, ExaltedAngel.class, GiantSpider.class, GrizzlyBears.class, Maro.class})
 class RothgaBondedEngulferTest extends BaseCardTest {
 
     @Test
@@ -102,5 +103,25 @@ class RothgaBondedEngulferTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Giant Spider");
         assertThat(gd.perpetualCardPowerToughnessModifiers).doesNotContainKey(spider.getId());
+    }
+
+    @Test
+    @DisplayName("X is a face-down creature spell's power of 2, not its real card's")
+    void faceDownCreatureSpellUsesItsFaceDownPower() {
+        harness.enterBattlefieldAndReturn(player1, new RothgaBondedEngulfer());
+        resolveAllTriggers();
+        harness.setHand(player1, List.of(new ExaltedAngel()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreatureWithMorph(player1, 0);
+        resolveAllTriggers();
+
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.turnFaceUp(player1, 1);
+
+        Permanent angel = findPermanent(player1, "Exalted Angel");
+        assertThat(gqs.getEffectivePower(gd, angel)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, angel)).isEqualTo(7);
     }
 }

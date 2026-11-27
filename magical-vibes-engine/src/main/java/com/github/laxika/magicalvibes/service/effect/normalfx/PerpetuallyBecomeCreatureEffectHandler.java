@@ -9,16 +9,18 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBecomeCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantCardCharacteristicsEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
-/** Applies a perpetual creature type, subtype, and base power/toughness change to the source card. */
+/** "It perpetually becomes a 2/1 Rat creature in addition to its other types": the source permanent's card. */
 @Component
 @RequiredArgsConstructor
 public class PerpetuallyBecomeCreatureEffectHandler implements NormalEffectHandlerBean {
@@ -45,22 +47,8 @@ public class PerpetuallyBecomeCreatureEffectHandler implements NormalEffectHandl
         boolean losesAttachmentSubtype = source.isAttached()
                 && source.getCard().getSubtypes().stream()
                 .anyMatch(subtype -> subtype == CardSubtype.EQUIPMENT || subtype == CardSubtype.AURA);
-        Card copy = source.getCard().createRuntimeCopy();
-        EnumSet<CardType> retainedTypes = EnumSet.noneOf(CardType.class);
-        retainedTypes.add(copy.getType());
-        retainedTypes.addAll(copy.getAdditionalTypes());
-        retainedTypes.remove(CardType.CREATURE);
-        copy.setType(CardType.CREATURE);
-        copy.setAdditionalTypes(retainedTypes);
-        ArrayList<CardSubtype> subtypes = new ArrayList<>(copy.getSubtypes());
-        if (!subtypes.contains(become.subtype())) {
-            subtypes.add(become.subtype());
-        }
-        copy.setSubtypes(subtypes);
-        copy.setPower(become.power());
-        copy.setToughness(become.toughness());
-        copy.freeze();
-        source.exchangeCard(copy);
+        Card physical = source.getOriginalCard() != null ? source.getOriginalCard() : source.getCard();
+        become(gameData, physical.getId(), become.power(), become.toughness(), become.subtype());
 
         if (losesAttachmentSubtype) {
             unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, source, source.getAttachedTo());
@@ -68,8 +56,21 @@ public class PerpetuallyBecomeCreatureEffectHandler implements NormalEffectHandl
             durationClock.sourceUnattached(gameData, source.getId());
         }
 
-        gameLogService.append(gameData, GameLog.cardThen(copy,
+        gameLogService.append(gameData, GameLog.cardThen(physical,
                 " perpetually becomes a " + become.power() + "/" + become.toughness() + " "
                         + become.subtype().getDisplayName() + " creature in addition to its other types."));
+    }
+
+    /**
+     * Records that the physical card {@code cardId} perpetually is a {@code power}/{@code toughness} {@code subtype}
+     * creature in addition to its other types, in the perpetual stores every zone reads: the types and subtypes
+     * seeded as its characteristics, the base power and toughness a layer-7b setter with this timestamp
+     * (CR 613.4b), none of it a copiable value (CR 707.2).
+     */
+    public static void become(GameData gameData, UUID cardId, int power, int toughness, CardSubtype subtype) {
+        PerpetuallyGrantCardCharacteristicsEffectHandler.grant(gameData, cardId,
+                new PerpetuallyGrantCardCharacteristicsEffect(Set.of(CardType.CREATURE), Set.of(subtype), List.of()));
+        gameData.perpetualCardBasePowerToughness.put(cardId,
+                new GameData.PerpetualBasePowerToughness(power, toughness, gameData.nextTimestamp()));
     }
 }

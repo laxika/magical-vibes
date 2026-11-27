@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantKeywordsToTriggeringCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantKeywordToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -28,13 +28,13 @@ public class MarshlandHordemaster extends Card {
 
     public MarshlandHordemaster() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new PerpetuallyGrantKeywordToSourceEffect(Keyword.BATTLE_CRY));
+                PerpetuallyGrantKeywordsToTriggeringCardEffect.toCards(Subjects.sourceObjectCard(), Keyword.BATTLE_CRY));
         addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(
                                 Triggers.CREATURE,
                                 new PermanentHasSubtypePredicate(CardSubtype.LIZARD))),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
-                new PerpetuallyGrantKeywordToSourceEffect(Keyword.BATTLE_CRY));
+                PerpetuallyGrantKeywordsToTriggeringCardEffect.toCards(Subjects.sourceObjectCard(), Keyword.BATTLE_CRY));
 
         var deathTrigger = target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),

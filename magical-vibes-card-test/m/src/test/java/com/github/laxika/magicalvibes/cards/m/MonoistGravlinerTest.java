@@ -4,12 +4,15 @@ import com.github.laxika.magicalvibes.cards.a.ArchetypeOfFinality;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -31,6 +34,26 @@ class MonoistGravlinerTest extends BaseCardTest {
         assertThat(gravliner.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.DEATHTOUCH)).isTrue();
         assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A stationing creature that left the battlefield before the trigger resolves gains nothing")
+    void stationingCreatureThatLeftGainsNothing() {
+        harness.addToBattlefield(player1, new MonoistGravliner());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, bears));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent recast = findPermanent(player1, "Grizzly Bears");
+        assertThat(gqs.hasKeyword(gd, recast, Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, recast, Keyword.LIFELINK)).isFalse();
     }
 
     @Test

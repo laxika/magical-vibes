@@ -8,8 +8,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceHasSubtype;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantCardCharacteristicsEffect;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantKeywordToSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantKeywordsToTriggeringCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallySetSourceBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 import java.util.Set;
@@ -24,7 +25,7 @@ public class SecondLittlePig extends Card {
                 List.of(
                         PerpetuallyGrantCardCharacteristicsEffect.becomingCreatureTypes(Set.of(CardSubtype.BOAR, CardSubtype.SPIRIT)),
                         new PerpetuallySetSourceBasePowerToughnessEffect(4, 4),
-                        new PerpetuallyGrantKeywordToSourceEffect(Keyword.FLYING)),
+                        PerpetuallyGrantKeywordsToTriggeringCardEffect.toCards(Subjects.sourceObjectCard(), Keyword.FLYING)),
                 "{2}{W/B}{W/B}: Second Little Pig perpetually becomes a Boar Spirit with base power and toughness "
                         + "4/4 and gains flying. Activate only if Second Little Pig isn't a Spirit."
         ).withActivationCondition(new NotCondition(new SourceHasSubtype(CardSubtype.SPIRIT)),

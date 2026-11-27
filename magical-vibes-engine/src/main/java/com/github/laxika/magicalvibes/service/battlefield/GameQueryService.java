@@ -7496,7 +7496,8 @@ public class GameQueryService {
             StaticEffectContext context = new StaticEffectContext(
                     source, target, sourceSlot.controllerId(), sourceSlot.sameBattlefieldAsTarget(), gameData);
             AccumulatorSnapshot beforeSource = explain != null ? AccumulatorSnapshot.of(accumulator) : null;
-            if (sourceState != null) {
+            // A permanent's own granted boost is applied to it by its self pass (StaticBoostSelfEffectHandler) below.
+            if (sourceState != null && !source.getId().equals(target.getId())) {
                 for (CardEffect grantedEffect : sourceState.getGrantedStaticEffects()) {
                     if (!(grantedEffect instanceof com.github.laxika.magicalvibes.model.effect.StaticBoostEffect)) {
                         continue;

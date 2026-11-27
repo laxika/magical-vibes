@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -20,9 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -139,61 +136,11 @@ public class ExileArtifactThenSeekArtifactAndPerpetuallyBecomeCreatureEffectHand
         }
 
         Card sought = matchingCards.get(ThreadLocalRandom.current().nextInt(matchingCards.size()));
-        gameData.perpetualCardTypes.merge(sought.getId(), Set.of(CardType.CREATURE, CardType.ARTIFACT),
-                (existing, added) -> {
-                    EnumSet<CardType> merged = EnumSet.noneOf(CardType.class);
-                    merged.addAll(existing);
-                    merged.addAll(added);
-                    return Set.copyOf(merged);
-                });
-        gameData.perpetualCardSubtypes.merge(sought.getId(), Set.of(effect.subtype()),
-                (existing, added) -> {
-                    EnumSet<CardSubtype> merged = EnumSet.noneOf(CardSubtype.class);
-                    merged.addAll(existing);
-                    merged.addAll(added);
-                    return Set.copyOf(merged);
-                });
-        gameData.perpetualCardBasePowerToughness.put(sought.getId(),
-                new GameData.PerpetualBasePowerToughness(effect.power(), effect.toughness(),
-                        gameData.nextTimestamp()));
+        PerpetuallyBecomeCreatureEffectHandler.become(
+                gameData, sought.getId(), effect.power(), effect.toughness(), effect.subtype());
         library.removeIf(card -> card.getId().equals(sought.getId()));
         gameData.addCardToHand(controllerId, sought);
-
-        Card soughtForTriggers = sought;
-        List<Card> hand = gameData.playerHands.get(controllerId);
-        if (hand != null) {
-            for (int i = 0; i < hand.size(); i++) {
-                if (hand.get(i).getId().equals(sought.getId())) {
-                    Card modified = perpetuallyBecomeCreature(sought, effect);
-                    hand.set(i, modified);
-                    soughtForTriggers = modified;
-                    break;
-                }
-            }
-        }
-        ActionEvents.sought(gameData, controllerId, List.of(soughtForTriggers));
-    }
-
-    private Card perpetuallyBecomeCreature(Card card,
-                                           ExileArtifactThenSeekArtifactAndPerpetuallyBecomeCreatureEffect effect) {
-        Card copy = card.createRuntimeCopy();
-        EnumSet<CardType> retainedTypes = EnumSet.noneOf(CardType.class);
-        retainedTypes.add(copy.getType());
-        retainedTypes.addAll(copy.getAdditionalTypes());
-        retainedTypes.remove(CardType.CREATURE);
-        retainedTypes.add(CardType.ARTIFACT);
-        copy.setType(CardType.CREATURE);
-        copy.setAdditionalTypes(retainedTypes);
-
-        List<CardSubtype> subtypes = new ArrayList<>(copy.getSubtypes());
-        if (!subtypes.contains(effect.subtype())) {
-            subtypes.add(effect.subtype());
-        }
-        copy.setSubtypes(subtypes);
-        copy.setPower(effect.power());
-        copy.setToughness(effect.toughness());
-        copy.freeze();
-        return copy;
+        ActionEvents.sought(gameData, controllerId, List.of(sought));
     }
 
     private record Candidate(UUID cardId, Permanent permanent, Card card) {

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RacketeerBoss.class, GrizzlyBears.class, Shock.class})
+@CardUsed({RacketeerBoss.class, GrizzlyBears.class, Shock.class, Counterspell.class})
 class RacketeerBossTest extends BaseCardTest {
 
     @Test
@@ -43,6 +44,31 @@ class RacketeerBossTest extends BaseCardTest {
         castBears(second);
         assertThat(findPermanents(player1, "Treasure")).hasSize(2);
         assertThat(gd.perpetualAbilityGrants).doesNotContainKeys(first.getId(), second.getId());
+    }
+
+    @Test
+    @DisplayName("A spell countered before its cast trigger resolves keeps the ability on the card in the graveyard")
+    void counteredSpellKeepsTheAbilityOnTheNewObject() {
+        GrizzlyBears chosen = new GrizzlyBears();
+        harness.setHand(player1, List.of(new RacketeerBoss(), chosen));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+
+        harness.setHand(player2, List.of(new Counterspell()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, chosen.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+        assertThat(gd.perpetualAbilityGrants).containsKey(chosen.getId());
     }
 
     private void castBears(GrizzlyBears bears) {

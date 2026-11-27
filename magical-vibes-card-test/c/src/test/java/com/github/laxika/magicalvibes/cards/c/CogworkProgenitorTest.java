@@ -9,13 +9,15 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CogworkProgenitor.class, SolRing.class})
+@CardUsed({CogworkProgenitor.class, SolRing.class, Clone.class})
 class CogworkProgenitorTest extends BaseCardTest {
 
     @Test
@@ -167,6 +169,37 @@ class CogworkProgenitorTest extends BaseCardTest {
         assertModifiedSoughtCard(sought);
     }
 
+    @Test
+    @DisplayName("A copy of the sought artifact copies its printed values, not its perpetual creature change")
+    void copyOfSoughtArtifactIsNotACreature() {
+        addCreatureReady(player1, new CogworkProgenitor());
+        Card artifact = new CogworkProgenitor();
+        Card sought = new SolRing();
+        harness.setGraveyard(player1, List.of(artifact));
+        harness.setLibrary(player1, List.of(sought));
+        beginEndStepMayChoice();
+        harness.handleMayAbilityChosen(player1, true);
+        Card inHand = gd.playerHands.get(player1.getId()).stream()
+                .filter(card -> card.getId().equals(sought.getId())).findFirst().orElseThrow();
+        gd.playerHands.get(player1.getId()).remove(inHand);
+        Permanent ring = harness.enterBattlefieldAndReturn(player1, inHand);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Clone()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handlePermanentChosen(player2, ring.getId());
+
+        Permanent copy = findPermanent(player2, "Sol Ring");
+        assertThat(gqs.isCreature(gd, copy)).isFalse();
+        assertThat(gqs.isCreature(gd, ring)).isTrue();
+    }
+
     private void beginEndStepMayChoice() {
         beginEndStepTrigger();
         resolveAllTriggers();
@@ -185,10 +218,10 @@ class CogworkProgenitorTest extends BaseCardTest {
                 .filter(card -> card.getId().equals(sought.getId()))
                 .findFirst()
                 .orElseThrow();
-        assertThat(modified.getType()).isEqualTo(CardType.CREATURE);
-        assertThat(modified.getAdditionalTypes()).contains(CardType.ARTIFACT);
-        assertThat(modified.getSubtypes()).contains(CardSubtype.GNOME);
-        assertThat(modified.getPower()).isEqualTo(1);
-        assertThat(modified.getToughness()).isEqualTo(1);
+        assertThat(gqs.cardHasType(modified, CardType.CREATURE, gd, player1.getId())).isTrue();
+        assertThat(gqs.cardHasType(modified, CardType.ARTIFACT, gd, player1.getId())).isTrue();
+        assertThat(gqs.cardHasSubtype(modified, CardSubtype.GNOME, gd, player1.getId())).isTrue();
+        assertThat(gqs.getEffectiveCardPower(gd, modified)).isEqualTo(1);
+        assertThat(gqs.getEffectiveCardToughness(gd, modified)).isEqualTo(1);
     }
 }

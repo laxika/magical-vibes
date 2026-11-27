@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
@@ -15,7 +17,10 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.UUID;
 
-/** Perpetually adds a static effect to targeted creature runtime cards. */
+/**
+ * Perpetually gives each targeted creature's card a static ability: an entry replacement ("enters with an additional
+ * shield counter") in the card's perpetual ability store, any other one as a floating grant re-made as the card enters.
+ */
 @Component
 @RequiredArgsConstructor
 public class PerpetuallyGrantStaticEffectToTargetCreatureEffectHandler
@@ -43,9 +48,9 @@ public class PerpetuallyGrantStaticEffectToTargetCreatureEffectHandler
             }
 
             if (grant.staticEffect() instanceof EnterWithCountersEffect) {
-                var copy = target.getCard().createRuntimeCopy();
-                copy.addStaticEffect(grant.staticEffect());
-                target.exchangeCard(copy);
+                // "This creature enters with ..." is read as the card enters, from the physical card's perpetual store.
+                Card physical = target.getOriginalCard() != null ? target.getOriginalCard() : target.getCard();
+                gameData.grantPerpetualAbility(physical.getId(), StaticAbility.of(grant.staticEffect()));
                 continue;
             }
 

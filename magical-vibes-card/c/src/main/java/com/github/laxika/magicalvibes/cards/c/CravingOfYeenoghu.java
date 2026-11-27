@@ -6,9 +6,10 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantStaticEffectToSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceFromGraveyardAttachedToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -35,8 +36,8 @@ public class CravingOfYeenoghu extends Card {
                 "{R}",
                 List.of(
                         new ReturnSourceFromGraveyardAttachedToTargetEffect(),
-                        new PerpetuallyGrantStaticEffectToSourceEffect(
-                                new StaticBoostEffect(-1, -1, Subjects.attachedCreature()))),
+                        new PerpetuallyGrantAbilitiesEffect(Subjects.sourceObjectCard(),
+                                List.of(StaticAbility.of(new StaticBoostEffect(-1, -1, Subjects.attachedCreature()))))),
                 "{R}: Return this card from your graveyard to the battlefield attached to target creature "
                         + "you control. Craving of Yeenoghu perpetually gains \"Enchanted creature gets "
                         + "-1/-1.\" Activate only as a sorcery.",

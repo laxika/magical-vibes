@@ -1984,9 +1984,11 @@ public class BattlefieldPlacementService {
 
         if (!permanent.isFaceDown()
                 && !gameQueryService.hasLostPrintedAbilitiesAsEntering(gameData, controllerId, permanent)) {
-            // A perpetual "this creature enters with ..." grant is stored as a static effect on
-            // the runtime card so it survives zone changes.
-            for (CardEffect effect : card.getStaticEffects()) {
+            // A perpetual "this creature enters with ..." grant is the physical card's, never a copy's (CR 707.2).
+            List<CardEffect> entryEffects = new ArrayList<>(card.getStaticEffects());
+            entryEffects.addAll(gameData.perpetualStaticEffects(
+                    (permanent.getOriginalCard() != null ? permanent.getOriginalCard() : card).getId()));
+            for (CardEffect effect : entryEffects) {
                 EnterWithCountersEffect enterWith;
                 if (effect instanceof AmplifyEffect amplify) {
                     enterWith = new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE,
