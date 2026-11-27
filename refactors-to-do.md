@@ -1191,7 +1191,7 @@ The effect cleanup's plan and queues were deleted when it closed (2026-11-26). T
 `agent-docs/architecture/effect-building-blocks.md`; `scripts/effect-audit-ledger.csv` keeps every class's verdict and
 `python3 -I scripts/effect-inventory.py` the inventory.
 
-58 items: every open question of the owner's and every orchestrator decision logged for the owner to review (the date is
+59 items: every open question of the owner's and every orchestrator decision logged for the owner to review (the date is
 the run's). An answer that changes play becomes a defect run (entry 18); one that confirms a decision just removes its line.
 
 The full text of each item is in the cleanup plan's last version, `git show 3b0d60d42d4:effect-cleanup-refactor.md`: the open
@@ -1214,6 +1214,7 @@ questions under "The owner's open questions", the decisions under "The owner's d
 - 2026-11-26, U7 Q3: a client chooser for an "[A] or [B]" additional cast cost (`AnyOfCost` as `addCastingCost`; CR 601.2b) is a missing feature: Bone Shards, Demand Answers, Minion Missile and Souls of the Lost can't be cast with their discard from the UI.
 - 2026-11-25, U3b Q5: the special-action delayed payments (Quenchable Fire, the Asps, Sabertooth Cobra; CR 116.2c) raise no tax-paid event (matters only with Tax Taker).
 - 2026-11-27, DM-1 (entry 18, line O9): Bomb Squad's "destroy it. That creature deals 4 damage to its controller": the creature deals the damage as it last existed (CR 608.2h). Does a "prevent all damage that creature would deal this turn" effect on it (Soul Parry) still prevent that damage once it has left the battlefield (CR 400.7)? The handler asks before the destruction, so today it does; moving the check into the player's damage pool needs the answer.
+- 2026-11-27, CT-1 (entry 18, line O65): Perplex's "unless its controller discards their hand": the payer discards as a cost (CR 118.12a). Is that discard caused by a spell an opponent controls, so the payer's Obstinate Baloth or Wilt-Leaf Liege enters the battlefield? Their rulings speak of "a spell or ability an opponent controls causes you to discard" but not of a ransom. Today the payer is named as the cause, so they don't.
 
 #### Orchestrator decisions for the owner to review
 
@@ -1325,7 +1326,7 @@ Don't commit.
 - Wake to Slaughter's opponent choice (`opponentChoosesOneForHand`, its own `wakeToSlaughterChosenCardId` state) is unchecked for multiplayer. Fairly sure from the code.
 - Vislor Turlough with 3+ players: whether the goad step resolves after the opponent prompt, with the new controller. Unverified.
 
-#### Simultaneity and APNAP (CR 101.4, 603.10a, 608.2e) (23)
+#### Simultaneity and APNAP (CR 101.4, 603.10a, 608.2e) (21)
 
 - Multi-dealer damage is dealt one dealer at a time: the bite (runs 37, 38), Rakdos Charm's third mode (T1, defect run 2: needs the open simultaneous event, `DamageSupport.beginDamageEvent`), Judgment of Alexander (P12). Sure.
 - Disorienting Choice exiles, Eumidian Wastewaker sacrifices or discards at each player's answer. Sure.
@@ -1339,8 +1340,6 @@ Don't commit.
 - An additional time a triggered ability triggers (CR 603.2d) is made by `GameData.TriggerAwareStackList.add` copying the first entry (`copyForNewStackObject`) once it reaches the stack, so the copies keep the first instance's targets and any mode announced before it got there; each instance should choose its own (CR 603.3c, 603.3d). Unsure.
 - `ParleyEffect`'s token form (Cutthroat Negotiator, Innocuous Researcher) creates the tokens inside its own handler, so a token-creation prompt pauses it after the draws' order is set and a rerun would reveal and draw again; Storm Fleet Negotiator and Phabine now use the step form. Unsure (by reading).
 - Tribute's "paid" check is `placed >= N`, so a halved tribute (an opponent's Halving Season) reads as unpaid (CR 702.104b: "as specified").
-- Experience counters and `MultiPermanentChoiceHandlerService`'s poison counters name no placer, so Vorinclex and Halving Season don't apply to them. Sure.
-- The 6-argument entering `replaceCounters` (a named placer) skips `appliesToAllPermanents` doublers on opponents' permanents (Primal Vigor's counter half). Fairly sure.
 - `TokenKindReplacements` and `JinnieFayTokenReplacements` read `event.controllerId()`'s battlefield, not the tokens' creator after Crafty Cutpurse; the count replacements resolve with Gather Specimens for creature tokens, though Chatterfang's ruling applies entering-control changes after (CR 616.1). Fairly sure.
 - The two remaining fixed-order `getTokenMultiplier` callers (`CreateTokensAttachedToControlledCreaturesEffectHandler`, `ReturnTargetCreatureToHandAndCreateTokenCopyEffectHandler`) skip the ordered token event.
 - The recipient damage multipliers (Gisela, Castigator, floated) are one pool option and the controller and source multipliers another, so a "plus N" can't be ordered between two of them (CR 616.1). Sure of the code.
@@ -1351,7 +1350,7 @@ Don't commit.
 - Flame Spill, Pigment Storm, Ravenous Tyrannosaurus, Megatron, Ram Through: the excess ignores damage from other sources dealt at the same time (a simultaneous step's damage to the same creature, CR 120.4a); only `SequenceEffect.simultaneous` could combine them, and none of these cards does. Sure of the code, low.
 - `AttackLegalityService.isCantAttackDueToGlobalRestriction`'s planechase branch judges a plane's `CreaturesCantAttackUnlessPredicateEffect` exemption with no filter context (the context it builds is used only by the attack-or-block branch), so a source-relative exemption (Ensnaring Bridge's hand size, `youControl`) on a plane would misjudge; no plane uses one today. Sure of the code, latent.
 
-#### Missing events or records (searches, coin flips, seeks, shuffles, counters, draws) (15)
+#### Missing events or records (searches, coin flips, seeks, shuffles, counters, draws) (14)
 
 - The Ring's level 2–4 abilities aren't implemented, only legendary and can't-be-blocked-by-greater-power (CR 701.54c). Sure.
 - The queue's may-searches (New Frontiers, Natural Balance, ...) have no "do you search?", so a player can't search and find nothing (CR 701.23a, 701.23b). Unverified.
@@ -1363,7 +1362,6 @@ Don't commit.
 - The selection-follow-up drafts (`LibraryRevealChoice`: Support Skyforge, Adaptive Armorer, Dragon Typhoon, Masterpiece Vault) record no CONJURE step.
 - When a library search is prevented, `SearchLibraryAndOrGraveyardForCardToHandEffect` (and the choice handler's `finishSearch`) still shuffles on a fruitless search or a decline ("If you search your library this way, shuffle"). Sure of the code, low.
 - Last Light of Durin's Day's "search your hand and/or library" always searches (and shuffles) the library; the player can't choose to search only the hand. Sure, low.
-- Suncleanser's player lock (`CantGetCountersEffect.onPlayers`) is not asked by the spark cost, proliferate's experience/energy/poison writes, `AddAnotherCounterOfEachKindToTargetEffectHandler`, `DamagePreventionService` rad, `MayHaveThisLandEnterTappedForRadCountersHandler`, `ExperienceCountersEffectHandler`'s direct put or `DoubleCountersOnControllerEffectHandler`'s energy (Suncleanser ruling: an affected player can't get counters). Sure of the code.
 - `MayMiscHandlerService.handleLookAtTopCardPutLandOrCreatureChoice`'s Aura put path records no RETURN step, so an "if you didn't put a card onto the battlefield" after an Aura put would misread. Sure.
 - `CombatAttackService` throws "must attack the specified player" for a `MustAttackIfAbleEffect(defenderId)` instead of weighing it against other requirements (CR 508.1d). Sure of the code, low.
 - Journey for the Elixir: taking both cards from the graveyard doesn't shuffle, though its text says "search your library and graveyard … then shuffle". Sure of the code.
@@ -1512,7 +1510,7 @@ Don't commit.
 - The morph face-up life cost (`SpellCastingService.validateMorphLifeCost`) and the attack / block life taxes (`CombatAttackService`, `CombatBlockService`) check `canPlayerLifeChange`, not `canPlayerLoseLife` (CR 119.8: a player who can't lose life can't pay life). Sure of the code.
 - Library of Leng's "if an effect causes you to discard a card" offers its top-of-library replacement for a discard paid as a cost (a ward or "unless" discard ransom, `ResolutionCostPaymentService`'s discard prompt); its ruling: "You can't use the Library of Leng ability  (CR 118.12). Sure of the ruling, fairly sure of the code.
 - Ward—Waterbend's payability (`WaterbendPaymentService.canPay`) counts the pool and the untapped artifacts and creatures, not mana the payer could still make (CR 118.3, 605.3a), so a payer with untapped lands and an empty pool isn't asked. Sure of the code.
-- The Serpent Society's poison ransom puts the counters with the ward's controller as their placer (`LifeSupport.applyPoisonCounters(..., sourceControllerId)`), and Perplex's discard-hand ransom names the payer as its cause: who "puts" a counter or "causes" a discard paid as a cost was kept as it was (Vorinclex, Obstinate Baloth readers), not checked against the rules. Unsure.
+- Perplex's discard-hand ransom names the payer as the discard's cause, so an opponent's Perplex doesn't count as "a spell or ability an opponent controls causes you to discard" for Obstinate Baloth or Wilt-Leaf Liege: not settled by the rules (an owner question in entry 17, CT-1). Unsure.
 - Gix, Yawgmoth Praetor: "whenever a creature deals combat damage to one of your opponents, its controller may pay 1 life. Sure of the Oracle text and the code.
 - The hard AI scores an `UnlessPaysEffect` as value(ifPaid) − value(ifNotPaid) for the payer (step 10 run U3a), but `CounterSpellEffect` is valued as the AI's own counterspell, so a ward or "counter unless" asked of the AI about its own spell scores negative and is declined (it scored 0 and was declined before). Sure of the code.
 - Timothar, Baron of Bats: when a replacement creates more than one Bat, only the last one is linked to the exiled card (`CreateTokenLinkedToCardsExiledThisWayEffectHandler` gives each exile entry one source); the ruling says every such Bat has the linked ability and any of them returns the card. Sure of the ruling and the code.

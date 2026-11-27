@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.model.effect.ControllerCantSacrificeTarget
 import com.github.laxika.magicalvibes.model.effect.PayBlackManaWithLifeEffect;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PlayerCounterType;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetSpellDamagePreventionShield;
@@ -5988,6 +5989,8 @@ public class GameQueryService {
                     if (replacement instanceof AddOnePlusOneCountersEffect placement) {
                         applies = placementReplacementApplies(gameData, placement, source, sourceControllerId,
                                 permanent, controllerId, placingPlayerId, counterType, creature, artifact);
+                    } else if (replacement.appliesToAllPermanents()) {
+                        applies = replacement.appliesTo(counterType, creature, artifact);
                     } else if (replacement.appliesGlobally()) {
                         applies = replacement.appliesTo(counterType, creature, sourceControlsAffected,
                                 sourceControllerIsPlacing, false);
@@ -6069,9 +6072,17 @@ public class GameQueryService {
         return replacePlayerCountersPlacedBy(gameData, playerId, count, placingPlayerId);
     }
 
-    /** Applies experience-counter replacements (e.g. Winding Constrictor) for a player getting counters. */
-    public int replaceExperienceCounters(GameData gameData, UUID playerId, int count) {
-        return replacePlayerCounters(gameData, playerId, count);
+    /**
+     * The number of {@code kind} counters {@code playerId} gets when {@code placingPlayerId} would put {@code count} on
+     * them: none if that player can't get counters (Solemnity, Suncleanser), else after the counter-placement
+     * replacements that apply to that placer (Vorinclex, Halving Season). Poison's own suppressions (Melira) are applied
+     * by {@code LifeSupport.applyPoisonCounters}, which every poison placement goes through.
+     */
+    public int replacePlayerCounters(GameData gameData, UUID playerId, PlayerCounterType kind, int count,
+                                     UUID placingPlayerId) {
+        return kind == PlayerCounterType.ENERGY
+                ? replaceEnergyCounters(gameData, playerId, count, placingPlayerId)
+                : replacePlayerCountersPlacedBy(gameData, playerId, count, placingPlayerId);
     }
 
     /** Applies rad-counter replacements for a player receiving counters placed by {@code placingPlayerId}. */
@@ -6112,8 +6123,13 @@ public class GameQueryService {
         return anyBattlefieldHasStaticEffect(gameData, CountersCantBePlacedEffect.class);
     }
 
-    /** Applies all energy-counter replacements for a player. */
+    /** Applies all energy-counter replacements for a player getting energy, who puts the counters on themself. */
     public int replaceEnergyCounters(GameData gameData, UUID playerId, int count) {
+        return replaceEnergyCounters(gameData, playerId, count, playerId);
+    }
+
+    /** Applies all energy-counter replacements for energy {@code placingPlayerId} would give {@code playerId}. */
+    public int replaceEnergyCounters(GameData gameData, UUID playerId, int count, UUID placingPlayerId) {
         if (count <= 0 || playerId == null) {
             return count;
         }
@@ -6135,9 +6151,8 @@ public class GameQueryService {
                     result = MaroGoneNutsSupport.apply(
                             gameData, effect, replacement.replaceEnergy(result));
                 } else if (effect instanceof AddOnePlusOneCountersEffect placement
-                        && playerPlacementReplacementApplies(placement, playerId, playerId, playerId)) {
-                    // A player getting energy puts the counters on themself, so they are the placing player
-                    // (Winding Constrictor, level 3 of Innkeeper's Talent, Vorinclex).
+                        && playerPlacementReplacementApplies(placement, playerId, playerId, placingPlayerId)) {
+                    // Winding Constrictor, level 3 of Innkeeper's Talent, Vorinclex.
                     result = MaroGoneNutsSupport.apply(
                             gameData, effect, placement.replace(null, result));
                 }
@@ -6151,7 +6166,8 @@ public class GameQueryService {
             for (Permanent source : sourceBattlefield) {
                 for (CardEffect effect : staticEffectsIncludingTemporary(gameData, source, sourceControllerId)) {
                     if (effect instanceof AddOnePlusOneCountersEffect placement
-                            && playerPlacementReplacementApplies(placement, sourceControllerId, playerId, playerId)) {
+                            && playerPlacementReplacementApplies(placement, sourceControllerId, playerId,
+                            placingPlayerId)) {
                         halved[0] = MaroGoneNutsSupport.apply(gameData, effect, placement.replace(null, halved[0]));
                     }
                 }

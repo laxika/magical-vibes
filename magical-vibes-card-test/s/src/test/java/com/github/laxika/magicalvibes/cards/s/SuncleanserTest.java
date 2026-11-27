@@ -1,9 +1,15 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.a.AethericAmplifier;
 import com.github.laxika.magicalvibes.cards.a.AetherMeltdown;
+import com.github.laxika.magicalvibes.cards.b.BloatflySwarm;
+import com.github.laxika.magicalvibes.cards.b.BloodPoet;
 import com.github.laxika.magicalvibes.cards.b.BurstOfStrength;
 import com.github.laxika.magicalvibes.cards.c.CaressOfPhyrexia;
 import com.github.laxika.magicalvibes.cards.g.GreenwoodSentinel;
+import com.github.laxika.magicalvibes.cards.m.MariposaMilitaryBase;
+import com.github.laxika.magicalvibes.cards.m.MaulfistRevolutionary;
+import com.github.laxika.magicalvibes.cards.m.MizzixOfTheIzmagnus;
 import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.cards.n.NuclearFallout;
 import com.github.laxika.magicalvibes.cards.r.RealityRipple;
@@ -21,9 +27,12 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Suncleanser.class, GreenwoodSentinel.class, BurstOfStrength.class, Murder.class,
-        CaressOfPhyrexia.class, AetherMeltdown.class, RealityRipple.class, NuclearFallout.class})
+        CaressOfPhyrexia.class, AetherMeltdown.class, RealityRipple.class, NuclearFallout.class,
+        SteadyProgress.class, MaulfistRevolutionary.class, BloatflySwarm.class, Shock.class, MariposaMilitaryBase.class,
+        AethericAmplifier.class, BloodPoet.class, MizzixOfTheIzmagnus.class})
 class SuncleanserTest extends BaseCardTest {
 
     private static final String CREATURE_MODE =
@@ -252,6 +261,145 @@ class SuncleanserTest extends BaseCardTest {
             harness.passBothPriorities();
             harness.handleListChoice(player1, PLAYER_MODE);
             harness.handlePermanentChosen(player1, player2.getId());
+        }
+    }
+
+    @Nested
+    @CardUsed({Suncleanser.class, SteadyProgress.class, MaulfistRevolutionary.class, BloatflySwarm.class, Shock.class,
+            MariposaMilitaryBase.class, AethericAmplifier.class, BloodPoet.class, MizzixOfTheIzmagnus.class})
+    @DisplayName("Every way of giving a player counters respects the player lock")
+    class PlayerLockOnEveryWriter {
+
+        @Test
+        @DisplayName("Proliferate gives the locked opponent no experience, energy, rad or poison counter")
+        void proliferateGivesNoCounters() {
+            lockOpponent();
+            gd.playerExperienceCounters.put(player2.getId(), 1);
+            gd.playerEnergyCounters.put(player2.getId(), 1);
+            gd.playerRadCounters.put(player2.getId(), 1);
+            gd.playerPoisonCounters.put(player2.getId(), 1);
+            harness.setHand(player1, List.of(new SteadyProgress()));
+            harness.addMana(player1, ManaColor.BLUE, 1);
+            harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+            harness.castAndResolveInstant(player1, 0);
+            harness.handleMultiplePermanentsChosen(player1, List.of(player2.getId()));
+
+            assertThat(gd.playerExperienceCounters.get(player2.getId())).isEqualTo(1);
+            assertThat(gd.playerEnergyCounters.get(player2.getId())).isEqualTo(1);
+            assertThat(gd.playerRadCounters.get(player2.getId())).isEqualTo(1);
+            assertThat(gd.playerPoisonCounters.get(player2.getId())).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("Maulfist Revolutionary gives the locked opponent no rad, spark or experience counter")
+        void anotherCounterOfEachKindGivesNoCounters() {
+            lockOpponent();
+            gd.playerRadCounters.put(player2.getId(), 1);
+            gd.playerSparkCounters.put(player2.getId(), 1);
+            gd.playerExperienceCounters.put(player2.getId(), 1);
+
+            harness.castFromHand(player1, new MaulfistRevolutionary(), "{1}{G}{G}");
+            harness.passBothPriorities();
+            harness.handlePermanentChosen(player1, player2.getId());
+            harness.passBothPriorities();
+
+            assertThat(gd.playerRadCounters.get(player2.getId())).isEqualTo(1);
+            assertThat(gd.playerSparkCounters.get(player2.getId())).isEqualTo(1);
+            assertThat(gd.playerExperienceCounters.get(player2.getId())).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("Bloatfly Swarm's prevention gives the locked opponent no rad counters; its controller still gets them")
+        void bloatflySwarmGivesTheLockedOpponentNoRadCounters() {
+            lockOpponent();
+            Permanent swarm = harness.addToBattlefieldAndReturn(player1, new BloatflySwarm());
+            swarm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+            harness.setHand(player1, List.of(new Shock()));
+            harness.addMana(player1, ManaColor.RED, 1);
+
+            harness.castAndResolveInstant(player1, 0, swarm.getId());
+
+            assertThat(gd.playerRadCounters.getOrDefault(player1.getId(), 0)).isEqualTo(2);
+            assertThat(gd.playerRadCounters.getOrDefault(player2.getId(), 0)).isZero();
+        }
+
+        @Test
+        @DisplayName("The locked opponent gets no rad counters for having Mariposa Military Base enter tapped")
+        void mariposaMilitaryBaseGivesNoRadCounters() {
+            lockOpponent();
+            asOpponentsMainPhase();
+            harness.setHand(player2, List.of(new MariposaMilitaryBase()));
+
+            harness.playLand(player2, 0);
+            harness.handleMayAbilityChosen(player2, true);
+
+            assertThat(findPermanent(player2, "Mariposa Military Base").isTapped()).isTrue();
+            assertThat(gd.playerRadCounters.getOrDefault(player2.getId(), 0)).isZero();
+        }
+
+        @Test
+        @DisplayName("Doubling the locked opponent's counters gives them no rad, spark or experience counters")
+        void doublingGivesNoCounters() {
+            lockOpponent();
+            Permanent amplifier = harness.addToBattlefieldAndReturn(player2, new AethericAmplifier());
+            amplifier.setSummoningSick(false);
+            gd.playerRadCounters.put(player2.getId(), 1);
+            gd.playerSparkCounters.put(player2.getId(), 2);
+            gd.playerExperienceCounters.put(player2.getId(), 3);
+            asOpponentsMainPhase();
+            harness.addMana(player2, ManaColor.COLORLESS, 4);
+
+            harness.activateAbility(player2, 0, 1, 1, null);
+            harness.passBothPriorities();
+
+            assertThat(gd.playerRadCounters.get(player2.getId())).isEqualTo(1);
+            assertThat(gd.playerSparkCounters.get(player2.getId())).isEqualTo(2);
+            assertThat(gd.playerExperienceCounters.get(player2.getId())).isEqualTo(3);
+        }
+
+        @Test
+        @DisplayName("The locked opponent can't pay a spark cost that puts spark counters on them")
+        void lockedOpponentCantPayAPlusSparkCost() {
+            lockOpponent();
+            harness.addToBattlefield(player2, new BloodPoet());
+            asOpponentsMainPhase();
+
+            assertThatThrownBy(() -> harness.activateAbility(player2, 0, 0, null, null))
+                    .isInstanceOf(IllegalStateException.class);
+            assertThat(gd.playerSparkCounters.getOrDefault(player2.getId(), 0)).isZero();
+        }
+
+        @Test
+        @DisplayName("The locked opponent gets no experience counters")
+        void lockedOpponentGetsNoExperienceCounters() {
+            lockOpponent();
+            harness.addToBattlefield(player2, new MizzixOfTheIzmagnus());
+            asOpponentsMainPhase();
+            harness.setHand(player2, List.of(new Shock()));
+            harness.addMana(player2, ManaColor.RED, 1);
+
+            harness.castInstant(player2, 0, player1.getId());
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+
+            assertThat(gd.playerExperienceCounters.getOrDefault(player2.getId(), 0)).isZero();
+        }
+
+        private void lockOpponent() {
+            harness.setHand(player1, List.of(new Suncleanser()));
+            harness.addMana(player1, ManaColor.WHITE, 2);
+            harness.castCreature(player1, 0);
+            harness.passBothPriorities();
+            harness.handleListChoice(player1, PLAYER_MODE);
+            harness.handlePermanentChosen(player1, player2.getId());
+            harness.passBothPriorities();
+        }
+
+        private void asOpponentsMainPhase() {
+            harness.forceActivePlayer(player2);
+            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+            harness.clearPriorityPassed();
         }
     }
 }

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.mayfx;
 
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.PlayerCounterType;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -9,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayHaveThisLandEnterTappedForRadCountersEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
@@ -23,6 +25,7 @@ public class MayHaveThisLandEnterTappedForRadCountersHandler implements MayEffec
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final LifeSupport lifeSupport;
     private final BattlefieldEntryService battlefieldEntryService;
     private final InputCompletionService inputCompletionService;
 
@@ -45,10 +48,11 @@ public class MayHaveThisLandEnterTappedForRadCountersHandler implements MayEffec
             if (source != null) {
                 source.tap();
             }
-            gameData.playerRadCounters.merge(ability.controllerId(), effect.radCounterCount(), Integer::sum);
             gameLogService.append(gameData, GameLog.textCardText(
-                    player.getUsername() + " gets " + effect.radCounterCount() + " rad counters — ",
-                    ability.sourceCard(), " enters tapped."));
+                    player.getUsername() + " has ", ability.sourceCard(), " enter tapped."));
+            // "If you do, you get two rad counters": put by the land's controller.
+            lifeSupport.givePlayerCounters(gameData, ability.controllerId(), PlayerCounterType.RAD,
+                    effect.radCounterCount(), ability.sourceCard().getName(), ability.controllerId());
             log.info("Game {} - {} has {} enter tapped and gets {} rad counters",
                     gameData.id, player.getUsername(), ability.sourceCard().getName(), effect.radCounterCount());
         }

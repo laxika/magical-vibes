@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToTargetFromC
 import com.github.laxika.magicalvibes.model.effect.ReplaceLandManaWithColorEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.rules.SpellEvent;
-import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
 import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -23,6 +22,7 @@ import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.PlayerCounterType;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellOrAbilityEffect;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -3470,21 +3470,14 @@ public class ChoiceHandlerService {
         }
 
         gameData.interaction.clearAwaitingInput();
-        if (ChoiceContext.AddAnotherCounterTypeChoice.POISON.equals(choice)) {
+        boolean poison = ChoiceContext.AddAnotherCounterTypeChoice.POISON.equals(choice);
+        if (poison || ChoiceContext.AddAnotherCounterTypeChoice.ENERGY.equals(choice)) {
             UUID targetId = ctx.placementTargetId() != null ? ctx.placementTargetId() : ctx.targetId();
-            lifeSupport.applyPoisonCounters(gameData, targetId, 1, ctx.sourceCardName(),
+            lifeSupport.givePlayerCounters(gameData, targetId,
+                    poison ? PlayerCounterType.POISON : PlayerCounterType.ENERGY, 1, ctx.sourceCardName(),
                     gameData.pendingEffectResolutionEntry != null
                             ? gameData.pendingEffectResolutionEntry.getControllerId()
                             : gameData.currentlyResolvingControllerId);
-        } else if (ChoiceContext.AddAnotherCounterTypeChoice.ENERGY.equals(choice)) {
-            UUID targetId = ctx.placementTargetId() != null ? ctx.placementTargetId() : ctx.targetId();
-            int amount = gameQueryService.replaceEnergyCounters(gameData, targetId, 1);
-            if (amount > 0) {
-                gameData.setPlayerEnergyCounters(targetId,
-                        gameData.playerEnergyCounters.getOrDefault(targetId, 0) + amount);
-                gameData.rulesEvents.occur(CounterChangeEvent.ofPlayer(CounterChangeEvent.Kind.ENERGY, targetId,
-                        amount));
-            }
         } else {
             CounterType counterType = ctx.counterTypes().stream()
                     .filter(type -> ChoiceContext.AddAnotherCounterTypeChoice.counterLabel(type).equals(choice))

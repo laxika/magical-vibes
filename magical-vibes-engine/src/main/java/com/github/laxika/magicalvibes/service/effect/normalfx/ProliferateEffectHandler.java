@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.PlayerCounterType;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -82,10 +83,8 @@ public class ProliferateEffectHandler implements NormalEffectHandlerBean {
 
         List<UUID> eligiblePlayerIds = new ArrayList<>();
         for (UUID playerId : gameData.playerIds) {
-            if (gameData.playerPoisonCounters.getOrDefault(playerId, 0) > 0
-                    || gameData.playerRadCounters.getOrDefault(playerId, 0) > 0
-                    || gameData.playerEnergyCounters.getOrDefault(playerId, 0) > 0
-                    || gameData.playerExperienceCounters.getOrDefault(playerId, 0) > 0) {
+            if (java.util.Arrays.stream(PlayerCounterType.values())
+                    .anyMatch(kind -> gameData.playerCounterCount(playerId, kind) > 0)) {
                 eligiblePlayerIds.add(playerId);
             }
         }

@@ -656,8 +656,9 @@ public class ResolutionCostPaymentService {
                 if (!gameQueryService.canPlayerGetPoisonCounters(gameData, payerId)) {
                     yield Outcome.NOT_PAID;
                 }
+                // The payer performs the cost's action, so they put the counters (CR 118.12a).
                 lifeSupport.applyPoisonCounters(gameData, payerId, poison.count(), payment.sourceCard().getName(),
-                        payment.sourceControllerId());
+                        payerId);
                 yield afterImmediatePayment(gameData);
             }
             case DamageFromSourceCost damage -> {

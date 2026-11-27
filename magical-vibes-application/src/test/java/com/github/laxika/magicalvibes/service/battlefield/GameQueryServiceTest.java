@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.CantGetCountersEffect;
+import com.github.laxika.magicalvibes.model.PlayerCounterType;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageFromCreaturesEffect;
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
@@ -1863,6 +1865,38 @@ class GameQueryServiceTest {
             assertThat(gqs.replacePoisonCounters(gd, player2Id, 1)).isEqualTo(1);
             assertThat(gqs.replaceEnergyCounters(gd, player1Id, 1)).isEqualTo(2);
             assertThat(gqs.replaceEnergyCounters(gd, player2Id, 1)).isEqualTo(1);
+        }
+    }
+
+    @Nested
+    @DisplayName("Player counters put by a named player")
+    class PlayerCountersPutByANamedPlayer {
+
+        @Test
+        @DisplayName("An \"if you would put\" replacement applies to every kind only when its controller puts them")
+        void ifYouWouldPutAppliesOnlyToItsControllersPlacements() {
+            Card marker = createCreature("Vorinclex", 6, 6, CardColor.GREEN);
+            marker.addStaticEffect(AddOnePlusOneCountersEffect.twice(CounterType.ANY,
+                    AddOnePlusOneCountersEffect.anyPermanent()).alsoOnPlayers().placedByYou());
+            addPermanent(player1Id, marker);
+
+            for (PlayerCounterType kind : PlayerCounterType.values()) {
+                assertThat(gqs.replacePlayerCounters(gd, player2Id, kind, 1, player1Id)).as(kind.name()).isEqualTo(2);
+                assertThat(gqs.replacePlayerCounters(gd, player1Id, kind, 1, player2Id)).as(kind.name()).isEqualTo(1);
+            }
+        }
+
+        @Test
+        @DisplayName("A player who can't get counters gets none of any kind")
+        void playerWhoCantGetCountersGetsNone() {
+            gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Suncleanser", null, player1Id,
+                    CantGetCountersEffect.onPlayers(Subjects.targetPlayer(), Duration.PERMANENT), player2Id,
+                    Duration.PERMANENT));
+
+            for (PlayerCounterType kind : PlayerCounterType.values()) {
+                assertThat(gqs.replacePlayerCounters(gd, player2Id, kind, 3, player1Id)).as(kind.name()).isZero();
+                assertThat(gqs.replacePlayerCounters(gd, player1Id, kind, 3, player2Id)).as(kind.name()).isEqualTo(3);
+            }
         }
     }
 

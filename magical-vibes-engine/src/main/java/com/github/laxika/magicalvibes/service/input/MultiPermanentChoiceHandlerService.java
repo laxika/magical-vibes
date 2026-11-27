@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.PendingRagingRiver;
 import com.github.laxika.magicalvibes.model.PendingWhimsOfTheFates;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PlayerCounterType;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StepKind;
@@ -2136,10 +2137,7 @@ public class MultiPermanentChoiceHandlerService {
             });
             List<UUID> eligiblePlayerIds = new ArrayList<>();
             for (UUID candidatePlayerId : gameData.playerIds) {
-                if (gameData.playerPoisonCounters.getOrDefault(candidatePlayerId, 0) > 0
-                        || gameData.playerRadCounters.getOrDefault(candidatePlayerId, 0) > 0
-                        || gameData.playerEnergyCounters.getOrDefault(candidatePlayerId, 0) > 0
-                        || gameData.playerExperienceCounters.getOrDefault(candidatePlayerId, 0) > 0) {
+                if (playerCounterTotal(gameData, candidatePlayerId) > 0) {
                     eligiblePlayerIds.add(candidatePlayerId);
                 }
             }
@@ -2175,49 +2173,28 @@ public class MultiPermanentChoiceHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
-    /** Gives player {@code permId} another counter of each tracked kind the player already has. */
+    /**
+     * Gives player {@code permId} another counter of each kind the player already has (CR 701.34a), put by the
+     * proliferating player {@code playerId}.
+     */
     private void proliferatePlayer(GameData gameData, UUID playerId, UUID permId, List<String> proliferatedPlayers) {
-        if (gameData.playerExperienceCounters.getOrDefault(permId, 0) > 0) {
-            gameData.playerExperienceCounters.merge(permId, 1, Integer::sum);
-            gameData.rulesEvents.occur(CounterChangeEvent.ofPlayer(
-                    CounterChangeEvent.Kind.YOU_PUT_COUNTERS, playerId, 1));
-            proliferatedPlayers.add(gameData.playerIdToName.get(permId));
-        }
-        if (gameData.playerEnergyCounters.getOrDefault(permId, 0) > 0) {
-            int added = gameQueryService.replaceEnergyCounters(gameData, permId, 1);
-            if (added > 0) {
-                gameData.setPlayerEnergyCounters(permId,
-                        gameData.playerEnergyCounters.get(permId) + added);
-                gameData.rulesEvents.occur(CounterChangeEvent.ofPlayer(CounterChangeEvent.Kind.ENERGY,
-                        permId, added));
-                gameData.rulesEvents.occur(CounterChangeEvent.ofPlayer(
-                        CounterChangeEvent.Kind.YOU_PUT_COUNTERS, playerId, added));
-                proliferatedPlayers.add(gameData.playerIdToName.get(permId));
+        boolean placed = false;
+        for (PlayerCounterType kind : PlayerCounterType.values()) {
+            if (gameData.playerCounterCount(permId, kind) > 0) {
+                placed |= lifeSupport.givePlayerCounters(gameData, permId, kind, 1, "Proliferate", playerId) > 0;
             }
         }
-        if (gameData.playerRadCounters.getOrDefault(permId, 0) > 0) {
-            lifeSupport.applyRadCounters(gameData, permId, 1, "Proliferate", playerId);
-            proliferatedPlayers.add(gameData.playerIdToName.get(permId));
-        }
-        if (gameData.playerPoisonCounters.getOrDefault(permId, 0) <= 0) {
-            return;
-        }
-        int placed = gameQueryService.applyPoisonCounterReplacement(gameData, permId, 1);
-        placed = gameQueryService.replacePoisonCounters(gameData, permId, placed);
-        if (placed > 0) {
-            int currentPoison = gameData.playerPoisonCounters.getOrDefault(permId, 0);
-            gameData.playerPoisonCounters.put(permId, currentPoison + placed);
-            gameData.rulesEvents.occur(CounterChangeEvent.ofPlayer(
-                    CounterChangeEvent.Kind.YOU_PUT_COUNTERS, playerId, placed));
+        if (placed) {
             proliferatedPlayers.add(gameData.playerIdToName.get(permId));
         }
     }
 
     private static int playerCounterTotal(GameData gameData, UUID playerId) {
-        return gameData.playerExperienceCounters.getOrDefault(playerId, 0)
-                + gameData.playerEnergyCounters.getOrDefault(playerId, 0)
-                + gameData.playerRadCounters.getOrDefault(playerId, 0)
-                + gameData.playerPoisonCounters.getOrDefault(playerId, 0);
+        int total = 0;
+        for (PlayerCounterType kind : PlayerCounterType.values()) {
+            total += gameData.playerCounterCount(playerId, kind);
+        }
+        return total;
     }
 
     private void proliferatePermanent(GameData gameData, StackEntry entry, UUID playerId, Permanent permanent,

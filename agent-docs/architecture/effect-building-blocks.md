@@ -420,6 +420,10 @@ triggered ability is a `TemporaryGlobalTriggeredAbility`. Never a `Permanent` or
   `AddAnotherCounterOfChosenTypeToTargetEffect`, `AdjustChosenCounterOnTargetEffect`.
 - Stores: `GameData.exiledCardCounters` (every kind but time is forgotten as the card leaves exile; `GameData.isSuspended`, CR 702.62b),
   `PlayerCounterType` + `GameData.playerCounterCount` / `removePlayerCounters`; `CantGetCountersEffect`, `CantHaveCountersEffect`.
+- Giving a player counters: `LifeSupport.givePlayerCounters(gameData, player, kind, amount, sourceName, placer)`, the one writer
+  (the player lock, the replacements for that placer, the log, the "you put counters" event); a cost that puts player counters asks
+  `GameQueryService.playerCantGetCounters` and `replacePlayerCounters(gameData, player, kind, amount, placer)`. "You get" is put by
+  the effect's controller, proliferate's by the proliferating player, a ransom's by its payer (CR 118.12a).
 
 **Copies, tokens, conjures:**
 

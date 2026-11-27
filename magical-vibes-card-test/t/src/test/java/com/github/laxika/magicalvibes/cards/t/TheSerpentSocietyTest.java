@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.s.SphinxOfTheFinalWord;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.v.VorinclexMonstrousRaider;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TheSerpentSociety.class, Shock.class, TyphoidRats.class, GrizzlyBears.class, ProdigalPyromancer.class, SphinxOfTheFinalWord.class})
+@CardUsed({TheSerpentSociety.class, Shock.class, TyphoidRats.class, GrizzlyBears.class, ProdigalPyromancer.class, SphinxOfTheFinalWord.class,
+        VorinclexMonstrousRaider.class})
 class TheSerpentSocietyTest extends BaseCardTest {
 
     @Test
@@ -37,6 +39,38 @@ class TheSerpentSocietyTest extends BaseCardTest {
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(5);
         harness.assertOnBattlefield(player1, "The Serpent Society");
         harness.assertInGraveyard(player2, "Shock");
+    }
+
+    @Test
+    @DisplayName("The player paying the ward puts the poison counters: the payer's Vorinclex doubles them")
+    void wardPayerPutsThePoisonCountersForTheirOwnVorinclex() {
+        harness.addToBattlefield(player2, new VorinclexMonstrousRaider());
+        payWardWithShock();
+
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("The player paying the ward puts the poison counters: the ward controller's Vorinclex halves them")
+    void wardPayerPutsThePoisonCountersForTheWardControllersVorinclex() {
+        harness.addToBattlefield(player1, new VorinclexMonstrousRaider());
+        payWardWithShock();
+
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(2);
+    }
+
+    private void payWardWithShock() {
+        addCreatureReady(player1, new TheSerpentSociety());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, findPermanent(player1, "The Serpent Society").getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
     }
 
     @Test

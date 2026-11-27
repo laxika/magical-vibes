@@ -43,7 +43,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | FC Free casts and casting from other zones | FC-1, FC-2, FC-3 | FC-1 done 2026-11-27; FC-2, FC-3 open |
 | CP Casting permissions and cost readers | CP-1 | open |
 | MP Multiplayer opponent choices | MP-1, MP-2 | MP-1 done 2026-11-27; MP-2 open |
-| CT Counters | CT-1, CT-2 | open |
+| CT Counters | CT-1, CT-2 | CT-1 done 2026-11-27; CT-2 open |
 | EB Entry and leave batches | EB-1, EB-2, EB-3 | open |
 | PY Payments | PY-1, PY-2, PY-3 | open |
 | TR Triggers, subjects and targeting | TR-1, TR-2, TR-3 | open |
@@ -375,7 +375,16 @@ Serpent Society's poison placer, Perplex's discard cause: settle by the CR, else
 
 Likely touches: `PermanentCounterSupport`, `LifeSupport.applyPoisonCounters`, the player-counter writers.
 
-Outcome:
+Outcome: 2026-11-27. Fixed: S13, S14, E11 (deleted from entry 18) and O65's poison half (edited down to Perplex, an owner
+question in entry 17). Every write of a player counter goes through the new `LifeSupport.givePlayerCounters` (player lock, the
+replacements for the named placer, log, "you put counters" event) with `GameQueryService.replacePlayerCounters(.., kind, ..,
+placer)`: "you get" is put by the controller (CR 608.2c), proliferate's by the proliferating player (CR 701.34a), a doubling gives
+counters (CR 701.10e), Bloatfly Swarm's by its controller, a ransom's by its payer (CR 118.12a), so The Serpent Society's ward
+poison is halved by the ward controller's Vorinclex and doubled by the payer's. A positive spark cost can't be paid under
+Suncleanser's lock (its ruling) and is replaced like a loyalty cost. The entering `replaceCounters` with a named placer applies
+`appliesToAllPermanents` doublers (Primal Vigor on an opponent's unleash counter). Also fixed: proliferate skipped spark counters.
+`ExperienceCountersEffectHandler`'s direct put already asked the lock (pinned). `replaceExperienceCounters` deleted. No effect
+class added or deleted, so no ledger or ratchet change.
 
 #### CT-2. Counter kinds
 
@@ -476,6 +485,9 @@ event), O56 ("this creature or another [X] enters" records no triggering permane
 no `AttackedTargetIsOpponent` condition; CB-1 takes it if CB-1 runs first).
 
 Likely touches: `TriggerCollectionService`, `TriggeredAbilityQueueService`, `GameData.TriggerAwareStackList`.
+
+New line N8 (seen in CT-1): `EnergyCountersEffectHandler` ("you get {E}") raises no "you put counters" event, so All Will Be
+One doesn't trigger on its controller getting energy (its ruling: any time you put counters on a player).
 
 Outcome:
 

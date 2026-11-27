@@ -203,4 +203,18 @@ class SteadyProgressTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
+
+    @Test
+    @DisplayName("Proliferating a player gives them another spark counter")
+    void proliferatesAPlayersSparkCounters() {
+        gd.playerSparkCounters.put(player1.getId(), 1);
+        harness.setHand(player1, List.of(new SteadyProgress()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.handleMultiplePermanentsChosen(player1, List.of(player1.getId()));
+
+        assertThat(gd.playerSparkCounters.get(player1.getId())).isEqualTo(2);
+    }
 }

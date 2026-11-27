@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.b.BladeSplicer;
+import com.github.laxika.magicalvibes.cards.d.DeadReveler;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MarosGoneNuts;
 import com.github.laxika.magicalvibes.cards.s.Skinrender;
@@ -10,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.t.Triskelion;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
@@ -19,7 +21,8 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({PrimalVigor.class, BladeSplicer.class, Pentavus.class, MarosGoneNuts.class,
-        GrizzlyBears.class, TimberlandGuide.class, Triskelion.class, ThrabenInspector.class, Skinrender.class})
+        GrizzlyBears.class, TimberlandGuide.class, Triskelion.class, ThrabenInspector.class, Skinrender.class,
+        DeadReveler.class})
 class PrimalVigorTest extends BaseCardTest {
 
     @Test
@@ -49,6 +52,24 @@ class PrimalVigorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Doubles the unleash counter an opponent's creature enters with")
+    void doublesTheUnleashCounterOfAnOpponentsCreature() {
+        harness.addToBattlefield(player1, new PrimalVigor());
+        harness.setHand(player2, List.of(new DeadReveler()));
+        harness.addMana(player2, ManaColor.BLACK, 3);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(findPermanent(player2, "Dead Reveler").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isEqualTo(2);
     }
 
     @Test

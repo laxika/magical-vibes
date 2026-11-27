@@ -1,14 +1,12 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.PlayerCounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AddAnotherCounterOfEachKindToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +24,6 @@ public class AddAnotherCounterOfEachKindToTargetEffectHandler implements NormalE
     private final GameQueryService gameQueryService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final LifeSupport lifeSupport;
-    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -64,33 +61,10 @@ public class AddAnotherCounterOfEachKindToTargetEffectHandler implements NormalE
     }
 
     private void addCountersToPlayer(GameData gameData, StackEntry entry, UUID playerId) {
-        if (gameData.playerPoisonCounters.getOrDefault(playerId, 0) > 0) {
-            lifeSupport.applyPoisonCounters(gameData, playerId, 1, entry.getCard().getName());
-        }
-
-        if (gameData.playerRadCounters.getOrDefault(playerId, 0) > 0) {
-            gameData.playerRadCounters.merge(playerId, 1, Integer::sum);
-        }
-
-        if (gameData.playerSparkCounters.getOrDefault(playerId, 0) > 0) {
-            gameData.playerSparkCounters.merge(playerId, 1, Integer::sum);
-        }
-
-        if (gameData.playerExperienceCounters.getOrDefault(playerId, 0) > 0) {
-            gameData.playerExperienceCounters.merge(playerId,
-                    gameQueryService.replaceExperienceCounters(gameData, playerId, 1), Integer::sum);
-        }
-
-        if (gameData.playerEnergyCounters.getOrDefault(playerId, 0) > 0) {
-            int energyAmount = gameQueryService.replaceEnergyCounters(gameData, playerId, 1);
-            if (energyAmount > 0) {
-                gameData.playerEnergyCounters.merge(playerId, energyAmount, Integer::sum);
-                String playerName = gameData.playerIdToName.getOrDefault(playerId, "Player");
-                gameLogService.append(gameData,
-                        GameLog.text(playerName + " gets " + energyAmount + " energy counter"
-                                + (energyAmount > 1 ? "s" : "") + " (" + entry.getCard().getName() + ")."));
-                gameData.rulesEvents.occur(CounterChangeEvent.ofPlayer(CounterChangeEvent.Kind.ENERGY, playerId,
-                        energyAmount));
+        for (PlayerCounterType kind : PlayerCounterType.values()) {
+            if (gameData.playerCounterCount(playerId, kind) > 0) {
+                lifeSupport.givePlayerCounters(gameData, playerId, kind, 1, entry.getCard().getName(),
+                        entry.getControllerId());
             }
         }
     }

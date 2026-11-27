@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.JudgmentOfAlexanderDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PlayerCounterType;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PlayerNextDamageRedirectShield;
@@ -955,7 +956,7 @@ public class DamagePreventionService {
                 queuePreventedDamageTrigger(gameData, permanent, countersToRemove, false);
             }
             if (effect.givesEachPlayerRadCounters()) {
-                giveEachPlayerRadCounters(gameData, countersToRemove);
+                giveEachPlayerRadCounters(gameData, permanent, countersToRemove);
             }
         }
         int amount = effect.preventOnlyIfCounterAvailable() ? countersToRemove : damage;
@@ -1376,12 +1377,12 @@ public class DamagePreventionService {
                                                 .withSourcePermanentId(source.getId()))))));
     }
 
-    private void giveEachPlayerRadCounters(GameData gameData, int amount) {
+    /** Bloatfly Swarm: its controller gives each player the rad counters, in turn order. */
+    private void giveEachPlayerRadCounters(GameData gameData, Permanent source, int amount) {
+        UUID controllerId = controllerOf(gameData, source);
         for (UUID playerId : gameData.orderedPlayerIds) {
-            gameData.playerRadCounters.merge(playerId, amount, Integer::sum);
-            String playerName = gameData.playerIdToName.getOrDefault(playerId, "Player");
-            gameLogService.append(gameData,
-                    GameLog.text(playerName + " gets " + amount + " rad counter" + (amount == 1 ? "." : "s.")));
+            lifeSupport.givePlayerCounters(gameData, playerId, PlayerCounterType.RAD, amount,
+                    FaceDownVisibility.publicName(gameData, source), controllerId);
         }
     }
 

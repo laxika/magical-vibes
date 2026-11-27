@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.model.DepartureResult;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.PlayerCounterType;
 import com.github.laxika.magicalvibes.model.SaturatingMath;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -670,6 +671,50 @@ public class LifeSupport {
         log.info("Game {} - {} gets {} poison counter(s) from {}", gameData.id, playerName, amount, sourceName);
         gameData.rulesEvents.occur(CounterChangeEvent.ofPlayer(CounterChangeEvent.Kind.YOU_PUT_COUNTERS,
                 placingPlayerId, amount));
+    }
+
+    /**
+     * {@code placingPlayerId} gives {@code playerId} {@code amount} counters of {@code kind} (CR 122.1): none if that
+     * player can't get counters (Solemnity, Suncleanser), else after the counter-placement replacements that apply to
+     * that placer (Vorinclex, Halving Season), logged with the "you put counters on a player" event. Poison goes through
+     * {@link #applyPoisonCounters}, rad through {@code replaceRadCounters} and {@link #applyRadCounters}. Returns how
+     * many were put.
+     */
+    public int givePlayerCounters(GameData gameData, UUID playerId, PlayerCounterType kind, int amount,
+                                  String sourceName, UUID placingPlayerId) {
+        if (amount <= 0 || playerId == null) {
+            return 0;
+        }
+        int before = gameData.playerCounterCount(playerId, kind);
+        switch (kind) {
+            case POISON -> applyPoisonCounters(gameData, playerId, amount, sourceName, placingPlayerId);
+            case RAD -> applyRadCounters(gameData, playerId,
+                    gameQueryService.replaceRadCounters(gameData, playerId, amount, placingPlayerId), sourceName,
+                    placingPlayerId);
+            case ENERGY, EXPERIENCE, SPARK -> {
+                int placed = gameQueryService.replacePlayerCounters(gameData, playerId, kind, amount, placingPlayerId);
+                if (placed <= 0) {
+                    return 0;
+                }
+                int updated = SaturatingMath.add(before, placed);
+                switch (kind) {
+                    case ENERGY -> gameData.setPlayerEnergyCounters(playerId, updated);
+                    case EXPERIENCE -> gameData.playerExperienceCounters.put(playerId, updated);
+                    default -> gameData.playerSparkCounters.put(playerId, updated);
+                }
+                String playerName = gameData.playerIdToName.getOrDefault(playerId, "Player");
+                gameLogService.append(gameData, GameLog.text(playerName + " gets " + placed + " "
+                        + kind.name().toLowerCase(java.util.Locale.ROOT) + " counter" + (placed > 1 ? "s" : "")
+                        + " (" + sourceName + ")."));
+                if (kind == PlayerCounterType.ENERGY) {
+                    gameData.rulesEvents.occur(CounterChangeEvent.ofPlayer(CounterChangeEvent.Kind.ENERGY, playerId,
+                            placed));
+                }
+                gameData.rulesEvents.occur(CounterChangeEvent.ofPlayer(CounterChangeEvent.Kind.YOU_PUT_COUNTERS,
+                        placingPlayerId, placed));
+            }
+        }
+        return gameData.playerCounterCount(playerId, kind) - before;
     }
 
     public void applyRadCounters(GameData gameData, UUID playerId, int amount, String sourceName,

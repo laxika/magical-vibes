@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.PlayerCounterType;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
@@ -8996,6 +8997,10 @@ public class AbilityActivationService {
         if (sparkCost < 0 && sparkCounters < Math.abs(sparkCost)) {
             throw new IllegalStateException("Not enough spark counters");
         }
+        // A cost that puts counters on a player who can't get counters can't be paid (Suncleanser's ruling).
+        if (sparkCost > 0 && gameQueryService.playerCantGetCounters(gameData, playerId)) {
+            throw new IllegalStateException("You can't get counters");
+        }
     }
 
     /**
@@ -9039,8 +9044,13 @@ public class AbilityActivationService {
     private void paySparkCost(GameData gameData, UUID playerId, ActivatedAbility ability) {
         validateSparkCost(gameData, playerId, ability);
         int sparkCost = ability.getLoyaltyCost();
+        // A positive cost puts spark counters, so counter-placement replacements apply, as to a loyalty cost.
+        int change = sparkCost > 0
+                ? gameQueryService.replacePlayerCounters(gameData, playerId, PlayerCounterType.SPARK, sparkCost,
+                playerId)
+                : sparkCost;
         gameData.playerSparkCounters.put(playerId,
-                gameData.playerSparkCounters.getOrDefault(playerId, 0) + sparkCost);
+                gameData.playerSparkCounters.getOrDefault(playerId, 0) + change);
         gameData.playersWhoActivatedSparkAbilityThisTurn.add(playerId);
     }
 
