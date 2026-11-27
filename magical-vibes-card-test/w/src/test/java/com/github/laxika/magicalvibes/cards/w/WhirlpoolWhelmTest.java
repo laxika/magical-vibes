@@ -56,6 +56,18 @@ class WhirlpoolWhelmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The clash log names the player who reveals the second card")
+    void clashLogNamesTheOpponent() {
+        UUID targetId = prepare();
+        stackClashTie();
+
+        harness.castAndResolveInstant(player1, 0, targetId);
+
+        assertThat(gameLogContains("; " + player2.getUsername() + " reveals ")).isTrue();
+        assertThat(gameLogContains("; opponent reveals ")).isFalse();
+    }
+
+    @Test
     @DisplayName("Winning the clash and accepting puts the creature on top of its owner's library")
     void wonClashAcceptPutsOnTopOfLibrary() {
         UUID targetId = prepare();

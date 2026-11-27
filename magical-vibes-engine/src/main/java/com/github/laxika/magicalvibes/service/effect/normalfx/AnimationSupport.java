@@ -51,6 +51,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -598,10 +599,26 @@ public class AnimationSupport {
             log.info("Game {} - {} unattached (equipment became creature)", gameData.id, target.getCard().getName());
         }
 
-        gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
-                " becomes a " + power + "/" + toughness + " creature."));
+        boolean onlyAddsTypes = !effect.becomesCreature() || effect.power() == null && effect.toughness() == null
+                && !effect.grantedCardTypes().isEmpty() && !effect.grantedCardTypes().contains(CardType.CREATURE);
+        if (!onlyAddsTypes) {
+            gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
+                    " becomes a " + power + "/" + toughness + " creature."));
+            log.info("Game {} - {} becomes a {}/{} creature permanently", gameData.id, target.getCard().getName(), power, toughness);
+        } else {
+            String types = effect.grantedCardTypes().stream()
+                    .map(cardType -> cardType.getDisplayName().toLowerCase(Locale.ROOT)).sorted()
+                    .collect(Collectors.joining(" and "));
+            if (!types.isEmpty()) {
+                gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
+                        " becomes " + (isVowel(types.charAt(0)) ? "an " : "a ") + types + "."));
+                log.info("Game {} - {} becomes {} permanently", gameData.id, target.getCard().getName(), types);
+            }
+        }
+    }
 
-        log.info("Game {} - {} becomes a {}/{} creature permanently", gameData.id, target.getCard().getName(), power, toughness);
+    private static boolean isVowel(char letter) {
+        return "aeiou".indexOf(letter) >= 0;
     }
 
     private int printedPower(Permanent permanent) {

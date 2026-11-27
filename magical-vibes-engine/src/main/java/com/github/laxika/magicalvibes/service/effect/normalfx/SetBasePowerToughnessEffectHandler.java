@@ -49,8 +49,8 @@ public class SetBasePowerToughnessEffectHandler implements NormalEffectHandlerBe
                 count++;
             }
             gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
-                    .text(" sets the base power and toughness of " + count + " creature(s) to "
-                            + e.power() + "/" + e.toughness() + " until end of turn.").build());
+                    .text(" sets the base " + settingOf(e) + " of " + count + " creature(s) to "
+                            + valuesOf(e) + " until end of turn.").build());
             return;
         }
 
@@ -62,8 +62,8 @@ public class SetBasePowerToughnessEffectHandler implements NormalEffectHandlerBe
                 count++;
             }
             gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
-                    .text(" sets the base power and toughness of " + count
-                            + " opponent creature(s) to " + e.power() + "/" + e.toughness()
+                    .text(" sets the base " + settingOf(e) + " of " + count
+                            + " opponent creature(s) to " + valuesOf(e)
                             + " until end of turn.").build());
             return;
         }
@@ -98,8 +98,8 @@ public class SetBasePowerToughnessEffectHandler implements NormalEffectHandlerBe
                 count++;
             }
             gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
-                    .text(" sets the base power and toughness of " + count
-                            + " creature(s) to " + e.power() + "/" + e.toughness()
+                    .text(" sets the base " + settingOf(e) + " of " + count
+                            + " creature(s) to " + valuesOf(e)
                             + durationDescription(e) + ".").build());
             return;
         }
@@ -136,6 +136,17 @@ public class SetBasePowerToughnessEffectHandler implements NormalEffectHandlerBe
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 FaceDownVisibility.sourceName(gameData, entry), entry.getSourcePermanentId(), entry.getControllerId(),
                 e, target.getId(), null, null, e.duration(), 0));
+    }
+
+    /** What the effect sets: only the values it gives, as a null side leaves that base value alone. */
+    private static String settingOf(SetBasePowerToughnessEffect effect) {
+        return effect.power() == null ? "toughness" : effect.toughness() == null ? "power" : "power and toughness";
+    }
+
+    private static String valuesOf(SetBasePowerToughnessEffect effect) {
+        return effect.power() == null ? String.valueOf(effect.toughness())
+                : effect.toughness() == null ? String.valueOf(effect.power())
+                : effect.power() + "/" + effect.toughness();
     }
 
     private static String durationDescription(SetBasePowerToughnessEffect effect) {

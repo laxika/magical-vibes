@@ -137,7 +137,9 @@ class PermanentDamagePreventions extends PermanentDamageCandidateSource {
                         && gameQueryService.isDamagePreventable(ctx.gameData(), ctx.combat())
                         && prevention.hasTargetSourcePreventionShield(
                         ctx.gameData(), ctx.target().getId(), ctx.damageSourceKey()),
-                ctx -> "Prevent damage from " + ctx.sourceName() + " (Healing Grace)",
+                ctx -> "Prevent damage from " + ctx.sourceName() + " ("
+                        + prevention.targetSourcePreventionShieldName(
+                        ctx.gameData(), ctx.target().getId(), ctx.damageSourceKey()) + ")",
                 ctx -> ctx.event().withAmount(prevention.applyTargetSourcePreventionShield(
                         ctx.gameData(), ctx.target().getId(), ctx.damageSourceKey(), ctx.amount(), ctx.combat()))));
         all.add(effect("ChosenSourceNextDamageShield", PREVENTION,

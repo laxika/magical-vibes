@@ -52,6 +52,20 @@ class ShadowOfDoubtTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The log says which players the search restriction applies to")
+    void logNamesThePlayersAffected() {
+        harness.setLibrary(player1, List.of(new WateryGrave()));
+        harness.setHand(player1, List.of(new ShadowOfDoubt()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gameLogContains("Shadow of Doubt affects " + player1.getUsername() + ", "
+                + player2.getUsername() + " until end of turn.")).isTrue();
+    }
+
+    @Test
     @DisplayName("Also prevents its controller from searching")
     void preventsControllerSearch() {
         Card drawn = new WateryGrave();

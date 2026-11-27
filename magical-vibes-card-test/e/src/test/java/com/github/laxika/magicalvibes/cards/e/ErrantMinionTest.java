@@ -272,4 +272,22 @@ class ErrantMinionTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
         assertThat(gd.playerDamagePreventionShields().get(player2.getId())).isEqualTo(4);
     }
+
+    @Test
+    @DisplayName("The order prompt names Errant Minion for its paid prevention, not another card")
+    void orderPromptNamesErrantMinionForItsPrevention() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+        attachErrantMinion(creature);
+        gd.addPlayerDamagePreventionShield(player2.getId(), 5);
+
+        advanceToUpkeep(player2);
+        harness.addMana(player2, ManaColor.BLUE, 5);
+
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player2, 1);
+
+        PendingInteraction.ColorChoice order = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(order.options()).anyMatch(option -> option.contains("Errant Minion"));
+        assertThat(order.options()).noneMatch(option -> option.contains("Healing Grace"));
+    }
 }

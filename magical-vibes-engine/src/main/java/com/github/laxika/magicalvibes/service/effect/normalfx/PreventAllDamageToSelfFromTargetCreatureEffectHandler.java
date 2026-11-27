@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -36,8 +37,8 @@ public class PreventAllDamageToSelfFromTargetCreatureEffectHandler implements No
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (source == null || target == null) return;
 
-        gameData.addShield(
-                TargetSourceDamagePreventionShield.allDamage(sourceId, targetId));
+        gameData.addShield(FaceDownVisibility.sourceName(gameData, entry), null, entry.getControllerId(), null,
+                TargetSourceDamagePreventionShield.allDamage(sourceId, targetId), Duration.UNTIL_END_OF_TURN);
         gameLogService.append(gameData, GameLog.text(
                 "All damage that would be dealt to " + FaceDownVisibility.publicName(gameData, source) + " by "
                         + FaceDownVisibility.publicName(gameData, target) + " this turn is prevented."));

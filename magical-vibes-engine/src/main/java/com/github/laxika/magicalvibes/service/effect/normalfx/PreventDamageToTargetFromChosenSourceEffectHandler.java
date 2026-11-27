@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -40,7 +41,8 @@ public class PreventDamageToTargetFromChosenSourceEffectHandler implements Norma
 
         gameData.interaction.setPermanentChoiceContext(
                 new PermanentChoiceContext.PreventDamageToTargetFromSourceChoice(
-                        controllerId, e.amount(), targetId, e.allDamage()));
+                        controllerId, e.amount(), targetId, e.allDamage(),
+                        FaceDownVisibility.sourceName(gameData, entry)));
         String prompt = e.allDamage()
                 ? "Choose a source. Prevent all damage it would deal to the target this turn."
                 : "Choose a source. The next " + e.amount() + " damage it would deal to the target is prevented.";

@@ -118,7 +118,9 @@ class PlayerDamagePreventions extends PlayerDamageCandidateSource {
                 effect("TargetSourceShield", PREVENTION,
                         ctx -> preventable(ctx) && prevention.hasTargetSourcePreventionShield(
                                 ctx.gameData(), ctx.playerId(), ctx.damageSourceId()),
-                        ctx -> "Prevent damage from " + ctx.sourceName() + " (Healing Grace)",
+                        ctx -> "Prevent damage from " + ctx.sourceName() + " ("
+                                + prevention.targetSourcePreventionShieldName(
+                                ctx.gameData(), ctx.playerId(), ctx.damageSourceId()) + ")",
                         ctx -> ctx.event().withAmount(prevention.applyTargetSourcePreventionShield(
                                 ctx.gameData(), ctx.playerId(), ctx.damageSourceId(), ctx.amount(), ctx.combat()))),
                 eyeForAnEye("EyeForAnEye", PlayerDamageContext::damageSourceId, false),

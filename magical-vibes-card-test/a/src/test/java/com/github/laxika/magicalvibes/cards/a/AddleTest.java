@@ -185,6 +185,21 @@ class AddleTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 
+    @Test
+    @DisplayName("The log names the card chosen from the revealed hand")
+    void logNamesTheCardChosenFromTheRevealedHand() {
+        harness.setHand(player2, List.of(new Opt(), new NomadicElf()));
+        harness.setHand(player1, List.of(new Addle()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleListChoice(player1, "BLUE");
+        harness.handleMultipleCardsChosen(player1, List.of(handCard(player2, 0)));
+
+        assertThat(gameLogContains("chooses Opt")).isTrue();
+        assertThat(gameLogContains("A card in")).isFalse();
+    }
+
     /** The id of the card at {@code index} of {@code player}'s hand. */
     private UUID handCard(Player player, int index) {
         return gd.playerHands.get(player.getId()).get(index).getId();

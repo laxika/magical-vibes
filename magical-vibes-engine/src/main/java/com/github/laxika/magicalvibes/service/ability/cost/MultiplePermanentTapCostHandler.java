@@ -89,6 +89,8 @@ public class MultiplePermanentTapCostHandler implements PermanentChoiceCostHandl
 
     @Override
     public String getPromptMessage(int remaining) {
-        return "Choose an untapped permanent to tap (" + remaining + " remaining).";
+        return cost.description() == null
+                ? "Choose an untapped permanent to tap (" + remaining + " remaining)."
+                : "Choose untapped " + cost.description() + " to tap (" + remaining + " remaining).";
     }
 }

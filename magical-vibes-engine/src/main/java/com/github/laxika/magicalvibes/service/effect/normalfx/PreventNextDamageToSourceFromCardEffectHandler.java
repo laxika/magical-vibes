@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -31,8 +33,8 @@ public class PreventNextDamageToSourceFromCardEffectHandler implements NormalEff
         if (targetId == null || sourceCardId == null) {
             return;
         }
-        gameData.addShield(
-                new TargetSourceDamagePreventionShield(targetId, sourceCardId, 1));
+        gameData.addShield(FaceDownVisibility.sourceName(gameData, entry), null, entry.getControllerId(), null,
+                new TargetSourceDamagePreventionShield(targetId, sourceCardId, 1), Duration.UNTIL_END_OF_TURN);
         Card sourceCard = gameData.stack.stream()
                 .filter(stackEntry -> stackEntry.getTargetableId().equals(sourceCardId))
                 .map(StackEntry::getCard)

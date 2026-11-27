@@ -1378,16 +1378,12 @@ Don't commit.
 - `TextChangeTransformer` rewrites change effect identity, so a text-changed targeted trigger can lose its target group. Unsure.
 - Whether a text change made to a spell on the stack (Sleight of Mind on an instant, `spellTextReplacements`) reaches its resolution was not traced. Unverified.
 
-#### Logs and hidden information (8)
+#### Logs and hidden information (4)
 
 - `cardsThisWay(REVEAL)` names a card a later step reordered within its library (CR 701.20d); no card reads it so. Unverified.
-- `ChooseCardEffectHandler` logs a chosen card unnamed whenever it is in a hand (fold run 12e's zone check), even a revealed one; keep hidden-ness on the subject (fold run 20's note: a zone-based prompt check broke Addle and Intuition). Sure, low.
-- `SetBasePowerToughnessEffectHandler`'s set and player-target log lines print "null" for a null side. Sure.
-- Shadow of Doubt logs nothing since fold run 34: `GrantStaticEffectToPlayerEffect` has no log line. Sure, low.
 - `getRevealedOpponentHand` returns only the first opponent's hand (multiplayer); needs a hand per opponent in `GameStateMessage` and the frontend (owner question in entry 17, MP-2). Sure of the code.
 - `CantAttackThisTurnEffectHandler`'s set branch logs the source by `entry.getCard().getName()` with no face-down redaction and doesn't bind its filter's chosen values (only the except branch goes through `lastingRule`). Sure of the code.
 - `GameViewProjectionFactory.collectFaceDownReveals` decides looks from printed effects while `mayLookAtExiledCard` holds granted looks, so one question is answered twice; `exilesHandsFaceDown` doesn't look inside `MayEffect`. Sure of the code.
-- `ClashSupport`'s log says "opponent reveals" without naming the player. Sure, low.
 
 #### Other (52)
 

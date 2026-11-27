@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CardSubject;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -187,13 +188,16 @@ public class ChooseCardEffectHandler implements NormalEffectHandlerBean {
             return;
         }
         // A card an earlier step put into a hand ("one of the conjured cards", "one of those drafted cards") is as hidden
-        // as the hand it is in (CR 400.2): its choice names no card.
-        List<LocatedCard> inHand = chosen.stream().filter(card -> card.zone() == Zone.HAND).toList();
+        // as the hand it is in (CR 400.2): its choice names no card. A card of a hand that step revealed is named.
+        boolean revealed = choose.cards() instanceof CardSubject.CardsThisWay thisWay
+                && thisWay.kind() == StepKind.REVEAL;
+        List<LocatedCard> inHand = revealed ? List.<LocatedCard>of()
+                : chosen.stream().filter(card -> card.zone() == Zone.HAND).toList();
         if (!inHand.isEmpty()) {
             logHiddenChoice(gameData, choose, inHand, chooserId);
         }
         for (LocatedCard card : chosen) {
-            if (card.zone() == Zone.HAND) {
+            if (card.zone() == Zone.HAND && !revealed) {
                 continue;
             }
             if (chooserId == null) {

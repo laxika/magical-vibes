@@ -55,7 +55,8 @@ public class ClashSupport {
         } else {
             clashLog.text("no card (empty library)");
         }
-        clashLog.text("; opponent reveals ");
+        clashLog.text(opponentId == null ? "; no opponent reveals "
+                : "; " + gameData.playerIdToName.get(opponentId) + " reveals ");
         if (opponentCard != null) {
             clashLog.card(opponentCard);
         } else {

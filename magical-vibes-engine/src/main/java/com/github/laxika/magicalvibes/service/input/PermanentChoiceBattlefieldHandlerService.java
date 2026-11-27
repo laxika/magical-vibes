@@ -1562,9 +1562,10 @@ public class PermanentChoiceBattlefieldHandlerService {
         }
 
         UUID targetId = ctx.targetId();
-        gameData.addShield(ctx.allDamage()
+        gameData.addShield(ctx.cardName(), null, ctx.controllerId(), null, ctx.allDamage()
                 ? TargetSourceDamagePreventionShield.allDamage(targetId, permanentId)
-                : new TargetSourceDamagePreventionShield(targetId, permanentId, ctx.amount()));
+                : new TargetSourceDamagePreventionShield(targetId, permanentId, ctx.amount()),
+                Duration.UNTIL_END_OF_TURN);
 
         // Determine target name for logging
         Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetId);

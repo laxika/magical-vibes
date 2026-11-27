@@ -2,16 +2,19 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AmountsFixedWhenFloatedEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEscapeToGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIdSetPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -20,6 +23,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +46,7 @@ public class GrantStaticEffectToPlayerEffectHandler implements NormalEffectHandl
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -70,7 +75,9 @@ public class GrantStaticEffectToPlayerEffectHandler implements NormalEffectHandl
             staticEffect = withAmounts.withAmountsFixed(amount -> amount instanceof Fixed
                     ? amount : new Fixed(amountEvaluationService.evaluate(gameData, amount, context)));
         }
+        List<String> names = new ArrayList<>();
         for (UUID playerId : subjectResolutionService.players(gameData, entry, effect, grant.player())) {
+            names.add(gameData.playerIdToName.get(playerId));
             CardEffect floated = staticEffect instanceof GrantEscapeToGraveyardCardsEffect escape
                     ? snapshotEscapeGrant(gameData, playerId, entry, escape)
                     : staticEffect;
@@ -86,6 +93,26 @@ public class GrantStaticEffectToPlayerEffectHandler implements NormalEffectHandl
                     grant.duration(),
                     0L));
         }
+        if (!names.isEmpty()) {
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
+                    " affects " + String.join(", ", names) + durationText(grant.duration()) + "."));
+        }
+    }
+
+    /** How long the grant lasts, as the log says it; the grant's durations are the six of {@link GrantStaticEffectToPlayerEffect}. */
+    private static String durationText(Duration duration) {
+        if (Duration.UNTIL_END_OF_TURN.equals(duration)) {
+            return " until end of turn";
+        } else if (Duration.UNTIL_END_OF_COMBAT.equals(duration)) {
+            return " until end of combat";
+        } else if (Duration.UNTIL_YOUR_NEXT_TURN.equals(duration)) {
+            return " until their controller's next turn";
+        } else if (Duration.UNTIL_PLANESWALK.equals(duration)) {
+            return " until a player planeswalks";
+        } else if (Duration.PERMANENT.equals(duration)) {
+            return " for the rest of the game";
+        }
+        return " for as long as its source remains";
     }
 
     /** The escape grant narrowed to the matching cards in {@code playerId}'s graveyard now, each in its current stay. */

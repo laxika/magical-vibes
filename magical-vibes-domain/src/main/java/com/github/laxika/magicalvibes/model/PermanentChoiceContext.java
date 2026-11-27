@@ -942,10 +942,11 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      *  stored as the redirect destination. */
     record RedirectPlayerDamageSourceChoice(UUID controllerId, UUID redirectTargetId) implements PermanentChoiceContext {}
 
+    /** {@code cardName}: the card whose shield this becomes, for the damage order prompt. */
     record PreventDamageToTargetFromSourceChoice(UUID controllerId, int amount, UUID targetId,
-                                                 boolean allDamage) implements PermanentChoiceContext {
+                                                 boolean allDamage, String cardName) implements PermanentChoiceContext {
         public PreventDamageToTargetFromSourceChoice(UUID controllerId, int amount, UUID targetId) {
-            this(controllerId, amount, targetId, false);
+            this(controllerId, amount, targetId, false, "");
         }
     }
 

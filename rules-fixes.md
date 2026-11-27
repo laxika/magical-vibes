@@ -58,7 +58,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | MC Single cards | MC-1, MC-2 | open |
 | AI Hard / easy AI | AI-1, AI-2 | AI-1, AI-2 done 2026-11-27 |
 | UI Frontend | UI-1 | UI-1 done 2026-11-27 |
-| LG, CL Logs and non-rules cleanup | LG-1, CL-1 | CL-1 done 2026-11-27; LG-1 open |
+| LG, CL Logs and non-rules cleanup | LG-1, CL-1 | CL-1, LG-1 done 2026-11-27 |
 | FT Missing features | FT-1, FT-2 | open |
 | Z Close | Z | open |
 
@@ -1153,6 +1153,9 @@ New line N50 (seen in MP-2): a noncreature permanent with `ChooseOpponentOnEnter
 not by its resolving spell, may still get no opponent choice with three or more players (MP-2 added it to
 `StackResolutionService.processResolvedPermanentEtb`, the spell path); unverified.
 
+New line N51 (seen in LG-1): `ClashSupport`'s outcome line says "No one won the clash." also when the other player's card had
+the higher mana value, and `performClash` still reads the opponent as the first other seat in turn order (multiplayer).
+
 Outcome:
 
 ### AI. Hard / easy AI (`magical-vibes-ai`)
@@ -1240,7 +1243,14 @@ Smithy's artifacts and/or creatures).
 New line N30 (seen in EB-2): `ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler.applyEntryAnimation` logs "becomes a X/X
 creature" for an animation that only adds a card type (The War in Heaven's "they're artifacts").
 
-Outcome:
+Outcome: done 2026-11-27, all of H3, H5, H6, H10, N2, N18 and N30 fixed, each with a test that failed first. H3: `ChooseCardEffectHandler`
+names a hand card of a `cardsThisWay(REVEAL)` subject (Addle) and keeps every other hand choice unnamed. H5: a one-sided setter's
+set, opponents' and player-target lines say the side it sets (no card reaches them; a synthetic card in
+`SetBasePowerToughnessLogTest`). H6: `GrantStaticEffectToPlayerEffectHandler` logs "<card> affects <players> <duration>". H10:
+`ClashSupport` names the opponent. N2: the target-and-source shields carry their card's name and the order prompt reads it
+(`DamagePreventionService.targetSourcePreventionShieldName`; `PreventDamageToTargetFromSourceChoice` got a `cardName`). N18:
+`MultiplePermanentTapCostHandler.getPromptMessage` reads the cost's description. N30: `AnimationSupport.animatePermanently` logs
+a type-only animation as "becomes an artifact". New line N51. No `CONVERSION_VERSION` change.
 
 #### CL-1. Dead code and a misnamed test
 

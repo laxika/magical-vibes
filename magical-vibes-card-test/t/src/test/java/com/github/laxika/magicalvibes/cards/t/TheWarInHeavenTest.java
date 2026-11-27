@@ -77,6 +77,25 @@ class TheWarInHeavenTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The log says a returned creature becomes an artifact, not a creature with stats")
+    void logSaysTheyBecomeArtifacts() {
+        Card bears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears));
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new TheWarInHeaven());
+        saga.setCounterCount(CounterType.LORE, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DRAW);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gameLogContains("Grizzly Bears becomes an artifact")).isTrue();
+        assertThat(gameLogContains("becomes a 2/2 creature")).isFalse();
+    }
+
+    @Test
     @DisplayName("Chapter III's creatures are artifacts as they enter, so Root Maze makes them enter tapped (CR 611.2e)")
     void chapterThreeCreaturesEnterAsArtifacts() {
         Card bears = new GrizzlyBears();

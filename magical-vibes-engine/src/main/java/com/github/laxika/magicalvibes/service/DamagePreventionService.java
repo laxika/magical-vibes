@@ -3151,6 +3151,16 @@ public class DamagePreventionService {
                 .anyMatch(shield -> targetId.equals(shield.targetId()));
     }
 
+    /** The card whose shield covers damage from {@code sourceId} to {@code targetId}, for the damage order prompt. */
+    public String targetSourcePreventionShieldName(GameData gameData, UUID targetId, UUID sourceId) {
+        return gameData.shieldEffects(TargetSourceDamagePreventionShield.class).stream()
+                .filter(fe -> ((TargetSourceDamagePreventionShield) fe.effect()).targetId().equals(targetId)
+                        && ((TargetSourceDamagePreventionShield) fe.effect()).sourceId().equals(sourceId))
+                .map(FloatingContinuousEffect::sourceCardName)
+                .filter(name -> name != null && !name.isBlank())
+                .findFirst().orElse("a prevention shield");
+    }
+
     /** Whether a Healing Grace-style shield covers damage from {@code sourceId} to {@code targetId}. */
     public boolean hasTargetSourcePreventionShield(GameData gameData, UUID targetId, UUID sourceId) {
         return targetId != null && sourceId != null && gameData.shields(TargetSourceDamagePreventionShield.class).stream()

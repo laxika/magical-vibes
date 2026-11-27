@@ -46,6 +46,24 @@ class RaffWeatherlightStalwartTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The tap payment prompt names the kind of permanent tapped")
+    void tapPromptNamesTheKindOfPermanent() {
+        addCreatureReady(player1, new RaffWeatherlightStalwart());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).prompt())
+                .contains("creatures");
+    }
+
+    @Test
     @DisplayName("The spell-cast trigger can be declined")
     void castingInstantCanDeclineTheDraw() {
         addCreatureReady(player1, new RaffWeatherlightStalwart());
