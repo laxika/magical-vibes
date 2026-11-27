@@ -161,7 +161,7 @@ line that needs the owner's answer is left and collected for the end.
 | 7 | FD-2, LY-1, DR-1, CB-1 | |
 | 8 | LY-2, LY-3, PP-1, CP-1 | |
 | 9 | LY-4, LY-5, PL-1, MC-1 | |
-| 10 | MC-2, FT-1, FT-2, FC-4, LS-3 | |
+| 10 | FT-1, FT-2, FC-4, LS-3, then MC-2a to MC-2f (one at a time) | |
 | 11 | Z | |
 
 ## Runs
@@ -1292,6 +1292,18 @@ shared removals, moves and remove-all skip locked stun counters; the direct `set
 any creature hitting one of your opponents triggers, its controller pays and draws. O81 left: owner question (entry 17). N85 added.
 
 #### MC-2
+
+Split (orchestrator, 2026-11-27): MC-2 is run as six sequential parts, after FC-4 and LS-3. Each part takes only its own IDs
+below and writes its own "MC-2x:" paragraph under Outcome. N41 and N42 belong to LS-3; a part skips any line an earlier run's
+Outcome already settled.
+
+- MC-2a, the AI (`magical-vibes-ai`): N19, N20, N21, N22, N23.
+- MC-2b, hidden information and colours: N33, N55, N56, N57, N60, N61, N62, N63, N85.
+- MC-2c, multiplayer opponent readers and draws: N49, N50, N51, N65, N66, N67, N68, N69, N79.
+- MC-2d, casting, costs and the stack: N16, N17, N25, N26, N38, N39, N59, N80, O25 (Caged Sun).
+- MC-2e, zone moves and single cards: S3 and S21 (Ezuri's Predation), O5, O7, S8, O79's Behemoth part, N28, N36, N40, N54,
+  N70, N84.
+- MC-2f, layers, perpetual changes and links: N64, N71, N73, N74, N75, N76, N81, N82, N83.
 
 Lines: O5 (Limitless Rekindling's pool), O7 (`ConjureCardToBattlefieldEffectHandler`: a conjured land gets no land-enter handling;
 check that the handler still exists after run J), S8 (Mythweaver Poq's simultaneous duplicates: rulings first, else an owner
