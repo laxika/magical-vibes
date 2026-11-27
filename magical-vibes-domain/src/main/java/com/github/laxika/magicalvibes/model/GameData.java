@@ -1244,8 +1244,6 @@ public class GameData {
     public final EachPlayerDiscardsOneThenDrawsForEachCardTypeState
             eachPlayerDiscardsOneThenDrawsForEachCardType =
             new EachPlayerDiscardsOneThenDrawsForEachCardTypeState();
-    /** Progress state for Dispersal's opponent-by-opponent return-then-discard sequence. */
-    public final DispersalState dispersal = new DispersalState();
     /** Progress state for an opponent-by-opponent discard-two-unless-nonland sequence. */
     public final EachOpponentDiscardsTwoUnlessNonlandState eachOpponentDiscardsTwoUnlessNonland =
             new EachOpponentDiscardsTwoUnlessNonlandState();
@@ -1613,16 +1611,6 @@ public class GameData {
     public PendingEachPlayerPutContinuation pendingEachPlayerPutContinuation;
     /** Primal Surge-style repeat step paused behind the prompt opened by the permanent just put onto the battlefield. */
     public PendingExileTopCardRepeat pendingExileTopCardRepeat;
-    /** Chosen count for the current optional draw instruction, retained across replacement choices. */
-    public Integer pendingEachPlayerMayDrawChosenCount;
-    /** APNAP-ordered players choosing for "each player may draw, then drawers gain life" effects. */
-    public final List<UUID> pendingEachPlayerMayDrawThenGainLifeQueue =
-            Collections.synchronizedList(new ArrayList<>());
-    /** Players who actually drew during the current "may draw, then gain life" resolution. */
-    public final List<UUID> pendingEachPlayerMayDrawThenGainLifeDrawers =
-            Collections.synchronizedList(new ArrayList<>());
-    /** Draw count before the current Kwain-style optional draw instruction. */
-    public Integer pendingEachPlayerMayDrawThenGainLifeInitialCount;
     /**
      * The one Ring store: the Ring emblem of each player the Ring has tempted (CR 701.54c), with its level and that
      * player's Ring-bearer (CR 701.54a). A player with no entry has no emblem.
@@ -10028,19 +10016,13 @@ public class GameData {
         copy.eumidianWastewaker.currentPlayerId = this.eumidianWastewaker.currentPlayerId;
         copy.eumidianWastewaker.remaining.addAll(this.eumidianWastewaker.remaining);
         copy.eumidianWastewaker.chosenMode = this.eumidianWastewaker.chosenMode;
-        copy.eumidianWastewaker.pendingDiscard = this.eumidianWastewaker.pendingDiscard;
-        copy.eumidianWastewaker.pendingSacrificeChoice = this.eumidianWastewaker.pendingSacrificeChoice;
-        copy.eumidianWastewaker.pendingSacrificeLandIds.addAll(
-                this.eumidianWastewaker.pendingSacrificeLandIds);
+        copy.eumidianWastewaker.chosenSacrificeIds.addAll(this.eumidianWastewaker.chosenSacrificeIds);
+        copy.eumidianWastewaker.sacrificing = this.eumidianWastewaker.sacrificing;
+        copy.eumidianWastewaker.sacrificedCardIds.addAll(this.eumidianWastewaker.sacrificedCardIds);
         copy.eumidianWastewaker.landCardsPutIntoGraveyard =
                 this.eumidianWastewaker.landCardsPutIntoGraveyard;
         copy.eachPlayerDiscardsOneThenDrawsForEachCardType.discardedCardTypes.addAll(
                 this.eachPlayerDiscardsOneThenDrawsForEachCardType.discardedCardTypes);
-        copy.dispersal.active = this.dispersal.active;
-        copy.dispersal.remainingOpponentIds.addAll(this.dispersal.remainingOpponentIds);
-        copy.dispersal.currentOpponentId = this.dispersal.currentOpponentId;
-        copy.dispersal.selectedPermanentId = this.dispersal.selectedPermanentId;
-        copy.dispersal.awaitingDiscard = this.dispersal.awaitingDiscard;
         copy.eachOpponentDiscardsTwoUnlessNonland.active = this.eachOpponentDiscardsTwoUnlessNonland.active;
         copy.eachOpponentDiscardsTwoUnlessNonland.remainingOpponentIds
                 .addAll(this.eachOpponentDiscardsTwoUnlessNonland.remainingOpponentIds);
@@ -10197,10 +10179,6 @@ public class GameData {
                 ? null : new LinkedHashMap<>(this.pendingEachPlayerDrawUpToInitialCounts);
         copy.pendingEachPlayerPutContinuation = this.pendingEachPlayerPutContinuation;
         copy.pendingExileTopCardRepeat = this.pendingExileTopCardRepeat;
-        copy.pendingEachPlayerMayDrawChosenCount = this.pendingEachPlayerMayDrawChosenCount;
-        copy.pendingEachPlayerMayDrawThenGainLifeQueue.addAll(this.pendingEachPlayerMayDrawThenGainLifeQueue);
-        copy.pendingEachPlayerMayDrawThenGainLifeDrawers.addAll(this.pendingEachPlayerMayDrawThenGainLifeDrawers);
-        copy.pendingEachPlayerMayDrawThenGainLifeInitialCount = this.pendingEachPlayerMayDrawThenGainLifeInitialCount;
         copy.pendingRegenerationControlChanges.putAll(this.pendingRegenerationControlChanges);
         copy.unpreventableDamageInProgress = this.unpreventableDamageInProgress;
 

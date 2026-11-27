@@ -1954,6 +1954,21 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    /**
+     * Eumidian Wastewaker: records the permanent {@code ctx.playerId()} chose to sacrifice without sacrificing it, then
+     * the paused trigger resumes ({@code EumidianWastewakerEffectHandler} re-runs for the next player, and once every
+     * player has chosen, everything happens together, CR 101.4).
+     */
+    public void handleEumidianWastewakerSacrifice(GameData gameData, UUID permanentId,
+                                                  PermanentChoiceContext.EumidianWastewakerSacrifice ctx) {
+        if (!gameData.eumidianWastewaker.active || !ctx.playerId().equals(gameData.eumidianWastewaker.currentPlayerId)
+                || !ctx.playerId().equals(gameQueryService.findPermanentController(gameData, permanentId))) {
+            throw new IllegalStateException("No pending Eumidian Wastewaker sacrifice choice for this permanent");
+        }
+        gameData.eumidianWastewaker.chosenSacrificeIds.add(permanentId);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     /** The losing player picked which loss replacement applies (CR 616.1); apply it and carry on. */
     public void handleLossReplacementChoice(GameData gameData, UUID permanentId,
                                             PermanentChoiceContext.LossReplacementChoice ctx) {

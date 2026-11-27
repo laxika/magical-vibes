@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.AllureOfTheUnknown
 import com.github.laxika.magicalvibes.service.effect.normalfx.BendOrBreakEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DawnbreakReclaimerEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokenCopyOfChosenCreatureEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentReturnsGreatestManaValueNonlandPermanentThenDiscardsEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesCreatureCreateTokenCopyWithTotalPowerToughnessEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesGreatestPowerCreatureToExileThenDealsPowerDamageEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesCreatureToTapAndGoadEffectHandler;
@@ -26,7 +25,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseCounterTypeO
 import com.github.laxika.magicalvibes.service.effect.normalfx.GrantKeywordToChosenCreatureUntilEndOfTurnEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PutKeywordCountersOnControlledCreaturesThenPutPlusOneCountersOnSourceEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GuidedPassageEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentExilesNonlandNontokenPermanentAndRandomNonlandCardThenDealsManaValueDamageEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RiskyMoveEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.MemoriesReturningEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.BoostEquippedCreatureUntilEndOfTurnEffectHandler;
@@ -90,13 +88,10 @@ public class PermanentChoiceHandlerService {
     private final BendOrBreakEffectHandler bendOrBreakEffectHandler;
     private final DawnbreakReclaimerEffectHandler dawnbreakReclaimerEffectHandler;
     private final AllureOfTheUnknownEffectHandler allureOfTheUnknownEffectHandler;
-    private final EachOpponentReturnsGreatestManaValueNonlandPermanentThenDiscardsEffectHandler dispersalEffectHandler;
     private final GuidedPassageEffectHandler guidedPassageEffectHandler;
     private final GrantKeywordToChosenCreatureUntilEndOfTurnEffectHandler grantChosenCreatureKeywordEffectHandler;
     private final PutKeywordCountersOnControlledCreaturesThenPutPlusOneCountersOnSourceEffectHandler
             kathrilEffectHandler;
-    private final EachOpponentExilesNonlandNontokenPermanentAndRandomNonlandCardThenDealsManaValueDamageEffectHandler
-            gildedAmbusherEffectHandler;
     private final SuspectChosenOtherCreatureEffectHandler suspectChosenOtherCreatureEffectHandler;
     private final CreateTokenAttachedToTargetEffectHandler createTokenAttachedToTargetEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokenCopyOfTargetPermanentEffectHandler
@@ -618,15 +613,12 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleLandEquilibriumSacrifice(gameData, permanentId, landEquilibrium);
         } else if (context instanceof PermanentChoiceContext.TormentSacrifice tormentSacrifice) {
             battlefieldHandler.handleTormentSacrifice(gameData, permanentId, tormentSacrifice);
+        } else if (context instanceof PermanentChoiceContext.EumidianWastewakerSacrifice wastewakerSacrifice) {
+            battlefieldHandler.handleEumidianWastewakerSacrifice(gameData, permanentId, wastewakerSacrifice);
         } else if (context instanceof PermanentChoiceContext.LossReplacementChoice lossReplacement) {
             battlefieldHandler.handleLossReplacementChoice(gameData, permanentId, lossReplacement);
         } else if (context instanceof PermanentChoiceContext.DestroyChosenCreature destroyChosenCreature) {
             battlefieldHandler.handleDestroyChosenCreature(gameData, permanentId, destroyChosenCreature);
-        } else if (context instanceof PermanentChoiceContext.GildedAmbusherChoice gildedAmbusherChoice) {
-            gildedAmbusherEffectHandler.completeChoice(gameData, permanentId, gildedAmbusherChoice);
-            if (!gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-            }
         } else if (context instanceof PermanentChoiceContext.ExileCombatOpponent exileCombatOpponent) {
             battlefieldHandler.handleExileCombatOpponent(gameData, permanentId, exileCombatOpponent);
         } else if (context instanceof PermanentChoiceContext.DefendingPlayerChoosesCreatureToBlock chooseBlocker) {
@@ -907,8 +899,6 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleSagaChapterPlayerTarget(gameData, permanentId, scpt);
         } else if (context instanceof PermanentChoiceContext.TariffTieBreak tariffTieBreak) {
             battlefieldHandler.handleTariffTieBreak(gameData, permanentId, tariffTieBreak);
-        } else if (context instanceof PermanentChoiceContext.DispersalTieBreak dispersalTieBreak) {
-            dispersalEffectHandler.handleTieBreakChosen(gameData, permanentId, dispersalTieBreak);
         } else if (context instanceof PermanentChoiceContext.JuxtaposeTieBreak juxtaposeTieBreak) {
             battlefieldHandler.handleJuxtaposeTieBreak(gameData, permanentId, juxtaposeTieBreak);
         } else if (context instanceof PermanentChoiceContext.ChooseCreatureAsEnter ccae) {

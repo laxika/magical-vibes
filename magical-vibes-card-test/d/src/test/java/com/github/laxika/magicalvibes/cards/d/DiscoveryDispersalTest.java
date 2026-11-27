@@ -8,16 +8,21 @@ import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.s.SearchForAzcanta;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -187,5 +192,64 @@ class DiscoveryDispersalTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(azcanta, thopter);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         harness.assertInGraveyard(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("Every opponent chooses before the chosen permanents return together, then all choose and discard together (ruling)")
+    void opponentsChooseBeforeAnythingReturnsOrIsDiscarded() {
+        Player player3 = addThirdPlayer();
+        harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent secondGiant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.addToBattlefieldAndReturn(player3, new GrizzlyBears());
+        Permanent secondBears = harness.addToBattlefieldAndReturn(player3, new GrizzlyBears());
+        harness.setHand(player2, List.of(new Forest()));
+        harness.setHand(player3, List.of(new Island()));
+        harness.setHand(player1, List.of(new DiscoveryDispersal()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 1);
+        harness.handlePermanentChosen(player2, secondGiant.getId());
+
+        PendingInteraction.PermanentChoice thirdPlayersChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(thirdPlayersChoice).isNotNull();
+        assertThat(thirdPlayersChoice.playerId()).isEqualTo(player3.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(secondGiant);
+
+        harness.handlePermanentChosen(player3, secondBears.getId());
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(secondGiant);
+        assertThat(gd.playerBattlefields.get(player3.getId())).doesNotContain(secondBears);
+        harness.handleCardChosen(player2, 0);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(player3.getId());
+        harness.assertInHand(player2, "Forest");
+        harness.handleCardChosen(player3, 0);
+
+        harness.assertInGraveyard(player2, "Forest");
+        harness.assertInGraveyard(player3, "Island");
+        harness.assertInHand(player2, "Hill Giant");
+        harness.assertInHand(player3, "Grizzly Bears");
+    }
+
+    private Player addThirdPlayer() {
+        UUID thirdPlayerId = UUID.randomUUID();
+        Player player3 = new Player(thirdPlayerId, "Charlie");
+        gd.playerIds.add(thirdPlayerId);
+        gd.orderedPlayerIds.add(thirdPlayerId);
+        gd.playerNames.add("Charlie");
+        gd.playerIdToName.put(thirdPlayerId, "Charlie");
+        gd.playerDecks.put(thirdPlayerId, new ArrayList<>());
+        gd.playerHands.put(thirdPlayerId, new ArrayList<>());
+        gd.playerBattlefields.put(thirdPlayerId, new ArrayList<>());
+        gd.playerGraveyards.put(thirdPlayerId, new ArrayList<>());
+        gd.playerCommandZones.put(thirdPlayerId, new ArrayList<>());
+        gd.playerManaPools.put(thirdPlayerId, new ManaPool());
+        gd.playerLifeTotals.put(thirdPlayerId, 20);
+        harness.getSessionManager().registerPlayer(
+                new FakeConnection("conn-3"), thirdPlayerId, "Charlie");
+        return player3;
     }
 }

@@ -384,6 +384,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** Torment of Hailfire: {@code playerId} sacrifices the chosen nonland permanent they control. */
     record TormentSacrifice(UUID playerId) implements PermanentChoiceContext {}
 
+    /**
+     * Eumidian Wastewaker: {@code playerId} chooses the permanent they will sacrifice; nothing is sacrificed until the
+     * defending player has chosen too, then everything happens together (CR 101.4).
+     */
+    record EumidianWastewakerSacrifice(UUID playerId) implements PermanentChoiceContext {}
+
     /** The chosen creature is destroyed, or exiled instead when {@code exile} is true (Doomfall). */
     record DestroyChosenCreature(UUID choosingPlayerId, String sourceCardName, boolean exile,
                                  boolean cannotBeRegenerated, UUID sourcePermanentId, Card sourceCard)
@@ -632,18 +638,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     ) implements PermanentChoiceContext {
         public ChooseBenthicAnomalyCopy {
             chosenPermanentIds = List.copyOf(chosenPermanentIds);
-        }
-    }
-
-    /** Gilded Ambusher: an opponent chooses a nonland, nontoken permanent to exile. */
-    record GildedAmbusherChoice(
-            StackEntry resolvingEntry,
-            UUID opponentId,
-            List<UUID> remainingOpponentIds,
-            PermanentPredicate permanentFilter
-    ) implements PermanentChoiceContext {
-        public GildedAmbusherChoice {
-            remainingOpponentIds = List.copyOf(remainingOpponentIds);
         }
     }
 
@@ -2652,9 +2646,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** Tariff tie-break: {@code playerId} chooses which of their creatures tied for greatest mana
      *  value is the one they must pay for or sacrifice. */
     record TariffTieBreak(UUID playerId, Card sourceCard) implements PermanentChoiceContext {}
-
-    /** Dispersal tie-break: the opponent chooses which tied nonland permanent to return. */
-    record DispersalTieBreak(UUID playerId, Card sourceCard) implements PermanentChoiceContext {}
 
     /** Juxtapose tie-break: a player chooses which of their permanents tied for greatest mana value
      *  participates in the exchange. {@code artifactPhase} distinguishes the creature step from the

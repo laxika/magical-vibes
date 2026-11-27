@@ -53,10 +53,10 @@ class TheSecondDoctorTest extends BaseCardTest {
         harness.passUntil(player1, TurnStep.END_STEP);
         harness.withAutoStop(TurnStep.END_STEP, this::resolveAllTriggers);
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.withAutoStop(TurnStep.END_STEP, () -> {
-            harness.handleXValueChosen(player1, 1);
-            harness.handleXValueChosen(player2, 1);
+            harness.handleMayAbilityChosen(player1, true);
+            harness.handleMayAbilityChosen(player2, true);
         });
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
@@ -75,14 +75,15 @@ class TheSecondDoctorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent may decline while the controller draws")
     void opponentMayDeclineWhileControllerDraws() {
         prepareDrawChoices();
         var attacker = addCreatureReady(player2, new GrizzlyBears());
         beginEndStepChoices();
 
         harness.withAutoStop(TurnStep.END_STEP, () -> {
-            harness.handleXValueChosen(player1, 1);
-            harness.handleXValueChosen(player2, 0);
+            harness.handleMayAbilityChosen(player1, true);
+            harness.handleMayAbilityChosen(player2, false);
         });
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
@@ -92,14 +93,15 @@ class TheSecondDoctorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The controller may decline while an opponent draws, and that opponent is restricted")
     void controllerMayDeclineWhileOpponentDraws() {
         prepareDrawChoices();
         var attacker = addCreatureReady(player2, new GrizzlyBears());
         beginEndStepChoices();
 
         harness.withAutoStop(TurnStep.END_STEP, () -> {
-            harness.handleXValueChosen(player1, 0);
-            harness.handleXValueChosen(player2, 1);
+            harness.handleMayAbilityChosen(player1, false);
+            harness.handleMayAbilityChosen(player2, true);
         });
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -109,6 +111,7 @@ class TheSecondDoctorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent whose draw is replaced drew no card and is not restricted")
     void acceptingReplacedDrawDoesNotRestrictAttacking() {
         prepareDrawChoices();
         harness.addToBattlefield(player2, new WordsOfWorship());
@@ -122,8 +125,8 @@ class TheSecondDoctorTest extends BaseCardTest {
         beginEndStepChoices();
 
         harness.withAutoStop(TurnStep.END_STEP, () -> {
-            harness.handleXValueChosen(player1, 0);
-            harness.handleXValueChosen(player2, 1);
+            harness.handleMayAbilityChosen(player1, false);
+            harness.handleMayAbilityChosen(player2, true);
         });
 
         harness.assertLife(player2, 25);
@@ -133,13 +136,14 @@ class TheSecondDoctorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The restriction outlives the Doctor and ends after the opponent's next turn")
     void restrictionSurvivesSourceLeavingAndExpiresAfterOpponentsNextTurn() {
         prepareDrawChoices();
         var attacker = addCreatureReady(player2, new GrizzlyBears());
         beginEndStepChoices();
         harness.withAutoStop(TurnStep.END_STEP, () -> {
-            harness.handleXValueChosen(player1, 0);
-            harness.handleXValueChosen(player2, 1);
+            harness.handleMayAbilityChosen(player1, false);
+            harness.handleMayAbilityChosen(player2, true);
         });
         gd.playerBattlefields.get(player1.getId()).clear();
 
@@ -151,6 +155,7 @@ class TheSecondDoctorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Opponents have no maximum hand size either")
     void opponentAlsoHasNoMaximumHandSize() {
         harness.addToBattlefield(player1, new TheSecondDoctor());
         harness.forceActivePlayer(player2);
@@ -165,6 +170,7 @@ class TheSecondDoctorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A face-down Doctor has no hand-size ability")
     void faceDownDoctorDoesNotPreventCleanupDiscard() {
         harness.addToBattlefield(player1, new TheSecondDoctor());
         harness.forceActivePlayer(player1);
@@ -184,6 +190,7 @@ class TheSecondDoctorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("No draws are offered at an opponent's end step")
     void doesNotOfferDrawsDuringOpponentsEndStep() {
         prepareDrawChoices();
         harness.forceActivePlayer(player2);
@@ -192,9 +199,27 @@ class TheSecondDoctorTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.END_STEP, this::resolveAllTriggers);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Every player chooses whether to draw before anyone draws (CR 101.4)")
+    void everyPlayerChoosesBeforeAnyoneDraws() {
+        prepareDrawChoices();
+        beginEndStepChoices();
+
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.handleMayAbilityChosen(player1, true);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                    .isEqualTo(player2.getId());
+            assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+            harness.handleMayAbilityChosen(player2, true);
+        });
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
     }
 
     private void prepareDrawChoices() {
@@ -211,6 +236,6 @@ class TheSecondDoctorTest extends BaseCardTest {
     private void beginEndStepChoices() {
         harness.passUntil(player1, TurnStep.END_STEP);
         harness.withAutoStop(TurnStep.END_STEP, this::resolveAllTriggers);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
     }
 }

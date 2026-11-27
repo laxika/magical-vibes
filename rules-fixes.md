@@ -54,7 +54,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | DR Draws | DR-1 | DR-1 done 2026-11-27 (E6's plural "one of them" readers: owner question) |
 | CB Combat | CB-1 | CB-1 done 2026-11-27 (M11's block half left: it needs multi-defender combat damage) |
 | PP Perpetual changes | PP-1 | PP-1 done 2026-11-27 (L8, O47 left; O41's hand half left) |
-| PL Each player chooses, then all act | PL-1 | open |
+| PL Each player chooses, then all act | PL-1 | PL-1 done 2026-11-27 (Gilded Ambusher's damage reading for the owner) |
 | MC Single cards | MC-1, MC-2 | open |
 | AI Hard / easy AI | AI-1, AI-2 | AI-1, AI-2 done 2026-11-27 |
 | UI Frontend | UI-1 | UI-1 done 2026-11-27 |
@@ -1264,7 +1264,16 @@ land a replacement exiled).
 Notes: First check what entry 16's "Each player chooses, then all act (blocked-player-loop)" cause still lacks. The piece built
 here should serve those rows too: list them in the report.
 
-Outcome:
+Outcome: done 2026-11-27. S2 fixed: Eumidian Wastewaker's you-then-defending-player choices (mode, then the card or permanent) are
+recorded first and the discards and the sacrifice happen together (its ruling, CR 101.4); Disorienting Choice was already fixed
+(D13, pinned). S5 fixed: Gilded Ambusher and Dispersal (its ruling) now have every opponent choose before anything is exiled or
+returned, Dispersal's discards chosen by all and made together; The Second Doctor and Kwain ask everyone before anyone draws
+(CR 101.4, 121.2c); Ol Rin's was already fixed (D13). S20 dropped: already fixed in D19 (a land only on the battlefield, Ashaya,
+pinned). O34 fixed: only land cards now in a graveyard count, so a discard Leyline of the Void exiles draws nothing (ruling). New
+shared pieces: `ChoosePermanentsEffect.eachChoosesOne`, `EachPlayerMayEffect`, `PermanentHasGreatestManaValueAmongController
+PermanentsPredicate`, `CreaturesCantAttackControllerUntilNextTurnEffect.duringTheirNextTurn`. Dispersal's, Kwain's and The Second
+Doctor's effects deleted (records 2853 to 2851, handlers 2239 to 2238; ledger rows added). Owner question: Gilded Ambusher's
+per-opponent or all-opponents damage total (entry 17). New line N84 (MC-2). No `CONVERSION_VERSION` change.
 
 ### MC. Single cards
 
@@ -1489,6 +1498,11 @@ New line N83 (seen in LY-5): an exile that records a constant link (`ExileTarget
 ABILITY_LINK`, `ExileTopCardOfOwnLibraryEffectHandler`'s) records it from a borrowed copy too, so Patchwork Crawler borrowing
 another Patchwork Crawler's ability counts what that ability exiles as its own (CR 607.2a); `linkGainedEffect` can't rewrite it.
 Of the code.
+
+New line N84 (seen in PL-1): Eumidian Wastewaker makes its chosen discards and then the chosen sacrifice as a step departure, so a
+CR 616.1 death replacement question about a sacrificed permanent is asked after the discards are made, not before the one
+simultaneous event (`EumidianWastewakerEffectHandler.actTogether`; Torment of Hailfire's deferred form asks first and discards
+after). Of the code, unverified by a test.
 
 Outcome:
 

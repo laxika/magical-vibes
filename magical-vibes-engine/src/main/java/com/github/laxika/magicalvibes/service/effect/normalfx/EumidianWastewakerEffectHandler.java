@@ -3,9 +3,8 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
-import com.github.laxika.magicalvibes.model.DiscardFollowUp;
-import com.github.laxika.magicalvibes.model.EumidianWastewakerState;
 import com.github.laxika.magicalvibes.model.DepartureBatch;
+import com.github.laxika.magicalvibes.model.EumidianWastewakerState;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,15 +13,32 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EumidianWastewakerEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-/** Resolves Eumidian Wastewaker's two-player discard-or-sacrifice attack trigger. */
+/**
+ * Resolves Eumidian Wastewaker's "you and defending player each discard a card or sacrifice a permanent. You draw a
+ * card for each land card put into a graveyard this way."
+ *
+ * <p>You, then the defending player, each choose to discard or to sacrifice (a player who can do only one of them
+ * does that) and choose the card or permanent; nothing happens until both have chosen, and then the discards and the
+ * sacrifice happen together (the card's ruling, CR 101.4). The discard picks wait in
+ * {@link GameData#deferredDiscardSelections}; the sacrifice picks in {@link EumidianWastewakerState}. The discards are
+ * made first, with every chosen permanent still on the battlefield, so a replacement of a permanent being sacrificed
+ * still applies to them; then the chosen permanents leave as one departure, which ends this step on a CR 616.1
+ * question and resolves it again once answered. Only land cards that end up in a graveyard are counted: a land token,
+ * a card that is a land only on the battlefield (Ashaya, Soul of the Wild) and a card a replacement put elsewhere are
+ * not (the card's ruling).
+ */
 @Component
 @RequiredArgsConstructor
 public class EumidianWastewakerEffectHandler implements NormalEffectHandlerBean {
@@ -33,6 +49,10 @@ public class EumidianWastewakerEffectHandler implements NormalEffectHandlerBean 
     private final DestructionSupport destructionSupport;
     private final GameQueryService gameQueryService;
     private final StepDepartureSupport stepDepartureSupport;
+
+    @Autowired
+    @Lazy
+    private CardChoiceHandlerService cardChoiceHandlerService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -45,33 +65,32 @@ public class EumidianWastewakerEffectHandler implements NormalEffectHandlerBean 
         String sourceName = entry.getCard().getName();
 
         if (!state.active) {
+            state.reset();
             state.active = true;
             state.remaining.add(entry.getControllerId());
             UUID defendingPlayerId = defendingPlayerId(gameData, entry);
             if (defendingPlayerId != null && !defendingPlayerId.equals(entry.getControllerId())) {
                 state.remaining.add(defendingPlayerId);
             }
-        } else if (state.pendingDiscard) {
-            if (gameData.lastDiscardedCardTypes.contains(CardType.LAND)) {
-                state.landCardsPutIntoGraveyard++;
-            }
-            state.pendingDiscard = false;
-            state.currentPlayerId = null;
-        } else if (state.pendingSacrificeChoice) {
-            countSacrificedLandCard(gameData, state);
-            state.currentPlayerId = null;
+        } else if (state.sacrificing) {
+            finish(gameData, entry, state);
+            return;
         }
+        // Back after a discard pick: the pick is recorded, so the player is done choosing.
+        gameData.deferredDiscardChooserId = null;
 
         if (state.chosenMode != null) {
             String chosenMode = state.chosenMode;
             state.chosenMode = null;
-            applyMode(gameData, entry, effect, sourceName, state, chosenMode);
-            return;
+            if (choose(gameData, entry, sourceName, state, chosenMode)) {
+                return;
+            }
         }
 
         advance(gameData, entry, effect, sourceName, state);
     }
 
+    /** Asks the next player to choose; once every player has chosen, everything happens together. */
     private void advance(GameData gameData, StackEntry entry, CardEffect effect, String sourceName,
                          EumidianWastewakerState state) {
         while (!state.remaining.isEmpty()) {
@@ -81,12 +100,8 @@ public class EumidianWastewakerEffectHandler implements NormalEffectHandlerBean 
             }
             state.currentPlayerId = playerId;
 
-            boolean hasPermanent = !permanentIds(gameData, playerId, entry.getControllerId()).isEmpty();
-            boolean hasCard = hasCardToDiscard(gameData, playerId);
-            if (!hasPermanent && !hasCard) {
-                state.currentPlayerId = null;
-                continue;
-            }
+            boolean hasPermanent = !sacrificeablePermanentIds(gameData, playerId, entry.getControllerId()).isEmpty();
+            boolean hasCard = !unchosenHandIndices(gameData, playerId).isEmpty();
             if (hasPermanent && hasCard) {
                 gameData.rerunCurrentEffectAfterInteraction = true;
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
@@ -100,124 +115,131 @@ public class EumidianWastewakerEffectHandler implements NormalEffectHandlerBean 
                 ));
                 return;
             }
-
-            applyMode(gameData, entry, effect, sourceName, state,
-                    hasPermanent
-                            ? ChoiceContext.EachPlayerSacrificeOrDiscardChoice.SACRIFICE
-                            : ChoiceContext.EachPlayerSacrificeOrDiscardChoice.DISCARD);
-            return;
-        }
-
-        finish(gameData, entry, state);
-    }
-
-    private void applyMode(GameData gameData, StackEntry entry, CardEffect effect, String sourceName,
-                           EumidianWastewakerState state, String mode) {
-        UUID playerId = state.currentPlayerId;
-        if (ChoiceContext.EachPlayerSacrificeOrDiscardChoice.SACRIFICE.equals(mode)) {
-            List<UUID> ids = permanentIds(gameData, playerId, entry.getControllerId());
-            if (ids.isEmpty()) {
-                state.currentPlayerId = null;
-                advance(gameData, entry, effect, sourceName, state);
-                return;
-            }
-            if (ids.size() == 1) {
-                Permanent permanent = gameQueryService.findPermanentById(gameData, ids.getFirst());
-                state.currentPlayerId = null;
-                if (permanent != null) {
-                    state.pendingSacrificeChoice = true;
-                    state.pendingSacrificeLandIds.clear();
-                    state.pendingSacrificeLandIds.add(permanent.getCard().getId());
-                    // A step departure: a CR 616.1 question ends the step before the permanent leaves, and the
-                    // effect is resolved again to go on with the next player once the sacrifice is done.
-                    if (!stepDepartureSupport.departOrResolveAgain(gameData, entry, effect,
-                            DepartureBatch.of(StepDepartureSupport.sacrifices(List.of(permanent.getId()))))) {
-                        return;
-                    }
-                    countSacrificedLandCard(gameData, state);
-                }
-                advance(gameData, entry, effect, sourceName, state);
-                return;
-            }
-
-            state.pendingSacrificeChoice = true;
-            state.pendingSacrificeLandIds.clear();
-            for (UUID id : ids) {
-                Permanent permanent = gameQueryService.findPermanentById(gameData, id);
-                if (permanent != null) {
-                    state.pendingSacrificeLandIds.add(permanent.getCard().getId());
+            if (hasPermanent || hasCard) {
+                String mode = hasPermanent
+                        ? ChoiceContext.EachPlayerSacrificeOrDiscardChoice.SACRIFICE
+                        : ChoiceContext.EachPlayerSacrificeOrDiscardChoice.DISCARD;
+                if (choose(gameData, entry, sourceName, state, mode)) {
+                    return;
                 }
             }
-            gameData.rerunCurrentEffectAfterInteraction = true;
-            gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.TormentSacrifice(playerId));
-            playerInputService.beginPermanentChoice(gameData, playerId, ids,
-                    sourceName + " — choose a permanent to sacrifice.");
-            return;
         }
 
-        if (ChoiceContext.EachPlayerSacrificeOrDiscardChoice.DISCARD.equals(mode)) {
-            if (!hasCardToDiscard(gameData, playerId)) {
-                state.currentPlayerId = null;
-                advance(gameData, entry, effect, sourceName, state);
-                return;
-            }
-            gameData.lastDiscardedCardTypes = java.util.Set.of();
-            gameData.discardCausedByOpponent = !playerId.equals(entry.getControllerId());
-            state.pendingDiscard = true;
-            gameData.rerunCurrentEffectAfterInteraction = true;
-            playerInteractionSupport.resolveDiscardCards(gameData, playerId, 1, DiscardFollowUp.NONE);
-            if (!gameData.interaction.isAwaitingInput()) {
-                if (gameData.lastDiscardedCardTypes.contains(CardType.LAND)) {
-                    state.landCardsPutIntoGraveyard++;
-                }
-                state.pendingDiscard = false;
-                state.currentPlayerId = null;
-                advance(gameData, entry, effect, sourceName, state);
-            }
-            return;
-        }
-
-        state.currentPlayerId = null;
-        advance(gameData, entry, effect, sourceName, state);
+        actTogether(gameData, entry, effect, state);
     }
 
     /**
-     * Counts the sacrificed permanent if its card is now a land card in a graveyard: a land token, a card exiled instead
-     * and a card that is a land only on the battlefield (Ashaya) put no land card into a graveyard (the card's ruling).
-     * {@code pendingSacrificeLandIds} holds the cards of the permanents that could have been sacrificed.
+     * The current player chooses the permanent to sacrifice or the card to discard, without either happening yet; a
+     * lone permanent is chosen unasked. Returns whether the player is being asked.
      */
-    private void countSacrificedLandCard(GameData gameData, EumidianWastewakerState state) {
-        boolean landCardPutIntoGraveyard = state.pendingSacrificeLandIds.stream()
-                .map(cardId -> gameQueryService.findCardInGraveyardById(gameData, cardId))
-                .anyMatch(card -> card != null && card.hasType(CardType.LAND));
-        if (landCardPutIntoGraveyard) {
-            state.landCardsPutIntoGraveyard++;
+    private boolean choose(GameData gameData, StackEntry entry, String sourceName, EumidianWastewakerState state,
+                           String mode) {
+        UUID playerId = state.currentPlayerId;
+        if (ChoiceContext.EachPlayerSacrificeOrDiscardChoice.SACRIFICE.equals(mode)) {
+            List<UUID> ids = sacrificeablePermanentIds(gameData, playerId, entry.getControllerId());
+            if (ids.size() == 1) {
+                state.chosenSacrificeIds.add(ids.getFirst());
+            } else if (!ids.isEmpty()) {
+                gameData.rerunCurrentEffectAfterInteraction = true;
+                PermanentChoiceContext.EumidianWastewakerSacrifice context =
+                        new PermanentChoiceContext.EumidianWastewakerSacrifice(playerId);
+                gameData.interaction.setPermanentChoiceContext(context);
+                playerInputService.beginPermanentChoice(gameData, playerId, ids, context,
+                        sourceName + " — choose a permanent to sacrifice.");
+                return true;
+            }
+            return false;
         }
-        state.pendingSacrificeChoice = false;
-        state.pendingSacrificeLandIds.clear();
+
+        List<Integer> indices = unchosenHandIndices(gameData, playerId);
+        if (indices.isEmpty()) {
+            return false;
+        }
+        gameData.discardCausedByOpponent = !playerId.equals(entry.getControllerId());
+        gameData.rerunCurrentEffectAfterInteraction = true;
+        gameData.deferredDiscardChooserId = playerId;
+        playerInteractionSupport.resolveDiscardCards(gameData, playerId, 1, indices);
+        if (gameData.interaction.isAwaitingInput()) {
+            return true;
+        }
+        gameData.deferredDiscardChooserId = null;
+        return false;
+    }
+
+    /**
+     * Every player has chosen: the chosen cards are discarded, then the chosen permanents are sacrificed as one
+     * departure. The land cards discarded into a graveyard are counted now; the sacrificed ones once they are gone.
+     */
+    private void actTogether(GameData gameData, StackEntry entry, CardEffect effect, EumidianWastewakerState state) {
+        gameData.rerunCurrentEffectAfterInteraction = false;
+        state.currentPlayerId = null;
+        Map<UUID, List<Card>> discarded =
+                cardChoiceHandlerService.discardDeferredSelections(gameData, entry.getControllerId());
+        gameData.discardCausedByOpponent = false;
+        discarded.values().forEach(cards -> cards.forEach(card -> {
+            if (isLandCardInGraveyard(gameData, card.getId())) {
+                state.landCardsPutIntoGraveyard++;
+            }
+        }));
+
+        List<UUID> sacrifices = new ArrayList<>();
+        for (UUID permanentId : state.chosenSacrificeIds) {
+            Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
+            if (permanent != null) {
+                sacrifices.add(permanentId);
+                state.sacrificedCardIds.add(permanent.getCard().getId());
+            }
+        }
+        if (sacrifices.isEmpty()) {
+            finish(gameData, entry, state);
+            return;
+        }
+        state.sacrificing = true;
+        // A step departure: a CR 616.1 question ends the step before anything leaves, and the effect is resolved
+        // again to count and draw once the sacrifice is done.
+        if (stepDepartureSupport.departOrResolveAgain(gameData, entry, effect,
+                DepartureBatch.of(StepDepartureSupport.sacrifices(sacrifices)))) {
+            finish(gameData, entry, state);
+        }
     }
 
     private void finish(GameData gameData, StackEntry entry, EumidianWastewakerState state) {
-        int drawAmount = state.landCardsPutIntoGraveyard;
+        int drawAmount = state.landCardsPutIntoGraveyard
+                + (int) state.sacrificedCardIds.stream()
+                .filter(cardId -> isLandCardInGraveyard(gameData, cardId))
+                .count();
         entry.setEventValue(drawAmount);
         state.reset();
-        gameData.discardCausedByOpponent = false;
         gameData.rerunCurrentEffectAfterInteraction = false;
         if (drawAmount > 0) {
             playerInteractionSupport.applyDrawCards(gameData, entry.getControllerId(), drawAmount);
         }
     }
 
-    private List<UUID> permanentIds(GameData gameData, UUID playerId, UUID sourceControllerId) {
+    /** Whether the card is now a land card in a graveyard; a token is no card (the card's ruling). */
+    private boolean isLandCardInGraveyard(GameData gameData, UUID cardId) {
+        Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
+        return card != null && !card.isToken() && card.hasType(CardType.LAND);
+    }
+
+    private List<UUID> sacrificeablePermanentIds(GameData gameData, UUID playerId, UUID sourceControllerId) {
         return gameQueryService.canEffectCauseSacrifice(gameData, playerId, sourceControllerId)
                 ? destructionSupport.collectPermanentIds(gameData, playerId,
                 permanent -> !gameQueryService.cantBeChosenToSacrifice(gameData, permanent))
                 : List.of();
     }
 
-    private boolean hasCardToDiscard(GameData gameData, UUID playerId) {
-        List<Card> hand = gameData.playerHands.get(playerId);
-        return hand != null && !hand.isEmpty();
+    /** Positions in the player's hand of the cards not already chosen to be discarded. */
+    private List<Integer> unchosenHandIndices(GameData gameData, UUID playerId) {
+        List<Card> hand = gameData.playerHands.getOrDefault(playerId, List.of());
+        List<Integer> indices = new ArrayList<>();
+        for (int i = 0; i < hand.size(); i++) {
+            UUID cardId = hand.get(i).getId();
+            if (gameData.deferredDiscardSelections.stream().noneMatch(pick -> pick.cardId().equals(cardId))) {
+                indices.add(i);
+            }
+        }
+        return indices;
     }
 
     private UUID defendingPlayerId(GameData gameData, StackEntry entry) {

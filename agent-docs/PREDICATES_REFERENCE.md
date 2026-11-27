@@ -244,6 +244,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `PermanentHasGreatestManaValueAmongAllCreaturesPredicate` | `()` | creatures with greatest mana value among all creatures on the battlefield across every player (ties allowed) | `gameData` |
 | `PermanentHasGreatestManaValueAmongAllArtifactsPredicate` | `()` | artifacts with greatest mana value among all artifacts on the battlefield across every player (ties allowed) | `gameData` |
 | `PermanentHasGreatestManaValueAmongControllerCreaturesOrPlaneswalkersPredicate` | `()` | creatures or planeswalkers tied for greatest mana value among the permanents controlled by the candidate's controller | `gameData` |
+| `PermanentHasGreatestManaValueAmongControllerPermanentsPredicate` | `()` | permanents tied for greatest mana value among all the permanents (lands included) controlled by the candidate's controller; with a nonland filter, Dispersal | `gameData` |
 | `PermanentHasGreatestPowerAmongControllerCreaturesPredicate` | `()` | creatures with greatest effective power among the creatures controlled by that permanent's controller (ties allowed) | `gameData` |
 | `PermanentHasLeastPowerAmongControllerCreaturesPredicate` | `()` | creatures with least effective power among the creatures controlled by that permanent's controller (ties allowed) | `gameData` |
 | `PermanentHasGreatestPowerAmongAllCreaturesPredicate` | `()` | creatures with the greatest effective power among all creatures on the battlefield across every player (ties allowed). Topple | `gameData` |

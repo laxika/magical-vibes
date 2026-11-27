@@ -101,7 +101,8 @@ triggered ability is a `TemporaryGlobalTriggeredAbility`. Never a `Permanent` or
   (CR 603.7c). Card subjects do this; a handler with its own lookup must too.
 - Permanents one instruction moves leave or enter as one event (CR 603.10a, 608.2e); several players choose in APNAP order, then act:
   collect the choices in the choice context, then act once (leave batch or departure batch); reference handlers Sothera, Ol Rin's
-  Searing Light. A cost sacrificing several permanents leaves as one batch (`SpellCastingService.paySacrificeCostTogether`); a
+  Searing Light; composed, `ChoosePermanentsEffect.eachChoosesOne` (each picks one they control, one CHOOSE step) then the verb over
+  `thisWay(CHOOSE)`, and `EachPlayerMayEffect` (each says yes or no, then X once over `acceptedPlayers()`). A cost sacrificing several permanents leaves as one batch (`SpellCastingService.paySacrificeCostTogether`); a
   handler's own loop of single removals runs inside `PermanentRemovalService.removeTogether`, which also judges each as all were
   before any left (CR 608.2h).
 - A choice with one possible answer is made unasked; a permanent that can't be chosen is neither offered, counted nor drawn at random
@@ -306,7 +307,7 @@ triggered ability is a `TemporaryGlobalTriggeredAbility`. Never a `Permanent` or
 **Steps, choices and readers:**
 
 - `ChooseCardEffect` (`oneOf`, `upTo`, `oneOfEach`, `atRandom`, `fromEachOwner()`, a chooser `.by(...)`) records CHOOSE over cards;
-  `ChoosePermanentsEffect` (`exactly`, `upTo`, `anyNumber`, `atRandom`, `chosenBy(player)`, `oneForEach`, `forEachVote`, `toSacrifice()`
+  `ChoosePermanentsEffect` (`exactly`, `upTo`, `anyNumber`, `atRandom`, `chosenBy(player)`, `oneForEach`, `eachChoosesOne`, `forEachVote`, `toSacrifice()`
   (only candidates the chooser could sacrifice, CR 608.2d, 701.21a; a `MayEffect` it leads isn't asked when none could be,
   `ChoosePermanentsEffectHandler.couldSacrificeAny`), `thatCanBeAttachedTo` / `thatCanHost`,
   `thatTheTriggeringSpellCouldTarget()`) over permanents; `ChoosePlayerEffect` (`opponent()`, `chosenBy(player)`) /
@@ -323,7 +324,7 @@ triggered ability is a `TemporaryGlobalTriggeredAbility`. Never a `Permanent` or
   `chosenManaValue()`, `revealedCards(filter)`, `revealedManaValue()`.
 - `NoteAmountEffect` (NOTE, `AmountThisWay.noted()`); `QueueReflexiveAbilityEffect` for "when you do" (CR 603.12),
   `.withEventValue(effect, amount)` fixes the reflexive ability's X; `RepeatEffect(n, effect)`; `SeparateIntoPilesEffect`;
-  `TemptingOfferEffect.of` / `.offeredOnlyTo` (all decide, then act; CR 608.2d); `IntuitionEffect`; `RollTwoDiceChooseOneEffect` and
+  `TemptingOfferEffect.of` / `.offeredOnlyTo` (all decide, then act; CR 608.2d); `EachPlayerMayEffect.of` ("each player may", CR 101.4); `IntuitionEffect`; `RollTwoDiceChooseOneEffect` and
   `DiceRollService.rollDice` (CR 706.6).
 - `EffectResolutionService.resolveNestedInCurrentResolution(gameData, nested)`: steps resolved inside whatever is resolving, without the
   stack; if they stop for an answer they resume first.

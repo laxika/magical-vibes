@@ -10,7 +10,10 @@ import java.util.Objects;
  * different powers": as the effect resolves its controller chooses among the permanents {@code candidates} names
  * (CR 608.2d); none of them is targeted. With no more candidates than must be chosen, all of them are, unasked.
  * "For each opponent, choose a nonland permanent that player controls" is {@link #oneForEach}: one choice for each
- * of those players in turn, among the candidates that player controls. "One of them chosen at random" is
+ * of those players in turn, among the candidates that player controls. "Each opponent chooses a nonland permanent they
+ * control" is {@link #eachChoosesOne}: each of those players, in APNAP order and knowing the earlier choices, chooses
+ * one of the candidates they control, and what all of them chose is the one CHOOSE step, so the following step acts on
+ * all of it at once (CR 101.4). "One of them chosen at random" is
  * {@link #atRandom}: nobody is asked. "Target opponent chooses a creature they control" is {@link #chosenBy}: that player
  * makes the one choice, and this effect declares the player target the chooser names. "Choose three target permanents.
  * Destroy one of them at random" is {@link #atRandom} among {@code Subjects.allTargets()}: the targets are declared by
@@ -112,7 +115,7 @@ public record ChoosePermanentsEffect(PermanentSubject candidates, DynamicAmount 
         if (random && (different != null || maximum == null)) {
             throw new IllegalArgumentException("A number of permanents is chosen at random: " + maximum);
         }
-        if (chooser != null && (oneForEach != null || random)) {
+        if (chooser != null && (oneForEach != null && !oneForEach.equals(chooser) || random)) {
             throw new IllegalArgumentException("Only the one choice among all is made by another player: " + chooser);
         }
         if (forEachVote != null && (oneForEach != null || chooser != null || different != null || random
@@ -149,6 +152,23 @@ public record ChoosePermanentsEffect(PermanentSubject candidates, DynamicAmount 
                                                     String label) {
         return new ChoosePermanentsEffect(candidates, new Fixed(1), new Fixed(1), null, label,
                 Objects.requireNonNull(players, "players"), false, null);
+    }
+
+    /**
+     * "Each [of players] chooses [one of candidates] they control": every one of them chooses their own, in APNAP order,
+     * before anything is done with the choices (CR 101.4); a player with one candidate chooses it unasked, one with
+     * none chooses nothing.
+     */
+    public static ChoosePermanentsEffect eachChoosesOne(PlayerSubject players, PermanentSubject candidates,
+                                                        String label) {
+        Objects.requireNonNull(players, "players");
+        return new ChoosePermanentsEffect(candidates, new Fixed(1), new Fixed(1), null, label, players, false,
+                players);
+    }
+
+    /** Whether each player {@link #oneForEach} names makes their own choice ({@link #eachChoosesOne}). */
+    public boolean chosenByEach() {
+        return oneForEach != null && oneForEach.equals(chooser);
     }
 
     /**

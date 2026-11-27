@@ -3,11 +3,13 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentExilesNonlandNontokenPermanentAndRandomNonlandCardThenDealsManaValueDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -34,8 +36,13 @@ public class GildedAmbusher extends Card {
                 SequenceEffect.of(
                         new SacrificePermanentsEffect(1, anotherNonlandPermanent, Subjects.you()),
                         new ConditionalEffect(HappenedThisWay.sacrificed(), new QueueReflexiveAbilityEffect(
-                                new EachOpponentExilesNonlandNontokenPermanentAndRandomNonlandCardThenDealsManaValueDamageEffect(
-                                nonlandNontokenPermanent)))),
+                                SequenceEffect.of(
+                                        ChoosePermanentsEffect.eachChoosesOne(Subjects.eachOpponent(),
+                                                Subjects.controlledBy(Subjects.eachOpponent(),
+                                                        nonlandNontokenPermanent),
+                                                "a nonland, nontoken permanent"),
+                                        new EachOpponentExilesNonlandNontokenPermanentAndRandomNonlandCardThenDealsManaValueDamageEffect(
+                                                Subjects.thisWay(StepKind.CHOOSE)))))),
                 "Sacrifice another nonland permanent?"));
     }
 }

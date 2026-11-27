@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -24,8 +25,8 @@ class KwainItinerantMeddlerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        harness.handleXValueChosen(player1, 1);
-        harness.handleXValueChosen(player2, 1);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player2, true);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
@@ -42,13 +43,33 @@ class KwainItinerantMeddlerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        harness.handleXValueChosen(player1, 0);
-        harness.handleXValueChosen(player2, 1);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, true);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
         assertThat(gd.getLife(player2.getId())).isEqualTo(21);
+    }
+
+    @Test
+    @DisplayName("Every player chooses whether to draw before anyone draws (CR 101.4)")
+    void everyPlayerChoosesBeforeAnyoneDraws() {
+        addReadyKwain(player1);
+        setUpLibraries();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
     }
 
     private Permanent addReadyKwain(Player player) {

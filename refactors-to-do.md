@@ -426,7 +426,7 @@ Run the test classes of every card that used a deleted class (scripts/effect-inv
 - Demonic Hordes' `OpponentChoosesPermanentToSacrificeEffect` and Infernal Denizen's `OpponentMayGainControlOfCreatureYouControlEffect` were `blocked-other` on the old forced-cost fallback list; both are now ordinary steps of their resolution (U4a), so their folds (`ChoosePlayerEffect` + `ChoosePermanentsEffect.chosenBy(playersThisWay(CHOOSE))` + the verb) are open for a fold run. Sure of the code.
 - Eye for an Eye, Harm's Way, Jade Monolith, Shaman en-Kor, General's Regalia, Nova Pentacle: their chosen-source handlers now ask `DamageSourceChoiceSupport.choosable` (rules-fixes DM-3); fold them onto `ChooseDamageSourceEffect` plus a step that reads the choice.
 
-#### Blocked records by cause (689)
+#### Blocked records by cause (684)
 
 #### The first half prompts mid-step (blocked-step-model) (127)
 
@@ -560,9 +560,12 @@ The fused record's first half pauses mid-step for a prompt, so it can't be an ea
 - `TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicateEffect`: fused: sacrifice then conjure; step 7/8.
 - `TargetPlayerSacrificesPermanentThenDealsManaValueDamageEffect`: fused: sacrifice then damage by its mana value; step 7/8.
 
-#### Each player chooses, then all act (blocked-player-loop) (88)
+#### Each player chooses, then all act (blocked-player-loop) (83)
 
 Each player chooses in its own continuation; unblocked by a generic "each player chooses, then all act" loop (CR 101.4, 608.2e).
+rules-fixes PL-1 built two such pieces: `ChoosePermanentsEffect.eachChoosesOne` ("each [player] chooses a [permanent] they
+control", one CHOOSE step, then any verb over `thisWay(CHOOSE)`) and `EachPlayerMayEffect` ("each player may [X]", then X once
+over `acceptedPlayers()`).
 
 - `AnyPlayerMayExileCardFromGraveyardAndAssignNoCombatDamageEffect`: each player is offered the exile in turn.
 - `DestroyAllCreaturesExceptChosenTypesEffect`: Harsh Mercy: each player chooses a creature type in APNAP order, then one wipe; ChooseCreatureTypeAtResolutionEffect has the controller as its only chooser and keeps one type.
@@ -578,14 +581,12 @@ Each player chooses in its own continuation; unblocked by a generic "each player
 - `EachOpponentChoosesGreatestPowerCreatureToDestroyEffect`: the controller breaks each opponent's tie in turn, then one destroy batch (Highcliff Felidar).
 - `EachOpponentChoosesGreatestPowerCreatureToExileThenDealsPowerDamageEffect`: choices accumulate by opponent and the creatures are exiled together, powers read just before (ruling, CR 101.4).
 - `EachOpponentChoosesMasterOfCeremoniesEffect`: each opponent chooses, then the rewards are counted over the choices (Master of Ceremonies).
-- `EachOpponentExilesNonlandNontokenPermanentAndRandomNonlandCardThenDealsManaValueDamageEffect`: each opponent chooses in turn in its own continuation (Gilded Ambusher).
 - `EachOpponentMayDiscardOrSacrificePermanentEffect`: one discard-or-sacrifice-or-damage offer per opponent through queued mays (Zoyowa, Osseous Sticktwister).
 - `EachOpponentMayInvestigateEffect`: one may per opponent, counted for the controller's investigations (Wernog).
 - `EachOpponentMaySacrificeMatchingPermanentOrLoseLifeAndControllerDrawsEffect`: one sacrifice-or-lose-and-draw offer per opponent through queued mays (Braids).
 - `EachOpponentMaySacrificeNontokenCreatureOrLoseLifeEffect`: one sacrifice-or-lose-life offer per opponent through queued mays (Fandaniel).
 - `EachOpponentMaySearchLibraryForCreatureToBattlefieldEffect`: each opponent is asked before seeing the library and may search and find nothing, then the next; the search queue only knows a searcher by a card taken (CR 701.23a; Boldwyr Heavyweights).
 - `EachOpponentOfTriggeringPlayerMayDrawCardEffect`: asks each opponent its own may choice; its MayEffect now wraps DrawCardEffect(targetPlayerDeclaredElsewhere()).
-- `EachOpponentReturnsGreatestManaValueNonlandPermanentThenDiscardsEffect`: a tie choice and a discard per opponent in its rerun loop (Dispersal).
 - `EachOpponentRevealsHandAndExilesCreatureCardEffect`: inserts one revealed-hand choice per opponent (Valki).
 - `EachOtherPlayerMayReturnCardsFromGraveyardToBattlefieldEffect`: one optional choice per other player on the graveyard-return queue (Enslaved Horror).
 - `EachPlayerChoosesColorThenExileOtherPermanentsEffect`: each player chooses a color, then one exile by each controller's color (Selective Obliteration).
@@ -621,8 +622,6 @@ Each player chooses in its own continuation; unblocked by a generic "each player
 - `EachPlayerMayDiscardOrLoseLifeEffect`: its own choose-then-act loop with deferred discards; takes each opponent once the opponents record moves onto it.
 - `EachPlayerMayDiscardThenSearchBasicLandToHandEffect`: each may discard, the discards deferred, then who did may search (Borderland Explorer).
 - `EachPlayerMayDiscardUpToThenTakeDamageEffect`: each chooses how many and which, discarded together, then damage (Mind Bomb).
-- `EachPlayerMayDrawCardAndRestrictAttackingEffect`: one may-draw per player, the rider on who drew (The Second Doctor).
-- `EachPlayerMayDrawCardThenGainLifeEffect`: one may-draw per player, then who drew gains (Kwain).
 - `EachPlayerMayExileGraveyardCardsThenLoseLifeEffect`: each chooses from their graveyard, all exiled together, then the losses (Grave Consequences).
 - `EachPlayerMayPutCountersOnCreatureAndRestrictAttacksEffect`: each player chooses in APNAP order, then a per-player restriction.
 - `EachPlayerMayPutLandFromHandThenOpponentsDrawEffect`: each player chooses secretly, then the lands enter together.
@@ -641,7 +640,6 @@ Each player chooses in its own continuation; unblocked by a generic "each player
 - `EachPlayerSacrificesDownToFewestEffect`: per-player amount (down to the fewest); own each-player loop.
 - `EachPlayerSacrificesFractionRoundedDownEffect`: per-player amount (a fraction of what they control); own each-player loop.
 - `EachPlayerSacrificesFractionRoundedUpEffect`: per-player amount (a fraction of what they control); own each-player loop.
-- `EumidianWastewakerEffect`: Eumidian Wastewaker: 'you and defending player each discard a card or sacrifice a permanent' is each player choosing, then all acting (CR 101.4); the handler acts at each answer.
 - `ExplosionOfRichesEffect`: Explosion of Riches: 'each other player may draw a card' is each asked in turn, then all draw (CR 101.4); no MayEffect over several players.
 - `MakeAnExampleEffect`: all opponents separate (APNAP), then the controller chooses every pile, then one sacrifice batch (CR 608.2e); PendingMakeAnExample carries the separations and chosen creatures.
 - `ManifoldInsightsEffect`: Manifold Insights: reveal the top ten, then starting with the next opponent in turn order each opponent chooses a different nonland card from among them, the chosen into your hand and the rest on the bottom in a random order: ChooseCardEffect takes one ….
@@ -1213,6 +1211,9 @@ questions under "The owner's open questions", the decisions under "The owner's d
 - 2026-11-27, TK-1 (entry 18, lines S16 and L5): Asinine Antics and Twisted Sewer-Witch create one Role "attached to" each creature; when a replacement creates fewer Roles than creatures (the caster's Halving Season), which creatures get them? The engine spreads the Roles over the creatures in battlefield order (`AttachCreatedTokensToHostsEffectHandler`: Role i goes to creature i × creatures / Roles); neither CR 616.1 nor the Asinine Antics rulings say whether the creating player chooses.
 - 2026-11-27, MP-2 (entry 18, lines M3 and H7): two multiplayer views the engine doesn't have. (1) A player who loses leaves the game while the others play on (CR 104.2a, 800.4a), but every loss ends the game (`GameOutcomeService.checkWinCondition`, `declareWinner` with `getOpponentId` of the loser), so Triskaidekaphobia's "each player with exactly 13 life loses" can't eliminate one of three players. (2) `GameViewProjectionFactory.getRevealedOpponentHand` (Zur's Weirding, Telepathy) shows one opponent's hand, since `GameStateMessage` and the frontend have one opponent hand slot. Both are infrastructure (a player-elimination model; a hand per opponent in the view and client): move them to `missing-features-to-do.md`, or keep them in entry 18?
 - 2026-11-27, DR-1 (entry 18, line E6): "draw N cards, then discard one of them" (Casting of Bones, Krovikan Sorcerer, Soldevi Sage: `DiscardEffect`'s `onlyCardsDrawnThisResolution`) and `MayCastAnySpellFromHandWithoutPayingManaCostEffect.drawnCardsOnly` now offer every card the instruction drew, a replacement's draws included (a doubled draw used to offer none). That follows the count rulings (The Royal Scions, Ancient Excavation) and CR 614.6; only the singular "that card" readers (Pact Weapon, Jace, Mirror Mage) leave a replaced draw out (Pact Weapon's ruling). Is "them" right that way?
+- 2026-11-27, PL-1 (entry 18, line S5): Gilded Ambusher "deals damage to them equal to the total mana value of the cards exiled
+  this way": each opponent is dealt the total of their own two exiled cards (as now), or every opponent the total of all the cards
+  exiled for every opponent? There is no ruling; the two readings differ only with two or more opponents.
 
 #### Orchestrator decisions for the owner to review
 
@@ -1302,15 +1303,12 @@ Don't commit.
 - `TargetOpponentCreatesTokenEffect`'s gift branch gives the gift to `getOpponentId`; waits for the owner's gift-opponent answer (entry 17). Sure of the code.
 - `CombatBlockService.handleDeclareBlockersStep`, `declareBlockers` and `getBlockableAttackerIndices` take the defending player as `getOpponentId`: only the first opponent declares blockers, against every attacker; each attacked player should declare in APNAP order against only the creatures attacking them (CR 802.4, 802.4a, 802.4b). First `CombatDamageService` must read more than one defending battlefield (`buildBlockerMap` and its index-keyed damage state use `getOpponentId`'s), then the AI and the frontend; whether several defenders' blocks are one block event ("one or more creatures become blocked") is unsettled. CB-1 fixed the `DefendingPlayer…` conditions. Sure.
 
-#### Simultaneity and APNAP (CR 101.4, 603.10a, 608.2e) (8)
+#### Simultaneity and APNAP (CR 101.4, 603.10a, 608.2e) (5)
 
-- Disorienting Choice exiles, Eumidian Wastewaker sacrifices or discards at each player's answer. Sure.
 - Ezuri's Predation pairs by battlefield order and fights one at a time (rulings: you choose the pairs, fights are simultaneous). Sure.
-- Ol Rin's Searing Light, Gilded Ambusher exile each opponent's choice before the next chooses; Dispersal returns and discards one opponent at a time; The Second Doctor, Kwain draw before the next player chooses (CR 121.2c). Unverified.
 - Mythweaver Poq's simultaneous duplicates are one conjure event each (unsettled). Unverified.
 - Tribute's "paid" check is `placed >= N`, so a halved tribute (an opponent's Halving Season) reads as unpaid (CR 702.104b: "as specified").
 - `PutExiledCardsIntoOwnersGraveyardEffect` (Covenant of Minds) gives no CR 404.3 order prompt for the cards it puts into one graveyard; an engine-wide policy, see entry 17 (EB-3). Sure, low.
-- Eumidian Wastewaker counts a sacrificed land token, or a permanent that is a land only on the battlefield (Ashaya), as a land card put into a graveyard (ruling). Sure.
 - Ezuri's Predation: "those creatures" are read at the fight, not when counted (CR 608.2h).
 
 #### Missing events or records (searches, coin flips, seeks, shuffles, counters, draws) (3)
@@ -1344,7 +1342,7 @@ Don't commit.
 - `cardsThisWay(REVEAL)` names a card a later step reordered within its library (CR 701.20d); no card reads it so. Unverified.
 - `getRevealedOpponentHand` returns only the first opponent's hand (multiplayer); needs a hand per opponent in `GameStateMessage` and the frontend (owner question in entry 17, MP-2). Sure of the code.
 
-#### Other (35)
+#### Other (34)
 
 - Casting checks left from runs 40 and 41: Scrycast (Biting Remark; `ScryInteractionHandler`, `ScryAiStrategy`, code: the scry answer casts it with no `canCastDuringResolution` check, and the AI strategies have no `CastingPermissionService`); the may-cast offers don't ask the shared check; an ability leaves the stack before it resolves, where CR 608.2n removes it last. Unverified. FC-2: Knowledge Pool's timing, the split exile cast and suspend's type restriction fixed.
 - Krovikan Vampire's `ReturnDamagedCreaturesThatDiedUnderControlEffect` (a mass return with control and sacrifice links) puts an Aura card that died animated onto the battlefield with no host choice (CR 303.4f, 303.4g); Lim-Dûl's head since rules-fixes EB-1 and `ReturnDyingCreatureToBattlefieldEffect`, `ReturnDyingCreatureToOwnerBattlefieldEffect` since EB-2 go through the entry batch. Unverified.
@@ -1362,7 +1360,6 @@ Don't commit.
 - Boseiju, Hall of the Bandit Lord: when a land-mana replacement applies, the produced mana may lose its rider (CR 106.6a). Unverified.
 - Caged Sun's "a land's ability causes you to add" misses land mana abilities without {T}; `youTapLandForMana` fires only for {T} abilities. Sure, low.
 - Valki (and any "becomes a copy" of a card with an exile/return pair): a copied reader of every link (`exiledWithSource()`, about 200 cards) still reads the cards the copier exiled with its own abilities, where it should read only what its copied exile ability exiled (CR 607.1, 607.2a); Valki's hand exile records no link, so with two or more opponents a copied unlinked reader (Lazav, Wearer of Faces) sees it too. Needs every printed exile to record its own link. LY-5 fixed the borrowers (Myr Welder, Territory Forge, Idris, Locus read their own exile's link). Fairly sure.
-- Eumidian Wastewaker's discard branch counts a land that a replacement exiled instead of discarding into the graveyard (`lastDiscardedCardTypes`; ruling). Unverified.
 - `PerpetuallyGrantKeywordsToTriggeringCardEffect` over `Subjects.sourceObjectCard()` (Heir to Dragonfire, PP-1): an ability of a card in a hand records no hand stay, so `SubjectResolutionService.sourceObjectCard` looks in the hand, exile and graveyard, and a card that went from the hand to a graveyard before the ability resolved still gains flying (CR 400.7).
 - A card with both a perpetual evoke and a plain perpetual alternative cost offers only the first granted one (`GameQueryService.findGrantedAlternateCast`) (CR 601.2b).
 - Combat damage's protection is applied by `CombatDamageService.protectionPreventsCombatDamage` before the recipient's pool, which orders it only beside Phantom Centaur's counter prevention, so protection and another prevention of combat damage aren't ordered (CR 702.16e, 616.1). Sure of the code.

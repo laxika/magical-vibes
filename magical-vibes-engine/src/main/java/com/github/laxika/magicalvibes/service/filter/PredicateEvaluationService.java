@@ -247,6 +247,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasExactlyTwoColorsP
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongAllArtifactsPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongAllCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongControllerCreaturesOrPlaneswalkersPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongControllerPermanentsPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmongAllCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmongControlledCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmongControllerCreaturesPredicate;
@@ -3415,6 +3416,8 @@ public class PredicateEvaluationService {
                     gameQueryService.hasGreatestManaValueAmongAllArtifacts(gameData, permanent);
             case PermanentHasGreatestManaValueAmongControllerCreaturesOrPlaneswalkersPredicate ignored ->
                     gameQueryService.hasGreatestManaValueAmongControllerCreaturesOrPlaneswalkers(gameData, permanent);
+            case PermanentHasGreatestManaValueAmongControllerPermanentsPredicate ignored ->
+                    hasGreatestManaValueAmongControllerPermanents(gameData, permanent);
             case PermanentHasGreatestPowerAmongAllCreaturesPredicate ignored ->
                     gameQueryService.hasGreatestPowerAmongAllCreatures(gameData, permanent);
             case PermanentHasLowestManaValueAmongAllNonlandPermanentsPredicate ignored ->
@@ -3575,6 +3578,9 @@ public class PredicateEvaluationService {
             return true;
         }
         if (predicate instanceof PermanentHasGreatestManaValueAmongControllerCreaturesOrPlaneswalkersPredicate) {
+            return true;
+        }
+        if (predicate instanceof PermanentHasGreatestManaValueAmongControllerPermanentsPredicate) {
             return true;
         }
         if (predicate instanceof PermanentIsModifiedPredicate) {
@@ -3829,6 +3835,9 @@ public class PredicateEvaluationService {
                     hasGreatestManaValueAmongAllArtifactsStatic(permanent, context);
             case PermanentHasGreatestManaValueAmongControllerCreaturesOrPlaneswalkersPredicate ignored ->
                     hasGreatestManaValueAmongControllerCreaturesOrPlaneswalkersStatic(permanent, context);
+            case PermanentHasGreatestManaValueAmongControllerPermanentsPredicate ignored ->
+                    hasGreatestManaValueAmongControllerPermanents(context == null ? null : context.gameData(),
+                            permanent);
             case PermanentInCombatWithSourcePredicate ignored -> inCombatWithSourceStatic(permanent, context);
             case PermanentDealtCombatDamageToPlayerThisCombatPredicate ignored -> {
                 GameData gameData = context == null ? null : context.gameData();
@@ -4670,6 +4679,20 @@ public class PredicateEvaluationService {
             }
         }
         return gameQueryService.getPermanentManaValue(target) == greatest;
+    }
+
+    /** Whether {@code permanent} has the greatest mana value among every permanent its controller controls. */
+    private boolean hasGreatestManaValueAmongControllerPermanents(GameData gameData, Permanent permanent) {
+        if (gameData == null || permanent == null) {
+            return false;
+        }
+        UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
+        List<Permanent> battlefield = controllerId == null ? null : gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return false;
+        }
+        int greatest = battlefield.stream().mapToInt(gameQueryService::getPermanentManaValue).max().orElse(-1);
+        return gameQueryService.getPermanentManaValue(permanent) == greatest;
     }
 
     private boolean hasGreatestManaValueAmongControllerCreaturesOrPlaneswalkersStatic(

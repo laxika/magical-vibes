@@ -65,7 +65,12 @@ public class ChoosePermanentsEffectHandler implements NormalEffectHandlerBean {
         if (chooserId == null) {
             return;
         }
-        if (choose.sacrificing()) {
+        if (choose.sacrificing() && choose.chosenByEach()) {
+            // Each chooses one of their own to sacrifice: one they couldn't sacrifice is no option (CR 608.2d).
+            candidates = candidates.stream()
+                    .filter(permanent -> !gameQueryService.cantBeChosenToSacrifice(gameData, permanent))
+                    .toList();
+        } else if (choose.sacrificing()) {
             // One to sacrifice: a permanent the chooser couldn't sacrifice is no option (CR 608.2d, 701.21a). When
             // they could sacrifice none of theirs, a required choice is still made among them, as the rest of the
             // instruction reads it ("return the other", Barrin's Spite); the sacrifice then does nothing.
@@ -100,7 +105,10 @@ public class ChoosePermanentsEffectHandler implements NormalEffectHandlerBean {
                         .filter(id -> playerId.equals(gameQueryService.findPermanentController(gameData, id)))
                         .toList();
                 if (!theirs.isEmpty()) {
-                    choices.add(new Offer(entry.getControllerId(), theirs, sourceName + " — choose " + choose.label()
+                    choices.add(choose.chosenByEach()
+                            ? new Offer(playerId, theirs, sourceName + " — choose " + choose.label()
+                            + " you control.")
+                            : new Offer(entry.getControllerId(), theirs, sourceName + " — choose " + choose.label()
                             + " " + gameData.playerIdToName.get(playerId) + " controls."));
                 }
             }
@@ -311,6 +319,7 @@ public class ChoosePermanentsEffectHandler implements NormalEffectHandlerBean {
         }
         String chooses = choose.random() ? "Chosen at random: "
                 : choose.forEachVote() != null && choose.forEachVote().byVoter() ? "Chosen by the voters: "
+                : choose.chosenByEach() ? "Chosen by each player: "
                 : chooser + " chooses ";
         List<UUID> controllers = new ArrayList<>();
         var log = GameLog.builder().text(chooses);

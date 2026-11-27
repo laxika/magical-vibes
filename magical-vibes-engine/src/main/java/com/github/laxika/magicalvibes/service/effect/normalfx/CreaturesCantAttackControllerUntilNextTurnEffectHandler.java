@@ -20,7 +20,8 @@ import java.util.UUID;
 /**
  * Resolves {@link CreaturesCantAttackControllerUntilNextTurnEffect}: the attacking and protected players are found as it
  * resolves, and each protected player gets a floating {@link CreaturesCantAttackControllerUnlessPredicateEffect}
- * (no creature exempt) naming each attacking player, or every player, for the effect's duration.
+ * (no creature exempt) naming each attacking player, or every player, for the effect's duration; "during their next
+ * turn" lasts through the end of that attacking player's next turn.
  */
 @Component
 @RequiredArgsConstructor
@@ -43,12 +44,14 @@ public class CreaturesCantAttackControllerUntilNextTurnEffectHandler implements 
                 if (protectedPlayerId.equals(attackingPlayerId)) {
                     continue;
                 }
+                // "During their next turn": the duration's "your" is the attacking player's.
+                UUID durationOwnerId = ban.duringAttackersNextTurn() ? attackingPlayerId : entry.getControllerId();
                 gameData.addFloatingEffect(new FloatingContinuousEffect(
                         UUID.randomUUID(), FaceDownVisibility.sourceName(gameData, entry), entry.getSourcePermanentId(),
-                        entry.getControllerId(),
+                        durationOwnerId,
                         new CreaturesCantAttackControllerUnlessPredicateEffect(
                                 new PermanentNotPredicate(new PermanentTruePredicate()), ban.protectsPlaneswalkers(),
-                                attackingPlayerId),
+                                attackingPlayerId, ban.protectsPermanents()),
                         null, protectedPlayerId, null, ban.duration(), 0L));
             }
         }

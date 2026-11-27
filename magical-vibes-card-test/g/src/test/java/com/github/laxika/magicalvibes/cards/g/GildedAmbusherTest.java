@@ -4,15 +4,20 @@ import com.github.laxika.magicalvibes.cards.c.Clone;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -153,5 +158,56 @@ class GildedAmbusherTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(clone, shock);
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         harness.assertLife(player1, 15);
+    }
+
+    @Test
+    @DisplayName("Every opponent chooses before the chosen permanents are exiled together (CR 101.4)")
+    void opponentsChooseBeforeAnythingIsExiled() {
+        Player player3 = addThirdPlayer();
+        addCreatureReady(player1, new GildedAmbusher());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        Permanent secondOfPlayer2 = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player3, new GrizzlyBears());
+        Permanent secondOfPlayer3 = addCreatureReady(player3, new GrizzlyBears());
+        harness.setLibrary(player2, List.of());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+            harness.handleMayAbilityChosen(player1, true);
+            resolveAllTriggers();
+
+            harness.handlePermanentChosen(player2, secondOfPlayer2.getId());
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId())
+                    .isEqualTo(player3.getId());
+            assertThat(gd.playerBattlefields.get(player2.getId())).contains(secondOfPlayer2);
+            harness.handlePermanentChosen(player3, secondOfPlayer3.getId());
+            resolveAllTriggers();
+        });
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(secondOfPlayer2);
+        assertThat(gd.playerBattlefields.get(player3.getId())).doesNotContain(secondOfPlayer3);
+        harness.assertLife(player2, 18);
+        harness.assertLife(player3, 18);
+    }
+
+    private Player addThirdPlayer() {
+        UUID thirdPlayerId = UUID.randomUUID();
+        Player player3 = new Player(thirdPlayerId, "Charlie");
+        gd.playerIds.add(thirdPlayerId);
+        gd.orderedPlayerIds.add(thirdPlayerId);
+        gd.playerNames.add("Charlie");
+        gd.playerIdToName.put(thirdPlayerId, "Charlie");
+        gd.playerDecks.put(thirdPlayerId, new ArrayList<>());
+        gd.playerHands.put(thirdPlayerId, new ArrayList<>());
+        gd.playerBattlefields.put(thirdPlayerId, new ArrayList<>());
+        gd.playerGraveyards.put(thirdPlayerId, new ArrayList<>());
+        gd.playerCommandZones.put(thirdPlayerId, new ArrayList<>());
+        gd.playerManaPools.put(thirdPlayerId, new ManaPool());
+        gd.playerLifeTotals.put(thirdPlayerId, 20);
+        harness.getSessionManager().registerPlayer(
+                new FakeConnection("conn-3"), thirdPlayerId, "Charlie");
+        return player3;
     }
 }
