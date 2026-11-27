@@ -87,6 +87,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentBlockingSourcePredic
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByMonarchPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsRingBearerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerDealtCombatDamageBySubtypeThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerPoisonCountersAtLeastPredicate;
@@ -1094,6 +1095,23 @@ class PredicateEvaluationServiceTest {
             gd.monarchPlayerId = player1Id;
             assertThat(evaluator.matchesPermanentPredicate(gd, permanent, predicate)).isFalse();
             assertThat(evaluator.matchesPermanentPredicate(gd, otherPermanent, predicate)).isTrue();
+        }
+
+        @Test
+        @DisplayName("PermanentIsRingBearerPredicate matches only the creature its controller chose as Ring-bearer")
+        void ringBearerPredicateMatchesItsControllersRingBearer() {
+            Permanent bearer = addPermanent(player1Id, createCreature("Bearer", 2, 2, CardColor.GREEN));
+            Permanent other = addPermanent(player1Id, createCreature("Other", 2, 2, CardColor.GREEN));
+            Permanent opponents = addPermanent(player2Id, createCreature("Opponent's", 2, 2, CardColor.GREEN));
+            PermanentIsRingBearerPredicate predicate = new PermanentIsRingBearerPredicate();
+
+            assertThat(evaluator.matchesPermanentPredicate(gd, bearer, predicate)).isFalse();
+
+            gd.temptByRing(player1Id);
+            gd.setRingBearer(player1Id, bearer.getId());
+            assertThat(evaluator.matchesPermanentPredicate(gd, bearer, predicate)).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(gd, other, predicate)).isFalse();
+            assertThat(evaluator.matchesPermanentPredicate(gd, opponents, predicate)).isFalse();
         }
 
         @Test

@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.s.SlipOnTheRing;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -12,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(BaneslayerAspirant.class)
+@CardUsed({BaneslayerAspirant.class, SlipOnTheRing.class})
 class BaneslayerAspirantTest extends BaseCardTest {
 
     @Test
@@ -38,6 +40,20 @@ class BaneslayerAspirantTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, aspirant, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasKeyword(gd, aspirant, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gqs.hasKeyword(gd, aspirant, Keyword.LIFELINK)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The Ring, the emblem the Ring tempting you gives, satisfies Baneslayer Aspirant")
+    void ringEmblemGrantsBonus() {
+        Permanent aspirant = addCreatureReady(player1, new BaneslayerAspirant());
+        harness.setHand(player1, List.of(new SlipOnTheRing()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castAndResolveInstant(player1, 0, aspirant.getId());
+
+        Permanent returned = findPermanent(player1, "Baneslayer Aspirant");
+        assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.FLYING)).isTrue();
     }
 
     @Test

@@ -186,6 +186,7 @@ public sealed interface PermanentPredicate permits
         PermanentIsRenownedPredicate,
         PermanentIsSuspectedPredicate,
         PermanentIsSourceCardPredicate,
+        PermanentIsRingBearerPredicate,
         PermanentSharesNameWithImprintedCardPredicate,
         PermanentIsTargetCardPredicate,
         PermanentIsSourceOrPairedPredicate,

@@ -189,7 +189,8 @@ no object), `delayedWatching(permanentId)`, `abilities(gameData, watcher, watche
 `permanentAbilities` by watch key; `ownAbilities` / `grantedAbilities` split them where a card's own abilities depend on
 where it is (an Aura's "enchanted creature becomes the target", printed ward on an attached permanent, an unattached
 animated Equipment). The spell matcher reads emblems by the same keys (`dispatchEmblems`); the combat-damage ally pass
-reads the controller's emblems as watchers. No emblem ability has its own reader.
+reads the controller's emblems as watchers, as do "a creature you control attacks" and "becomes blocked" (the Ring's,
+`RingState.EMBLEM`). No emblem ability has its own reader.
 
 ### Zone changes
 

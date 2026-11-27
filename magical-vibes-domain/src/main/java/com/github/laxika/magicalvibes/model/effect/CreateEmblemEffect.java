@@ -26,7 +26,9 @@ import java.util.List;
  * Necromancer; "whenever you draw a card, exile target permanent an opponent controls", Teferi, Hero of Dominaria;
  * "whenever a creature you control deals combat damage to a player", Kaito Shizuki),
  * {@code AttackTriggers} "whenever a creature attacks you"
- * ({@code Triggers.creatureAttacksYou()}, Garruk, Apex Predator), the emblem graveyard readers "whenever a card is put
+ * ({@code Triggers.creatureAttacksYou()}, Garruk, Apex Predator) and "whenever a creature you control attacks",
+ * {@code BlockTriggers} "whenever a creature you control becomes blocked [by a creature]" (the Ring's,
+ * {@code RingState.EMBLEM}), the emblem graveyard readers "whenever a card is put
  * into your graveyard from anywhere" (Tamiyo, the Moon Sage) and "whenever an artifact is put into your graveyard from
  * the battlefield" (Daretti, Scrap Savant), and the emblem step reader the "at the beginning of [step]" abilities
  * ({@code StepTrigger}; Sarkhan, the Dragonspeaker).</p>

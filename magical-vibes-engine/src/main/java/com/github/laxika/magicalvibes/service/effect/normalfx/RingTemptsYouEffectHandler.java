@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.RingState;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RingTemptsYouEffect;
@@ -19,11 +20,12 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * "The Ring tempts you" (CR 701.54a, 701.54c): the controller gets the Ring emblem if they lack it and its level
- * rises, then they choose a creature they control as their Ring-bearer (unasked when only one can be chosen; with
+ * "The Ring tempts you" (CR 701.54a, 701.54c): the controller gets the Ring emblem if they lack it (an emblem named
+ * The Ring with {@link RingState#EMBLEM}'s abilities, which the trigger readers read from the command zone) and its
+ * level rises, then they choose a creature they control as their Ring-bearer (unasked when only one can be chosen; with
  * none, their Ring-bearer stays as it was). The Ring has tempted them once that is done, even if no creature could
  * be chosen (CR 701.54d), which raises the tempted event; a chosen Ring-bearer also raises the bearer-chosen event.
- * Everything is kept in the one Ring store, {@link GameData#ringStates}.
+ * The level and the Ring-bearer are kept in the one Ring store, {@link GameData#ringStates}.
  */
 @Component
 @RequiredArgsConstructor
@@ -33,6 +35,7 @@ public class RingTemptsYouEffectHandler implements NormalEffectHandlerBean {
     private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
     private final EffectResolutionService effectResolutionService;
+    private final CreateEmblemEffectHandler createEmblemEffectHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -46,6 +49,9 @@ public class RingTemptsYouEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        if (!gameData.ringStates.containsKey(controllerId)) {
+            createEmblemEffectHandler.createEmblem(gameData, controllerId, RingState.EMBLEM_NAME, RingState.EMBLEM);
+        }
         gameData.temptByRing(controllerId);
         gameLogService.append(gameData, GameLog.text(
                 gameData.playerIdToName.get(controllerId) + " is tempted by the Ring."));

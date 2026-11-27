@@ -59,7 +59,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | AI Hard / easy AI | AI-1, AI-2 | AI-1, AI-2 done 2026-11-27 |
 | UI Frontend | UI-1 | UI-1 done 2026-11-27 |
 | LG, CL Logs and non-rules cleanup | LG-1, CL-1 | CL-1, LG-1 done 2026-11-27 |
-| FT Missing features | FT-1, FT-2 | open |
+| FT Missing features | FT-1, FT-2 | FT-1 done 2026-11-27 (N86 to MC-2e) |
 | Z Close | Z | open |
 
 ## Ground rules for every run
@@ -1302,7 +1302,7 @@ Outcome already settled.
 - MC-2c, multiplayer opponent readers and draws: N49, N50, N51, N65, N66, N67, N68, N69, N79.
 - MC-2d, casting, costs and the stack: N16, N17, N25, N26, N38, N39, N59, N80, O25 (Caged Sun).
 - MC-2e, zone moves and single cards: S3 and S21 (Ezuri's Predation), O5, O7, S8, O79's Behemoth part, N28, N36, N40, N54,
-  N70, N84.
+  N70, N84, N86.
 - MC-2f, layers, perpetual changes and links: N64, N71, N73, N74, N75, N76, N81, N82, N83.
 
 Lines: O5 (Limitless Rekindling's pool), O7 (`ConjureCardToBattlefieldEffectHandler`: a conjured land gets no land-enter handling;
@@ -1526,6 +1526,13 @@ New line N85 (seen in MC-1): Ulamog's Despoiler's as-enters choice (`AsEntersInt
 ones too: a face-down card should be a pick of its pile taking a random card of it (2015-08-25 ruling, as MC-1 did for Ulamog's
 Nullifier with `sameFaceDownPile`), and the prompt may show the face-down cards' names. Of the code, unverified by a test.
 
+New line N86 (seen in FT-1): a creature an effect makes block an attacker that is already blocked (Balduvian Warlord,
+`SwapBlockingAssignmentsBetweenTwoCreaturesEffect`) triggers no "becomes blocked by a creature" ability (`EACH_BLOCKER`):
+`CombatBlockService.applyBlockFromEffect` sends no blocked attacker then, and `BlockTriggers`' EFFECT branch calls every
+becomes-blocked reader only for a newly blocked one, but CR 509.3d says it triggers if the blocker wasn't already blocking that
+attacker (Sawtooth Ogre, Auras' "enchanted creature becomes blocked by a creature", No Quarter, the Ring's level 3). Of the
+code, unverified by a test.
+
 Outcome:
 
 ### AI. Hard / easy AI (`magical-vibes-ai`)
@@ -1656,7 +1663,16 @@ left (over the 30-file limit; many copies differ from the harness's, e.g. a fixe
 Lines: E1. The Ring tempts you: implement the remaining abilities, verified against the CR's Ring rule (find it with
 `search_rules`) and the rulings of the tempting cards.
 
-Outcome:
+Outcome: E1 fixed (2026-11-27). CR 701.54c: the first time the Ring tempts a player they get an emblem named The Ring
+(`RingTemptsYouEffectHandler` creates it through `CreateEmblemEffectHandler.createEmblem` with `RingState.EMBLEM`), whose three
+triggered abilities exist from levels 2, 3 and 4 (event condition `ControllerRingLevelAtLeast`; the rulings: "the Ring gains its
+abilities in order ... has that ability for the rest of the game") and read "your Ring-bearer" with the new
+`PermanentIsRingBearerPredicate`: attack loot, each blocker sacrificed by its controller at end of combat (once per blocker,
+CR 509.3d, the Sawtooth Ogre delayed shape), each opponent loses 3 on combat damage to a player. `AttackTriggers`' "a creature
+you control attacks" and `BlockTriggers`' "a creature you control becomes blocked" now read the player's emblems (CR 114.4); the
+latter also takes `EACH_BLOCKER`. Baneslayer Aspirant now counts The Ring as an emblem (pinned). Tests first failing: six in
+`SlipOnTheRingTest$RingLevels`. Left: N86 (an effect-made extra blocker triggers no "becomes blocked by a creature"), to MC-2e.
+No owner questions.
 
 #### FT-2. A plot destination
 

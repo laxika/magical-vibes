@@ -209,6 +209,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayerDi
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceChosenPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByMonarchPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsRingBearerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledContinuouslySinceBeginningOfTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentCouldProduceManaPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentPredicate;
@@ -2772,6 +2773,8 @@ public class PredicateEvaluationService {
                 yield triggeringPermanentControllerId != null
                         && sourceControllerId.equals(triggeringPermanentControllerId);
             }
+            case PermanentIsRingBearerPredicate ignored ->
+                    gameData != null && gameQueryService.isRingBearer(gameData, permanent);
             case PermanentControlledByMonarchPredicate ignored ->
                     gameData != null && gameData.monarchPlayerId != null
                             && gameData.monarchPlayerId.equals(gameData.findControllerOf(permanent));
@@ -3574,7 +3577,8 @@ public class PredicateEvaluationService {
                 || predicate instanceof PermanentIsCommanderPredicate
                 || predicate instanceof PermanentHasAttachedPermanentPredicate
                 || predicate instanceof PermanentEnteredBattlefieldThisTurnPredicate
-                || predicate instanceof PermanentTurnedFaceUpThisTurnPredicate) {
+                || predicate instanceof PermanentTurnedFaceUpThisTurnPredicate
+                || predicate instanceof PermanentIsRingBearerPredicate) {
             return true;
         }
         if (predicate instanceof PermanentHasGreatestManaValueAmongControllerCreaturesOrPlaneswalkersPredicate) {
@@ -3761,6 +3765,10 @@ public class PredicateEvaluationService {
                 UUID chosenPlayerId = sourceChosenPlayerId(context);
                 yield gameData != null && chosenPlayerId != null
                         && chosenPlayerId.equals(gameData.findControllerOf(permanent));
+            }
+            case PermanentIsRingBearerPredicate ignored -> {
+                GameData gameData = context == null ? null : context.gameData();
+                yield gameData != null && gameQueryService.isRingBearer(gameData, permanent);
             }
             case PermanentControlledByMonarchPredicate ignored -> {
                 GameData gameData = context == null ? null : context.gameData();

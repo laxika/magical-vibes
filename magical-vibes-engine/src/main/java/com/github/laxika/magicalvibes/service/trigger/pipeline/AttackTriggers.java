@@ -615,10 +615,9 @@ public class AttackTriggers {
     }
 
     /**
-     * "Whenever a creature you control attacks" of the attacking player's permanents and of the delayed abilities they
-     * control that watch no particular object ("whenever a creature you control attacks this turn", Indulge), for
-     * {@code attacker}: the filter
-     * on the attacker ("a creature you control with a +1/+1 counter on it attacks", Rage Forger), the event condition
+     * "Whenever a creature you control attacks" of the attacking player's permanents, their emblems and the delayed
+     * abilities they control that watch no particular object ("whenever a creature you control attacks this turn",
+     * Indulge), for {@code attacker}: the filter on the attacker ("a creature you control with a +1/+1 counter on it attacks", Rage Forger), the event condition
      * ("attacks alone", exalted, CR 702.83a). The entry records the attacked player, planeswalker or battle, the
      * defending player and the attacker as its triggering permanent and non-targeting "that creature".
      */
@@ -641,11 +640,20 @@ public class AttackTriggers {
                 }
             }
         }
-        for (TemporaryGlobalTriggeredAbility delayed : triggerIndex.delayedAbilities(gameData)) {
-            if (delayed.watchedPermanentId() != null || !delayed.controllerId().equals(playerId)) {
-                continue;
+        // Then their emblems, whose abilities function in the command zone (CR 114.4; the Ring's "whenever your
+        // Ring-bearer attacks", CR 701.54c), and the delayed abilities they control.
+        List<Watcher> watchers = new ArrayList<>();
+        for (Emblem emblem : List.copyOf(gameData.emblems)) {
+            if (emblem.controllerId().equals(playerId)) {
+                watchers.add(Watcher.of(emblem));
             }
-            Watcher watcher = Watcher.of(delayed);
+        }
+        for (TemporaryGlobalTriggeredAbility delayed : triggerIndex.delayedAbilities(gameData)) {
+            if (delayed.watchedPermanentId() == null && delayed.controllerId().equals(playerId)) {
+                watchers.add(Watcher.of(delayed));
+            }
+        }
+        for (Watcher watcher : watchers) {
             ConditionContext context = watcher.conditionContext().withTriggeringPermanentId(attacker.getId());
             for (TriggeredAbility ability : abilities(gameData, watcher, watched)) {
                 requireNoLimitOrMultiplicity(ability, watched);
