@@ -119,6 +119,37 @@ class UlamogsNullifierTest extends BaseCardTest {
         assertThat(harness.getConn1().getMessagesContaining("Clutch of Currents")).isEmpty();
     }
 
+    @Test
+    @DisplayName("A pile of face-down cards is offered as two picks, not card by card (2015-08-25 ruling)")
+    void faceDownPileIsOfferedAsTwoPicks() {
+        List<ClutchOfCurrents> pile = List.of(new ClutchOfCurrents(), new ClutchOfCurrents(), new ClutchOfCurrents());
+        harness.inMutationScope(() -> pile.forEach(card -> gd.addToExile(player2.getId(), card, null, true)));
+
+        castNullifierInResponseTo(new BroodhunterWurm());
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOfSatisfying(PendingInteraction.TwoOpponentOwnedExiledCardsToGraveyardChoice.class,
+                        choice -> assertThat(choice.validCardIds()).hasSize(2));
+    }
+
+    @Test
+    @DisplayName("Two picks of one face-down pile put two different cards of that pile into the graveyard")
+    void twoPicksOfOnePileMoveTwoOfItsCards() {
+        List<ClutchOfCurrents> pile = List.of(new ClutchOfCurrents(), new ClutchOfCurrents(), new ClutchOfCurrents());
+        harness.inMutationScope(() -> pile.forEach(card -> gd.addToExile(player2.getId(), card, null, true)));
+        BroodhunterWurm wurm = new BroodhunterWurm();
+        castNullifierInResponseTo(wurm);
+
+        var choice = (PendingInteraction.TwoOpponentOwnedExiledCardsToGraveyardChoice) gd.interaction.activeInteraction();
+        harness.handleMultipleCardsChosen(player1, choice.validCardIds());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Broodhunter Wurm");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(1).isSubsetOf(pile);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .filteredOn(card -> pile.contains(card)).hasSize(2);
+    }
+
     private void castNullifierInResponseTo(BroodhunterWurm wurm) {
         harness.forceActivePlayer(player2);
         harness.castFromHand(player2, wurm, "{3}{G}");

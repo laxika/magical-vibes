@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.c.Clone;
 import com.github.laxika.magicalvibes.cards.p.PlayWithFire;
 import com.github.laxika.magicalvibes.cards.p.PlatinumAngel;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -18,7 +19,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EnduringAngel.class, AngelicEnforcer.class, PlayWithFire.class, PlatinumAngel.class})
+@CardUsed({EnduringAngel.class, AngelicEnforcer.class, PlayWithFire.class, PlatinumAngel.class, Clone.class})
 class EnduringAngelTest extends BaseCardTest {
 
     @Test
@@ -190,5 +191,45 @@ class EnduringAngelTest extends BaseCardTest {
 
         assertThat(angel.isTransformed()).isFalse();
         assertThat(gd.status).isEqualTo(com.github.laxika.magicalvibes.model.GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("A single-faced copy that can't transform still sets life to 3, then its controller loses the game")
+    void copyThatCannotTransformSetsLifeThenLoses() {
+        Permanent copy = cloneOpponentsAngel();
+        harness.setLife(player1, 1);
+
+        harness.inMutationScope(() -> harness.getLifeSupport()
+                .applyLifeLoss(gd, player1.getId(), 2, "life loss"));
+
+        assertThat(copy.isTransformed()).isFalse();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(3);
+        assertThat(gd.status).isEqualTo(com.github.laxika.magicalvibes.model.GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("A player who can't lose keeps the life of 3 a copy that can't transform gives them")
+    void copyThatCannotTransformUnderCantLoseLeavesLifeAtThree() {
+        cloneOpponentsAngel();
+        harness.addToBattlefield(player1, new PlatinumAngel());
+        harness.setLife(player1, 1);
+
+        harness.inMutationScope(() -> harness.getLifeSupport()
+                .applyLifeLoss(gd, player1.getId(), 2, "life loss"));
+        harness.runStateBasedActions();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(3);
+        assertThat(gd.status).isNotEqualTo(com.github.laxika.magicalvibes.model.GameStatus.FINISHED);
+    }
+
+    private Permanent cloneOpponentsAngel() {
+        Permanent original = addReadyAngel(player2);
+        harness.castFromHand(player1, new Clone(), "{3}{U}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, original.getId());
+        return gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getOriginalCard() instanceof Clone)
+                .findFirst().orElseThrow();
     }
 }

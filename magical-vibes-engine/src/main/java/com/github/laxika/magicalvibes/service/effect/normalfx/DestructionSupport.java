@@ -527,12 +527,13 @@ public class DestructionSupport {
 
     /**
      * Removes one counter from {@code permanent}, asking the player to choose its kind when
-     * several kinds are present. Returns false when the permanent has no counters left to remove.
+     * several kinds are present. Returns false when the permanent has no counter that can be removed.
      */
     public boolean removeOneCounterAndLog(GameData gameData, Permanent permanent, UUID playerId) {
         List<CounterType> kinds = permanent.getCounters().entrySet().stream()
                 .filter(e -> e.getValue() > 0)
                 .map(java.util.Map.Entry::getKey)
+                .filter(kind -> kind != CounterType.STUN || !gameQueryService.stunCountersLocked(gameData, permanent))
                 .toList();
         if (kinds.isEmpty()) {
             return false;

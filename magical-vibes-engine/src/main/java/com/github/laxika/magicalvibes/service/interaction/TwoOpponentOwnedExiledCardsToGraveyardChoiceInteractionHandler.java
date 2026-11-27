@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PutOpponentOwnedExiledCardIntoGraveyardAndGainLifeEffectHandler;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import lombok.RequiredArgsConstructor;
@@ -67,6 +68,7 @@ public class TwoOpponentOwnedExiledCardsToGraveyardChoiceInteractionHandler
                 }
                 selected.add(exiled);
             }
+            selected = withFaceDownPicksAtRandom(gameData, selected);
         }
 
         gameData.interaction.clearAwaitingInput();
@@ -92,5 +94,27 @@ public class TwoOpponentOwnedExiledCardsToGraveyardChoiceInteractionHandler
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    /**
+     * A face-down pick names only its pile (what exiled the cards and when): the card that moves is chosen
+     * at random from that pile, two picks of one pile taking two different cards (2015-08-25 ruling).
+     */
+    private static List<ExiledCardEntry> withFaceDownPicksAtRandom(GameData gameData, List<ExiledCardEntry> picks) {
+        List<ExiledCardEntry> result = new ArrayList<>();
+        for (ExiledCardEntry pick : picks) {
+            if (!pick.faceDown()) {
+                result.add(pick);
+                continue;
+            }
+            List<ExiledCardEntry> pile = gameData.exiledCards.stream()
+                    .filter(exiled -> PutOpponentOwnedExiledCardIntoGraveyardAndGainLifeEffectHandler
+                            .sameFaceDownPile(pick, exiled))
+                    .filter(exiled -> result.stream().noneMatch(taken -> taken.card().getId().equals(exiled.card().getId())))
+                    .toList();
+            result.add(pile.isEmpty() ? pick
+                    : pile.get(java.util.concurrent.ThreadLocalRandom.current().nextInt(pile.size())));
+        }
+        return result;
     }
 }

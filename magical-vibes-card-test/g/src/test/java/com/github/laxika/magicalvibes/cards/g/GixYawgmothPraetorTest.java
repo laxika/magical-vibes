@@ -4,15 +4,20 @@ import com.github.laxika.magicalvibes.cards.s.Swamp;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -223,5 +228,65 @@ class GixYawgmothPraetorTest extends BaseCardTest {
                 && entry.getControllerId().equals(player1.getId()));
         harness.assertNotOnBattlefield(player1, "Swamp");
         assertThat(gd.exiledCards).extracting(exiled -> exiled.card()).containsExactly(swamp);
+    }
+
+    @Test
+    @DisplayName("Another player's creature hitting one of your opponents lets that creature's controller pay 1 life to draw")
+    void anotherPlayersCreatureHittingYourOpponentLetsItsControllerDraw() {
+        Player player3 = addThirdPlayer();
+        harness.addToBattlefield(player1, new GixYawgmothPraetor());
+        Permanent attacker = addCreatureReady(player3, new GrizzlyBears());
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+        Card drawn = new GrizzlyBears();
+        harness.setLibrary(player3, List.of(drawn));
+        int player1HandBefore = gd.playerHands.get(player1.getId()).size();
+        int player1LifeBefore = gd.getLife(player1.getId());
+
+        resolveCombat(player3);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player3.getId());
+        harness.handleMayAbilityChosen(player3, true);
+
+        assertThat(gd.getLife(player3.getId())).isEqualTo(19);
+        assertThat(gd.playerHands.get(player3.getId())).containsExactly(drawn);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(player1LifeBefore);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(player1HandBefore);
+    }
+
+    @Test
+    @DisplayName("A creature dealing combat damage to you doesn't trigger it")
+    void creatureHittingYouDoesNotTrigger() {
+        harness.addToBattlefield(player1, new GixYawgmothPraetor());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        attacker.setAttacking(true);
+
+        resolveCombat(player2);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private Player addThirdPlayer() {
+        UUID id = UUID.randomUUID();
+        String name = "Charlie";
+        Player player = new Player(id, name);
+        gd.playerIds.add(id);
+        gd.orderedPlayerIds.add(id);
+        gd.playerNames.add(name);
+        gd.playerIdToName.put(id, name);
+        gd.playerDecks.put(id, new ArrayList<>());
+        gd.playerHands.put(id, new ArrayList<>());
+        gd.playerBattlefields.put(id, new ArrayList<>());
+        gd.playerGraveyards.put(id, new ArrayList<>());
+        gd.playerCommandZones.put(id, new ArrayList<>());
+        gd.playerManaPools.put(id, new ManaPool());
+        gd.playerLifeTotals.put(id, 20);
+        harness.getSessionManager().registerPlayer(new FakeConnection("conn-3"), id, name);
+        return player;
     }
 }

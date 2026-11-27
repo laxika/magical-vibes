@@ -631,7 +631,7 @@ public class PermanentCounterSupport {
     public int removeCountersForMove(GameData gameData, Permanent from, Permanent to,
                                      CounterType counterType, int amount, UUID movingPlayerId) {
         if (from == null || to == null || from.getId().equals(to.getId()) || amount <= 0
-                || !canReceiveCounter(gameData, to, counterType)) {
+                || !canReceiveCounter(gameData, to, counterType) || cantBeRemoved(gameData, from, counterType)) {
             return 0;
         }
         int current = from.getCounterCount(counterType);
@@ -776,7 +776,7 @@ public class PermanentCounterSupport {
     public void removeCounterFromPermanent(GameData gameData, Permanent target,
                                             CounterType counterType, int amount) {
         int current = target.getCounterCount(counterType);
-        if (current <= 0 || amount <= 0) {
+        if (current <= 0 || amount <= 0 || cantBeRemoved(gameData, target, counterType)) {
             return;
         }
 
@@ -796,6 +796,9 @@ public class PermanentCounterSupport {
 
     public void removeCountersFromPermanent(GameData gameData, Permanent permanent,
                                             CounterType counterType, int count) {
+        if (cantBeRemoved(gameData, permanent, counterType)) {
+            return;
+        }
         int remaining = count;
         if (counterType == CounterType.ANY) {
             int minusOneCounters = permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
@@ -838,7 +841,8 @@ public class PermanentCounterSupport {
         int timeCountersBefore = permanent.getCounterCount(CounterType.TIME);
         Map<CounterType, Integer> removedByKind = new EnumMap<>(CounterType.class);
         for (CounterType counterType : CounterType.values()) {
-            if (counterType == CounterType.ANY || counterType == CounterType.SILVER) {
+            if (counterType == CounterType.ANY || counterType == CounterType.SILVER
+                    || cantBeRemoved(gameData, permanent, counterType)) {
                 continue;
             }
             int count = permanent.getCounterCount(counterType);
@@ -853,6 +857,14 @@ public class PermanentCounterSupport {
                 notifyLastCounterRemoved(gameData, permanent, counterType, count, removingPlayerId));
         checkLastTimeCounterRemoved(gameData, permanent, CounterType.TIME, timeCountersBefore);
         return removed;
+    }
+
+    /**
+     * Whether {@code permanent}'s counters of {@code counterType} can't be removed: stun counters an opponent's Fear of
+     * Sleep Paralysis keeps on it, which no removal or move takes off (its rulings).
+     */
+    private boolean cantBeRemoved(GameData gameData, Permanent permanent, CounterType counterType) {
+        return counterType == CounterType.STUN && gameQueryService.stunCountersLocked(gameData, permanent);
     }
 
     /** Vanishing's sacrifice ability triggers whenever the last time counter is removed. */

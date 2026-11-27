@@ -4858,10 +4858,11 @@ public class GameQueryService {
 
     /**
      * Returns {@code true} if the permanent has a stun counter that an opponent's
-     * {@link StunCountersCantBeRemovedFromOpponentsPermanentsEffect} keeps on it, so the stun
-     * replacement (CR 122.1d) can't remove it and the permanent stays tapped.
+     * {@link StunCountersCantBeRemovedFromOpponentsPermanentsEffect} keeps on it: the stun
+     * replacement (CR 122.1d) can't remove it, so the permanent stays tapped, and no effect or cost
+     * removes or moves it (Fear of Sleep Paralysis rulings).
      */
-    private boolean stunCountersLocked(GameData gameData, Permanent permanent) {
+    public boolean stunCountersLocked(GameData gameData, Permanent permanent) {
         if (permanent.getCounterCount(CounterType.STUN) <= 0) {
             return false;
         }

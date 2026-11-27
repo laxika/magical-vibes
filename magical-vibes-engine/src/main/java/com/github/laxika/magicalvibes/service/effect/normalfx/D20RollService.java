@@ -1,8 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PokeyTheScallywaggEffect;
 import com.github.laxika.magicalvibes.model.effect.RollWithAdvantageEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -56,17 +54,9 @@ public class D20RollService {
         }
 
         int diceCount = baseDiceCount;
-        List<Permanent> battlefield = gameData == null || rollingPlayerId == null
-                ? null : gameData.playerBattlefields.get(rollingPlayerId);
-        if (battlefield != null) {
-            for (Permanent permanent : battlefield) {
-                if (gameQueryService != null && gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
-                for (CardEffect effect : permanent.getCard().getStaticEffects()) {
-                    if (effect instanceof RollWithAdvantageEffect) {
-                        diceCount++;
-                    }
-                }
-            }
+        if (gameData != null && rollingPlayerId != null && gameQueryService != null) {
+            diceCount += gameQueryService.countPlayerControlledStaticEffects(
+                    gameData, rollingPlayerId, RollWithAdvantageEffect.class);
         }
 
         int result = 0;

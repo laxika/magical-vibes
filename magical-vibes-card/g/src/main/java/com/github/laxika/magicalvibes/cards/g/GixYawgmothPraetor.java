@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -23,9 +25,11 @@ import java.util.List;
 public class GixYawgmothPraetor extends Card {
 
     public GixYawgmothPraetor() {
-        addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
+        addTrigger(Triggers.creatureDealsCombatDamageToOpponent()
                         .withFilter(new PermanentIsCreaturePredicate()),
-                UnlessPaysEffect.youMayPayLife(1, new DrawCardEffect(1)).withPrompt("Pay 1 life to draw a card?"));
+                UnlessPaysEffect.mayPay(Subjects.controllerOf(Subjects.triggering()), new PayLifeCost(1),
+                                new DrawCardEffect(1, Subjects.controllerOf(Subjects.triggering())))
+                        .withPrompt("Pay 1 life to draw a card?"));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

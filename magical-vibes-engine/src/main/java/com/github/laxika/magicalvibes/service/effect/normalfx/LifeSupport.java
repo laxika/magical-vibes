@@ -19,6 +19,9 @@ import com.github.laxika.magicalvibes.model.SaturatingMath;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.GameOutcomeService;
+import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
+import com.github.laxika.magicalvibes.service.outcome.LossReason;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
@@ -77,6 +80,9 @@ public class LifeSupport {
     @Autowired
     @Lazy
     private TriggeredAbilityStackService triggeredAbilityStackService;
+    @Autowired
+    @Lazy
+    private GameOutcomeService gameOutcomeService;
 
     public LifeSupport(GameQueryService gameQueryService,
                        GameLogService gameLogService,
@@ -626,9 +632,11 @@ public class LifeSupport {
     }
 
     /**
-     * Transforms the first Enduring Angel the player controls and makes the player's life total 3.
+     * Applies Enduring Angel's replacement: the first angel the player controls that can transform does, and the
+     * player's life total becomes 3. When none can (a token or a single-faced copy), the life total still becomes 3 and
+     * the player then loses the game (2021-09-24 ruling), unless something says they can't.
      *
-     * @return true if an angel transformed and the life total was set
+     * @return true if the replacement applied
      */
     public boolean applyEnduringAngelReplacement(GameData gameData, UUID playerId) {
         if (!gameQueryService.canPlayerLifeChange(gameData, playerId)) {
@@ -638,14 +646,28 @@ public class LifeSupport {
         if (battlefield == null) {
             return false;
         }
+        Permanent untransformedAngel = null;
         for (Permanent angel : battlefield) {
-            boolean hasReplacement = gameQueryService.hasActiveStaticEffect(
-                    gameData, angel, EnduringAngelLifeTotalReplacementEffect.class);
-            if (hasReplacement && animationSupport.transformToBackFace(gameData, angel)) {
+            if (!gameQueryService.hasActiveStaticEffect(gameData, angel, EnduringAngelLifeTotalReplacementEffect.class)) {
+                continue;
+            }
+            if (animationSupport.transformToBackFace(gameData, angel)) {
                 return applySetLifeTotal(gameData, playerId, 3);
             }
+            if (untransformedAngel == null) {
+                untransformedAngel = angel;
+            }
         }
-        return false;
+        if (untransformedAngel == null) {
+            return false;
+        }
+        applySetLifeTotal(gameData, playerId, 3);
+        if (gameOutcomeService.resolveLoss(gameData, playerId, LossReason.EFFECT) == LossOutcome.LOSES) {
+            gameLogService.append(gameData, GameLog.textCardText(gameData.playerIdToName.get(playerId)
+                    + " loses the game: ", untransformedAngel.getCard(), " didn't transform."));
+            gameOutcomeService.declareWinner(gameData, gameQueryService.getOpponentId(gameData, playerId));
+        }
+        return true;
     }
 
     public void applyPoisonCounters(GameData gameData, UUID playerId, int amount, String sourceName) {

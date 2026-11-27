@@ -3,19 +3,24 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.d.DazzlingTheaterPropRoom;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.NestingGrounds;
+import com.github.laxika.magicalvibes.cards.v.VampireHexmage;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FearOfSleepParalysis.class, DazzlingTheaterPropRoom.class, GloriousAnthem.class, GrizzlyBears.class})
+@CardUsed({FearOfSleepParalysis.class, DazzlingTheaterPropRoom.class, GloriousAnthem.class, GrizzlyBears.class,
+        VampireHexmage.class, NestingGrounds.class})
 class FearOfSleepParalysisTest extends BaseCardTest {
 
     @Test
@@ -118,5 +123,44 @@ class FearOfSleepParalysisTest extends BaseCardTest {
         harness.performUntapStep(player1);
 
         assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("\"Remove all counters\" leaves the stun counters of a permanent an opponent controls")
+    void removeAllCountersLeavesOpponentsStunCounters() {
+        harness.addToBattlefield(player1, new FearOfSleepParalysis());
+        addCreatureReady(player2, new VampireHexmage());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        bears.setCounterCount(CounterType.STUN, 1);
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player2, 0, null, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(bears.getCounterCount(CounterType.STUN)).isEqualTo(1);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A stun counter on a permanent an opponent controls can't be moved (Fear of Sleep Paralysis ruling)")
+    void opponentsStunCounterCantBeMoved() {
+        harness.addToBattlefield(player1, new FearOfSleepParalysis());
+        addCreatureReady(player2, new NestingGrounds());
+        Permanent stunned = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent destination = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        stunned.setCounterCount(CounterType.STUN, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.activateAbilityWithMultiTargets(player2, 0, 1, List.of(stunned.getId(), destination.getId()));
+        harness.passBothPriorities();
+
+        assertThat(stunned.getCounterCount(CounterType.STUN)).isEqualTo(1);
+        assertThat(destination.getCounterCount(CounterType.STUN)).isZero();
     }
 }

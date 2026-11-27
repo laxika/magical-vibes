@@ -55,7 +55,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | CB Combat | CB-1 | CB-1 done 2026-11-27 (M11's block half left: it needs multi-defender combat damage) |
 | PP Perpetual changes | PP-1 | PP-1 done 2026-11-27 (L8, O47 left; O41's hand half left) |
 | PL Each player chooses, then all act | PL-1 | PL-1 done 2026-11-27 (Gilded Ambusher's damage reading for the owner) |
-| MC Single cards | MC-1, MC-2 | open |
+| MC Single cards | MC-1, MC-2 | MC-1 done 2026-11-27 (O13's direct counter removals left; O81 for the owner) |
 | AI Hard / easy AI | AI-1, AI-2 | AI-1, AI-2 done 2026-11-27 |
 | UI Frontend | UI-1 | UI-1 done 2026-11-27 |
 | LG, CL Logs and non-rules cleanup | LG-1, CL-1 | CL-1, LG-1 done 2026-11-27 |
@@ -1284,7 +1284,12 @@ Lines: T7 and T18 (the opponent-owned processor head and Ulamog's Nullifier: pil
 lock vs other stun removals), O66 (Gix; full line in the queue file), O81 (Sword-Point Diplomacy's processing order, which its ruling
 lets the caster choose).
 
-Outcome:
+Outcome: done 2026-11-27. T7 dropped (its processor-head half was no defect, D15; the Nullifier half is T18). T18 fixed: a
+face-down pile is offered as up to two picks, each moving a random card of the pile. E16 fixed: Pokey's d20 counts Pixie Guide's extra
+dice (the Pokey ruling); `D20RollService` counts them through `countPlayerControlledStaticEffects`, so a face-down Guide no longer adds
+one. O12 fixed: a copy that can't transform still sets life to 3, then its controller loses (2021-09-24 ruling). O13 partly fixed: the
+shared removals, moves and remove-all skip locked stun counters; the direct `setCounterCount` removals are left on the line. O66 fixed:
+any creature hitting one of your opponents triggers, its controller pays and draws. O81 left: owner question (entry 17). N85 added.
 
 #### MC-2
 
@@ -1503,6 +1508,11 @@ New line N84 (seen in PL-1): Eumidian Wastewaker makes its chosen discards and t
 CR 616.1 death replacement question about a sacrificed permanent is asked after the discards are made, not before the one
 simultaneous event (`EumidianWastewakerEffectHandler.actTogether`; Torment of Hailfire's deferred form asks first and discards
 after). Of the code, unverified by a test.
+
+New line N85 (seen in MC-1): Ulamog's Despoiler's as-enters choice (`AsEntersInteractionService`,
+`AsEntersOpponentExileToGraveyardEffect`) offers every opponent-owned exiled card by id through `beginMultiGraveyardChoice`, face-down
+ones too: a face-down card should be a pick of its pile taking a random card of it (2015-08-25 ruling, as MC-1 did for Ulamog's
+Nullifier with `sameFaceDownPile`), and the prompt may show the face-down cards' names. Of the code, unverified by a test.
 
 Outcome:
 

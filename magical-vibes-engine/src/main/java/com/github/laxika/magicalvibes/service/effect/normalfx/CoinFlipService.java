@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EdgarKingOfFigaroEffect;
 import com.github.laxika.magicalvibes.model.effect.KrarksThumbEffect;
 import com.github.laxika.magicalvibes.model.effect.PokeyTheScallywaggEffect;
+import com.github.laxika.magicalvibes.model.effect.RollWithAdvantageEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.MayEffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
@@ -267,8 +268,14 @@ public class CoinFlipService {
         }
         if (pokeyApplies) {
             List<RecordedCoinFlip> rolls = new ArrayList<>(count);
+            // The roll is a die roll to every other effect, so Pixie Guide's extra die applies (Pokey ruling).
+            int diceEach = 1 + gameQueryService.countPlayerControlledStaticEffects(
+                    gameData, playerId, RollWithAdvantageEffect.class);
             for (int coin = 0; coin < count; coin++) {
-                int roll = ThreadLocalRandom.current().nextInt(1, 21);
+                int roll = 0;
+                for (int die = 0; die < diceEach; die++) {
+                    roll = Math.max(roll, ThreadLocalRandom.current().nextInt(1, 21));
+                }
                 rolls.add(new RecordedCoinFlip(playerId, roll >= 11, 1, roll >= 11 ? 1 : 0, false, roll));
             }
             if (choiceWindow) {

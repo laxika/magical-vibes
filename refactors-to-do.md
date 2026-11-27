@@ -1183,7 +1183,7 @@ The effect cleanup's plan and queues were deleted when it closed (2026-11-26). T
 `agent-docs/architecture/effect-building-blocks.md`; `scripts/effect-audit-ledger.csv` keeps every class's verdict and
 `python3 -I scripts/effect-inventory.py` the inventory.
 
-59 items: every open question of the owner's and every orchestrator decision logged for the owner to review (the date is
+60 items: every open question of the owner's and every orchestrator decision logged for the owner to review (the date is
 the run's). An answer that changes play becomes a defect run (entry 18); one that confirms a decision just removes its line.
 
 The full text of each item is in the cleanup plan's last version, `git show 3b0d60d42d4:effect-cleanup-refactor.md`: the open
@@ -1214,6 +1214,9 @@ questions under "The owner's open questions", the decisions under "The owner's d
 - 2026-11-27, PL-1 (entry 18, line S5): Gilded Ambusher "deals damage to them equal to the total mana value of the cards exiled
   this way": each opponent is dealt the total of their own two exiled cards (as now), or every opponent the total of all the cards
   exiled for every opponent? There is no ruling; the two readings differ only with two or more opponents.
+- 2026-11-27, MC-1 (entry 18, line O81): Sword-Point Diplomacy's ruling lets the caster choose the order the revealed cards
+  are processed in; the engine asks in library order. Is a prompt wanted, and is the order chosen up front or card by card
+  (the ruling doesn't say)? With every revealed card known to the opponents, the order changes no two-player outcome.
 
 #### Orchestrator decisions for the owner to review
 
@@ -1311,19 +1314,16 @@ Don't commit.
 - `PutExiledCardsIntoOwnersGraveyardEffect` (Covenant of Minds) gives no CR 404.3 order prompt for the cards it puts into one graveyard; an engine-wide policy, see entry 17 (EB-3). Sure, low.
 - Ezuri's Predation: "those creatures" are read at the fight, not when counted (CR 608.2h).
 
-#### Missing events or records (searches, coin flips, seeks, shuffles, counters, draws) (3)
+#### Missing events or records (searches, coin flips, seeks, shuffles, counters, draws) (2)
 
 - The Ring's level 2–4 abilities aren't implemented, only legendary and can't-be-blocked-by-greater-power (CR 701.54c). Sure.
 - An "and/or" search (`SearchLibraryAndOrGraveyardChoice`: Last Light of Durin's Day's "search your hand and/or library", every "library and/or graveyard" card) has no "do you search your library?": a pick of nothing counts as a library search (search triggers, shuffle) and a pick from another zone as none, so a player can't search only the hand or graveyard and find nothing, or search the library too and take a graveyard card. Needs the zones chosen before the pool is shown (CR 701.23a; `MaySearchLibraryChoice` asks it for a single library). Sure, low; LS-1 left it (about 48 cards' tests).
-- `CoinFlipService`'s Pokey d20 (the roll that replaces a flip) ignores dice advantage (Pixie Guide). Unverified.
 
-#### Wrong targets and choices (5)
+#### Wrong targets and choices (3)
 
 - `ChoosePermanentsEffect` keeps a lone chosen permanent as the source's chosen permanent, so Deepfathom Echo (if folded onto it) or any copier choosing its model would leave a "the chosen creature" card's copy with a choice it never made (Dauntless Bodyguard) (CR 607.2d). Sure of the code.
 - The prompt callers (about 415 calls of `beginPermanentChoice`, `beginAnyTargetChoice`, `beginMultiPermanentChoice`, `beginMultiPermanentOrPlayerChoice`) that count or auto-pick candidates before prompting don't drop a permanent that can't be chosen (`GameQueryService.cantBeChosen`; the prompts themselves do since D15), so a lone such candidate can be taken or an empty prompt opened; only Glimpse the Unthinkable (playtest) has the ability. Unverified.
-- The opponent-owned processor head and Ulamog's Nullifier offer face-down cards one by one where Ruin Processor chooses piles. Unverified.
 - Nowhere to Run: "spells and abilities" are any player's, but it is modelled as its controller's only (multiplayer). Sure.
-- Ulamog's Nullifier (`TwoOpponentOwnedExiledCardsToGraveyardChoiceInteractionHandler`): face-down picks are taken by id, not at random from their pile (2015-08-25 ruling). Fairly sure.
 
 #### Payments and costs (3)
 
@@ -1342,7 +1342,7 @@ Don't commit.
 - `cardsThisWay(REVEAL)` names a card a later step reordered within its library (CR 701.20d); no card reads it so. Unverified.
 - `getRevealedOpponentHand` returns only the first opponent's hand (multiplayer); needs a hand per opponent in `GameStateMessage` and the frontend (owner question in entry 17, MP-2). Sure of the code.
 
-#### Other (34)
+#### Other (32)
 
 - Casting checks left from runs 40 and 41: Scrycast (Biting Remark; `ScryInteractionHandler`, `ScryAiStrategy`, code: the scry answer casts it with no `canCastDuringResolution` check, and the AI strategies have no `CastingPermissionService`); the may-cast offers don't ask the shared check; an ability leaves the stack before it resolves, where CR 608.2n removes it last. Unverified. FC-2: Knowledge Pool's timing, the split exile cast and suspend's type restriction fixed.
 - Krovikan Vampire's `ReturnDamagedCreaturesThatDiedUnderControlEffect` (a mass return with control and sacrifice links) puts an Aura card that died animated onto the battlefield with no host choice (CR 303.4f, 303.4g); Lim-Dûl's head since rules-fixes EB-1 and `ReturnDyingCreatureToBattlefieldEffect`, `ReturnDyingCreatureToOwnerBattlefieldEffect` since EB-2 go through the entry batch. Unverified.
@@ -1351,8 +1351,7 @@ Don't commit.
 - `ConjureCardToBattlefieldEffectHandler` gives a conjured land no land-enter handling. Unverified for a land with an enter ability (Mishra's Foundry and Forest have none).
 - `isPreventedFromDealingDamage` pre-checks left before the damage pools skip the damage event (Selfless Squire misses them) and the CR 616.1 order: Bomb Squad's `RemoveAllCountersThenDestroyReferencedPermanentAndDamageControllerEffectHandler` (asked before the destruction; the creature deals the damage as it last existed, an owner question in entry 17) and the combat damage step (`CombatDamageService`'s three `isPreventedFromDealingDamage(…, true)` checks) (CR 616.1). Sure of the code.
 - The set exchanges (Reins of Power, Twist Allegiance) and Perplexing Chimera don't check `cantBeControlledByOtherPlayers`; CR 701.12a's set reading unsettled. Unverified.
-- Enduring Angel that can't transform skips its replacement (differs only under "can't lose the game"). Fairly sure, low.
-- Fear of Sleep Paralysis' lock is read only by the untap replacement, not other stun removals. Fairly sure, low.
+- Fear of Sleep Paralysis' lock (`GameQueryService.stunCountersLocked`) is read by the untap replacement and `PermanentCounterSupport`'s and `DestructionSupport`'s shared removals since MC-1, not by the removals that set counts directly (remove-counter costs in `ActivatedAbilityExecutionService` and `ResolutionCostPaymentService`, the counter-kind choice lists of `removableCounterKinds`, handlers calling `setCounterCount`). Fairly sure, low.
 - `hasLukkaExilePermission` matches a name starting "Lukka,", not the Lukka planeswalker type: `CardSubtype` has no LUKKA (adding it bumps `StoredSet.CONVERSION_VERSION`; batch it with another mapping change). CP-1 made it read the live planeswalker type and skip face-down permanents. Sure, low.
 - Make Your Own Luck puts all three cards into hand, then plots the chosen one (needs a plot library destination).
 - No seeded game random source: about 180 `ThreadLocalRandom` sites, random-target picks included, so tests can't fix a random pick. Sure.
@@ -1365,7 +1364,6 @@ Don't commit.
 - Combat damage's protection is applied by `CombatDamageService.protectionPreventsCombatDamage` before the recipient's pool, which orders it only beside Phantom Centaur's counter prevention, so protection and another prevention of combat damage aren't ordered (CR 702.16e, 616.1). Sure of the code.
 - "May pay" mana paid from the pool without the tax-paid event (Tax Taker): Reflect (`ReflectMayEffectHandler`) still pays with `payResolutionCost`; its only card, Mirrored Lotus, reflects for {0}, so no mana and no event. The others were fixed in PY-1 (`TaxTakerTest.EffectPromptTaxes`). Latent.
 - Perplex's discard-hand ransom names the payer as the discard's cause, so an opponent's Perplex doesn't count as "a spell or ability an opponent controls causes you to discard" for Obstinate Baloth or Wilt-Leaf Liege: not settled by the rules (an owner question in entry 17, CT-1). Unsure.
-- Gix, Yawgmoth Praetor: "whenever a creature deals combat damage to one of your opponents, its controller may pay 1 life. Sure of the Oracle text and the code.
 - Mana abilities that work from the graveyard, exile or the command zone count as mana sources for `couldPossiblyPay` but can't be activated during a may-pay prompt (only hand abilities can, step 10 run U3a); no implemented card has one today. Sure, harmless today.
 - Quenchable Fire, Glass Asp, Nafs Asp, Sabertooth Cobra: the special action that pays before the delayed trigger (`AbilityActivationService.payDelayedTriggerCost`, CR 116.2c) raises no tax-paid event, so Tax Taker doesn't see mana an opponent pays for your spell's or creature's delayed ability; it changes play only with Tax Taker and the rules don't say whether it is a "tax". Sure of the code.
 - `UnlessPaysEffectHandler.nextStep` now sets the entry's accepted players to the payers who chose to pay before every branch (for `eachUnless`); an entry that also had a `TemptingOfferEffect` or Snort's discard set them before its "unless" would lose that list. Sure of the code.

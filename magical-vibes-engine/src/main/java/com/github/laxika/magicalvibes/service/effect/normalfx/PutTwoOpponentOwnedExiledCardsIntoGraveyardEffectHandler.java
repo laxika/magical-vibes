@@ -32,9 +32,20 @@ public class PutTwoOpponentOwnedExiledCardsIntoGraveyardEffectHandler
         entry.setEventValue(0);
         List<UUID> validCardIds = new ArrayList<>();
         synchronized (gameData.exiledCards) {
+            List<ExiledCardEntry> faceDownOffered = new ArrayList<>();
             for (ExiledCardEntry exiled : gameData.exiledCards) {
-                if (gameData.playerIds.contains(exiled.ownerId())
-                        && !controllerId.equals(exiled.ownerId())) {
+                if (!gameData.playerIds.contains(exiled.ownerId()) || controllerId.equals(exiled.ownerId())) {
+                    continue;
+                }
+                if (!exiled.faceDown()) {
+                    validCardIds.add(exiled.card().getId());
+                } else if (faceDownOffered.stream()
+                        .filter(offered -> PutOpponentOwnedExiledCardIntoGraveyardAndGainLifeEffectHandler
+                                .sameFaceDownPile(offered, exiled))
+                        .count() < 2) {
+                    // A face-down pile is offered as up to two indistinguishable picks; the cards that move
+                    // are chosen at random from the pile when the answer comes.
+                    faceDownOffered.add(exiled);
                     validCardIds.add(exiled.card().getId());
                 }
             }

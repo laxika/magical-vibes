@@ -5,8 +5,11 @@ import com.github.laxika.magicalvibes.cards.c.ContactOtherPlane;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SorcerersStrongbox;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.service.effect.normalfx.CoinFlipService;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -14,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({PokeyTheScallywagg.class, SorcerersStrongbox.class, ContactOtherPlane.class,
-        GrizzlyBears.class, BrazenDwarf.class})
+        GrizzlyBears.class, BrazenDwarf.class, PixieGuide.class})
 class PokeyTheScallywaggTest extends BaseCardTest {
 
     @Test
@@ -81,5 +84,25 @@ class PokeyTheScallywaggTest extends BaseCardTest {
 
         assertThat(gameLogContains("Pokey, the Scallywagg rolled a d20:")).isTrue();
         harness.assertLife(player2, opponentLifeBefore - 1);
+    }
+
+    @Test
+    @DisplayName("Pixie Guide's extra die applies to the d20 Pokey rolls instead of a coin flip (Pokey ruling)")
+    void pixieGuideAppliesToTheRollThatReplacesAFlip() {
+        harness.addToBattlefield(player1, new PokeyTheScallywagg());
+        harness.addToBattlefield(player1, new PixieGuide());
+        CoinFlipService coinFlipService = GameTestEngineContext.get().getBean(CoinFlipService.class);
+        int trials = 400;
+        int[] total = new int[1];
+
+        harness.inMutationScope(() -> {
+            for (int trial = 0; trial < trials; trial++) {
+                total[0] += coinFlipService.flip(gd, player1.getId()).pokeyD20Result();
+            }
+        });
+
+        // One d20 averages 10.5; the higher of two averages 13.83. Over 400 rolls, 12.2 is about six
+        // standard deviations from either mean.
+        assertThat(total[0] / (double) trials).isGreaterThan(12.2);
     }
 }

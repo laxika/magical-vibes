@@ -36,7 +36,7 @@ class BarbarianClassTest extends BaseCardTest {
         rollD20EffectHandler = GameTestEngineContext.get().getBean(RollD20EffectHandler.class);
         originalD20RollService = (D20RollService) ReflectionTestUtils.getField(
                 rollD20EffectHandler, "d20RollService");
-        ReflectionTestUtils.setField(rollD20EffectHandler, "d20RollService", new FixedD20RollService(9));
+        ReflectionTestUtils.setField(rollD20EffectHandler, "d20RollService", wired(new FixedD20RollService(9)));
     }
 
     @AfterEach
@@ -113,7 +113,7 @@ class BarbarianClassTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BarbarianClass());
         harness.addToBattlefield(player1, new BarbarianClass());
         SequenceD20RollService rolls = new SequenceD20RollService(2, 9, 5);
-        ReflectionTestUtils.setField(rollD20EffectHandler, "d20RollService", rolls);
+        ReflectionTestUtils.setField(rollD20EffectHandler, "d20RollService", wired(rolls));
         prepareRoll(List.of(new HillGiantHerdgorger(), new HillGiantHerdgorger()));
 
         harness.castAndResolveInstant(player1, 0);
@@ -127,7 +127,7 @@ class BarbarianClassTest extends BaseCardTest {
     void opponentsClassDoesNotAddDiceToYourRoll() {
         harness.addToBattlefield(player2, new BarbarianClass());
         SequenceD20RollService rolls = new SequenceD20RollService(2);
-        ReflectionTestUtils.setField(rollD20EffectHandler, "d20RollService", rolls);
+        ReflectionTestUtils.setField(rollD20EffectHandler, "d20RollService", wired(rolls));
         prepareRoll(List.of(new HillGiantHerdgorger(), new HillGiantHerdgorger()));
 
         harness.castAndResolveInstant(player1, 0);
@@ -222,6 +222,15 @@ class BarbarianClassTest extends BaseCardTest {
 
     private int battlefieldIndex(Permanent permanent) {
         return gd.playerBattlefields.get(player1.getId()).indexOf(permanent);
+    }
+
+    /** Gives a stub roll service the engine's collaborators, which count the extra dice of each advantage effect. */
+    private D20RollService wired(D20RollService stub) {
+        ReflectionTestUtils.setField(stub, "gameQueryService",
+                ReflectionTestUtils.getField(originalD20RollService, "gameQueryService"));
+        ReflectionTestUtils.setField(stub, "coinFlipService",
+                ReflectionTestUtils.getField(originalD20RollService, "coinFlipService"));
+        return stub;
     }
 
     private static final class SequenceD20RollService extends D20RollService {
