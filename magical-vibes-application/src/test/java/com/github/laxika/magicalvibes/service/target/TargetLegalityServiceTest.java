@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.filter.StackEntryIsMulticoloredPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntrySubtypeInPredicate;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -215,6 +217,7 @@ class TargetLegalityServiceTest {
                         invocation.<Permanent>getArgument(1).getCard().hasType(CardType.LAND));
         lenient().when(gameQueryService.getEffectiveCardColors(eq(gd), any(Card.class)))
                 .thenAnswer(invocation -> effectiveColors(invocation.getArgument(1)));
+        lenient().when(gameQueryService.getEffectiveSpellColors(eq(gd), any(StackEntry.class))).thenCallRealMethod();
         lenient().when(gameQueryService.getEffectiveCardPower(eq(gd), any(Card.class)))
                 .thenAnswer(invocation -> invocation.<Card>getArgument(1).getPower());
         lenient().when(gameQueryService.getEffectiveCardToughness(eq(gd), any(Card.class)))
@@ -2624,6 +2627,36 @@ class TargetLegalityServiceTest {
 
             assertThat(sut.matchesStackEntryPredicate(gd, nonmatchingEntry,
                     new StackEntryPowerOrToughnessAtMostPredicate(2), player1Id)).isFalse();
+        }
+
+        @Test
+        @DisplayName("A base power and toughness the spell got on the stack is what a power-or-toughness predicate reads")
+        void powerOrToughnessAtMostReadsBasePowerToughnessSetOnTheStack() {
+            Card card = createCreature("Big", CardColor.GREEN);
+            card.setPower(4);
+            card.setToughness(4);
+            StackEntry entry = new StackEntry(card, player2Id);
+            entry.setBasePowerOverrideOnEntry(1);
+            entry.setBaseToughnessOverrideOnEntry(1);
+
+            assertThat(sut.matchesStackEntryPredicate(gd, entry,
+                    new StackEntryPowerOrToughnessAtMostPredicate(2), player1Id)).isTrue();
+        }
+
+        @Test
+        @DisplayName("A colour and a subtype the spell gained on the stack count for colour and subtype predicates")
+        void colourAndSubtypeGainedOnTheStackCount() {
+            Card card = createCreature("Bear", CardColor.GREEN);
+            StackEntry entry = new StackEntry(card, player2Id);
+            entry.getGrantedColorsOnEntry().add(CardColor.BLACK);
+            entry.getGrantedSubtypesOnEntry().add(CardSubtype.BIRD);
+
+            assertThat(sut.matchesStackEntryPredicate(gd, entry,
+                    new StackEntryColorInPredicate(Set.of(CardColor.BLACK)), player1Id)).isTrue();
+            assertThat(sut.matchesStackEntryPredicate(gd, entry,
+                    new StackEntryIsMulticoloredPredicate(), player1Id)).isTrue();
+            assertThat(sut.matchesStackEntryPredicate(gd, entry,
+                    new StackEntrySubtypeInPredicate(Set.of(CardSubtype.BIRD)), player1Id)).isTrue();
         }
 
         @Test

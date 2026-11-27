@@ -5,12 +5,14 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.SourceIsEnchantment;
-import com.github.laxika.magicalvibes.model.effect.BecomeCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromTriggeringSpellColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import java.util.List;
+import java.util.Set;
 
 @CardRegistration(set = "USG", collectorNumber = "26")
 public class OpalTitan extends Card {
@@ -19,7 +21,7 @@ public class OpalTitan extends Card {
         addTrigger(Triggers.opponentCastsSpell().withFilter(new CardTypePredicate(CardType.CREATURE)),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceIsEnchantment()),
                 SequenceEffect.of(
-                        new BecomeCreatureEffect(4, 4, CardSubtype.GIANT),
+                        AnimatePermanentsEffect.sourceBecomesCreature(4, 4, List.of(CardSubtype.GIANT), Set.of()),
                         new GrantProtectionFromTriggeringSpellColorsEffect()));
     }
 }

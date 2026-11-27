@@ -50,7 +50,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | LS Library searches and reveals | LS-1, LS-2, LS-3 | LS-1 done 2026-11-27; LS-2 done 2026-11-27 (N35, E10 left) |
 | TK Tokens and copies | TK-1, TK-2 | TK-1 done 2026-11-27; TK-2 done 2026-11-27 (T1 left: choices keyed by their linking ability) |
 | FD Face-down and hidden reads | FD-1, FD-2 | FD-1, FD-2 done 2026-11-27 (FD-2: H1 left, latent) |
-| LY Layers, protection, text changes, linked abilities | LY-1 to LY-5 | LY-1 done 2026-11-27 |
+| LY Layers, protection, text changes, linked abilities | LY-1 to LY-5 | LY-1, LY-2 done 2026-11-27 |
 | DR Draws | DR-1 | DR-1 done 2026-11-27 (E6's plural "one of them" readers: owner question) |
 | CB Combat | CB-1 | CB-1 done 2026-11-27 (M11's block half left: it needs multi-defender combat damage) |
 | PP Perpetual changes | PP-1 | open |
@@ -1033,7 +1033,22 @@ New line N29 (seen in EB-2): a return's keyword grants ("it's a 3/3 Robot artifa
 Abuelo's Awakening) apply after the permanent enters: `GraveyardReturnSupport`'s pre-entry `battlefieldEffectGrants` cover only
 colour, card types, subtypes and base P/T, though "has [characteristic]" applies as it enters (CR 611.2e); unverified.
 
-Outcome:
+Outcome: done 2026-11-27. Fixed L15, L1, L9 (deleted from entry 18). L15: `BecomeCreatureEffect`'s card swap made "becomes a 2/4
+Soldier creature" a copiable value, so Cytoshape on an animated Opal Acrolith made it a 3/2 Gorilla Warrior (CR 613.1a, 613.1d,
+707.2). The 22 self-animations are `AnimatePermanentsEffect.sourceBecomesCreature` (new factory: source, PERMANENT, type-overriding
+floating layer-4/6/7b effects); Opal Guardian adds a floating protection grant, Dancing Sword is the non-overriding "artifact
+creature" form (CR 205.1b) plus `LoseAllLandTypesEffect.subtypes({EQUIPMENT})`; "becomes an enchantment" (Opal Acrolith, Hidden
+Stag) is `SetCardTypesEffect({ENCHANTMENT}, source())`. `BecomeCreatureEffect`, `BecomeEnchantmentEffect` and their handlers
+deleted (ledger rows, ratchet 2855 / 2241). HiddenPredatorsTest's "Enchanted Evening keeps it an enchantment" asserted the swap:
+an earlier Enchanted Evening loses to the newer type change (CR 613.7, 205.1a); rewritten with Enchanted Evening entering later.
+L1: the stack-spell readers see Wickerwing Effigy's changes: `stackPower`/`stackToughness` read the 7b base override (Stern
+Scolding can target a 4/3 made 1/1), `StackEntrySubtypeInPredicate` the granted subtypes, and every spell-colour reader goes
+through the new `GameQueryService.getEffectiveSpellColors` (Neutralizing Blast counters a green spell made black). The subtype
+half has no card that targets Birds; pinned by a `TargetLegalityServiceTest` case. L9: `wouldEnterAsCreature` counts Starfield of
+Nyx's animation of the entered permanent (CR 603.10): Torpor Orb stops an Oblivion Ring that enters as the fifth enchantment.
+Dropped: N29 (no implemented card observes when a return's keyword grant applies; Watcher of the Spheres already sees Abuelo's
+flying; pinned). New line N71 (MC-2). Tests: 349 XML files, 3,545 tests, 4 failures (`TargetLegalityServiceTest` missing stub
+for the new call, fixed), rerun with the architecture tests 129 files, 966 tests, 0 failures.
 
 #### LY-3. Protection
 
@@ -1342,6 +1357,10 @@ text.
 New line N70 (seen in CB-1): `ReturnCardExiledWithSourceToBattlefieldEffectHandler` skips the attack-target choice of a creature it
 returns attacking while another prompt is open (an entry prompt), so with two or more possible targets it stays attacking nothing
 (CR 508.4). Sure of the code, rare.
+
+New line N71 (seen in LY-2): `ReturnOpponentCreaturesFromGraveyardAsFoodEffectHandler` (Supper for Spiders) still makes each
+returned card a Food by swapping in a runtime copy (`Permanent.becomeCreatureBaseCard`), the shape L15 removed from
+`BecomeCreatureEffect`, so a later copy effect on the Food drops its Food types (CR 613.1a, 613.1d); unverified.
 
 Outcome:
 

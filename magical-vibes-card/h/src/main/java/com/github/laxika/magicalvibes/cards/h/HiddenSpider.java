@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceIsEnchantment;
-import com.github.laxika.magicalvibes.model.effect.BecomeCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -25,6 +25,6 @@ public class HiddenSpider extends Card {
                                 new CardTypePredicate(CardType.CREATURE),
                                 new CardKeywordPredicate(Keyword.FLYING)))),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceIsEnchantment()),
-                new BecomeCreatureEffect(3, 5, CardSubtype.SPIDER, Set.of(Keyword.REACH)));
+                AnimatePermanentsEffect.sourceBecomesCreature(3, 5, List.of(CardSubtype.SPIDER), Set.of(Keyword.REACH)));
     }
 }

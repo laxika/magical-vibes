@@ -622,14 +622,20 @@ public class GameQueryService {
     /**
      * Returns whether {@code card} is a creature at the moment it enters the battlefield: a creature card, or one an
      * {@link AnimateNoncreatureArtifactsEffect} of another face-up battlefield permanent that still has its abilities
-     * animates (a noncreature artifact under March of the Machines, a non-Aura enchantment under Opalescence). Such an
-     * effect does not apply to its own source card.
+     * animates (a noncreature artifact under March of the Machines, a non-Aura enchantment under Opalescence), or, once
+     * it is on the battlefield, one Starfield of Nyx's {@link AnimateControlledEnchantmentsEffect} animates with the
+     * newcomer counted among its controller's enchantments (CR 603.10). Such an effect does not apply to its own
+     * source card.
      */
     private boolean wouldEnterAsCreature(GameData gameData, Card card) {
         if (hasCardType(card, CardType.CREATURE)) {
             return true;
         }
-        return isAnimatedByPrintedStaticAnimation(gameData, new Permanent(card), card.getId(), true);
+        if (isAnimatedByPrintedStaticAnimation(gameData, new Permanent(card), card.getId(), true)) {
+            return true;
+        }
+        Permanent entered = findPermanentByCardId(gameData, card.getId());
+        return entered != null && isAnimatedByStarfield(gameData, entered);
     }
 
     /**
@@ -4454,6 +4460,21 @@ public class GameQueryService {
             }
         }
         return card.hasName(chosenName);
+    }
+
+    /**
+     * The colours of a spell on the stack: its card's effective colours ({@link #getEffectiveCardColors}) and those it
+     * gained while on the stack ("it becomes a black Bird in addition to its other colors", Wickerwing Effigy's cast
+     * trigger, {@code StackEntry.grantedColorsOnEntry}).
+     */
+    public Set<CardColor> getEffectiveSpellColors(GameData gameData, StackEntry entry) {
+        if (entry.getGrantedColorsOnEntry().isEmpty()) {
+            return getEffectiveCardColors(gameData, entry.getCard());
+        }
+        Set<CardColor> colors = EnumSet.noneOf(CardColor.class);
+        colors.addAll(getEffectiveCardColors(gameData, entry.getCard()));
+        colors.addAll(entry.getGrantedColorsOnEntry());
+        return colors;
     }
 
     /**

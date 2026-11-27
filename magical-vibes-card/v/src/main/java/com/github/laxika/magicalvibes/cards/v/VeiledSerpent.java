@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.SourceIsEnchantment;
-import com.github.laxika.magicalvibes.model.effect.BecomeCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToSourceEffect;
@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import java.util.List;
+import java.util.Set;
 
 @CardRegistration(set = "USG", collectorNumber = "110")
 @CardRegistration(set = "DMR", collectorNumber = "72")
@@ -30,6 +32,6 @@ public class VeiledSerpent extends Card {
                                         new PermanentHasSubtypePredicate(CardSubtype.ISLAND)),
                                 "an Island"),
                         Subjects.source())),
-                new BecomeCreatureEffect(4, 4, CardSubtype.SERPENT));
+                AnimatePermanentsEffect.sourceBecomesCreature(4, 4, List.of(CardSubtype.SERPENT), Set.of()));
     }
 }

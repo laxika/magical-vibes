@@ -4,10 +4,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.SourceMatchesPermanentPredicate;
-import com.github.laxika.magicalvibes.model.effect.BecomeCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import java.util.List;
+import java.util.Set;
 
 @CardRegistration(set = "ULG", collectorNumber = "15")
 public class OpalAvenger extends Card {
@@ -18,6 +20,6 @@ public class OpalAvenger extends Card {
         addTrigger(Triggers.state((gameData, sourcePermanent, controllerId) -> gameData.getLife(controllerId) <= 10),
                 TriggerOptions.DEFAULT.withInterveningIf(
                         new SourceMatchesPermanentPredicate(new PermanentIsEnchantmentPredicate())),
-                new BecomeCreatureEffect(3, 5, CardSubtype.SOLDIER));
+                AnimatePermanentsEffect.sourceBecomesCreature(3, 5, List.of(CardSubtype.SOLDIER), Set.of()));
     }
 }

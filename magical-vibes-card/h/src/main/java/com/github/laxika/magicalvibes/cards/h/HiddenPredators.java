@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.SourceMatchesPermanentPredicate;
-import com.github.laxika.magicalvibes.model.effect.BecomeCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -15,6 +15,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import java.util.Set;
 
 @CardRegistration(set = "USG", collectorNumber = "263")
 public class HiddenPredators extends Card {
@@ -26,6 +27,6 @@ public class HiddenPredators extends Card {
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())))),
                 TriggerOptions.DEFAULT.withInterveningIf(
                         new SourceMatchesPermanentPredicate(new PermanentIsEnchantmentPredicate())),
-                new BecomeCreatureEffect(4, 4, CardSubtype.BEAST));
+                AnimatePermanentsEffect.sourceBecomesCreature(4, 4, List.of(CardSubtype.BEAST), Set.of()));
     }
 }

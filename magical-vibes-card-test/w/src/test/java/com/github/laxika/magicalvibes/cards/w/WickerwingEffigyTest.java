@@ -2,6 +2,9 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.Lifeforce;
+import com.github.laxika.magicalvibes.cards.n.NeutralizingBlast;
+import com.github.laxika.magicalvibes.cards.s.SternScolding;
+import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -18,7 +21,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WickerwingEffigy.class, GrizzlyBears.class, Lifeforce.class})
+@CardUsed({WickerwingEffigy.class, GrizzlyBears.class, Lifeforce.class, SternScolding.class, TrainedArmodon.class,
+        NeutralizingBlast.class})
 class WickerwingEffigyTest extends BaseCardTest {
 
     @Test
@@ -61,6 +65,7 @@ class WickerwingEffigyTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The changed spell can be countered as a black spell")
     void modifiedSpellCanBeCounteredAsABlackSpell() {
         harness.addToBattlefield(player1, new WickerwingEffigy());
         harness.addToBattlefield(player2, new Lifeforce());
@@ -78,6 +83,43 @@ class WickerwingEffigyTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The changed spell has base power and toughness 1/1 on the stack, so Stern Scolding can target it")
+    void changedSpellHasBasePowerAndToughnessOnTheStack() {
+        harness.addToBattlefield(player1, new WickerwingEffigy());
+        TrainedArmodon armodon = new TrainedArmodon();
+        harness.setLibrary(player1, List.of(armodon));
+        harness.setHand(player2, List.of(new SternScolding()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castAndResolveFromLibraryTop(player1);
+        harness.castInstant(player2, 0, armodon.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Trained Armodon");
+        harness.assertNotOnBattlefield(player1, "Trained Armodon");
+    }
+
+    @Test
+    @DisplayName("The changed spell is green and black on the stack, so Neutralizing Blast can counter it as a multicolored spell")
+    void changedSpellIsMulticoloredOnTheStack() {
+        harness.addToBattlefield(player1, new WickerwingEffigy());
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(bears));
+        harness.setHand(player2, List.of(new NeutralizingBlast()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castAndResolveFromLibraryTop(player1);
+        harness.castInstant(player2, 0, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The top noncreature card is visible only to its controller and cannot be cast")
     void topNoncreatureIsVisibleOnlyToControllerAndCannotBeCast() {
         harness.addToBattlefield(player1, new WickerwingEffigy());
         Lifeforce top = new Lifeforce();
@@ -97,6 +139,7 @@ class WickerwingEffigyTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The library permission does not grant flash")
     void libraryPermissionDoesNotGrantFlash() {
         harness.addToBattlefield(player1, new WickerwingEffigy());
         GrizzlyBears bears = new GrizzlyBears();
@@ -110,6 +153,7 @@ class WickerwingEffigyTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The library permission still requires paying the spell's cost")
     void libraryPermissionStillRequiresPayment() {
         harness.addToBattlefield(player1, new WickerwingEffigy());
         GrizzlyBears bears = new GrizzlyBears();

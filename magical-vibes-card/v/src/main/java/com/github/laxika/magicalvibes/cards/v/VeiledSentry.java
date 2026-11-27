@@ -5,9 +5,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.condition.SourceIsEnchantment;
-import com.github.laxika.magicalvibes.model.effect.BecomeCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import java.util.List;
+import java.util.Set;
 
 @CardRegistration(set = "USG", collectorNumber = "109")
 public class VeiledSentry extends Card {
@@ -17,6 +19,6 @@ public class VeiledSentry extends Card {
         // power and toughness each equal to that spell's mana value.
         addTrigger(Triggers.opponentCastsSpell().anySpell(),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceIsEnchantment()),
-                new BecomeCreatureEffect(new TargetSpellManaValue(), new TargetSpellManaValue(), CardSubtype.ILLUSION));
+                AnimatePermanentsEffect.sourceBecomesCreature(new TargetSpellManaValue(), new TargetSpellManaValue(), List.of(CardSubtype.ILLUSION), Set.of()));
     }
 }

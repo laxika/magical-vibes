@@ -426,7 +426,7 @@ Run the test classes of every card that used a deleted class (scripts/effect-inv
 - Demonic Hordes' `OpponentChoosesPermanentToSacrificeEffect` and Infernal Denizen's `OpponentMayGainControlOfCreatureYouControlEffect` were `blocked-other` on the old forced-cost fallback list; both are now ordinary steps of their resolution (U4a), so their folds (`ChoosePlayerEffect` + `ChoosePermanentsEffect.chosenBy(playersThisWay(CHOOSE))` + the verb) are open for a fold run. Sure of the code.
 - Eye for an Eye, Harm's Way, Jade Monolith, Shaman en-Kor, General's Regalia, Nova Pentacle: their chosen-source handlers now ask `DamageSourceChoiceSupport.choosable` (rules-fixes DM-3); fold them onto `ChooseDamageSourceEffect` plus a step that reads the choice.
 
-#### Blocked records by cause (690)
+#### Blocked records by cause (689)
 
 #### The first half prompts mid-step (blocked-step-model) (127)
 
@@ -975,7 +975,7 @@ Waits on the owner (no gift opponent is recorded; "Waiting on the owner" below).
 - `EachOtherPlayerDrawsCardEffect`: the 4 non-gift files moved (Words of Wisdom, Deadpool Trading Card, Master of the Feast to DrawCardEffect(1, eachOpponent()); Baleful Mastery to ChoosePlayerEffect.opponent() + DrawCardEffect(1, playersThisWay(CHOOSE)), its multiplayer ruling).
 - `TargetOpponentCreatesTokenEffect`: declares no target and derives the opponent (two players): the target or promised opponent must reach the entry before it can be a subject; also fires the gift-given event.
 
-#### Other (each note names the missing part) (196)
+#### Other (each note names the missing part) (195)
 
 - `ActivePlayerExilesCardFromGraveyardEffect`: "if the player doesn't" also covers an accepted exile from an empty graveyard: needs the player graveyard choice to record an EXILE step (Web of Inertia).
 - `ActivePlayerRevealsUntilCreatureToBattlefieldRestToGraveyardEffect`: the handler now enters the creature through the entry batch (as-enters choices, a card that can't enter from the library stays there); still blocked on the record declaring Oath of Druids' player target.
@@ -987,7 +987,6 @@ Waits on the owner (no gift opponent is recorded; "Waiting on the owner" below).
 - `BattleAngelsOfTyrEffect`: Battle Angels of Tyr: the split needs three Conditions on the damaged player, more cards in hand / lands / life than each other player (you included); subjects inside Conditions are outside this plan and each Condition would be its card's alone.
 - `BecomeCopyOfChosenCreatureYouControlUntilEndOfTurnEffect`: Deepfathom Echo: ChoosePermanentsEffect keeps a lone chosen permanent as the source's chosen permanent, so a copy of a 'the chosen creature' card (Dauntless Bodyguard) would have a choice it never made; the choose step needs a no-keep form first.
 - `BecomeCopyOfTargetCreatureEffect`: the optional copy runs through BecomeCopyOfTargetCreatureChoiceHandler (keeps its trigger, may keep color); the two siblings are mandatory with their own retention: a copy verb needs the "except" profile first (step 10).
-- `BecomeEnchantmentEffect`: Opal Acrolith, Hidden Stag (already one record): it undoes BecomeCreatureEffect's card swap (setCard(getOriginalCard())); a layered SetCardTypesEffect({ENCHANTMENT}, source()) folds it only once BecomeCreatureEffect is a timestamped layer 4/7b floating ….
 - `BoostAllCreaturesExceptChosenTypeEffect`: ChooseCreatureTypeAtResolutionEffect + BoostAllCreaturesEffect(-3, -3, Not(PermanentHasTypeChosenThisResolutionPredicate)) says it, but BoostAllCreaturesEffect is no BoardWipeEffect, so Crippling Fear would lose the sweepsBoard view SpellEvaluator's phase and ….
 - `BoostAndGrantKeywordToTriggeringAndSharingCreaturesUntilEndOfTurnEffect`: Haunted One's 'other creatures that share a creature type with it' uses the triggering creature's last-known types once it left (CR 608.2h); Subjects.otherPermanentsSharing reads live permanents only and would name nothing, a narrowing.
 - `BoostByAttackCountEffect`: implements StaticCreatureBoostEffect, which five AI readers use; DynamicStaticBoostEffect has no such view, so the fold would change the AI's reading of Moraug and Rampaging Ursaguana.
@@ -1338,16 +1337,13 @@ Don't commit.
 - Development (Research // Development): two or more opponents letting its controller draw in one round draw one card, not one per accepting opponent (CR 118.12a: each paid cost is that player's; its 2006 rulings don't settle it). Sure of the code.
 - Madame Null, Power Broker asks "pay 0 life" for a creature with 0 power (HEAD's behaviour, pinned in U8: `MadameNullPowerBrokerTest.zeroPowerAsksForZeroLife`); the U3b orchestrator's decision (Q4) says it doesn't ask (CR 119.4).
 
-#### Layers and copy values (11)
+#### Layers and copy values (8)
 
-- Wickerwing Effigy's "becomes a black Bird ... Fairly sure, low.
 - Esix's copies keep none of the replaced copy's instructions (Faerie Artisans); Dance of Many waits for it. Sure of the code.
 - Thought Partition and Hydroponics Architect write colour, mana cost, supertype and subtype into runtime copies (layer 1, CR 613). Sure of the code.
-- Starfield of Nyx: `isAnimatedByStarfield` makes a battlefield enchantment a creature ignoring later layer-4 type removals, and `wouldEnterAsCreature` ignores Starfield (Torpor Orb). Sure of the code, low.
 - Ability borrowers in a CR 613.8b dependency loop are approximated by assembly order, so a three-borrower cycle can miss a lender's borrowed abilities. Sure of the code, rare.
 - `ProtectionFromColorsEffectHandler` gives a self-subject fixed protection to the host when its source is attached (a bestowed or reconfigured creature with printed protection); CR 702.16a makes it the object's own. Sure of the code.
 - Mask of Law and Grace, Shield of Duty and Reason, Strength of Isolation and Strength of Lunacy stay exempt from their own protection when recoloured, though they have no "doesn't remove" text (CR 702.16c). Fairly sure.
-- `BecomeCreatureEffect` (Opal Acrolith, Hidden Stag, 24 cards) replaces the card instead of floating a layer-4 and layer-7b effect, so a later copy effect drops the type change (CR 613.1a, 613.1d). Sure of the code.
 - `PerpetuallyGrantStaticEffectToTargetCreatureEffectHandler`, `PerpetuallyGrantStaticEffectToSourceEffectHandler`, `DealDamageToAnyTargetThenPerpetuallyGrantStaticEffectsIfCreatureDamagedEffectHandler`, `PerpetuallyBecomeCreatureEffectHandler` and `ExileArtifactThenSeekArtifactAndPerpetuallyBecomeCreatureEffectHandler` write perpetual changes into an exchanged card, which a copy then copies (CR 707.2). Sure of the code.
 - `TextChangeTransformer` rewrites change effect identity, so a text-changed targeted trigger can lose its target group. Unsure.
 - Whether a text change made to a spell on the stack (Sleight of Mind on an instant, `spellTextReplacements`) reaches its resolution was not traced. Unverified.

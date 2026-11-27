@@ -46,8 +46,9 @@ public class Permanent {
     /** Copiable characteristics before a layer-3 graveyard text change, including Clone effects. */
     @Setter private Card fullTextCopyBaseCard;
     /**
-     * The card this permanent showed before a one-shot "becomes a creature" effect replaced it. That
-     * effect is not a copiable value (CR 707.2), so a copy of this permanent sees this card.
+     * The card this permanent showed before a one-shot type change replaced it (a creature card returned as a Food,
+     * {@code ReturnOpponentCreaturesFromGraveyardAsFoodEffect}). That change is not a copiable value (CR 707.2), so a
+     * copy of this permanent sees this card.
      */
     @Setter private Card becomeCreatureBaseCard;
     /** The card that effect produced; once something else replaces it, {@link #becomeCreatureBaseCard} no longer applies. */

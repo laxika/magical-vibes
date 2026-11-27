@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.s.SoulWarden;
 import com.github.laxika.magicalvibes.cards.t.ThreefoldThunderhulk;
+import com.github.laxika.magicalvibes.cards.w.WatcherOfTheSpheres;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -23,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({AbuelosAwakening.class, BanishingLight.class, CharcoalDiamond.class, HolyDay.class, Pacifism.class,
-        SoulWarden.class, ThreefoldThunderhulk.class})
+        SoulWarden.class, ThreefoldThunderhulk.class, WatcherOfTheSpheres.class})
 class AbuelosAwakeningTest extends BaseCardTest {
 
     @Test
@@ -44,6 +45,22 @@ class AbuelosAwakeningTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, returned, Keyword.FLYING)).isTrue();
         assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The returned permanent has flying as it enters, so a creature-with-flying enters trigger sees it (CR 611.2e)")
+    void returnedPermanentHasFlyingAsItEnters() {
+        Permanent watcher = harness.addToBattlefieldAndReturn(player1, new WatcherOfTheSpheres());
+        Card artifact = new CharcoalDiamond();
+        harness.setGraveyard(player1, List.of(artifact));
+        harness.setHand(player1, List.of(new AbuelosAwakening()));
+        addMana(0);
+
+        harness.castSorcery(player1, 0, 0, artifact.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, watcher)).isEqualTo(2);
     }
 
     @Test

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.s.SongOfTheDryads;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -25,10 +24,9 @@ class LurkingJackalsTest extends BaseCardTest {
 
         assertThat(gqs.isCreature(gd, jackals)).isTrue();
         assertThat(gqs.isEnchantment(gd, jackals)).isFalse();
-        assertThat(jackals.getCard().getType()).isEqualTo(CardType.CREATURE);
-        assertThat(jackals.getCard().getSubtypes()).containsExactly(CardSubtype.JACKAL);
-        assertThat(jackals.getCard().getPower()).isEqualTo(3);
-        assertThat(jackals.getCard().getToughness()).isEqualTo(2);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, jackals)).containsExactly(CardSubtype.JACKAL);
+        assertThat(gqs.getEffectivePower(gd, jackals)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, jackals)).isEqualTo(2);
     }
 
     @Test

@@ -82,13 +82,30 @@ class HiddenPredatorsTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Can trigger again when a continuous effect keeps it an enchantment")
-    void canTriggerAgainWhenContinuousEffectKeepsItAnEnchantment() {
+    @DisplayName("An earlier Enchanted Evening doesn't keep it an enchantment: the newer type change replaces its types (CR 613.7, 205.1a)")
+    void earlierEnchantedEveningDoesNotKeepItAnEnchantment() {
         Permanent hiddenPredators = harness.addToBattlefieldAndReturn(player1, new HiddenPredators());
         harness.addToBattlefield(player1, new EnchantedEvening());
         harness.addToBattlefield(player2, new ThunderingGiant());
 
         harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.isCreature(gd, hiddenPredators)).isTrue();
+        assertThat(gqs.isEnchantment(gd, hiddenPredators)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can trigger again when a later continuous effect makes it an enchantment again")
+    void canTriggerAgainWhenLaterContinuousEffectMakesItAnEnchantment() {
+        Permanent hiddenPredators = harness.addToBattlefieldAndReturn(player1, new HiddenPredators());
+        harness.addToBattlefield(player2, new ThunderingGiant());
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gqs.isEnchantment(gd, hiddenPredators)).isFalse();
+        harness.addToBattlefield(player1, new EnchantedEvening());
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, hiddenPredators)).isTrue();

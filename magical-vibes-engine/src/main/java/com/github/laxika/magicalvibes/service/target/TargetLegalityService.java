@@ -5476,11 +5476,16 @@ public class TargetLegalityService {
     }
 
     /**
-     * Power of a spell on the stack. A characteristic-defining power ("power is equal to the number of
-     * creatures you control", CR 604.3) is evaluated from the game state, since the card has no
-     * permanent to take it from; otherwise the printed power is used.
+     * Power of a spell on the stack. A base power set while it is on the stack ("it ... has base power and toughness
+     * 1/1", Wickerwing Effigy's cast trigger) applies in sublayer 7b, after a characteristic-defining power (7a,
+     * CR 613.4a, 613.4b). A characteristic-defining power ("power is equal to the number of creatures you control",
+     * CR 604.3) is evaluated from the game state, since the card has no permanent to take it from; otherwise the
+     * printed power is used.
      */
     private Integer stackPower(GameData gameData, StackEntry stackEntry) {
+        if (stackEntry.getBasePowerOverrideOnEntry() != null) {
+            return stackEntry.getBasePowerOverrideOnEntry();
+        }
         SetPowerToughnessToAmountEffect cda = stackCharacteristicDefiningEffect(stackEntry);
         if (cda == null) {
             return stackEntry.getCard().getPower();
@@ -5490,6 +5495,9 @@ public class TargetLegalityService {
 
     /** Toughness of a spell on the stack, computed like {@link #stackPower}. */
     private Integer stackToughness(GameData gameData, StackEntry stackEntry) {
+        if (stackEntry.getBaseToughnessOverrideOnEntry() != null) {
+            return stackEntry.getBaseToughnessOverrideOnEntry();
+        }
         SetPowerToughnessToAmountEffect cda = stackCharacteristicDefiningEffect(stackEntry);
         if (cda == null) {
             return stackEntry.getCard().getToughness();
@@ -5575,10 +5583,8 @@ public class TargetLegalityService {
                     stackEntry.getControllerId());
         }
         if (predicate instanceof StackEntryColorInPredicate colorInPredicate) {
-            Set<CardColor> spellColors = new HashSet<>(
-                    gameQueryService.getEffectiveCardColors(gameData, stackEntry.getCard()));
-            spellColors.addAll(stackEntry.getGrantedColorsOnEntry());
-            return spellColors.stream().anyMatch(colorInPredicate.colors()::contains);
+            return gameQueryService.getEffectiveSpellColors(gameData, stackEntry).stream()
+                    .anyMatch(colorInPredicate.colors()::contains);
         }
         if (predicate instanceof StackEntrySourceIsColorlessPredicate) {
             if (stackEntry.getSourcePlanarObject() != null) {
@@ -5596,7 +5602,7 @@ public class TargetLegalityService {
                 }
             }
             return stackEntry.getCard() != null
-                    && gameQueryService.getEffectiveCardColors(gameData, stackEntry.getCard()).isEmpty();
+                    && gameQueryService.getEffectiveSpellColors(gameData, stackEntry).isEmpty();
         }
         if (predicate instanceof StackEntrySourceHasSupertypePredicate sourceSupertype) {
             Permanent sourcePermanent = sourcePermanentForStackEntry(gameData, stackEntry);
@@ -5620,7 +5626,7 @@ public class TargetLegalityService {
             return stackEntry.isLoyaltyAbility();
         }
         if (predicate instanceof StackEntryIsMulticoloredPredicate) {
-            return gameQueryService.getEffectiveCardColors(gameData, stackEntry.getCard()).size() >= 2;
+            return gameQueryService.getEffectiveSpellColors(gameData, stackEntry).size() >= 2;
         }
         if (predicate instanceof StackEntryCardTypeInPredicate cardTypeInPredicate) {
             if (stackEntry.getSourcePermanentId() != null) {
@@ -5637,10 +5643,11 @@ public class TargetLegalityService {
             return cardTypeInPredicate.cardTypes().stream().anyMatch(stackEntry.getCard()::hasType);
         }
         if (predicate instanceof StackEntrySubtypeInPredicate subtypeInPredicate) {
+            // A subtype the spell gained on the stack (Wickerwing Effigy's "it becomes a black Bird") counts too.
             Card stackCard = stackEntry.getCard();
             return subtypeInPredicate.subtypes().stream()
-                    .anyMatch(subtype -> gameQueryService.cardHasSubtype(
-                            stackCard, subtype, gameData, stackCard.getOwnerId()));
+                    .anyMatch(subtype -> stackEntry.getGrantedSubtypesOnEntry().contains(subtype)
+                            || gameQueryService.cardHasSubtype(stackCard, subtype, gameData, stackCard.getOwnerId()));
         }
         if (predicate instanceof StackEntrySupertypeInPredicate supertypeInPredicate) {
             return stackEntry.getCard().getSupertypes().stream()
@@ -5688,7 +5695,7 @@ public class TargetLegalityService {
         }
         if (predicate instanceof StackEntrySnowManaOfItsColorSpentPredicate) {
             UUID spellCardId = stackEntry.getCard().getId();
-            return gameQueryService.getEffectiveCardColors(gameData, stackEntry.getCard()).stream()
+            return gameQueryService.getEffectiveSpellColors(gameData, stackEntry).stream()
                     .map(color -> ManaColor.valueOf(color.name()))
                     .anyMatch(color -> gameData.getSpellCastSnowManaSpentByColor(spellCardId, color) > 0);
         }
@@ -5813,7 +5820,7 @@ public class TargetLegalityService {
                 return false;
             }
             boolean sharesColor = gameQueryService.getEffectiveCardColors(gameData, imprintedCard).stream()
-                    .anyMatch(gameQueryService.getEffectiveCardColors(gameData, stackEntry.getCard())::contains);
+                    .anyMatch(gameQueryService.getEffectiveSpellColors(gameData, stackEntry)::contains);
             int spellManaValue = stackEntry.getSpellManaValue();
             return sharesColor || spellManaValue == imprintedCard.getManaValue();
         }

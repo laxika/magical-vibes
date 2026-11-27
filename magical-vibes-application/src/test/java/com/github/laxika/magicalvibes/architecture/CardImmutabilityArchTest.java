@@ -63,7 +63,6 @@ class CardImmutabilityArchTest {
             "BecomeCopyOfTargetCreatureCardInGraveyardEffectHandler", // name/legendary/activated ability on the fresh clone-copy card
             "BecomeCopyOfTargetLandEffectHandler", // re-grants "except it has this ability" on the fresh clone-copy card (Thespian's Stage)
             "EachOtherPermanentMatchingPredicateBecomesCopyOfTargetPermanentUntilEndOfTurnEffectHandler", // removes legendary from fresh clone-copy cards
-            "BecomeCreatureEffectHandler", // replaces an enchantment with the freshly created runtime creature copy
             "BecomeCreatureTypeWithBasePowerToughnessEffectHandler", // replaces subtypes on a fresh runtime copy
             "BecomeAuraReanimateFromGraveyardEffectHandler", // Aura subtype + enchant filter on the fresh runtime copy (Necrotic Plague)
             "BecomeAuraManifestTopCardEffectHandler", // Aura subtype + enchant filter on the fresh runtime copy (Lightform)

@@ -4,12 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.SourceMatchesPermanentPredicate;
-import com.github.laxika.magicalvibes.model.effect.BecomeCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import java.util.Set;
 
 @CardRegistration(set = "USG", collectorNumber = "108")
 public class VeiledCrocodile extends Card {
@@ -19,6 +20,6 @@ public class VeiledCrocodile extends Card {
                         .anyMatch(playerId -> gameData.playerHands.getOrDefault(playerId, List.of()).isEmpty())),
                 TriggerOptions.DEFAULT.withInterveningIf(
                         new SourceMatchesPermanentPredicate(new PermanentIsEnchantmentPredicate())),
-                new BecomeCreatureEffect(4, 4, CardSubtype.CROCODILE));
+                AnimatePermanentsEffect.sourceBecomesCreature(4, 4, List.of(CardSubtype.CROCODILE), Set.of()));
     }
 }

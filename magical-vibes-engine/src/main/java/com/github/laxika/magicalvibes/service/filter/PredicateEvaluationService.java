@@ -5480,7 +5480,7 @@ public class PredicateEvaluationService {
                             .anyMatch(colorIn.colors()::contains);
                 }
                 if (gameData != null) {
-                    yield gameQueryService.getEffectiveCardColors(gameData, entry.getCard()).stream()
+                    yield gameQueryService.getEffectiveSpellColors(gameData, entry).stream()
                             .anyMatch(colorIn.colors()::contains);
                 }
                 List<CardColor> colors = entry.getCard().getColors();
@@ -5492,7 +5492,7 @@ public class PredicateEvaluationService {
             }
             case StackEntryIsLoyaltyAbilityPredicate ignored -> entry.isLoyaltyAbility();
             case StackEntryIsMulticoloredPredicate ignored -> gameData != null
-                    ? gameQueryService.getEffectiveCardColors(gameData, entry.getCard()).size() >= 2
+                    ? gameQueryService.getEffectiveSpellColors(gameData, entry).size() >= 2
                     : entry.getCard().getColors() != null && entry.getCard().getColors().size() >= 2;
             case StackEntryCardTypeInPredicate cardTypeIn -> liveSource != null
                     ? gameQueryService.getEffectiveCardTypes(gameData, liveSource).stream()

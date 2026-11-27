@@ -151,6 +151,29 @@ public record AnimatePermanentsEffect(DynamicAmount power, DynamicAmount toughne
                 Set.of(CardType.CREATURE, CardType.ARTIFACT), Subjects.source(), Duration.UNTIL_END_OF_TURN, null, Set.of(), false, false);
     }
 
+    /**
+     * "This permanent becomes a 2/4 Soldier creature [with flying]", with no duration (Opal Acrolith, Hidden Stag,
+     * Lurking Evil): from the source's own timestamp, floating effects make it only a creature (CR 205.1a, layer 4),
+     * the first creature type it names replaces its creature types, it gains the keywords (layer 6) and it has that
+     * base power and toughness (sublayer 7b). They are not copiable values, so a copy of it, or a later copy effect on
+     * it, doesn't change them (CR 707.2, 613.1a).
+     */
+    public static AnimatePermanentsEffect sourceBecomesCreature(int power, int toughness, List<CardSubtype> subtypes,
+                                                                Set<Keyword> keywords) {
+        return sourceBecomesCreature(new Fixed(power), new Fixed(toughness), subtypes, keywords);
+    }
+
+    /**
+     * As {@link #sourceBecomesCreature(int, int, List, Set)}, with base power and toughness amounts evaluated once as
+     * the effect resolves (CR 608.2h): "it becomes an Illusion creature with power and toughness each equal to that
+     * spell's mana value" (Veiled Sentry).
+     */
+    public static AnimatePermanentsEffect sourceBecomesCreature(DynamicAmount power, DynamicAmount toughness,
+                                                                List<CardSubtype> subtypes, Set<Keyword> keywords) {
+        return new AnimatePermanentsEffect(power, toughness, subtypes, keywords, null, Set.of(), Subjects.source(),
+                Duration.PERMANENT, null, Set.of(), true, false);
+    }
+
     /** Self-targeting animation with a fixed set of colors. */
     public static AnimatePermanentsEffect withAnimatedColors(int power, int toughness,
                                                                List<CardSubtype> grantedSubtypes,

@@ -188,7 +188,7 @@ All paths relative to `cards/`.
 
 | Attached life-loss protection + draw/reveal mana-value attack rider | `p/PactWeapon.java` | STATIC `ConditionalEffect(SourceIsAttached, CantLoseGameFromLifeEffect)` + `Triggers.attacks() SequenceEffect(DrawCardEffect(1), RevealDrawnCardAndBoostEquippedCreatureByManaValueEffect())` + sorcery-speed equip with `DiscardCardTypeCost` and `EquipEffect` |
 
-- `d/DancingSword.java` — STATIC `StaticBoostEffect(2, 1, Subjects.attachedCreature())` + `Triggers.creatureDies(EQUIPPED) MayEffect(BecomeCreatureEffect(2, 1, CONSTRUCT, {FLYING}, {ARTIFACT}))` + conditional STATIC ward grant while the transformed source is a creature + `EquipActivatedAbility("{1}")`
+- `d/DancingSword.java` — STATIC `StaticBoostEffect(2, 1, Subjects.attachedCreature())` + `Triggers.creatureDies(EQUIPPED) MayEffect(AnimatePermanentsEffect(2/1 CONSTRUCT {FLYING} +{ARTIFACT}, source, PERMANENT) + LoseAllLandTypesEffect.subtypes({EQUIPMENT}, source, PERMANENT))` + conditional STATIC ward grant while the transformed source is a creature + `EquipActivatedAbility("{1}")`
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
 | Simple boost equip | `l/LeoninScimitar.java` | STATIC StaticBoostEffect(X, Y, Subjects.attachedCreature()) + EquipActivatedAbility |

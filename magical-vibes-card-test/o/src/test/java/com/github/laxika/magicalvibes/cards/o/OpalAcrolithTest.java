@@ -149,6 +149,35 @@ class OpalAcrolithTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A later copy effect on an animated Opal Acrolith keeps its 2/4 Soldier creature change (CR 613.1a, 613.1d)")
+    @CardUsed(com.github.laxika.magicalvibes.cards.c.Cytoshape.class)
+    void laterCopyEffectKeepsTheTypeChange() {
+        Permanent opal = addOpalAcrolith();
+        prepareOpponentCast();
+        castOpponentCreature();
+        resolveAllTriggers();
+        Permanent gorilla = gd.playerBattlefields.get(player2.getId()).stream()
+                .filter(permanent -> permanent.getCard().getName().equals("Gorilla Warrior"))
+                .findFirst().orElseThrow();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.c.Cytoshape()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, opal.getId());
+        harness.handlePermanentChosen(player1, gorilla.getId());
+
+        assertThat(opal.getCard().getName()).isEqualTo("Gorilla Warrior");
+        assertThat(gqs.isCreature(gd, opal)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, opal)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opal)).isEqualTo(4);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, opal)).containsExactly(CardSubtype.SOLDIER);
+    }
+
+    @Test
     @DisplayName("The zero-mana ability is usable while already an enchantment")
     void canActivateWhileAlreadyEnchantment() {
         Permanent opal = addOpalAcrolith();

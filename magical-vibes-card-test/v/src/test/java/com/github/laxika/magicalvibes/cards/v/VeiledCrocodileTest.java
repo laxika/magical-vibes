@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.e.EnchantedEvening;
 import com.github.laxika.magicalvibes.cards.t.TolarianWinds;
 import com.github.laxika.magicalvibes.cards.s.SongOfTheDryads;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -33,10 +32,9 @@ class VeiledCrocodileTest extends BaseCardTest {
 
         assertThat(gqs.isCreature(gd, crocodile)).isTrue();
         assertThat(gqs.isEnchantment(gd, crocodile)).isFalse();
-        assertThat(crocodile.getCard().getType()).isEqualTo(CardType.CREATURE);
-        assertThat(crocodile.getCard().getSubtypes()).containsExactly(CardSubtype.CROCODILE);
-        assertThat(crocodile.getCard().getPower()).isEqualTo(4);
-        assertThat(crocodile.getCard().getToughness()).isEqualTo(4);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, crocodile)).containsExactly(CardSubtype.CROCODILE);
+        assertThat(gqs.getEffectivePower(gd, crocodile)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, crocodile)).isEqualTo(4);
     }
 
     @Test

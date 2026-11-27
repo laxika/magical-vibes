@@ -6,12 +6,13 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceIsEnchantment;
-import com.github.laxika.magicalvibes.model.effect.BecomeCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
+import java.util.List;
 
 @CardRegistration(set = "USG", collectorNumber = "261")
 public class HiddenGuerrillas extends Card {
@@ -19,6 +20,6 @@ public class HiddenGuerrillas extends Card {
     public HiddenGuerrillas() {
         addTrigger(Triggers.opponentCastsSpell().withFilter(new CardTypePredicate(CardType.ARTIFACT)),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceIsEnchantment()),
-                new BecomeCreatureEffect(5, 3, CardSubtype.SOLDIER, Set.of(Keyword.TRAMPLE)));
+                AnimatePermanentsEffect.sourceBecomesCreature(5, 3, List.of(CardSubtype.SOLDIER), Set.of(Keyword.TRAMPLE)));
     }
 }

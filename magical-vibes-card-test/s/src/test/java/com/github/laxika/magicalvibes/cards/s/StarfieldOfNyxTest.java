@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.b.Browse;
 import com.github.laxika.magicalvibes.cards.g.GossamerChains;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Insight;
+import com.github.laxika.magicalvibes.cards.o.OblivionRing;
+import com.github.laxika.magicalvibes.cards.t.TorporOrb;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,7 +21,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({StarfieldOfNyx.class, SylvanEchoes.class, GossamerChains.class, Insight.class,
-        Browse.class, GrizzlyBears.class, Pacifism.class, StillLife.class})
+        Browse.class, GrizzlyBears.class, Pacifism.class, StillLife.class,
+        OblivionRing.class, TorporOrb.class})
 class StarfieldOfNyxTest extends BaseCardTest {
 
     /** Starfield plus four more enchantments — the "five or more enchantments" threshold. */
@@ -96,6 +99,27 @@ class StarfieldOfNyxTest extends BaseCardTest {
 
         assertThat(gqs.isCreature(gd, heliod)).isFalse();
         assertThat(gqs.isCreature(gd, findPermanent(player1, "Browse"))).isTrue();
+    }
+
+    @Test
+    @DisplayName("An enchantment that enters as a creature under Starfield of Nyx doesn't trigger its enters ability under Torpor Orb")
+    void enchantmentEnteringAsCreatureIsStoppedByTorporOrb() {
+        harness.addToBattlefield(player1, new StarfieldOfNyx());
+        harness.addToBattlefield(player1, new SylvanEchoes());
+        harness.addToBattlefield(player1, new GossamerChains());
+        harness.addToBattlefield(player1, new Insight());
+        harness.addToBattlefield(player1, new TorporOrb());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of());
+
+        harness.castFromHand(player1, new OblivionRing(), "{2}{W}");
+        harness.passBothPriorities();
+
+        Permanent ring = findPermanent(player1, "Oblivion Ring");
+        assertThat(gqs.isCreature(gd, ring)).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
     }
 
     @Test
