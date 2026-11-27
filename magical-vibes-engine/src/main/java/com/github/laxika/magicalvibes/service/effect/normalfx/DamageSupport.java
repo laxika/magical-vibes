@@ -2006,7 +2006,18 @@ public class DamageSupport {
                     damage + " damage is redirected to ", targetPerm.getCard(), "."));
         }
         if (origin != null) {
-            return origin.redirectedTo(controllerId, permanentId, damage, RedirectedDamageRules::staysSpent);
+            DamageEvent redirected = origin.redirectedTo(controllerId, permanentId, damage,
+                    RedirectedDamageRules::staysSpent);
+            Permanent dealer = origin.explicitSource();
+            if (permanentId == null && dealer != null) {
+                // The damage a fight's or bite's other permanent deals stays its damage at the player (CR 120.1):
+                // its lifelink, infect and triggers apply, not the resolving entry's source's.
+                Permanent asItIsOrWas = dealerAsItIsOrWas(gameData, origin.entry(), dealer.getId());
+                if (asItIsOrWas == null) asItIsOrWas = dealer;
+                redirected = redirected.dealtThrough(entryDealtByPermanent(gameData, origin.entry(), asItIsOrWas,
+                        dealerControllerId(gameData, origin.entry(), asItIsOrWas)));
+            }
+            return redirected;
         }
         Permanent source = redirect.damageSourceId() == null ? null
                 : gameQueryService.findPermanentById(gameData, redirect.damageSourceId());

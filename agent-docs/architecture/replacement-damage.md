@@ -27,8 +27,8 @@ Owner: `ReplacementCandidateSource`; `DamageCandidateSource` for damage.
 Why: an effect applied outside the pool is applied in a fixed order, or twice.
 
 ### Effects pass the unmodified damage amount
-Multipliers and "plus N" bonuses are pool options, one per effect instance; `applyDamageMultiplier` is only a prediction (`DamageMultiplierRatchetTest`).
-Owner: `DamageSupport`; `DamageBonusGrant`.
+Multipliers and "plus N" bonuses are pool options, one per effect instance (`multiplierRule`, `bonusRule`); `applyDamageMultiplier` is only a prediction (`DamageMultiplierRatchetTest`).
+Owner: `DamageSupport`; `GameQueryService.DamageMultiplier` / `DamageBonus` lists; `DamageBonusGrant`.
 Why: the recipient may apply a multiplier between two bonuses.
 
 ### A replacement that makes the permanent leave asks first (CR 616.1f)
@@ -47,8 +47,8 @@ Owner: `CombatDamageService` (`processCollectedCombatDamage`).
 Why: a step's combat damage is dealt at once; a myriad copy may damage another opponent.
 
 ### Redirected damage runs through the new recipient's pool (CR 614.9)
-Source-side and global effects already applied stay spent (CR 614.5); the new recipient's own effects still apply.
-Owner: `RedirectedDamageRules` (`staysSpent`), `DamageEvent` (`redirectedTo`).
+Source-side and global effects already applied stay spent (CR 614.5); the new recipient's own effects still apply. A fought or bitten permanent's damage sent to a player is dealt through that permanent's own entry (CR 120.1).
+Owner: `RedirectedDamageRules` (`staysSpent`), `DamageEvent` (`redirectedTo`, `dealtThrough`).
 Why: a doubler must not apply twice.
 
 ### Replaced land mana is final

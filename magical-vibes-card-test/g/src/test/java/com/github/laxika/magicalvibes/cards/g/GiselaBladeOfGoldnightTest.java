@@ -2,11 +2,16 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.a.Archangel;
 import com.github.laxika.magicalvibes.cards.b.Blaze;
+import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.t.TamiyoTheMoonSage;
+import com.github.laxika.magicalvibes.cards.t.TorbranThaneOfRedFell;
 import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -281,5 +286,52 @@ class GiselaBladeOfGoldnightTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, player1.getId());
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @CardUsed({GoldnightCastigator.class, TorbranThaneOfRedFell.class, LightningBolt.class})
+    @DisplayName("Gisela's and Goldnight Castigator's doublings of damage to a player are ordered apart, so a plus 2 can go between them")
+    void recipientDoublingsAreOrderedApartForAPlayer() {
+        harness.addToBattlefield(player1, new GiselaBladeOfGoldnight());
+        harness.addToBattlefield(player1, new TorbranThaneOfRedFell());
+        harness.addToBattlefield(player2, new GoldnightCastigator());
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        chooseReplacement(player2, "Gisela");
+        chooseReplacement(player2, "Deal 2 more damage");
+
+        // (3 x 2 + 2) x 2
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(4);
+    }
+
+    @Test
+    @CardUsed({GoldnightCastigator.class, TorbranThaneOfRedFell.class, LightningBolt.class})
+    @DisplayName("Gisela's and Goldnight Castigator's doublings of damage to Castigator are ordered apart, so a plus 2 can go between them")
+    void recipientDoublingsAreOrderedApartForAPermanent() {
+        harness.addToBattlefield(player1, new GiselaBladeOfGoldnight());
+        harness.addToBattlefield(player1, new TorbranThaneOfRedFell());
+        Permanent castigator = harness.addToBattlefieldAndReturn(player2, new GoldnightCastigator());
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, castigator.getId());
+        harness.passBothPriorities();
+        chooseReplacement(player2, "Goldnight Castigator");
+        chooseReplacement(player2, "Deal 2 more damage");
+
+        // (3 x 2 + 2) x 2 = 16, lethal for the 4/9
+        harness.assertInGraveyard(player2, "Goldnight Castigator");
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    private void chooseReplacement(Player chooser, String optionPrefix) {
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        harness.handleListChoice(chooser, choice.options().stream()
+                .filter(option -> option.startsWith(optionPrefix)).findFirst().orElseThrow());
     }
 }

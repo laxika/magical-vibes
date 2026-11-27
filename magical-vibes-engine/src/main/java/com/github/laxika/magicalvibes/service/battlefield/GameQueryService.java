@@ -12313,20 +12313,26 @@ public class GameQueryService {
      * doubles nothing.
      */
     public int getEnchantedPlayerDamageMultiplier(GameData gameData, UUID playerId) {
-        int[] multiplier = {1};
+        return product(getEnchantedPlayerDamageMultipliers(gameData, playerId));
+    }
+
+    /** {@link #getEnchantedPlayerDamageMultiplier}, one entry per Curse. */
+    public List<DamageMultiplier> getEnchantedPlayerDamageMultipliers(GameData gameData, UUID playerId) {
+        List<DamageMultiplier> multipliers = new ArrayList<>();
         gameData.forEachPermanent((controllerId, p) -> {
             if (!p.isAttached() || !playerId.equals(p.getAttachedTo())
                     || !printsStaticEffect(gameData, p, OpponentRecipientDamageMultiplyingEffect.class)
                     || hasLostAllAbilities(gameData, p)) return;
-            for (CardEffect effect : p.getCard().getStaticEffects()) {
+            forEachStaticEffect(p, (effect, instance) -> {
                 if (effect instanceof OpponentRecipientDamageMultiplyingEffect multiplyingEffect
                         && multiplyingEffect.players() instanceof PlayerSubject.EnchantedPlayer
                         && multipliesDamageTo(p, controllerId, playerId, null, multiplyingEffect)) {
-                    multiplier[0] *= MaroGoneNutsSupport.apply(gameData, effect, multiplyingEffect.damageMultiplier());
+                    multipliers.add(staticMultiplier(gameData, p, instance,
+                            MaroGoneNutsSupport.apply(gameData, effect, multiplyingEffect.damageMultiplier())));
                 }
-            }
+            });
         });
-        return multiplier[0];
+        return multipliers;
     }
 
     /**
@@ -12398,25 +12404,39 @@ public class GameQueryService {
     public int getDamageToRecipientMultiplier(GameData gameData, UUID recipientPlayerId,
                                               UUID sourceControllerId, UUID recipientPermanentId,
                                               boolean combatDamage) {
-        if (recipientPlayerId == null) return 1;
+        return product(getDamageToRecipientMultipliers(
+                gameData, recipientPlayerId, sourceControllerId, recipientPermanentId, combatDamage));
+    }
 
-        int[] multiplier = {1};
-        for (CardEffect floated : gameData.floatingPlayerEffects(recipientPlayerId,
+    /**
+     * {@link #getDamageToRecipientMultiplier}, one entry per effect, so the damaged player or the damaged permanent's
+     * controller can order each against the other replacement effects (CR 616.1).
+     */
+    public List<DamageMultiplier> getDamageToRecipientMultipliers(GameData gameData, UUID recipientPlayerId,
+                                                                  UUID sourceControllerId, UUID recipientPermanentId,
+                                                                  boolean combatDamage) {
+        if (recipientPlayerId == null) return List.of();
+
+        List<DamageMultiplier> multipliers = new ArrayList<>();
+        for (FloatingContinuousEffect floating : gameData.floatingEffectsOnPlayer(recipientPlayerId,
                 DoubleDamageToOpponentsAndTheirPermanentsEffect.class)) {
             // Floated on the player it names ("you"): damage to that player, or to a permanent they control.
-            OpponentRecipientDamageMultiplyingEffect multiplyingEffect = (OpponentRecipientDamageMultiplyingEffect) floated;
+            OpponentRecipientDamageMultiplyingEffect multiplyingEffect =
+                    (OpponentRecipientDamageMultiplyingEffect) floating.effect();
             if (recipientPermanentId == null || multiplyingEffect.permanents() instanceof PermanentSubject.ControlledBy) {
-                multiplier[0] *= MaroGoneNutsSupport.apply(gameData, floated, multiplyingEffect.damageMultiplier());
+                multipliers.add(floatingMultiplier(floating,
+                        MaroGoneNutsSupport.apply(gameData, floating.effect(), multiplyingEffect.damageMultiplier())));
             }
         }
         if (sourceControllerId != null && !recipientPlayerId.equals(sourceControllerId)) {
-            for (CardEffect floated : gameData.floatingPlayerEffects(sourceControllerId,
+            for (FloatingContinuousEffect floating : gameData.floatingEffectsOnPlayer(sourceControllerId,
                     DoubleControllerDamageToOpponentsAndTheirPermanentsEffect.class)) {
                 ControllerRecipientDamageMultiplyingEffect multiplyingEffect =
-                        (ControllerRecipientDamageMultiplyingEffect) floated;
+                        (ControllerRecipientDamageMultiplyingEffect) floating.effect();
                 if ((recipientPermanentId == null || multiplyingEffect.appliesToOpponentPermanents())
                         && (!combatDamage || !multiplyingEffect.noncombatOnly())) {
-                    multiplier[0] *= MaroGoneNutsSupport.apply(gameData, floated, multiplyingEffect.damageMultiplier());
+                    multipliers.add(floatingMultiplier(floating, MaroGoneNutsSupport.apply(
+                            gameData, floating.effect(), multiplyingEffect.damageMultiplier())));
                 }
             }
         }
@@ -12424,31 +12444,31 @@ public class GameQueryService {
             if (!printsStaticEffect(gameData, p, OpponentRecipientDamageMultiplyingEffect.class,
                     ControllerRecipientDamageMultiplyingEffect.class, ChosenPlayersDamageMultiplyingEffect.class)
                     || hasLostAllAbilities(gameData, p)) return;
-            for (CardEffect effect : p.getCard().getStaticEffects()) {
+            forEachStaticEffect(p, (effect, instance) -> {
                 if (effect instanceof OpponentRecipientDamageMultiplyingEffect multiplyingEffect
                         && !(multiplyingEffect.players() instanceof PlayerSubject.EnchantedPlayer)
                         && multipliesDamageTo(p, controllerId, recipientPlayerId, recipientPermanentId,
                         multiplyingEffect)) {
-                    multiplier[0] *= MaroGoneNutsSupport.apply(
-                            gameData, effect, multiplyingEffect.damageMultiplier());
+                    multipliers.add(staticMultiplier(gameData, p, instance,
+                            MaroGoneNutsSupport.apply(gameData, effect, multiplyingEffect.damageMultiplier())));
                 } else if (!recipientPlayerId.equals(controllerId)
                         && sourceControllerId != null
                         && sourceControllerId.equals(controllerId)
                         && effect instanceof ControllerRecipientDamageMultiplyingEffect multiplyingEffect) {
                     if ((recipientPermanentId == null || multiplyingEffect.appliesToOpponentPermanents())
                             && (!combatDamage || !multiplyingEffect.noncombatOnly())) {
-                        multiplier[0] *= MaroGoneNutsSupport.apply(
-                                gameData, effect, multiplyingEffect.damageMultiplier());
+                        multipliers.add(staticMultiplier(gameData, p, instance,
+                                MaroGoneNutsSupport.apply(gameData, effect, multiplyingEffect.damageMultiplier())));
                     }
                 } else if (sourceControllerId != null
                         && effect instanceof ChosenPlayersDamageMultiplyingEffect multiplyingEffect
                         && multiplyingEffect.appliesTo(sourceControllerId, recipientPlayerId, p)) {
-                    multiplier[0] *= MaroGoneNutsSupport.apply(
-                            gameData, effect, multiplyingEffect.damageMultiplier());
+                    multipliers.add(staticMultiplier(gameData, p, instance,
+                            MaroGoneNutsSupport.apply(gameData, effect, multiplyingEffect.damageMultiplier())));
                 }
-            }
+            });
         });
-        return multiplier[0];
+        return multipliers;
     }
 
     /**
@@ -12919,16 +12939,34 @@ public class GameQueryService {
      * damage, so its doublings are not applied.
      */
     public int getExplicitSourceDamageMultiplier(GameData gameData, StackEntry entry, Permanent explicitSource) {
+        return product(getExplicitSourceDamageMultipliers(gameData, entry, explicitSource));
+    }
+
+    /** {@link #getExplicitSourceDamageMultiplier}, one entry per effect. */
+    public List<DamageMultiplier> getExplicitSourceDamageMultipliers(GameData gameData, StackEntry entry,
+                                                                     Permanent explicitSource) {
         UUID controllerId = findDamageSourceController(gameData, entry, explicitSource);
-        return getControllerDamageMultiplier(gameData, controllerId, entry, false, explicitSource)
-                * getPermanentDamageMultiplier(gameData, explicitSource.getId());
+        List<DamageMultiplier> multipliers = new ArrayList<>(
+                controllerDamageMultipliers(gameData, controllerId, entry, false, explicitSource));
+        multipliers.addAll(permanentDamageMultipliers(gameData, explicitSource.getId()));
+        return multipliers;
     }
 
     public int getDealingSourceDamageMultiplier(GameData gameData, StackEntry entry) {
+        return product(getDealingSourceDamageMultipliers(gameData, entry));
+    }
+
+    /**
+     * {@link #getDealingSourceDamageMultiplier}, one entry per effect: the controller's and the source's doublings,
+     * each a replacement effect of its own (CR 616.1).
+     */
+    public List<DamageMultiplier> getDealingSourceDamageMultipliers(GameData gameData, StackEntry entry) {
         Permanent source = dealingSourcePermanent(gameData, entry);
         UUID controllerId = dealingSourceController(gameData, entry, source);
-        return getControllerDamageMultiplier(gameData, controllerId, entry, false, source)
-                * getPermanentDamageMultiplier(gameData, entry != null ? entry.getSourcePermanentId() : null);
+        List<DamageMultiplier> multipliers = new ArrayList<>(
+                controllerDamageMultipliers(gameData, controllerId, entry, false, source));
+        multipliers.addAll(permanentDamageMultipliers(gameData, entry != null ? entry.getSourcePermanentId() : null));
+        return multipliers;
     }
 
     private static boolean isSpellEntry(StackEntryType entryType) {
@@ -12997,33 +13035,34 @@ public class GameQueryService {
      * @param isCombat whether this is combat damage
      */
     int getControllerDamageMultiplier(GameData gameData, UUID controllerId, StackEntry entry, boolean isCombat) {
-        return getControllerDamageMultiplier(gameData, controllerId, entry, isCombat, null);
+        return product(controllerDamageMultipliers(gameData, controllerId, entry, isCombat, null));
     }
 
-    private int getControllerDamageMultiplier(GameData gameData, UUID controllerId, StackEntry entry,
-                                              boolean isCombat, Permanent damageSource) {
-        if (controllerId == null) return 1;
+    private List<DamageMultiplier> controllerDamageMultipliers(GameData gameData, UUID controllerId,
+                                                               StackEntry entry, boolean isCombat,
+                                                               Permanent damageSource) {
+        if (controllerId == null) return List.of();
 
-        int[] multiplier = {1};
+        List<DamageMultiplier> multipliers = new ArrayList<>();
         gameData.forEachPermanent((playerId, p) -> {
             if (!playerId.equals(controllerId)) return;
             if (p.isFaceDown()
                     || !printsStaticEffect(gameData, p, ControllerDamageMultiplyingEffect.class,
                     ConditionalEffect.class, SourceDamageMultiplyingEffect.class)
                     || hasLostPrintedAbilities(gameData, p)) return;
-            for (CardEffect effect : p.getCard().getStaticEffects()) {
+            forEachStaticEffect(p, (effect, instance) -> {
                 if (effect instanceof ControllerDamageMultiplyingEffect multiplyingEffect) {
                     if (isCombat) {
                         if (multiplyingEffect.appliesToCombatDamage()) {
-                            multiplier[0] *= MaroGoneNutsSupport.apply(
-                                    gameData, effect, multiplyingEffect.damageMultiplier());
+                            multipliers.add(staticMultiplier(gameData, p, instance,
+                                    MaroGoneNutsSupport.apply(gameData, effect, multiplyingEffect.damageMultiplier())));
                         }
                     } else if (entry != null) {
                         if (multiplyingEffect.stackFilter() == null
                                 || predicateEvaluationService.matchesStackEntryPredicate(
                                 entry, multiplyingEffect.stackFilter(), null)) {
-                            multiplier[0] *= MaroGoneNutsSupport.apply(
-                                    gameData, multiplyingEffect, multiplyingEffect.damageMultiplier());
+                            multipliers.add(staticMultiplier(gameData, p, instance, MaroGoneNutsSupport.apply(
+                                    gameData, multiplyingEffect, multiplyingEffect.damageMultiplier())));
                         }
                     }
                 } else if (effect instanceof ConditionalEffect conditional
@@ -13032,38 +13071,40 @@ public class GameQueryService {
                         && conditional.wrapped() instanceof ControllerDamageMultiplyingEffect multiplyingEffect) {
                     if (isCombat) {
                         if (multiplyingEffect.appliesToCombatDamage()) {
-                            multiplier[0] *= MaroGoneNutsSupport.apply(
-                                    gameData, multiplyingEffect, multiplyingEffect.damageMultiplier());
+                            multipliers.add(staticMultiplier(gameData, p, instance, MaroGoneNutsSupport.apply(
+                                    gameData, multiplyingEffect, multiplyingEffect.damageMultiplier())));
                         }
                     } else if (entry != null
                             && (multiplyingEffect.stackFilter() == null
                             || predicateEvaluationService.matchesStackEntryPredicate(
                             entry, multiplyingEffect.stackFilter(), null))) {
-                        multiplier[0] *= MaroGoneNutsSupport.apply(
-                                gameData, effect, multiplyingEffect.damageMultiplier());
+                        multipliers.add(staticMultiplier(gameData, p, instance,
+                                MaroGoneNutsSupport.apply(gameData, effect, multiplyingEffect.damageMultiplier())));
                     }
                 } else if (!isCombat && entry != null && damageSource == null
                         && effect instanceof SourceDamageMultiplyingEffect multiplyingEffect
                         && multiplyingEffect.appliesToNonCombatDamage()
                         && matchesSpellDamageSource(gameData, entry, multiplyingEffect.spellSourceFilter(), p)) {
-                    multiplier[0] *= MaroGoneNutsSupport.apply(
-                            gameData, effect, multiplyingEffect.damageMultiplier());
+                    multipliers.add(staticMultiplier(gameData, p, instance,
+                            MaroGoneNutsSupport.apply(gameData, effect, multiplyingEffect.damageMultiplier())));
                 }
-            }
+            });
         });
         if (damageSource != null && (findPermanentController(gameData, damageSource.getId()) == null
                 || controllerId.equals(findPermanentController(gameData, damageSource.getId())))) {
-            multiplier[0] *= getSourceDamageMultiplier(gameData, controllerId, damageSource);
+            multipliers.addAll(sourceDamageMultipliers(gameData, controllerId, damageSource, false, null, null));
         }
-        for (CardEffect floated : gameData.floatingPlayerEffects(controllerId, DoubleControllerDamageEffect.class)) {
-            ControllerDamageMultiplyingEffect multiplyingEffect = (ControllerDamageMultiplyingEffect) floated;
+        for (FloatingContinuousEffect floating : gameData.floatingEffectsOnPlayer(controllerId,
+                DoubleControllerDamageEffect.class)) {
+            ControllerDamageMultiplyingEffect multiplyingEffect = (ControllerDamageMultiplyingEffect) floating.effect();
             if (isCombat ? multiplyingEffect.appliesToCombatDamage()
                     : entry != null && (multiplyingEffect.stackFilter() == null
                     || predicateEvaluationService.matchesStackEntryPredicate(entry, multiplyingEffect.stackFilter(), null))) {
-                multiplier[0] *= MaroGoneNutsSupport.apply(gameData, floated, multiplyingEffect.damageMultiplier());
+                multipliers.add(floatingMultiplier(floating,
+                        MaroGoneNutsSupport.apply(gameData, floating.effect(), multiplyingEffect.damageMultiplier())));
             }
         }
-        return multiplier[0];
+        return multipliers;
     }
 
     /**
@@ -13083,19 +13124,20 @@ public class GameQueryService {
     }
 
     public int getSourceDamageMultiplier(GameData gameData, UUID controllerId, Permanent damageSource) {
-        return getSourceDamageMultiplier(gameData, controllerId, damageSource, false, null, null);
+        return product(sourceDamageMultipliers(gameData, controllerId, damageSource, false, null, null));
     }
 
-    private int getSourceDamageMultiplier(GameData gameData, UUID controllerId, Permanent damageSource,
-                                          boolean combatDamage, Permanent combatDamageTarget,
-                                          UUID combatDamageRecipientPlayerId) {
+    private List<DamageMultiplier> sourceDamageMultipliers(GameData gameData, UUID controllerId,
+                                                           Permanent damageSource, boolean combatDamage,
+                                                           Permanent combatDamageTarget,
+                                                           UUID combatDamageRecipientPlayerId) {
         if (controllerId == null || damageSource == null
                 || (findPermanentController(gameData, damageSource.getId()) != null
                 && !controllerId.equals(findPermanentController(gameData, damageSource.getId())))) {
-            return 1;
+            return List.of();
         }
 
-        int[] multiplier = {1};
+        List<DamageMultiplier> multipliers = new ArrayList<>();
         gameData.forEachPermanent((playerId, effectSource) -> {
             if (!playerId.equals(controllerId)) {
                 boolean hasCrossControllerSourceMultiplier = effectSource.getCard().getStaticEffects()
@@ -13113,7 +13155,7 @@ public class GameQueryService {
                     .withSourceControllerId(playerId)
                     .withSourcePermanentSnapshot(effectSource)
                     .withSourcePermanentId(effectSource.getId());
-            for (CardEffect effect : effectSource.getCard().getStaticEffects()) {
+            forEachStaticEffect(effectSource, (effect, instance) -> {
                 if (effect instanceof SourceDamageMultiplyingEffect multiplyingEffect
                         && (!multiplyingEffect.requiresSourceControllerMatch() || playerId.equals(controllerId))
                         && predicateEvaluationService.matchesPermanentPredicate(
@@ -13121,12 +13163,12 @@ public class GameQueryService {
                         && (combatDamage
                         ? multiplyingEffect.appliesToCombatDamageTarget(combatDamageTarget)
                         : multiplyingEffect.appliesToNonCombatDamage())) {
-                    multiplier[0] *= MaroGoneNutsSupport.apply(
-                            gameData, multiplyingEffect, multiplyingEffect.damageMultiplier());
+                    multipliers.add(staticMultiplier(gameData, effectSource, instance, MaroGoneNutsSupport.apply(
+                            gameData, multiplyingEffect, multiplyingEffect.damageMultiplier())));
                 }
-            }
+            });
         });
-        return multiplier[0];
+        return multipliers;
     }
 
     /**
@@ -13134,15 +13176,17 @@ public class GameQueryService {
      * same permanent stack multiplicatively.
      */
     public int getPermanentDamageMultiplier(GameData gameData, UUID permanentId) {
-        if (permanentId == null) return 1;
+        return product(permanentDamageMultipliers(gameData, permanentId));
+    }
 
-        int doublings = gameData.floatingEffectsOnPermanent(permanentId,
-                DoubleDamageFromTargetPermanentThisTurnEffect.class).size();
-        int multiplier = 1;
-        for (int i = 0; i < doublings; i++) {
-            multiplier *= MaroGoneNutsSupport.doublingFactor(gameData) * 2;
+    private List<DamageMultiplier> permanentDamageMultipliers(GameData gameData, UUID permanentId) {
+        if (permanentId == null) return List.of();
+        List<DamageMultiplier> multipliers = new ArrayList<>();
+        for (FloatingContinuousEffect doubling : gameData.floatingEffectsOnPermanent(permanentId,
+                DoubleDamageFromTargetPermanentThisTurnEffect.class)) {
+            multipliers.add(floatingMultiplier(doubling, MaroGoneNutsSupport.doublingFactor(gameData) * 2));
         }
-        return multiplier;
+        return multipliers;
     }
 
     /**
@@ -13176,18 +13220,19 @@ public class GameQueryService {
      * {@link DoubleEquippedCreatureCombatDamageEffect} on attached equipment.
      * Each such equipment doubles the multiplier.
      */
-    private int getEquippedCreatureCombatDamageMultiplier(GameData gameData, Permanent creature) {
-        int[] multiplier = {1};
+    private List<DamageMultiplier> equippedCreatureCombatDamageMultipliers(GameData gameData, Permanent creature) {
+        List<DamageMultiplier> multipliers = new ArrayList<>();
         gameData.forEachPermanent((playerId, p) -> {
             if (p.isAttached() && p.getAttachedTo() != null && p.getAttachedTo().equals(creature.getId())) {
-                for (CardEffect effect : p.getCard().getStaticEffects()) {
+                forEachStaticEffect(p, (effect, instance) -> {
                     if (effect instanceof DoubleEquippedCreatureCombatDamageEffect) {
-                        multiplier[0] *= MaroGoneNutsSupport.apply(gameData, effect, 2);
+                        multipliers.add(staticMultiplier(gameData, p, instance,
+                                MaroGoneNutsSupport.apply(gameData, effect, 2)));
                     }
-                }
+                });
             }
         });
-        return multiplier[0];
+        return multipliers;
     }
 
     /** The "deals that much damage plus N" bonuses for combat damage {@code source} deals, whoever is dealt it. */
@@ -13215,13 +13260,22 @@ public class GameQueryService {
      */
     public int getCombatSourceDamageMultiplier(GameData gameData, Permanent source, Permanent recipientPermanent,
                                                UUID recipientPlayerId) {
+        return product(getCombatSourceDamageMultipliers(gameData, source, recipientPermanent, recipientPlayerId));
+    }
+
+    /** {@link #getCombatSourceDamageMultiplier}, one entry per effect. */
+    public List<DamageMultiplier> getCombatSourceDamageMultipliers(GameData gameData, Permanent source,
+                                                                   Permanent recipientPermanent,
+                                                                   UUID recipientPlayerId) {
         UUID controllerId = findPermanentController(gameData, source.getId());
-        return getControllerDamageMultiplier(gameData, controllerId, null, true)
-                * getSourceDamageMultiplier(gameData, controllerId, source, true, recipientPermanent,
-                        recipientPlayerId)
-                * getDelayedSourceDamageMultiplier(gameData, source, recipientPlayerId)
-                * getPermanentDamageMultiplier(gameData, source.getId())
-                * getEquippedCreatureCombatDamageMultiplier(gameData, source);
+        List<DamageMultiplier> multipliers = new ArrayList<>(
+                controllerDamageMultipliers(gameData, controllerId, null, true, null));
+        multipliers.addAll(sourceDamageMultipliers(gameData, controllerId, source, true, recipientPermanent,
+                recipientPlayerId));
+        multipliers.addAll(delayedSourceDamageMultipliers(gameData, source, recipientPlayerId));
+        multipliers.addAll(permanentDamageMultipliers(gameData, source.getId()));
+        multipliers.addAll(equippedCreatureCombatDamageMultipliers(gameData, source));
+        return multipliers;
     }
 
     /**
@@ -13229,29 +13283,35 @@ public class GameQueryService {
      * Equipment's doublings and "combat damage dealt to creatures is doubled this turn".
      */
     public int getCombatDamageToCreatureMultiplier(GameData gameData, Permanent target) {
-        int multiplier = getEquippedCreatureCombatDamageMultiplier(gameData, target);
+        return product(getCombatDamageToCreatureMultipliers(gameData, target));
+    }
+
+    /** {@link #getCombatDamageToCreatureMultiplier}, one entry per effect. */
+    public List<DamageMultiplier> getCombatDamageToCreatureMultipliers(GameData gameData, Permanent target) {
+        List<DamageMultiplier> multipliers = new ArrayList<>(equippedCreatureCombatDamageMultipliers(gameData, target));
         for (FloatingContinuousEffect doubling : gameData.floatingEffectsOnPlayer(null,
                 DoubleCombatDamageToCreaturesThisTurnEffect.class)) {
             // A doubling effect, so Maro's Gone Nuts upgrades it like every other doubler.
-            multiplier *= MaroGoneNutsSupport.apply(gameData, doubling.effect(), 2);
+            multipliers.add(floatingMultiplier(doubling, MaroGoneNutsSupport.apply(gameData, doubling.effect(), 2)));
         }
-        return multiplier;
+        return multipliers;
     }
 
-    private int getDelayedSourceDamageMultiplier(GameData gameData, Permanent source,
-                                                 UUID recipientPlayerId) {
+    private List<DamageMultiplier> delayedSourceDamageMultipliers(GameData gameData, Permanent source,
+                                                                  UUID recipientPlayerId) {
         if (source == null || recipientPlayerId == null) {
-            return 1;
+            return List.of();
         }
-        int multiplier = 1;
+        List<DamageMultiplier> multipliers = new ArrayList<>();
         for (FloatingContinuousEffect delayed : gameData.floatingEffectsOnPermanent(source.getId(),
                 MultiplyCombatDamageFromTargetCreatureToOpponentsUntilNextTurnEffect.class)) {
             if (!recipientPlayerId.equals(delayed.controllerId())) {
-                multiplier *= ((MultiplyCombatDamageFromTargetCreatureToOpponentsUntilNextTurnEffect) delayed.effect())
-                        .multiplier();
+                multipliers.add(floatingMultiplier(delayed,
+                        ((MultiplyCombatDamageFromTargetCreatureToOpponentsUntilNextTurnEffect) delayed.effect())
+                                .multiplier()));
             }
         }
-        return multiplier;
+        return multipliers;
     }
 
     /**
@@ -13328,6 +13388,31 @@ public class GameQueryService {
      * {@code sourceName} names where it comes from and {@code amount} is N.
      */
     public record DamageBonus(String instance, String sourceName, int amount) {}
+
+    /**
+     * One damage-multiplying effect: {@code instance} identifies it (a static ability of a permanent or a floating
+     * effect), {@code sourceName} names where it comes from and {@code factor} is what it multiplies the damage by.
+     * Each is a replacement effect of its own, ordered by the affected player (CR 616.1).
+     */
+    public record DamageMultiplier(String instance, String sourceName, int factor) {}
+
+    /** What {@code multipliers} multiply damage by together. */
+    public static int product(List<DamageMultiplier> multipliers) {
+        int product = 1;
+        for (DamageMultiplier multiplier : multipliers) {
+            product = SaturatingMath.multiply(product, multiplier.factor());
+        }
+        return product;
+    }
+
+    private static DamageMultiplier staticMultiplier(GameData gameData, Permanent permanent, String instance,
+                                                     int factor) {
+        return new DamageMultiplier(instance, FaceDownVisibility.publicName(gameData, permanent), factor);
+    }
+
+    private static DamageMultiplier floatingMultiplier(FloatingContinuousEffect floating, int factor) {
+        return new DamageMultiplier(String.valueOf(floating.id()), floating.sourceCardName(), factor);
+    }
 
     private static int totalBonus(List<DamageBonus> bonuses) {
         return bonuses.stream().mapToInt(DamageBonus::amount).sum();

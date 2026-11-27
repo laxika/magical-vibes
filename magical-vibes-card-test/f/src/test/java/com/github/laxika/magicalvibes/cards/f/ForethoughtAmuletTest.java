@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.d.DurkwoodBoars;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pyrotechnics;
+import com.github.laxika.magicalvibes.cards.r.ResoundingThunder;
 import com.github.laxika.magicalvibes.cards.s.StormSeeker;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,7 +18,8 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ForethoughtAmulet.class, DurkwoodBoars.class, Pyrotechnics.class, StormSeeker.class})
+@CardUsed({ForethoughtAmulet.class, DurkwoodBoars.class, Pyrotechnics.class, StormSeeker.class,
+        ResoundingThunder.class, GrizzlyBears.class})
 class ForethoughtAmuletTest extends BaseCardTest {
 
     @Test
@@ -178,4 +181,22 @@ class ForethoughtAmuletTest extends BaseCardTest {
         harness.assertLife(player2, 16);
     }
 
+    @Test
+    @DisplayName("Replaces damage from an ability whose source is an instant card")
+    void replacesDamageFromAnInstantCardsAbility() {
+        harness.addToBattlefield(player2, new ForethoughtAmulet());
+        harness.setHand(player1, List.of(new ResoundingThunder()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+    }
 }

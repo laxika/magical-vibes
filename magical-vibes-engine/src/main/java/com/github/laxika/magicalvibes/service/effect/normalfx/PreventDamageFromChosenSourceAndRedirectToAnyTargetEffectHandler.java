@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component;
 public class PreventDamageFromChosenSourceAndRedirectToAnyTargetEffectHandler implements NormalEffectHandlerBean {
 
     private final PreventionSupport preventionSupport;
+    private final DamageSourceChoiceSupport damageSourceChoiceSupport;
     private final PlayerInputService playerInputService;
     private final AmountEvaluationService amountEvaluationService;
 
@@ -36,7 +37,7 @@ public class PreventDamageFromChosenSourceAndRedirectToAnyTargetEffectHandler im
         int amount = amountEvaluationService.evaluate(gameData, e.amount(), AmountContext.forStackEntry(entry, null));
         if (amount <= 0) return;
 
-        List<UUID> validIds = preventionSupport.collectAllDamageSourceIds(gameData);
+        List<UUID> validIds = damageSourceChoiceSupport.choosable(gameData, entry);
 
         if (validIds.isEmpty()) {
             preventionSupport.broadcastNoDamageSourcesForChoice(gameData);

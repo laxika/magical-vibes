@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.d.DeadlyRecluse;
 import com.github.laxika.magicalvibes.cards.f.FurnaceOfRath;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
+import com.github.laxika.magicalvibes.cards.r.RaiseDead;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -28,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({HarmsWay.class, RuneclawBear.class, StampedingRhino.class, CanyonMinotaur.class,
         ChildOfNight.class, DeadlyRecluse.class, LightningBolt.class, ProdigalPyromancer.class,
-        LeylineOfPunishment.class, FurnaceOfRath.class})
+        LeylineOfPunishment.class, FurnaceOfRath.class, RaiseDead.class})
 class HarmsWayTest extends BaseCardTest {
 
     @Test
@@ -493,5 +494,26 @@ class HarmsWayTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertLife(player1, 19);
         harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("A card in a graveyard that a spell on the stack targets can be chosen as the source")
+    void graveyardCardReferredToByAStackObjectCanBeChosen() {
+        RuneclawBear deadBear = new RuneclawBear();
+        harness.setGraveyard(player2, List.of(deadBear));
+        harness.setHand(player2, List.of(new RaiseDead()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.forceActivePlayer(player2);
+        harness.castSorcery(player2, 0, deadBear.getId());
+
+        harness.setHand(player1, List.of(new HarmsWay()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).contains(deadBear.getId());
     }
 }

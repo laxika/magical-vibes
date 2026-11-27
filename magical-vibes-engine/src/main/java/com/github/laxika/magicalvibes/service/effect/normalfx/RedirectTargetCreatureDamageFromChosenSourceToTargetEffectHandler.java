@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 public class RedirectTargetCreatureDamageFromChosenSourceToTargetEffectHandler implements NormalEffectHandlerBean {
 
     private final PreventionSupport preventionSupport;
+    private final DamageSourceChoiceSupport damageSourceChoiceSupport;
     private final SubjectResolutionService subjectResolutionService;
     private final PlayerInputService playerInputService;
 
@@ -34,7 +35,7 @@ public class RedirectTargetCreatureDamageFromChosenSourceToTargetEffectHandler i
         List<UUID> redirectIds = subjectResolutionService.permanentIds(gameData, entry, effect, redirect.redirectTo());
         if (protectedIds.isEmpty() || redirectIds.isEmpty()) return;
 
-        List<UUID> validIds = preventionSupport.collectAllDamageSourceIds(gameData);
+        List<UUID> validIds = damageSourceChoiceSupport.choosable(gameData, entry);
         if (validIds.isEmpty()) {
             preventionSupport.broadcastNoDamageSourcesForChoice(gameData);
             return;

@@ -48,7 +48,7 @@ public class ChooseDamageSourceEffectHandler implements NormalEffectHandlerBean 
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var choose = (ChooseDamageSourceEffect) effect;
         entry.recordStep(StepKind.CHOOSE, StepOutcome.NONE);
-        List<UUID> candidates = damageSourceChoiceSupport.candidates(gameData, null, entry);
+        List<UUID> candidates = damageSourceChoiceSupport.choosable(gameData, entry);
         if (choose.controlledBy() != null) {
             Set<UUID> controllers = new HashSet<>(
                     subjectResolutionService.players(gameData, entry, effect, choose.controlledBy()));
@@ -56,12 +56,6 @@ public class ChooseDamageSourceEffectHandler implements NormalEffectHandlerBean 
                     .filter(id -> controllers.contains(damageSourceChoiceSupport.controllerOf(gameData, id, entry)))
                     .toList();
         }
-        candidates = candidates.stream()
-                .filter(id -> {
-                    Permanent permanent = gameQueryService.findPermanentById(gameData, id);
-                    return permanent == null || !gameQueryService.cantBeChosen(gameData, permanent);
-                })
-                .toList();
         if (candidates.isEmpty()) {
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), ": there is no source to choose."));
             return;

@@ -1,14 +1,11 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageRedirectShield;
-import com.github.laxika.magicalvibes.model.CreatureDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignNoCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -60,42 +57,6 @@ public class PreventionSupport {
     public List<UUID> collectAllBattlefieldPermanentIds(GameData gameData) {
         List<UUID> validIds = new ArrayList<>();
         gameData.forEachPermanent((playerId, perm) -> validIds.add(perm.getId()));
-        return validIds;
-    }
-
-    public List<UUID> collectAllDamageSourceIds(GameData gameData) {
-        List<UUID> validIds = collectAllBattlefieldPermanentIds(gameData);
-        gameData.stack.stream()
-                .filter(entry -> entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
-                        && entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY)
-                .map(entry -> entry.getCard().getId())
-                .forEach(validIds::add);
-        // An ability whose source is a card outside the battlefield (a "when you discard this card"
-        // trigger) is itself a source of damage: its card is the source.
-        gameData.stack.stream()
-                .filter(entry -> (entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
-                        || entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY)
-                        && entry.getSourcePermanentId() == null
-                        && entry.getCard() != null)
-                .map(entry -> entry.getCard().getId())
-                .filter(id -> !validIds.contains(id))
-                .forEach(validIds::add);
-        gameData.stack.stream()
-                .filter(entry -> entry.getSourcePermanentId() != null
-                        && entry.getSourcePermanentSnapshot() != null)
-                .map(entry -> entry.getSourcePermanentId())
-                .filter(id -> !validIds.contains(id))
-                .forEach(validIds::add);
-        // CR 609.7a: an object referred to by a waiting replacement or prevention effect can be chosen as a
-        // source even after it has left the battlefield.
-        gameData.shields(CreatureDamageRedirectShield.class).stream()
-                .map(shield -> shield.damageSourceId())
-                .filter(id -> !validIds.contains(id))
-                .forEach(validIds::add);
-        gameData.shields(PlayerSourceNextDamageRedirectShield.class).stream()
-                .map(shield -> shield.sourcePermanentId())
-                .filter(id -> !validIds.contains(id))
-                .forEach(validIds::add);
         return validIds;
     }
 

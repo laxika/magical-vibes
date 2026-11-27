@@ -14,12 +14,11 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.ToIntFunction;
 
 /**
  * Replacement effects that change how much damage a player is dealt: global multipliers such as
- * Furnace of Rath, Curse of Bloodletting and other recipient multipliers, the "that much damage
- * plus N" bonuses (Torbran, one option per effect), Benevolent Unicorn's reduction, and the halving, capping and
+ * Furnace of Rath, the source's, its controller's and the recipient's multipliers (Fiery Emancipation, Gisela,
+ * Curse of Bloodletting), the "that much damage plus N" bonuses (Torbran), each one option per effect, Benevolent Unicorn's reduction, and the halving, capping and
  * Ojer Axonil replacements. They only rewrite the amount, so they are pure; when they meet each
  * other or a prevention shield, the order is the affected player's (CR 616.1).
  */
@@ -34,18 +33,14 @@ class PlayerDamageModifiers extends PlayerDamageCandidateSource {
         super(gameQueryService, gameLogService);
         List<Rule<PlayerDamageContext>> all = new ArrayList<>();
         all.add(globalMultiplierRule(gameQueryService));
-        all.add(multiplier("SourceMultiplier", "damage from the source", this::sourceMultiplier));
+        all.add(multiplierRule("SourceMultiplier", this::sourceMultipliers));
         all.add(bonusRule("SourceBonus", ctx -> ctx.combat()
                 ? gameQueryService.getCombatSourceDamageBonuses(ctx.gameData(), combatSource(ctx))
                 : gameQueryService.getDealingSourceDamageBonuses(ctx.gameData(), ctx.entry())));
-        all.add(multiplier("EnchantedPlayerMultiplier", "damage to enchanted player",
-                ctx -> gameQueryService.getEnchantedPlayerDamageMultiplier(ctx.gameData(), ctx.playerId())).whole());
-        all.add(multiplier("RecipientMultiplier", "damage to recipient",
-                ctx -> ctx.combat()
-                        ? gameQueryService.getDamageToRecipientMultiplier(
-                        ctx.gameData(), ctx.playerId(), ctx.sourceControllerId(), true)
-                        : gameQueryService.getDamageToRecipientMultiplier(
-                        ctx.gameData(), ctx.playerId(), ctx.sourceControllerId())));
+        all.add(DamageCandidateSource.<PlayerDamageContext>multiplierRule("EnchantedPlayerMultiplier",
+                ctx -> gameQueryService.getEnchantedPlayerDamageMultipliers(ctx.gameData(), ctx.playerId())).whole());
+        all.add(multiplierRule("RecipientMultiplier", ctx -> gameQueryService.getDamageToRecipientMultipliers(
+                ctx.gameData(), ctx.playerId(), ctx.sourceControllerId(), null, ctx.combat())));
         all.add(bonusRule("AdditionalDamageBonus", ctx -> gameQueryService.getAdditionalDamageBonuses(ctx.gameData(),
                 gameQueryService.additionalDamageEvent(ctx.entry(), ctx.sourcePermanent(), ctx.source(),
                         ctx.sourceControllerId(), true, ctx.combat(), ctx.playerId(), null))));
@@ -72,25 +67,17 @@ class PlayerDamageModifiers extends PlayerDamageCandidateSource {
         return rules;
     }
 
-    /** The controller's and the source's doublings of the damage. */
-    private int sourceMultiplier(PlayerDamageContext ctx) {
+    /** The controller's and the source's doublings of the damage, one per effect. */
+    private List<GameQueryService.DamageMultiplier> sourceMultipliers(PlayerDamageContext ctx) {
         return ctx.combat()
-                ? gameQueryService.getCombatSourceDamageMultiplier(ctx.gameData(), combatSource(ctx), null,
+                ? gameQueryService.getCombatSourceDamageMultipliers(ctx.gameData(), combatSource(ctx), null,
                         ctx.playerId())
-                : gameQueryService.getDealingSourceDamageMultiplier(ctx.gameData(), ctx.entry());
+                : gameQueryService.getDealingSourceDamageMultipliers(ctx.gameData(), ctx.entry());
     }
 
     /** The creature dealing combat damage, as it last existed on the battlefield. */
     private static Permanent combatSource(PlayerDamageContext ctx) {
         return ctx.sourcePermanent() != null ? ctx.sourcePermanent() : ctx.entry().getSourcePermanentSnapshot();
-    }
-
-    private Rule<PlayerDamageContext> multiplier(String family, String description, ToIntFunction<PlayerDamageContext> factor) {
-        return pure(family, REPLACEMENT,
-                ctx -> factor.applyAsInt(ctx) > 1,
-                ctx -> "Multiply " + description + " by " + factor.applyAsInt(ctx),
-                ctx -> ctx.event().withAmount(ctx.amount() * factor.applyAsInt(ctx)),
-                PlayerDamageCandidateSource::noLog);
     }
 
     /**

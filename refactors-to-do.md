@@ -424,6 +424,7 @@ Run the test classes of every card that used a deleted class (scripts/effect-inv
 - Confiscation Coup and Behemoth of Vault 0 keep their pay-energy records: Coup is now `UnlessPaysEffect.youMayPay(new PayEnergyCost(new TargetManaValue()), new GainControlOfTargetEffect(Duration.PERMANENT))` (a fold run; mind the AI's control-stealing view); Behemoth's reflexive "that permanent" is a rules defect, entry 18.
 - Transcantation (`TargetSpellBecomesCopyOfCardEffectHandler`) queues its own new-targets offer; fold it onto `MayEffect(ChooseNewTargetsForTargetSpellEffect…)` (CR 115.7d). Sure.
 - Demonic Hordes' `OpponentChoosesPermanentToSacrificeEffect` and Infernal Denizen's `OpponentMayGainControlOfCreatureYouControlEffect` were `blocked-other` on the old forced-cost fallback list; both are now ordinary steps of their resolution (U4a), so their folds (`ChoosePlayerEffect` + `ChoosePermanentsEffect.chosenBy(playersThisWay(CHOOSE))` + the verb) are open for a fold run. Sure of the code.
+- Eye for an Eye, Harm's Way, Jade Monolith, Shaman en-Kor, General's Regalia, Nova Pentacle: their chosen-source handlers now ask `DamageSourceChoiceSupport.choosable` (rules-fixes DM-3); fold them onto `ChooseDamageSourceEffect` plus a step that reads the choice.
 
 #### Blocked records by cause (693)
 
@@ -1324,7 +1325,7 @@ Don't commit.
 - Wake to Slaughter's opponent choice (`opponentChoosesOneForHand`, its own `wakeToSlaughterChosenCardId` state) is unchecked for multiplayer. Fairly sure from the code.
 - Vislor Turlough with 3+ players: whether the goad step resolves after the opponent prompt, with the new controller. Unverified.
 
-#### Simultaneity and APNAP (CR 101.4, 603.10a, 608.2e) (16)
+#### Simultaneity and APNAP (CR 101.4, 603.10a, 608.2e) (15)
 
 - Disorienting Choice exiles, Eumidian Wastewaker sacrifices or discards at each player's answer. Sure.
 - Ezuri's Predation pairs by battlefield order and fights one at a time (rulings: you choose the pairs, fights are simultaneous). Sure.
@@ -1336,7 +1337,6 @@ Don't commit.
 - Tribute's "paid" check is `placed >= N`, so a halved tribute (an opponent's Halving Season) reads as unpaid (CR 702.104b: "as specified").
 - `TokenKindReplacements` and `JinnieFayTokenReplacements` read `event.controllerId()`'s battlefield, not the tokens' creator after Crafty Cutpurse; the count replacements resolve with Gather Specimens for creature tokens, though Chatterfang's ruling applies entering-control changes after (CR 616.1). Fairly sure.
 - The two remaining fixed-order `getTokenMultiplier` callers (`CreateTokensAttachedToControlledCreaturesEffectHandler`, `ReturnTargetCreatureToHandAndCreateTokenCopyEffectHandler`) skip the ordered token event.
-- The recipient damage multipliers (Gisela, Castigator, floated) are one pool option and the controller and source multipliers another, so a "plus N" can't be ordered between two of them (CR 616.1). Sure of the code.
 - Precursor Golem, Ink-Treader Nephilim: the copies' controller doesn't choose the order they go on the stack (rulings). Sure.
 - `PutExiledCardsIntoOwnersGraveyardEffect` (Covenant of Minds, Dakra Mystic) gives no CR 404.3 order prompt. Sure, low.
 - Eumidian Wastewaker counts a sacrificed land token, or a permanent that is a land only on the battlefield (Ashaya), as a land card put into a graveyard (ruling). Sure.
@@ -1359,7 +1359,7 @@ Don't commit.
 - Journey for the Elixir: taking both cards from the graveyard doesn't shuffle, though its text says "search your library and graveyard … then shuffle". Sure of the code.
 - `CoinFlipService`'s Pokey d20 (the roll that replaces a flip) ignores dice advantage (Pixie Guide). Unverified.
 
-#### Wrong targets and choices (17)
+#### Wrong targets and choices (16)
 
 - `ChoosePermanentsEffect` keeps a lone chosen permanent as the source's chosen permanent, so Deepfathom Echo (if folded onto it) or any copier choosing its model would leave a "the chosen creature" card's copy with a choice it never made (Dauntless Bodyguard) (CR 607.2d). Sure of the code.
 - `CardSubject.TriggeringCards` names a card only in the stay its event put it in, so `bindCardSubjects` reads no type for a discarded card that was exiled instead or has left the graveyard, where the text reads last-known characteristics (CR 608.2h; Diviner of Fates' fold). Sure of the code.
@@ -1372,14 +1372,13 @@ Don't commit.
 - Kefnet, Reversal of Fortune, Spellweaver Volute: a copy of a card is created and cast in exile, not in the card's own zone (CR 707.12; Kefnet and Reversal rulings), so a "cast from hand / graveyard" trigger misses it. Sure.
 - The Clone Saga (SPM 28) chapter II offers new targets for the copy although the text doesn't say it may (CR 707.10, 707.10c). Fairly sure.
 - Nowhere to Run: "spells and abilities" are any player's, but it is modelled as its controller's only (multiplayer). Sure.
-- EyeForAnEye, Harm's Way, Jade Monolith, Shaman en-Kor, General's Regalia, Nova Pentacle collect damage sources with their own lists, missing part of CR 609.7a's set (sources of waiting shields, cards stack objects refer to); move them onto `ChooseDamageSourceEffect`. Sure of the code.
 - The copy-service turn-face-up path used by state-based actions doesn't check "can't be turned face up" (CR 101.2). Unverified.
 - `ExileGraveyardCardsEffect.defendingPlayerOnly` (Graven Abomination): the flag is never read, so any opponent's graveyard can be targeted (multiplayer). Sure of the code.
 - Ulamog's Nullifier (`TwoOpponentOwnedExiledCardsToGraveyardChoiceInteractionHandler`): face-down picks are taken by id, not at random from their pile (2015-08-25 ruling). Fairly sure.
 - Descendants' Fury offers a choice among creatures that can't be sacrificed after the "may" (CR 608.2d). Sure, low.
 - Rasaad, Radiant Monk: the specialize trigger's target spec is any exiled creature card, not one exiled with this creature. Sure of the code.
 
-#### Payments and costs (15)
+#### Payments and costs (14)
 
 - Moxite Refinery's `CounterType.ANY` cost removes kinds in enum order; the player should choose (the kind prompt serves one counter only).
 - Feather, Radiant Arbiter's {2} per creature is paid only from the pool: no mana abilities (CR 605.3a). Fairly sure.
@@ -1391,7 +1390,6 @@ Don't commit.
 - `AbilityActivationService.getActivatedAbilityAdditionalGenericCost`: with a {0} equip or power-up cost, the tax is returned without cost reductions applied (CR 601.2f). Fairly sure of the code.
 - "Mana of any type" exile and graveyard permissions (`withAnyManaType`, `spendingManaOfAnyType`: Mnemonic Betrayal, Gonti, Dire Fleet Daredevil and others) are paid as any colour when the cost has {C} (`SpellCastingService` `anyColorForColoredSymbols`), so coloured mana can't pay {C} (CR 106.1b, 609.4b). Sure.
 - Flotsam // Jetsam (Jetsam) refuses Bone Shards, Minion Missile and Souls of the Lost instead of letting their sacrifice-or-discard cost be paid (CR 118.9d); before fold run 49b it cast them with the cost skipped. Sure of the code.
-- Gargantuan Gorilla, Bronze Bombshell, Elder Spawn: damage from a source sacrificed earlier in the same resolution loses Aura-granted keywords (`sourceHasKeyword` reads the trigger-time snapshot; CR 608.2h). Sure of the code.
 - Collective Effort and other tap-escalate spells cast from a graveyard through a flashback grant pay no escalate taps (CR 702.120a). Fairly sure.
 - Chisei, Heart of Oceans' `ForcedCostOrElseEffect` counter removal may take the first kind of counter instead of letting the payer choose. Unverified.
 - Development (Research // Development): two or more opponents letting its controller draw in one round draw one card, not one per accepting opponent (CR 118.12a: each paid cost is that player's; its 2006 rulings don't settle it). Sure of the code.
@@ -1430,7 +1428,7 @@ Don't commit.
 - `GameViewProjectionFactory.collectFaceDownReveals` decides looks from printed effects while `mayLookAtExiledCard` holds granted looks, so one question is answered twice; `exilesHandsFaceDown` doesn't look inside `MayEffect`. Sure of the code.
 - `ClashSupport`'s log says "opponent reveals" without naming the player. Sure, low.
 
-#### Other (82)
+#### Other (80)
 
 - Casting checks left from runs 40 and 41: Scrycast (Biting Remark; `ScryInteractionHandler`, `ScryAiStrategy`, code: the scry answer casts it with no `canCastDuringResolution` check, and the AI strategies have no `CastingPermissionService`); the may-cast offers don't ask the shared check; an ability leaves the stack before it resolves, where CR 608.2n removes it last. Unverified. FC-2: Knowledge Pool's timing, the split exile cast and suspend's type restriction fixed.
 - The dying-creature return heads other than Lim-Dûl's (`ReturnDyingCreatureToBattlefieldEffect`, `ReturnDyingCreatureToOwnerBattlefieldEffect`, `ReturnDamagedCreaturesThatDiedUnderControlEffect`) put an Aura card that died animated onto the battlefield with no host choice (CR 303.4f, 303.4g); Lim-Dûl's head goes through the entry batch since rules-fixes EB-1. Unverified.
@@ -1438,7 +1436,6 @@ Don't commit.
 - Limitless Rekindling's pool is seven YECL printings; its text names a random instant or sorcery card of the whole expansion. Fairly sure.
 - Cards with no printing identity: the `Supplier`-built conjures and spellbook drafts, the hand paths not marking a card conjured (runs 29 to 31); Protean War Engine (P08); Darigaaz, Skywriter Djinn, Oracle of the Alpha built by hand, Juggernaut Peddler, Calim, Mephidross Slime by constructor or `Supplier`, Goblin Influx Array's Reckless Ringleader a blank `new Card()` (P16). Sure.
 - `ConjureCardToBattlefieldEffectHandler` gives a conjured land no land-enter handling. Unverified for a land with an enter ability (Mishra's Foundry and Forest have none).
-- Pestilent Spirit's deathtouch reaches abilities of instant and sorcery cards; Forethought Amulet replaces only spells, not their sources' abilities (a "source is a spell" fact). Unverified.
 - `isPreventedFromDealingDamage` pre-checks left before the damage pools skip the damage event (Selfless Squire misses them) and the CR 616.1 order: Bomb Squad's `RemoveAllCountersThenDestroyReferencedPermanentAndDamageControllerEffectHandler` (asked before the destruction; the creature deals the damage as it last existed, an owner question in entry 17) and the combat damage step (`CombatDamageService`'s three `isPreventedFromDealingDamage(…, true)` checks) (CR 616.1). Sure of the code.
 - `TriggeringPermanentPower` / `Toughness` prefer the trigger-time value over a departed permanent's snapshot (CR 608.2h). Unverified.
 - The set exchanges (Reins of Power, Twist Allegiance) and Perplexing Chimera don't check `cantBeControlledByOtherPlayers`; CR 701.12a's set reading unsettled. Unverified.
@@ -1448,7 +1445,6 @@ Don't commit.
 - Mug's graveyard and exile permissions don't share "a spell". Sure, rare.
 - Make Your Own Luck puts all three cards into hand, then plots the chosen one (needs a plot library destination).
 - Frontend: the client ignores `MULTI_PERMANENT_PICK`'s minimum (code) and shows graveyards for an index pick over a pool; `GameSimulator` answers a multi-pick with the first maximum.
-- `PlayerDamageCandidateSource.context` ignores `DamageEvent.explicitSource`, so a fighting or biting permanent's damage to a player is judged as the stack entry's source. Fairly sure.
 - No seeded game random source: about 180 `ThreadLocalRandom` sites, random-target picks included, so tests can't fix a random pick. Sure.
 - Shaman's Trance, Tomik: "from their graveyards" is judged by zone, not by owner, so it also stops a cast from another player's graveyard. Sure of the code, low.
 - Reality Twist: a Volcanic Island offers the unlisted Island type's U; `RealityTwistTest` asserts it and the 2013 ruling is ambiguous for unlisted types. Unsure.

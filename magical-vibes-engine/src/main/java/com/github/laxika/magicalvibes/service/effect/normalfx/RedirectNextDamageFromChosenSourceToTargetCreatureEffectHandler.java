@@ -19,6 +19,7 @@ import java.util.UUID;
 public class RedirectNextDamageFromChosenSourceToTargetCreatureEffectHandler implements NormalEffectHandlerBean {
 
     private final PreventionSupport preventionSupport;
+    private final DamageSourceChoiceSupport damageSourceChoiceSupport;
     private final PlayerInputService playerInputService;
     private final SubjectResolutionService subjectResolutionService;
 
@@ -35,7 +36,7 @@ public class RedirectNextDamageFromChosenSourceToTargetCreatureEffectHandler imp
         if (controllerId == null || redirectIds.isEmpty()) return;
         UUID redirectTargetId = redirectIds.getFirst();
 
-        List<UUID> validIds = preventionSupport.collectAllDamageSourceIds(gameData);
+        List<UUID> validIds = damageSourceChoiceSupport.choosable(gameData, entry);
         if (validIds.isEmpty()) {
             preventionSupport.broadcastNoDamageSourcesForChoice(gameData);
             return;

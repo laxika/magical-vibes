@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.replacement.damage;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.SaturatingMath;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -171,6 +172,32 @@ abstract class DamageCandidateSource<C extends DamageCandidateSource.DamageConte
                 (ctx, instance) -> ctx.event().withAmount(ctx.amount() + bonus(bonuses.apply(ctx), instance).amount()),
                 (ctx, instance) -> new ApplyResult.Applied<>(
                         ctx.event().withAmount(ctx.amount() + bonus(bonuses.apply(ctx), instance).amount())));
+    }
+
+    /**
+     * A family of damage-multiplying effects with one option per effect instance (Gisela and Goldnight Castigator, two
+     * Fiery Emancipations), so the affected player can apply a "plus N" between two of them (CR 616.1).
+     */
+    protected static <C extends DamageContext> Rule<C> multiplierRule(
+            String family, Function<C, List<GameQueryService.DamageMultiplier>> multipliers) {
+        return new Rule<C>(family, ReplacementOption.Kind.REPLACEMENT, true,
+                ctx -> multipliers.apply(ctx).stream().filter(multiplier -> multiplier.factor() > 1)
+                        .map(GameQueryService.DamageMultiplier::instance).toList(),
+                (ctx, instance) -> {
+                    GameQueryService.DamageMultiplier multiplier = multiplier(multipliers.apply(ctx), instance);
+                    return (multiplier.sourceName() == null ? "" : multiplier.sourceName() + ": ")
+                            + "multiply damage by " + multiplier.factor();
+                },
+                (ctx, instance) -> ctx.event().withAmount(
+                        SaturatingMath.multiply(ctx.amount(), multiplier(multipliers.apply(ctx), instance).factor())),
+                (ctx, instance) -> new ApplyResult.Applied<>(ctx.event().withAmount(
+                        SaturatingMath.multiply(ctx.amount(), multiplier(multipliers.apply(ctx), instance).factor()))));
+    }
+
+    private static GameQueryService.DamageMultiplier multiplier(List<GameQueryService.DamageMultiplier> multipliers,
+                                                                String instance) {
+        return multipliers.stream().filter(multiplier -> multiplier.instance().equals(instance)).findFirst()
+                .orElse(new GameQueryService.DamageMultiplier(instance, null, 1));
     }
 
     private static GameQueryService.DamageBonus bonus(List<GameQueryService.DamageBonus> bonuses, String instance) {

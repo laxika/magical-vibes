@@ -2869,6 +2869,32 @@ class GameQueryServiceTest {
         }
 
         @Test
+        @DisplayName("lists two Giselas as two multipliers, each its own replacement effect")
+        void sameControllerGiselasAreListedApart() {
+            addGisela(player1Id);
+            addGisela(player1Id);
+
+            List<GameQueryService.DamageMultiplier> multipliers =
+                    gqs.getDamageToRecipientMultipliers(gd, player2Id, null, null, false);
+
+            assertThat(multipliers).hasSize(2).allSatisfy(multiplier -> assertThat(multiplier.factor()).isEqualTo(2));
+            assertThat(multipliers.stream().map(GameQueryService.DamageMultiplier::instance).distinct()).hasSize(2);
+            assertThat(GameQueryService.product(multipliers)).isEqualTo(4);
+        }
+
+        @Test
+        @DisplayName("lists two delayed damage doublings apart")
+        void delayedDamageDoublingsAreListedApart() {
+            addDamageDoubling(player2Id, player1Id);
+            addDamageDoubling(player2Id, player1Id);
+
+            List<GameQueryService.DamageMultiplier> multipliers =
+                    gqs.getDamageToRecipientMultipliers(gd, player2Id, null, null, false);
+
+            assertThat(multipliers.stream().map(GameQueryService.DamageMultiplier::instance).distinct()).hasSize(2);
+        }
+
+        @Test
         @DisplayName("source-and-recipient multiplier requires both matching controllers")
         void sourceAndRecipientMultiplierRequiresBothMatchingControllers() {
             addPermanent(player1Id, createEnchantmentWithStaticEffect(
@@ -3129,6 +3155,22 @@ class GameQueryServiceTest {
                     new DoubleControllerDamageEffect(null, true)));
 
             assertThat(gqs.getControllerDamageMultiplier(gd, player1Id, null, true)).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("lists each controller multiplier of a combat source apart")
+        void listsControllerMultipliersApartForCombat() {
+            addPermanent(player1Id, createCreatureWithStaticEffect("Angrath's Marauders", 4, 4, CardColor.RED,
+                    new DoubleControllerDamageEffect(null, true)));
+            addPermanent(player1Id, createCreatureWithStaticEffect("Angrath's Marauders", 4, 4, CardColor.RED,
+                    new DoubleControllerDamageEffect(null, true)));
+            Permanent attacker = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
+
+            List<GameQueryService.DamageMultiplier> multipliers =
+                    gqs.getCombatSourceDamageMultipliers(gd, attacker, null, player2Id);
+
+            assertThat(multipliers).hasSize(2);
+            assertThat(gqs.getCombatSourceDamageMultiplier(gd, attacker, null, player2Id)).isEqualTo(4);
         }
 
         @Test

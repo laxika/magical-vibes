@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
+import com.github.laxika.magicalvibes.cards.l.Lifelink;
 import com.github.laxika.magicalvibes.cards.n.NecromancersMagemark;
 import com.github.laxika.magicalvibes.cards.s.ShivanDragon;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
@@ -21,7 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ElderSpawn.class, Island.class, GrizzlyBears.class, ShivanDragon.class, Unsummon.class})
+@CardUsed({ElderSpawn.class, Island.class, GrizzlyBears.class, ShivanDragon.class, Unsummon.class, Lifelink.class})
 class ElderSpawnTest extends BaseCardTest {
 
     @Test
@@ -239,4 +240,18 @@ class ElderSpawnTest extends BaseCardTest {
         assertThat(blocker.isBlocking()).isTrue();
     }
 
+
+    @Test
+    @DisplayName("The sacrificed Elder Spawn deals its 6 damage with the lifelink an Aura gave it as it last existed")
+    void sacrificedElderSpawnKeepsAuraGrantedLifelink() {
+        Permanent spawn = harness.addToBattlefieldAndReturn(player1, new ElderSpawn());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Lifelink());
+        aura.setAttachedTo(spawn.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Elder Spawn");
+        harness.assertLife(player1, 20);
+    }
 }

@@ -1699,8 +1699,9 @@ public class DamagePreventionService {
                 }
                 gameData.endFloatingEffect(fe);
                 // The event's damage to the player's creatures is the same "next time" (Shadowbane).
+                // A combat damage step's damage is dealt at once (CR 510.2), so it too is one "next time".
                 if (shield.coversControlledCreatures() && !shield.preventAllButOne() && !shield.preventHalfDamage()
-                        && (gameData.openDamageEvent != null || gameData.effectResolutionDepth > 0)) {
+                        && (combatDamage || gameData.openDamageEvent != null || gameData.effectResolutionDepth > 0)) {
                     gameData.playerSourceShieldsUsedInOpenEvent.add(shield);
                 }
                 int prevented = shield.preventAllButOne()
@@ -1783,7 +1784,7 @@ public class DamagePreventionService {
                     && shieldMatchesSource(gameData, shield, sourcePermanentId, null)) {
                 gameData.endFloatingEffect(fe);
                 // One damage event can hit several creatures at once; the shield covers all of them.
-                if (!gameData.pendingSimultaneousDamage.isEmpty() || gameData.openDamageEvent != null
+                if (combatDamage || !gameData.pendingSimultaneousDamage.isEmpty() || gameData.openDamageEvent != null
                         || gameData.effectResolutionDepth > 0) {
                     gameData.playerSourceShieldsUsedInOpenEvent.add(shield);
                 }

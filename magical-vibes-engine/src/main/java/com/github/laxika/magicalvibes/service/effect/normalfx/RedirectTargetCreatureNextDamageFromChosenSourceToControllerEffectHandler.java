@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 public class RedirectTargetCreatureNextDamageFromChosenSourceToControllerEffectHandler implements NormalEffectHandlerBean {
 
     private final PreventionSupport preventionSupport;
+    private final DamageSourceChoiceSupport damageSourceChoiceSupport;
     private final PlayerInputService playerInputService;
 
     @Override
@@ -30,7 +31,7 @@ public class RedirectTargetCreatureNextDamageFromChosenSourceToControllerEffectH
         // Without a target creature the ability does nothing. The redirected damage goes to the controller.
         if (protectedCreatureId == null || controllerId == null) return;
 
-        List<UUID> validIds = preventionSupport.collectAllDamageSourceIds(gameData);
+        List<UUID> validIds = damageSourceChoiceSupport.choosable(gameData, entry);
         if (validIds.isEmpty()) {
             preventionSupport.broadcastNoDamageSourcesForChoice(gameData);
             return;

@@ -1711,21 +1711,27 @@ public class PermanentChoiceBattlefieldHandlerService {
                         .filter(entry -> permanentId.equals(entry.getSourcePermanentId()))
                         .findFirst().orElse(null)
                 : null;
-        if (chosenPermanent == null && chosenSpell == null && chosenAbility == null) {
+        Card chosenCard = chosenPermanent != null ? chosenPermanent.getCard()
+                : chosenSpell != null ? chosenSpell.getCard()
+                : chosenAbility != null ? chosenAbility.getCard()
+                : findDamageSourceCard(gameData, permanentId);
+        if (chosenCard == null) {
             throw new IllegalStateException("Chosen source no longer exists");
         }
 
         UUID controllerId = ctx.controllerId();
+        // A card known only as it last was (a graveyard card a spell targets) has no controller.
         UUID sourceControllerId = chosenPermanent != null
                 ? gameQueryService.findPermanentController(gameData, permanentId)
-                : chosenSpell.getControllerId();
+                : chosenSpell != null ? chosenSpell.getControllerId()
+                : chosenAbility != null ? chosenAbility.getControllerId() : null;
         gameData.addShield(new com.github.laxika.magicalvibes.model.EyeForAnEyeShield(
                 controllerId, permanentId, ctx.eyeCard(), controllerId, sourceControllerId));
 
         String playerName = gameData.playerIdToName.get(controllerId);
         String sourceName = chosenPermanent != null
                 ? FaceDownVisibility.publicName(gameData, chosenPermanent.getCard())
-                : FaceDownVisibility.publicName(gameData, chosenSpell.getCard());
+                : FaceDownVisibility.publicName(gameData, chosenCard);
         String logEntry = "The next time " + sourceName + " would deal damage to " + playerName
                 + " this turn, that much damage is also dealt to " + sourceName + "'s controller.";
         gameLogService.append(gameData, GameLog.text(logEntry));

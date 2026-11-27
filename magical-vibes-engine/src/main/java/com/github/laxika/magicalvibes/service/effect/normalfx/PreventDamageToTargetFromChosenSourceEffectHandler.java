@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 public class PreventDamageToTargetFromChosenSourceEffectHandler implements NormalEffectHandlerBean {
 
     private final PreventionSupport preventionSupport;
+    private final DamageSourceChoiceSupport damageSourceChoiceSupport;
     private final PlayerInputService playerInputService;
 
     @Override
@@ -30,7 +31,7 @@ public class PreventDamageToTargetFromChosenSourceEffectHandler implements Norma
         UUID targetId = entry.getTargetId();
         if (targetId == null) return;
 
-        List<UUID> validIds = preventionSupport.collectAllDamageSourceIds(gameData);
+        List<UUID> validIds = damageSourceChoiceSupport.choosable(gameData, entry);
 
         if (validIds.isEmpty()) {
             preventionSupport.broadcastNoDamageSourcesForChoice(gameData);

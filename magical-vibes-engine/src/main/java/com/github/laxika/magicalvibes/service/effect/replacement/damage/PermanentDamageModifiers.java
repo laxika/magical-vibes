@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,8 +18,9 @@ import java.util.UUID;
 
 /**
  * Replacement effects that change how much damage a permanent is dealt: Benevolent Unicorn's
- * reduction, the "that much damage plus N" bonuses, Gisela's doubling for an opponent's permanent
- * and the halving and capping replacements. They only rewrite the amount, so they are pure.
+ * reduction, the "that much damage plus N" bonuses, the source's, its controller's and the recipient's
+ * multipliers (Gisela's doubling for an opponent's permanent), each one option per effect, and the halving
+ * and capping replacements. They only rewrite the amount, so they are pure.
  */
 @Component
 class PermanentDamageModifiers extends PermanentDamageCandidateSource {
@@ -31,11 +33,7 @@ class PermanentDamageModifiers extends PermanentDamageCandidateSource {
         super(gameQueryService, gameLogService);
         this.rules = List.of(
                 globalMultiplierRule(gameQueryService),
-                pure("SourceMultiplier", REPLACEMENT,
-                        ctx -> sourceMultiplier(ctx) > 1,
-                        ctx -> "Multiply damage from the source by " + sourceMultiplier(ctx),
-                        ctx -> ctx.event().withAmount(ctx.amount() * sourceMultiplier(ctx)),
-                        PermanentDamageCandidateSource::noLog),
+                multiplierRule("SourceMultiplier", this::sourceMultipliers),
                 bonusRule("SourceBonus", ctx -> ctx.combat()
                         ? gameQueryService.getCombatSourceDamageBonuses(ctx.gameData(), ctx.damageSource())
                         : gameQueryService.getDealingSourceDamageBonuses(ctx.gameData(), ctx.entry(), ctx.damageSource())),
@@ -48,11 +46,7 @@ class PermanentDamageModifiers extends PermanentDamageCandidateSource {
                         : gameQueryService.getControllerNoncombatDamageBonuses(ctx.gameData(), ctx.sourceControllerId())),
                 bonusRule("PerpetualNoncombatBonus", ctx -> ctx.combat() ? List.of()
                         : gameQueryService.getPerpetualNoncombatDamageBonuses(ctx.gameData(), ctx.entry())),
-                pure("RecipientMultiplier", REPLACEMENT,
-                        ctx -> recipientMultiplier(ctx) > 1,
-                        ctx -> "Multiply damage to recipient by " + recipientMultiplier(ctx),
-                        ctx -> ctx.event().withAmount(ctx.amount() * recipientMultiplier(ctx)),
-                        PermanentDamageCandidateSource::noLog),
+                multiplierRule("RecipientMultiplier", this::recipientMultipliers),
                 pure("DamageReplacement", REPLACEMENT,
                         ctx -> replacedDamage(ctx) != ctx.amount(),
                         ctx -> "Change the damage to " + replacedDamage(ctx),
@@ -66,9 +60,9 @@ class PermanentDamageModifiers extends PermanentDamageCandidateSource {
     }
 
     /** Gisela: doubling keyed on who controls the damage source, as the spell or the fighting permanent. */
-    private int recipientMultiplier(PermanentDamageContext ctx) {
+    private List<GameQueryService.DamageMultiplier> recipientMultipliers(PermanentDamageContext ctx) {
         if (ctx.combat()) {
-            return gameQueryService.getDamageToRecipientMultiplier(ctx.gameData(), ctx.targetControllerId(),
+            return gameQueryService.getDamageToRecipientMultipliers(ctx.gameData(), ctx.targetControllerId(),
                     ctx.sourceControllerId(), ctx.target().getId(), true);
         }
         UUID sourceControllerId = ctx.dealtByStackEntry() ? ctx.entry().getControllerId()
@@ -76,8 +70,8 @@ class PermanentDamageModifiers extends PermanentDamageCandidateSource {
         if (sourceControllerId == null) {
             sourceControllerId = ctx.entry().getControllerId();
         }
-        return gameQueryService.getDamageToRecipientMultiplier(ctx.gameData(), ctx.targetControllerId(),
-                sourceControllerId, ctx.target().getId());
+        return gameQueryService.getDamageToRecipientMultipliers(ctx.gameData(), ctx.targetControllerId(),
+                sourceControllerId, ctx.target().getId(), false);
     }
 
     /**
@@ -85,19 +79,21 @@ class PermanentDamageModifiers extends PermanentDamageCandidateSource {
      * own doublings count too when it isn't the stack entry's source. Combat damage to a creature
      * also gets that creature's own doublings.
      */
-    private int sourceMultiplier(PermanentDamageContext ctx) {
+    private List<GameQueryService.DamageMultiplier> sourceMultipliers(PermanentDamageContext ctx) {
         if (ctx.combat()) {
-            int multiplier = gameQueryService.getCombatSourceDamageMultiplier(ctx.gameData(), ctx.damageSource(),
-                    ctx.target(), null);
-            return gameQueryService.isCreature(ctx.gameData(), ctx.target())
-                    ? multiplier * gameQueryService.getCombatDamageToCreatureMultiplier(ctx.gameData(), ctx.target())
-                    : multiplier;
+            List<GameQueryService.DamageMultiplier> multipliers = new ArrayList<>(
+                    gameQueryService.getCombatSourceDamageMultipliers(ctx.gameData(), ctx.damageSource(),
+                            ctx.target(), null));
+            if (gameQueryService.isCreature(ctx.gameData(), ctx.target())) {
+                multipliers.addAll(gameQueryService.getCombatDamageToCreatureMultipliers(ctx.gameData(), ctx.target()));
+            }
+            return multipliers;
         }
         Permanent explicitSource = ctx.event().explicitSource();
         if (explicitSource != null && !explicitSource.getId().equals(ctx.entry().getSourcePermanentId())) {
-            return gameQueryService.getExplicitSourceDamageMultiplier(ctx.gameData(), ctx.entry(), explicitSource);
+            return gameQueryService.getExplicitSourceDamageMultipliers(ctx.gameData(), ctx.entry(), explicitSource);
         }
-        return gameQueryService.getDealingSourceDamageMultiplier(ctx.gameData(), ctx.entry());
+        return gameQueryService.getDealingSourceDamageMultipliers(ctx.gameData(), ctx.entry());
     }
 
     private int replacedDamage(PermanentDamageContext ctx) {

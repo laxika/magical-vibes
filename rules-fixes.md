@@ -39,7 +39,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | Track | Runs | Status |
 |---|---|---|
 | 0 Owner and bookkeeping | 0 | moves done; owner questions asked after the last run |
-| DM Damage | DM-1, DM-2, DM-3 | DM-1, DM-2 done 2026-11-27; DM-3 open |
+| DM Damage | DM-1, DM-2, DM-3 | DM-1, DM-2, DM-3 done 2026-11-27 |
 | FC Free casts and casting from other zones | FC-1, FC-2, FC-3 | FC-1, FC-2 done 2026-11-27; FC-3 open |
 | CP Casting permissions and cost readers | CP-1 | open |
 | MP Multiplayer opponent choices | MP-1, MP-2 | MP-1 done 2026-11-27; MP-2 open |
@@ -261,7 +261,20 @@ New line N10 (seen in DM-2): Shadowbane's "you and/or creatures you control" shi
 halves only inside a resolution (`playerSourceShieldsUsedInOpenEvent`), so a combat damage step where one chosen trampler damages
 a blocker and its controller likely prevents only the first of the two (unverified).
 
-Outcome:
+Outcome: 2026-11-27. Fixed: S17 (every source, controller and recipient multiplier is its own pool option through
+`GameQueryService.DamageMultiplier` lists and `DamageCandidateSource.multiplierRule`, so a "plus N" can go between Gisela's and
+Goldnight Castigator's doublings or two Fiery Emancipations; CR 616.1; the int multiplier queries are now the lists' product),
+T14 (the seven chosen-source handlers ask from `DamageSourceChoiceSupport.choosable`, CR 609.7a's full set: graveyard cards a
+stack object targets, waiting shields' sources; Eye for an Eye's completion takes them too and no longer fails on an ability
+source), O8's Forethought Amulet half (an ability of an instant or sorcery card is an instant or sorcery source: Resounding
+Thunder's cycling trigger), O20 (a fought creature's damage redirected to a player is dealt through that creature's own entry,
+`DamageEvent.dealtThrough`, so its lifelink applies; CR 120.1, 702.15b), N10 (Shadowbane's shared shield also covers a combat
+damage step, CR 510.2). Deleted from entry 18. Dropped: P18 (a source sacrificed earlier in its own resolution already deals
+damage with its layered last-known keywords, an Aura's lifelink included: `PermanentRemovalService` rewrites the resolving entry's
+source snapshot; pinned in `GargantuanGorillaTest`, `ElderSpawnTest`), O8's Pestilent Spirit half (fixed by D19; pinned in
+`PestilentSpiritTest`). The fold half of T14 (the six cards onto `ChooseDamageSourceEffect` plus a step reading the choice) is a
+cleanup left for entry 16. No effect class added or deleted, so no ledger or ratchet change. Tests: 565 XML files, 5,382 tests,
+0 failures (295 card classes, 148 application classes with the architecture tests, the AI module).
 
 ### FC. Free casts and casting from other zones
 
@@ -701,6 +714,10 @@ when recoloured).
 
 Avoid: DM-1.
 
+New line N24 (seen in DM-3): `DamageSupport.isRedirectedToProtectedCreature` pre-checks a redirected event's protection from the
+stack entry's source card, not from the event's `explicitSource`, so a fought creature's damage redirected to another creature
+(Shaman en-Kor) is judged as the fight's source; the pool's `Protection` rule already reads the right source (unverified).
+
 Outcome:
 
 #### LY-4. Text changes
@@ -833,6 +850,10 @@ over every creature on both battlefields.
 
 New line N23 (seen in AI-2): `TargetPolarityClassifier`'s `DistributeCountersAmongTargetsEffect` rule reads only +1/+1 and
 -1/-1 counters, not the other power/toughness kinds AI-2 gave the put-counter rule.
+
+New line N25 (seen in DM-3): the "have it dealt to you instead" choice (`DamageSupport.queueCreatureDamageRedirectChoice`, the
+`AllCreatureDamageRedirectChoice` rule) builds its prompt and redirected damage from the stack entry's source, not the event's
+`explicitSource`, so a fought creature's damage accepted this way is dealt as the fight's source's (unverified).
 
 Outcome:
 

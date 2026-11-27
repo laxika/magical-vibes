@@ -25,7 +25,8 @@ import java.util.function.Predicate;
  *                                controller when the event began
  * @param recipientPermanentId    the permanent the damage would be dealt to; {@code null} for a player
  * @param explicitSource          the permanent dealing the damage when it isn't the entry's source
- *                                (a fight or a bite), otherwise {@code null}
+ *                                (a fight or a bite), otherwise {@code null}; only damage to a
+ *                                permanent has one (see {@link #dealtThrough})
  * @param amount                  the damage still to be dealt
  * @param unpreventable           the damage can't be prevented, whatever the board says later
  * @param cantBeRedirected        the damage can't be redirected
@@ -145,6 +146,16 @@ public record DamageEvent(StackEntry entry, UUID recipientPlayerId, UUID recipie
         }
         return new DamageEvent(entry, controllerId, permanentId, explicitSource, Math.max(0, redirectedAmount),
                 unpreventable, cantBeRedirected, -1, keys, false, List.of(), false);
+    }
+
+    /**
+     * This damage as dealt through {@code dealerEntry}, the entry its {@link #explicitSource()} deals its own damage
+     * through, with no explicit source left: a player event names its source only by its entry, so a fought or bitten
+     * permanent's damage redirected to a player keeps that permanent as its source (CR 120.1, 120.3).
+     */
+    public DamageEvent dealtThrough(StackEntry dealerEntry) {
+        return new DamageEvent(dealerEntry, recipientPlayerId, recipientPermanentId, null, amount, unpreventable,
+                cantBeRedirected, journalSlot, appliedKeys, combat, portions, redirected);
     }
 
     /**

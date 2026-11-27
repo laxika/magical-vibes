@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.cards.g.GargantuanGorilla;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
 import com.github.laxika.magicalvibes.cards.s.SpiritLink;
+import com.github.laxika.magicalvibes.cards.v.VampireNighthawk;
 import com.github.laxika.magicalvibes.model.CreatureDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -21,7 +23,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({JadeMonolith.class, GrizzlyBears.class, ProdigalSorcerer.class, LightningBolt.class,
-        SpiritLink.class})
+        SpiritLink.class, GargantuanGorilla.class, VampireNighthawk.class})
 class JadeMonolithTest extends BaseCardTest {
 
     // ===== Activation / source choice =====
@@ -294,6 +296,28 @@ class JadeMonolithTest extends BaseCardTest {
         assertThat(choice).isNotNull();
         assertThat(choice.validIds()).contains(source.getId());
         harness.handlePermanentChosen(player1, source.getId());
+    }
+
+    @Test
+    @DisplayName("A fought creature's damage redirected to the controller is dealt by that creature, so its lifelink applies")
+    void redirectedFightDamageIsDealtByTheFoughtCreature() {
+        Permanent monolith = addCreatureReady(player1, new JadeMonolith());
+        Permanent gorilla = addCreatureReady(player1, new GargantuanGorilla());
+        Permanent nighthawk = addCreatureReady(player2, new VampireNighthawk());
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, indexOf(player1, monolith), null, gorilla.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, nighthawk.getId());
+
+        harness.activateAbility(player1, indexOf(player1, gorilla), null, nighthawk.getId());
+        harness.passBothPriorities();
+
+        assertThat(gorilla.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(gorilla);
+        harness.assertNotOnBattlefield(player2, "Vampire Nighthawk");
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 22);
     }
 
     private Permanent addReadyStats(Player player, int power, int toughness) {

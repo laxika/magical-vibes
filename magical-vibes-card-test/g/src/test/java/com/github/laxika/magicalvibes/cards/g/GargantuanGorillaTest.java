@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.l.Lifelink;
 import com.github.laxika.magicalvibes.cards.s.SnowCoveredForest;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -18,7 +19,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GargantuanGorilla.class, Forest.class, SnowCoveredForest.class, GorillaChieftain.class})
+@CardUsed({GargantuanGorilla.class, Forest.class, SnowCoveredForest.class, GorillaChieftain.class, Lifelink.class})
 class GargantuanGorillaTest extends BaseCardTest {
 
     private Permanent gorilla(Player owner) {
@@ -220,5 +221,19 @@ class GargantuanGorillaTest extends BaseCardTest {
 
     private Permanent readyGorilla(Player player) {
         return addCreatureReady(player, new GargantuanGorilla());
+    }
+
+    @Test
+    @DisplayName("The sacrificed Gorilla deals its 7 damage with the lifelink an Aura gave it as it last existed")
+    void sacrificedGorillaKeepsAuraGrantedLifelink() {
+        Permanent gorilla = harness.addToBattlefieldAndReturn(player1, new GargantuanGorilla());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Lifelink());
+        aura.setAttachedTo(gorilla.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Gargantuan Gorilla");
+        harness.assertLife(player1, 20);
     }
 }

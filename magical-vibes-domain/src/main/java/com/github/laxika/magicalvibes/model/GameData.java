@@ -1447,8 +1447,9 @@ public class GameData {
      *  once the event is dealt. */
     public final List<FloatingContinuousEffect> sourceRedirectShieldsUsedInOpenEvent =
             Collections.synchronizedList(new ArrayList<>());
-    /** Shadowbane-style creature shields already consumed by the open simultaneous damage event; they keep
-     *  preventing the rest of that event's damage from the same source and are dropped once it is dealt. */
+    /** Shadowbane-style creature shields already consumed by the open simultaneous damage event or the combat
+     *  damage step being dealt; they keep preventing the rest of that damage from the same source and are dropped
+     *  when the next event or step begins. */
     public final List<PlayerSourceNextDamageShield> playerSourceShieldsUsedInOpenEvent =
             Collections.synchronizedList(new ArrayList<>());
     /** Pending Eye for an Eye reflected damage to deal after a shield matches (populated by

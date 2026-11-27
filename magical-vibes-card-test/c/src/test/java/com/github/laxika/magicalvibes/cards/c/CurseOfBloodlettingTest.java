@@ -246,7 +246,7 @@ class CurseOfBloodlettingTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 1, player2.getId());
         harness.passBothPriorities();
 
-        harness.handleListChoice(player2, "Multiply damage to enchanted player by 2");
+        harness.handleListChoice(player2, "Curse of Bloodletting: multiply damage by 2");
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
         assertThat(gd.playerDamagePreventionShields().getOrDefault(player2.getId(), 0)).isZero();
     }

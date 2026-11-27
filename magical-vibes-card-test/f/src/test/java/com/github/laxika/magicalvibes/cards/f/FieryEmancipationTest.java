@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HealingSalve;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.t.TorbranThaneOfRedFell;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -135,5 +137,32 @@ class FieryEmancipationTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @CardUsed({TorbranThaneOfRedFell.class})
+    @DisplayName("Two Fiery Emancipations are two replacement effects, so a plus 2 can be applied between them")
+    void twoEmancipationsAreOrderedApart() {
+        harness.addToBattlefield(player1, new FieryEmancipation());
+        harness.addToBattlefield(player1, new FieryEmancipation());
+        harness.addToBattlefield(player1, new TorbranThaneOfRedFell());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setLife(player2, 100);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        chooseReplacement("Fiery Emancipation");
+        chooseReplacement("Deal 2 more damage");
+
+        // (2 x 3 + 2) x 3
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(76);
+    }
+
+    private void chooseReplacement(String optionPrefix) {
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        harness.handleListChoice(player2, choice.options().stream()
+                .filter(option -> option.startsWith(optionPrefix)).findFirst().orElseThrow());
     }
 }

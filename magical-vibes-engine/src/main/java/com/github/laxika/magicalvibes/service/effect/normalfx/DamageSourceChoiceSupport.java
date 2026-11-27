@@ -37,6 +37,19 @@ public class DamageSourceChoiceSupport {
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
 
+    /**
+     * The sources {@code resolvingEntry}'s controller may choose (CR 609.7a): every {@link #candidates candidate} but a
+     * permanent that can't be chosen.
+     */
+    public List<UUID> choosable(GameData gameData, StackEntry resolvingEntry) {
+        return candidates(gameData, null, resolvingEntry).stream()
+                .filter(id -> {
+                    Permanent permanent = gameQueryService.findPermanentById(gameData, id);
+                    return permanent == null || !gameQueryService.cantBeChosen(gameData, permanent);
+                })
+                .toList();
+    }
+
     /** The ids of the sources {@code resolvingEntry}'s controller may choose that match {@code sourceFilter}. */
     public List<UUID> candidates(GameData gameData, PermanentPredicate sourceFilter, StackEntry resolvingEntry) {
         List<UUID> validIds = new ArrayList<>();

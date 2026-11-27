@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
+import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
 import com.github.laxika.magicalvibes.cards.d.DrainLife;
 import com.github.laxika.magicalvibes.cards.f.FemerefArchers;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Incinerate;
 import com.github.laxika.magicalvibes.cards.k.KaerveksPurge;
 import com.github.laxika.magicalvibes.cards.t.TalruumMinotaur;
@@ -14,12 +16,14 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -277,4 +281,26 @@ class ShadowbaneTest extends BaseCardTest {
         harness.castInstant(player, 0);
     }
 
+    @Test
+    @CardUsed({ColossalDreadmaw.class, GrizzlyBears.class})
+    @DisplayName("Prevents a trampler's combat damage to your blocker and to you, dealt at once, as one \"next time\"")
+    void preventsATramplersCombatDamageToBlockerAndToYou() {
+        Permanent blocker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent dreadmaw = addCreatureReady(player2, new ColossalDreadmaw());
+        harness.setLife(player1, 20);
+        castShadowbane(player1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, dreadmaw.getId());
+
+        dreadmaw.setAttacking(true);
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player1.getId()).indexOf(blocker), 0)));
+        harness.passBothPriorities();
+        harness.handleCombatDamageAssigned(player2, 0, Map.of(blocker.getId(), 2, player1.getId(), 4));
+
+        assertThat(blocker.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(blocker);
+        harness.assertLife(player1, 20);
+    }
 }

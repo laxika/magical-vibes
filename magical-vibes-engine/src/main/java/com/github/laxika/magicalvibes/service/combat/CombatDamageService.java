@@ -2435,6 +2435,8 @@ public class CombatDamageService {
      * CR 101.4); an event that waits for a choice parks the step until it is made.
      */
     private void processCollectedCombatDamage(GameData gameData, CombatDamageState state) {
+        // The step's damage is one "next time" for Shadowbane's shared shield (CR 510.2), and only this step's.
+        gameData.playerSourceShieldsUsedInOpenEvent.clear();
         List<DamageEvent> events = new ArrayList<>();
         state.collectedPortions.forEach((recipientId, portions) -> {
             DamageEvent event = combatDamageEvent(gameData, recipientId, portions);

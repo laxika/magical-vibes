@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.e.EarthElemental;
 import com.github.laxika.magicalvibes.cards.f.Firebolt;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.k.KasminasTransmutation;
+import com.github.laxika.magicalvibes.cards.r.ResoundingThunder;
 import com.github.laxika.magicalvibes.cards.r.RubblebeltRecluse;
 import com.github.laxika.magicalvibes.cards.s.Scorchmark;
 import com.github.laxika.magicalvibes.cards.s.SenateCourier;
@@ -22,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({PestilentSpirit.class, EarthElemental.class, Shock.class, Firebolt.class,
         RubblebeltRecluse.class, Scorchmark.class, SkewerTheCritics.class, KasminasTransmutation.class,
-        SenateCourier.class, TitanicBrawl.class})
+        SenateCourier.class, TitanicBrawl.class, ResoundingThunder.class, GrizzlyBears.class})
 class PestilentSpiritTest extends BaseCardTest {
 
     @Test
@@ -136,5 +138,29 @@ class PestilentSpiritTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Senate Courier");
         harness.assertOnBattlefield(player2, "Rubblebelt Recluse");
         assertThat(target.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed({PestilentSpirit.class, ResoundingThunder.class, GrizzlyBears.class})
+    @DisplayName("An ability of an instant card is not a spell, so its damage has no deathtouch")
+    void instantCardsAbilityDamageHasNoDeathtouch() {
+        addCreatureReady(player1, new PestilentSpirit());
+        GrizzlyBears toughBears = new GrizzlyBears();
+        toughBears.setToughness(8);
+        var target = addCreatureReady(player2, toughBears);
+        harness.setHand(player1, List.of(new ResoundingThunder()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(target.getMarkedDamage()).isEqualTo(6);
     }
 }
