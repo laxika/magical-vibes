@@ -223,15 +223,6 @@ public class LibrarySearchSupport {
         return true;
     }
 
-    /**
-     * Starts the next "search for a card matching the queued descriptor, reveal it, put it into your
-     * hand" pick from the follow-up's queue (a colour for Conflux, a subtype for Gem of Becoming, or
-     * an exact card name for Nissa's Encouragement). Each queue entry is one descriptor, searched in
-     * order; the advanced remainder rides the begun search. Descriptors with no matching card left
-     * in the library are skipped without shuffling. When the queue is exhausted the library is
-     * shuffled once (the single shuffle for the whole search) and false is returned; returns true if
-     * a search was begun, false if the search is prevented or no descriptor remains to search.
-     */
     /** Starts several choices within one search, retaining its original searchable library cards. */
     public boolean startSingleSearchToHandPicks(GameData gameData, UUID playerId,
                                                LibrarySearchFollowUp followUp) {
@@ -246,6 +237,17 @@ public class LibrarySearchSupport {
                         .map(pick -> pick.withinSingleSearch(searchableCardIds)).toList()));
     }
 
+    /**
+     * Starts the next "search for a card matching the queued descriptor, reveal it, put it into your
+     * hand" pick from the follow-up's queue (a colour for Conflux, a subtype for Gem of Becoming, a
+     * description of Nissa's Encouragement or Journey for the Elixir). Each queue entry is one
+     * descriptor, searched in order; the advanced remainder rides the begun search. A descriptor that
+     * also searches the graveyard offers its matches there too and must find one when there is one
+     * (CR 701.23b). Descriptors with no matching card left are skipped without shuffling. When the
+     * queue is exhausted the library is shuffled once (the single shuffle for the whole search) and
+     * false is returned; returns true if a search was begun, false if the search is prevented or no
+     * descriptor remains to search.
+     */
     public boolean startNextToHandPick(GameData gameData, UUID playerId, LibrarySearchFollowUp followUp) {
         if (isSearchPrevented(gameData, playerId)) return false;
 
@@ -259,33 +261,38 @@ public class LibrarySearchSupport {
                             .filter(card -> pick.searchableCardIds() == null
                                     || pick.searchableCardIds().contains(card.getId()))
                             .filter(card -> matchesToHandPick(gameData, playerId, card, pick)).toList());
+            // A card in the graveyard, a public zone, has to be found (CR 701.23b).
+            boolean canFailToFind = true;
             if (pick.includeGraveyard()) {
-                gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
+                List<Card> graveyardMatches = gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
                         .filter(card -> matchesToHandPick(gameData, playerId, card, pick))
-                        .forEach(matches::add);
+                        .toList();
+                matches.addAll(graveyardMatches);
+                canFailToFind = graveyardMatches.isEmpty();
             }
             if (matches.isEmpty()) {
                 continue;
             }
             String prompt;
             String logMsg;
+            String searched = pick.includeGraveyard() ? "library and graveyard" : "library";
             var builder = LibrarySearchParams.builder(playerId, new ArrayList<>(matches))
                     .reveals(true)
-                    .canFailToFind(true)
+                    .canFailToFind(canFailToFind)
                     .destination(LibrarySearchDestination.HAND)
                     .shuffleAfterSelection(remaining.isEmpty())
                     .followUp(followUp.withRemainingToHandPicks(remaining));
             if (pick.cardName() != null) {
                 builder.filterCardName(pick.cardName());
-                prompt = "Search your " + (pick.includeGraveyard() ? "library and graveyard" : "library")
-                        + " for a card named " + pick.cardName() + " to reveal and put into your hand.";
-                logMsg = playerName + " searches their library for a card named " + pick.cardName() + ".";
+                prompt = "Search your " + searched + " for a card named " + pick.cardName()
+                        + " to reveal and put into your hand.";
+                logMsg = playerName + " searches their " + searched + " for a card named " + pick.cardName() + ".";
             } else {
                 String descriptor = pick.describe();
-                prompt = "Search your library for " + descriptor + " to reveal and put into your hand.";
-                logMsg = playerName + " searches their library for " + descriptor + ".";
+                prompt = "Search your " + searched + " for " + descriptor + " to reveal and put into your hand.";
+                logMsg = playerName + " searches their " + searched + " for " + descriptor + ".";
             }
-            sendLibrarySearchToPlayer(gameData, playerId, builder.build(), prompt, true, logMsg,
+            sendLibrarySearchToPlayer(gameData, playerId, builder.build(), prompt, canFailToFind, logMsg,
                     pick.searchableCardIds());
             return true;
         }
@@ -426,11 +433,8 @@ public class LibrarySearchSupport {
     /** Whether {@code card} is one {@code pick} asks for: the card named, or a card its filter matches. */
     private boolean matchesToHandPick(GameData gameData, UUID playerId, Card card,
                                       LibrarySearchFollowUp.ToHandPick pick) {
-        if (card.hasAllCardNames()) {
-            return true;
-        }
         if (pick.cardName() != null) {
-            return pick.cardName().equals(card.getName());
+            return card.hasName(pick.cardName());
         }
         return predicateEvaluationService.matchesCardPredicate(card, pick.filter(), null, gameData, playerId);
     }

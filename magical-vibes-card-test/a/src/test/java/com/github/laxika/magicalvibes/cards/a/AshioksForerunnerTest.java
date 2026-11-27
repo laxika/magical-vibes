@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -15,6 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class AshioksForerunnerTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Accepts optional search from graveyard")
     void acceptsOptionalSearchFromGraveyard() {
         Card ashiok = new AshiokSculptorOfFears();
         harness.setGraveyard(player1, List.of(ashiok));
@@ -23,6 +25,7 @@ class AshioksForerunnerTest extends BaseCardTest {
         resolveEnterTheBattlefieldTrigger();
         harness.handleMayAbilityChosen(player1, true);
 
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class)).isNotNull();
         harness.handleMultipleCardsChosen(player1, List.of(ashiok.getId()));
 
@@ -31,6 +34,7 @@ class AshioksForerunnerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Accepts optional search from library")
     void acceptsOptionalSearchFromLibrary() {
         Card ashiok = new AshiokSculptorOfFears();
         harness.setLibrary(player1, List.of(ashiok));
@@ -39,6 +43,7 @@ class AshioksForerunnerTest extends BaseCardTest {
         resolveEnterTheBattlefieldTrigger();
         harness.handleMayAbilityChosen(player1, true);
 
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class)).isNotNull();
         harness.handleMultipleCardsChosen(player1, List.of(ashiok.getId()));
 

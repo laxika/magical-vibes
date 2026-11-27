@@ -37,6 +37,7 @@ class DovinsDismissalTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, false);
         harness.handleMultipleCardsChosen(player1, List.of(dovin.getId()));
 
         harness.assertInHand(player1, "Dovin, Architect of Law");
@@ -87,6 +88,7 @@ class DovinsDismissalTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice search =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(search.validCardIds()).containsExactly(dovin.getId());

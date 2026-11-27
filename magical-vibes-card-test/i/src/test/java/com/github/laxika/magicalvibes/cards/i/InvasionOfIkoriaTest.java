@@ -41,6 +41,7 @@ class InvasionOfIkoriaTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice search =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(search).isNotNull();
@@ -64,6 +65,7 @@ class InvasionOfIkoriaTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice search =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(search).isNotNull();
@@ -82,6 +84,7 @@ class InvasionOfIkoriaTest extends BaseCardTest {
         castInvasion(0);
         harness.passBothPriorities();
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         Permanent battle = findPermanent(player1, "Invasion of Ikoria");
         battle.setCounterCount(CounterType.DEFENSE, 0);
@@ -197,6 +200,7 @@ class InvasionOfIkoriaTest extends BaseCardTest {
         castInvasion(0);
         harness.passBothPriorities();
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         Permanent battle = findPermanent(player1, "Invasion of Ikoria");
         Card card = battle.getCard();
         battle.setCounterCount(CounterType.DEFENSE, 0);
@@ -223,6 +227,7 @@ class InvasionOfIkoriaTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice search =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(search).isNotNull();
@@ -247,6 +252,7 @@ class InvasionOfIkoriaTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creature);
@@ -265,6 +271,7 @@ class InvasionOfIkoriaTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(graveyardCard);

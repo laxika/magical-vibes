@@ -32,6 +32,7 @@ class EtherealElkTest extends BaseCardTest {
         setupAndCast();
 
         resolveMay(true);
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(searchChoice().pool().getFirst().getId()));
 
         harness.assertInHand(player1, "Vivien, Nature's Avenger");
@@ -47,6 +48,7 @@ class EtherealElkTest extends BaseCardTest {
 
         resolveMay(true);
 
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(searchChoice().pool()).hasSize(1);
         assertThat(searchChoice().pool().getFirst().getName()).isEqualTo("Vivien, Nature's Avenger");
@@ -73,6 +75,7 @@ class EtherealElkTest extends BaseCardTest {
         setupAndCast();
 
         resolveMay(true);
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(vivien.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(vivien);
@@ -87,6 +90,7 @@ class EtherealElkTest extends BaseCardTest {
         setupAndCast();
 
         resolveMay(true);
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -120,6 +124,7 @@ class EtherealElkTest extends BaseCardTest {
         resolveMay(true);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 

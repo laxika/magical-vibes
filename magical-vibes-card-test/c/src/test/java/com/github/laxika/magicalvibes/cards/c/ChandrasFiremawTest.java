@@ -34,6 +34,7 @@ class ChandrasFiremawTest extends BaseCardTest {
 
         resolveMay(true);
 
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1,
                 List.of(gd.playerGraveyards.get(player1.getId()).getFirst().getId()));
 
@@ -50,6 +51,7 @@ class ChandrasFiremawTest extends BaseCardTest {
 
         resolveMay(true);
 
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of(chandra.getId()));

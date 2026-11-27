@@ -77,7 +77,16 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
         if (selectedIds.isEmpty() && interaction.mustFind()) {
             throw new IllegalStateException("Must find a card in the graveyard");
         }
+        complete(gameData, interaction, selectedIds);
+    }
 
+    /**
+     * Puts the chosen cards where the search sends them, records and shuffles a searched library, and ends through the
+     * epilogue; an empty {@code selectedIds} finds nothing. {@link AndOrSearchZonesChoiceInteractionHandler} completes a
+     * search with no card to offer here.
+     */
+    void complete(GameData gameData, PendingInteraction.SearchLibraryAndOrGraveyardChoice interaction,
+                  List<UUID> selectedIds) {
         UUID playerId = interaction.playerId();
         boolean toBattlefield = interaction.destination() == LibrarySearchDestination.BATTLEFIELD;
         List<Card> selectedCards = selectedIds.stream()
@@ -88,25 +97,30 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
                 .toList();
 
         if (selectedCards.isEmpty()) {
-            finishSearch(gameData, interaction, selectedCards);
-            gameLogService.append(gameData, GameLog.text(interaction.optional()
-                    ? gameData.playerIdToName.get(playerId) + " chooses not to put a " + interaction.cardLabel()
-                            + " into their hand."
-                    : gameData.playerIdToName.get(playerId) + " searches their library and graveyard but finds no "
-                            + interaction.cardLabel() + "."
-                            + (gameData.playerDecks.get(playerId) == null || !interaction.shuffleAfterSearch()
-                                    || !interaction.librarySearchAllowed() ? "" : " Library is shuffled.")));
+            finishSearch(gameData, interaction);
+            String playerName = gameData.playerIdToName.get(playerId);
+            boolean shuffled = interaction.librarySearchAllowed() && interaction.shuffleAfterSearch()
+                    && gameData.playerDecks.get(playerId) != null;
+            gameLogService.append(gameData, GameLog.text(interaction.librarySearchAllowed()
+                    ? playerName + " searches their library but finds no " + interaction.cardLabel() + "."
+                            + (shuffled ? " Library is shuffled." : "")
+                    : playerName + " finds no " + interaction.cardLabel() + "."));
         } else if (interaction.maxCount() > 1) {
-            if (toBattlefield) {
+            if (interaction.oppositionAgentControllerId() != null) {
+                for (Card card : selectedCards) {
+                    removeFromSearchZone(gameData, playerId, card, interaction);
+                    exileFoundUnderOppositionAgent(gameData, playerId, card, interaction.oppositionAgentControllerId());
+                }
+            } else if (toBattlefield) {
                 putCardsOntoBattlefield(gameData, playerId, selectedCards, interaction);
             } else {
                 putCardsIntoHand(gameData, playerId, selectedCards, interaction);
             }
-            finishSearch(gameData, interaction, selectedCards);
+            finishSearch(gameData, interaction);
         } else {
             boolean awaitingAuraChoice = completeSingleSelection(
                     gameData, playerId, selectedCards.getFirst(), interaction, toBattlefield);
-            finishSearch(gameData, interaction, selectedCards);
+            finishSearch(gameData, interaction);
             if (awaitingAuraChoice) {
                 return;
             }
@@ -119,7 +133,8 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
     private boolean completeSingleSelection(GameData gameData, UUID playerId, Card chosen,
                                          PendingInteraction.SearchLibraryAndOrGraveyardChoice interaction,
                                          boolean toBattlefield) {
-        if (toBattlefield && interaction.attachToPermanentId() != null
+        UUID agentControllerId = interaction.oppositionAgentControllerId();
+        if (agentControllerId == null && toBattlefield && interaction.attachToPermanentId() != null
                 && gameQueryService.findPermanentById(gameData, interaction.attachToPermanentId()) == null) {
             // An Aura that can't enter attached to the permanent it was meant for stays where it is.
             gameLogService.append(gameData, GameLog.textCardText(
@@ -133,7 +148,7 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
         boolean fromExile = interaction.exileCardIds().contains(chosen.getId());
         List<UUID> attachTargetIds = List.of();
         List<UUID> attachPlayerIds = List.of();
-        if (toBattlefield && interaction.attachAuraOrEquipment() && chosen.isAura()) {
+        if (agentControllerId == null && toBattlefield && interaction.attachAuraOrEquipment() && chosen.isAura()) {
             attachTargetIds = gameData.orderedPlayerIds.stream()
                     .flatMap(battlefieldPlayerId -> gameData.playerBattlefields
                             .getOrDefault(battlefieldPlayerId, List.of()).stream())
@@ -173,8 +188,8 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
         if (!fromLibrary && !fromHand && !fromOutsideGame && !fromExile) {
             graveyardService.notifyCardsLeftGraveyard(gameData, playerId, chosen);
         }
-        if (fromLibrary && !toBattlefield && interaction.oppositionAgentControllerId() != null) {
-            exileFoundUnderOppositionAgent(gameData, playerId, chosen, interaction.oppositionAgentControllerId());
+        if (agentControllerId != null) {
+            exileFoundUnderOppositionAgent(gameData, playerId, chosen, agentControllerId);
             return false;
         }
         if (toBattlefield && interaction.attachAuraOrEquipment() && chosen.isAura()) {
@@ -221,8 +236,9 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
     }
 
     /**
-     * Opposition Agent: a library card found by the opponent's search is exiled instead of going to hand, and the
-     * Agent's controller may play it for as long as it remains exiled.
+     * Opposition Agent: a card the opponent finds in any of the zones searched with their library is exiled instead of
+     * going where the search puts it, and the Agent's controller may play it for as long as it remains exiled (the
+     * Opposition Agent rulings).
      */
     private void exileFoundUnderOppositionAgent(GameData gameData, UUID searcherId, Card chosen, UUID agentControllerId) {
         exileService.exileCard(gameData, searcherId, chosen);
@@ -299,19 +315,17 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
         return interaction.libraryCardIds().contains(card.getId()) ? "library" : "graveyard";
     }
 
-    private void finishSearch(GameData gameData,
-                              PendingInteraction.SearchLibraryAndOrGraveyardChoice interaction,
-                              List<Card> selectedCards) {
-        boolean searchedLibrary = selectedCards.isEmpty()
-                || selectedCards.stream().anyMatch(card -> interaction.libraryCardIds().contains(card.getId()));
-        if (interaction.librarySearchAllowed() && searchedLibrary) {
-            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(
-                    gameData, interaction.playerId());
+    /**
+     * A searched library is recorded whatever was found, and shuffled if the search says "if you search your library
+     * this way, shuffle": whether it was searched is the zone answer, not the find (the Dark Supplicant rulings). A
+     * library that couldn't be searched isn't shuffled (the Leonin Arbiter and Mindlock Orb rulings).
+     */
+    private void finishSearch(GameData gameData, PendingInteraction.SearchLibraryAndOrGraveyardChoice interaction) {
+        if (!interaction.librarySearchAllowed()) {
+            return;
         }
-        // "If you search your library this way, shuffle": a graveyard-only find neither searches nor shuffles the library,
-        // and a library that couldn't be searched isn't shuffled (the Leonin Arbiter and Mindlock Orb rulings).
-        if (interaction.shuffleAfterSearch() && interaction.librarySearchAllowed() && searchedLibrary
-                && gameData.playerDecks.get(interaction.playerId()) != null) {
+        LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, interaction.playerId());
+        if (interaction.shuffleAfterSearch() && gameData.playerDecks.get(interaction.playerId()) != null) {
             LibraryShuffleHelper.shuffleLibrary(gameData, interaction.playerId());
         }
     }

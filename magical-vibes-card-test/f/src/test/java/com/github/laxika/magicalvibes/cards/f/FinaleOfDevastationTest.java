@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.o.OppositionAgent;
 import com.github.laxika.magicalvibes.cards.u.UginsConjurant;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -22,7 +23,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FinaleOfDevastation.class, AirElemental.class, GrizzlyBears.class, LlanowarElves.class,
+@CardUsed({FinaleOfDevastation.class, OppositionAgent.class, AirElemental.class, GrizzlyBears.class, LlanowarElves.class,
         UginsConjurant.class})
 class FinaleOfDevastationTest extends BaseCardTest {
 
@@ -38,6 +39,7 @@ class FinaleOfDevastationTest extends BaseCardTest {
 
         castFinale(2);
 
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
                 harness.getGameData().interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice).isNotNull();
@@ -61,6 +63,7 @@ class FinaleOfDevastationTest extends BaseCardTest {
 
         castFinale(10);
 
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
                 harness.getGameData().interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice).isNotNull();
@@ -84,10 +87,12 @@ class FinaleOfDevastationTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("No bonus below ten")
     void noBonusBelowTen() {
         Card creature = new GrizzlyBears();
         setLibrary(creature);
         castFinale(9);
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
 
         GameData gd = harness.getGameData();
@@ -98,12 +103,14 @@ class FinaleOfDevastationTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Bonus without finding creature only affects existing own creatures and expires")
     void bonusWithoutFindingCreatureOnlyAffectsExistingOwnCreaturesAndExpires() {
         setLibrary();
         harness.setGraveyard(player1, List.of());
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears());
         castFinale(12);
+        harness.handleMayAbilityChosen(player1, true);
 
         GameData gd = harness.getGameData();
         Permanent own = gd.playerBattlefields.get(player1.getId()).getFirst();
@@ -126,10 +133,12 @@ class FinaleOfDevastationTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Bonus still applies when library search finds nothing by choice")
     void bonusStillAppliesWhenLibrarySearchFindsNothingByChoice() {
         setLibrary(new LlanowarElves());
         harness.addToBattlefield(player1, new GrizzlyBears());
         castFinale(10);
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of());
 
         GameData gd = harness.getGameData();
@@ -140,10 +149,12 @@ class FinaleOfDevastationTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A creature with X in its cost gets the bonus before state-based actions")
     void creatureWithXInItsCostGetsBonusBeforeStateBasedActions() {
         Card creature = new UginsConjurant();
         setLibrary(creature);
         castFinale(10);
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
 
         GameData gd = harness.getGameData();
@@ -153,6 +164,23 @@ class FinaleOfDevastationTest extends BaseCardTest {
         assertThat(harness.getGameQueryService().getEffectivePower(gd, permanent)).isEqualTo(10);
         assertThat(harness.getGameQueryService().getEffectiveToughness(gd, permanent)).isEqualTo(10);
         assertThat(harness.getGameQueryService().hasKeyword(gd, permanent, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Under an opponent's Opposition Agent, the found creature is exiled instead of entering")
+    void oppositionAgentExilesTheFoundCreature() {
+        Card bears = new GrizzlyBears();
+        setLibrary(bears);
+        harness.setGraveyard(player1, List.of());
+        harness.addToBattlefield(player2, new OppositionAgent());
+        castFinale(2);
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player2, List.of(bears.getId()));
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(bears);
+        assertThat(gd.exilePlayPermissionHolder(bears.getId())).isEqualTo(player2.getId());
     }
 
     private void castFinale(int xValue) {

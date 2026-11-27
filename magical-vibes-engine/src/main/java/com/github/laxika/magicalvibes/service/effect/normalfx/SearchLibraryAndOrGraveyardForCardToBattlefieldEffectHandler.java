@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -22,6 +23,7 @@ import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.List;
 import java.util.UUID;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.ArrayList;
@@ -97,18 +99,6 @@ public class SearchLibraryAndOrGraveyardForCardToBattlefieldEffectHandler implem
                     ? " with mana value " + boundValue
                     : " with mana value " + boundValue + " or less";
         }
-        if (libraryMatches.isEmpty() && graveyardMatches.isEmpty() && handMatches.isEmpty()) {
-            if (librarySearchAllowed) {
-                LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, controllerId);
-                if (deck != null) {
-                    LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
-                }
-                gameLogService.append(gameData, GameLog.text(playerName + " searches their " + searched(effect.zones(), "and")
-                        + " but finds no " + description + "." + (deck == null ? "" : " Library is shuffled.")));
-            }
-            return;
-        }
-
         List<Card> pool = new ArrayList<>(libraryMatches);
         pool.addAll(graveyardMatches);
         pool.addAll(handMatches);
@@ -118,32 +108,40 @@ public class SearchLibraryAndOrGraveyardForCardToBattlefieldEffectHandler implem
         int enterWithCounterCount = effect.enterWithCounters() == null ? 0
                 : amountEvaluationService.evaluate(gameData, effect.enterWithCounters().count(),
                 AmountContext.forStackEntry(entry, null));
-        interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.SearchLibraryAndOrGraveyardChoice(
-                controllerId, pool, new HashSet<>(libraryMatches.stream().map(Card::getId).toList()),
-                new HashSet<>(handMatches.stream().map(Card::getId).toList()), new HashSet<>(),
-                librarySearchAllowed, description, LibrarySearchDestination.BATTLEFIELD,
-                attachToPermanentId, enterWithCounterType, enterWithCounterCount, 1,
-                effect.attachAuraOrEquipment(), searchesLibrary));
-        gameLogService.append(gameData, GameLog.text(playerName + " searches their " + searched(effect.zones(), "and/or")
-                + "."));
-        log.info("Game {} - {} searches library and/or graveyard for a card to battlefield", gameData.id, playerName);
-    }
-
-    /** "Library and/or graveyard", "hand and/or library", "graveyard, hand, and/or library". */
-    private static String searched(Set<Zone> zones, String conjunction) {
-        List<String> names = new ArrayList<>();
-        for (Zone zone : List.of(Zone.GRAVEYARD, Zone.HAND, Zone.LIBRARY)) {
-            if (zones.contains(zone)) {
-                names.add(zone == Zone.GRAVEYARD ? "graveyard" : zone == Zone.HAND ? "hand" : "library");
+        UUID oppositionAgentControllerId = librarySearchAllowed
+                ? librarySearchSupport.oppositionAgentControllerId(gameData, controllerId)
+                : null;
+        // A card in a searched hand can be left unfound, as the player may search the hand alone (CR 701.23b).
+        PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
+                new PendingInteraction.SearchLibraryAndOrGraveyardChoice(
+                        controllerId, pool, new HashSet<>(libraryMatches.stream().map(Card::getId).toList()),
+                        new HashSet<>(handMatches.stream().map(Card::getId).toList()), new HashSet<>(),
+                        librarySearchAllowed, description, LibrarySearchDestination.BATTLEFIELD,
+                        attachToPermanentId, enterWithCounterType, enterWithCounterCount, 1,
+                        effect.attachAuraOrEquipment(), searchesLibrary, oppositionAgentControllerId, Set.of(),
+                        effect.zones().contains(Zone.HAND));
+        Set<Zone> otherZones = EnumSet.noneOf(Zone.class);
+        otherZones.addAll(effect.zones());
+        otherZones.remove(Zone.LIBRARY);
+        if (librarySearchAllowed && !otherZones.isEmpty()) {
+            // "And/or": the player chooses whether the library is among the zones searched (CR 701.23a).
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.AndOrSearchZonesChoice(choice,
+                    otherZones));
+            return;
+        }
+        if (pool.isEmpty()) {
+            if (librarySearchAllowed) {
+                LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, controllerId);
+                if (deck != null) {
+                    LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+                }
+                gameLogService.append(gameData, GameLog.text(playerName + " searches their library but finds no "
+                        + description + "." + (deck == null ? "" : " Library is shuffled.")));
             }
+            return;
         }
-        if (names.equals(List.of("graveyard", "library"))) {
-            return "library " + conjunction + " graveyard";
-        }
-        if (names.size() <= 2) {
-            return String.join(" " + conjunction + " ", names);
-        }
-        return String.join(", ", names.subList(0, names.size() - 1)) + ", " + conjunction + " " + names.getLast();
+        interactionHandlerRegistry.begin(gameData, choice);
+        log.info("Game {} - {} searches for a card to put onto the battlefield", gameData.id, playerName);
     }
 
     /** Only a permanent card can be put onto the battlefield (CR 400.4a). */

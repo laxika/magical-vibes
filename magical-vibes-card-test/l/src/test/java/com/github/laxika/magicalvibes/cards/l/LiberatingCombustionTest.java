@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -20,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class LiberatingCombustionTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Deals six damage and searches the library for Chandra")
     void dealsSixDamageAndSearchesLibraryForChandra() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Card chandra = new ChandraPyrogenius();
@@ -29,6 +31,7 @@ class LiberatingCombustionTest extends BaseCardTest {
         cast(target.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMayAbilityChosen(player1, true);
 
         PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
@@ -42,6 +45,7 @@ class LiberatingCombustionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Searches the graveyard for Chandra")
     void searchesGraveyardForChandra() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Card chandra = new ChandraPyrogenius();
@@ -52,6 +56,7 @@ class LiberatingCombustionTest extends BaseCardTest {
         cast(target.getId());
         harness.handleMayAbilityChosen(player1, true);
 
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice.validCardIds()).containsExactly(chandra.getId());

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingAbilityActivation;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
@@ -167,6 +168,19 @@ class SpecializedInteractionAiStrategiesTest {
         var interaction = new PendingInteraction.MaySearchLibraryChoice(aiPlayerId,
                 LibrarySearchParams.builder(aiPlayerId, List.of()).canFailToFind(true).build(),
                 "Search your library for up to 1 basic land card.");
+
+        AiInteractionStrategies.forInteraction(interaction).answer(interaction, context);
+
+        assertThat(capturedAnswer()).isEqualTo(new InteractionAnswer.MayAbilityChosen(true));
+    }
+
+    @Test
+    @DisplayName("Searches its library too when an and/or search asks for its zones")
+    void andOrSearchZonesChoiceSearchesTheLibrary() throws Exception {
+        var interaction = new PendingInteraction.AndOrSearchZonesChoice(
+                new PendingInteraction.SearchLibraryAndOrGraveyardChoice(aiPlayerId, List.of(), Set.of(),
+                        true, "creature card"),
+                Set.of(Zone.GRAVEYARD));
 
         AiInteractionStrategies.forInteraction(interaction).answer(interaction, context);
 
@@ -543,6 +557,7 @@ class SpecializedInteractionAiStrategiesTest {
                 PendingInteraction.SylvanLibraryChoice.class,
                 PendingInteraction.AdNauseamRepeatChoice.class,
                 PendingInteraction.MaySearchLibraryChoice.class,
+                PendingInteraction.AndOrSearchZonesChoice.class,
                 PendingInteraction.ActivatedAbilityGraveyardExileCostChoice.class,
                 PendingInteraction.ExileNonlandCardFromTargetHandOrGraveyardChoice.class,
                 PendingInteraction.ExiledCardMayPlayChoice.class,

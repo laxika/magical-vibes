@@ -86,6 +86,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.RevealAnyNumberOfCardsFromHandChoice,
         PendingInteraction.DoomsdayChoice,
         PendingInteraction.SearchLibraryAndOrGraveyardChoice,
+        PendingInteraction.AndOrSearchZonesChoice,
         PendingInteraction.SearchLibraryToTopChoice,
         PendingInteraction.IntuitionSearchChoice,
         PendingInteraction.TurtlesForeverSearchChoice,
@@ -1821,7 +1822,9 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     /**
      * Matching cards the controller owns, chosen across their library, hand, graveyard, cards outside the game and
      * face-up exile, for their destination. A pool card in none of the id sets is in the graveyard. With
-     * {@code optional} ("you may") no card has to be chosen.
+     * {@code librarySearchAllowed} the library is searched: the search is recorded and, with {@code shuffleAfterSearch},
+     * shuffled whatever is found. With {@code optional} ("you may", or a hidden zone the player may search alone) no
+     * card has to be chosen.
      */
     record SearchLibraryAndOrGraveyardChoice(UUID playerId, java.util.List<Card> pool,
                                              java.util.Set<UUID> libraryCardIds,
@@ -1997,6 +2000,26 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             return pool.stream().map(Card::getId).toList();
         }
 
+        /**
+         * This search with the library searched too (an "and/or" search's zone answer): it counts whatever is found,
+         * and finding nothing is allowed, as the player could have searched the library alone (CR 701.23b).
+         */
+        public SearchLibraryAndOrGraveyardChoice withLibrarySearched() {
+            return new SearchLibraryAndOrGraveyardChoice(playerId, pool, libraryCardIds, handCardIds, outsideGameCardIds,
+                    true, cardLabel, destination, attachToPermanentId, enterWithCounterType, enterWithCounterCount,
+                    maxCount, attachAuraOrEquipment, shuffleAfterSearch, oppositionAgentControllerId, exileCardIds,
+                    true);
+        }
+
+        /** This search without the library: its cards leave the pool, and no Opposition Agent controls the search. */
+        public SearchLibraryAndOrGraveyardChoice withoutLibrary() {
+            return new SearchLibraryAndOrGraveyardChoice(playerId,
+                    pool.stream().filter(card -> !libraryCardIds.contains(card.getId())).toList(), Set.of(),
+                    handCardIds, outsideGameCardIds, false, cardLabel, destination, attachToPermanentId,
+                    enterWithCounterType, enterWithCounterCount, maxCount, attachAuraOrEquipment, shuffleAfterSearch,
+                    null, exileCardIds, optional);
+        }
+
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds(), mustFind() ? 1 : 0,
@@ -2010,6 +2033,32 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         public boolean mustFind() {
             return !optional && maxCount == 1 && pool.stream().anyMatch(card -> !libraryCardIds.contains(card.getId())
                     && !handCardIds.contains(card.getId()));
+        }
+    }
+
+    /**
+     * An "and/or" search's zones (CR 701.23a): whether {@code search}'s player searches their library as well as
+     * {@code otherZones}, asked before any card is shown. A library searched counts as searched whatever is found; one
+     * not searched isn't searched or shuffled (the Dark Supplicant rulings). The other zones need no answer: a card can
+     * be left unfound in a hidden one (CR 701.23b), and a public one is searched whenever the library isn't. On yes
+     * {@code search} is shown {@link SearchLibraryAndOrGraveyardChoice#withLibrarySearched() with the library}, on no
+     * {@link SearchLibraryAndOrGraveyardChoice#withoutLibrary() without it}.
+     */
+    record AndOrSearchZonesChoice(SearchLibraryAndOrGraveyardChoice search, Set<Zone> otherZones)
+            implements PendingInteraction {
+
+        public AndOrSearchZonesChoice {
+            otherZones = Set.copyOf(otherZones);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return search.playerId();
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return InteractionOptions.ACCEPT_DECLINE;
         }
     }
 

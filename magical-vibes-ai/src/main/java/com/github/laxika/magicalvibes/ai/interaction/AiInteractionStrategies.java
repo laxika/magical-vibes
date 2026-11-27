@@ -90,6 +90,7 @@ public final class AiInteractionStrategies {
         register(new RevealAnyNumberOfCardsFromHandChoiceAiStrategy());
         register(new DoomsdayChoiceAiStrategy());
         register(new SearchLibraryAndOrGraveyardChoiceAiStrategy());
+        register(new AndOrSearchZonesChoiceAiStrategy());
         register(new SearchLibraryToTopChoiceAiStrategy());
         register(new IntuitionSearchChoiceAiStrategy());
         register(new TurtlesForeverSearchChoiceAiStrategy());

@@ -26,6 +26,7 @@ class TowerWinderTest extends BaseCardTest {
 
         resolveAllTriggers();
 
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice).isNotNull();
@@ -46,6 +47,7 @@ class TowerWinderTest extends BaseCardTest {
 
         resolveAllTriggers();
 
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice).isNotNull();
@@ -66,6 +68,7 @@ class TowerWinderTest extends BaseCardTest {
 
         resolveAllTriggers();
 
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(otherCard);
     }
@@ -80,6 +83,7 @@ class TowerWinderTest extends BaseCardTest {
         castTowerWinder();
         resolveAllTriggers();
 
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice).isNotNull();
@@ -100,6 +104,7 @@ class TowerWinderTest extends BaseCardTest {
         castTowerWinder();
         resolveAllTriggers();
 
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -118,6 +123,7 @@ class TowerWinderTest extends BaseCardTest {
         castTowerWinder();
         resolveAllTriggers();
 
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(libraryTower);

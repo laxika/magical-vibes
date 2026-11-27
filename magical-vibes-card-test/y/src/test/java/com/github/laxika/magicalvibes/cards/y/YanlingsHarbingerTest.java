@@ -33,6 +33,7 @@ class YanlingsHarbingerTest extends BaseCardTest {
         setupAndCast();
 
         resolveMay(true);
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(graveyardCopy.getId()));
 
         harness.assertInHand(player1, "Mu Yanling, Celestial Wind");
@@ -47,6 +48,7 @@ class YanlingsHarbingerTest extends BaseCardTest {
 
         resolveMay(true);
 
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice search =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(search.pool()).hasSize(1);
@@ -74,6 +76,7 @@ class YanlingsHarbingerTest extends BaseCardTest {
         setupAndCast();
 
         resolveMay(true);
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(selected);
@@ -89,6 +92,7 @@ class YanlingsHarbingerTest extends BaseCardTest {
         setupAndCast();
 
         resolveMay(true);
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -122,6 +126,7 @@ class YanlingsHarbingerTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(unrelated);
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 

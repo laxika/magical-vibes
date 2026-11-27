@@ -52,6 +52,7 @@ class LilianasInfluenceTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(liliana.getId()));
 
         harness.assertInHand(player1, "Liliana, Death Wielder");
@@ -68,6 +69,7 @@ class LilianasInfluenceTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice.playerId()).isEqualTo(player1.getId());
@@ -101,6 +103,7 @@ class LilianasInfluenceTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosen);
@@ -117,6 +120,7 @@ class LilianasInfluenceTest extends BaseCardTest {
         setupAndCast();
 
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of());
 

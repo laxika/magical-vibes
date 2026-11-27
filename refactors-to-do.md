@@ -1314,9 +1314,7 @@ Don't commit.
 - `PutExiledCardsIntoOwnersGraveyardEffect` (Covenant of Minds) gives no CR 404.3 order prompt for the cards it puts into one graveyard; an engine-wide policy, see entry 17 (EB-3). Sure, low.
 - Ezuri's Predation: "those creatures" are read at the fight, not when counted (CR 608.2h).
 
-#### Missing events or records (searches, coin flips, seeks, shuffles, counters, draws) (1)
-
-- An "and/or" search (`SearchLibraryAndOrGraveyardChoice`: Last Light of Durin's Day's "search your hand and/or library", every "library and/or graveyard" card) has no "do you search your library?": a pick of nothing counts as a library search (search triggers, shuffle) and a pick from another zone as none, so a player can't search only the hand or graveyard and find nothing, or search the library too and take a graveyard card. Needs the zones chosen before the pool is shown (CR 701.23a; `MaySearchLibraryChoice` asks it for a single library). Sure, low; LS-1 left it (about 48 cards' tests).
+#### Missing events or records (searches, coin flips, seeks, shuffles, counters, draws) (0)
 
 #### Wrong targets and choices (3)
 

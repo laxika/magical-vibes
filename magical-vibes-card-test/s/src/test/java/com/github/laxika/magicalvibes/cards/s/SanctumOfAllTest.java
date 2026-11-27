@@ -34,6 +34,7 @@ class SanctumOfAllTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         HondenOfSeeingWinds honden = gd.playerDecks.get(player1.getId()).stream()
@@ -56,6 +57,7 @@ class SanctumOfAllTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(honden.getId()));
 
@@ -155,6 +157,7 @@ class SanctumOfAllTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Shrine entering during upkeep does not trigger that upkeep")
     void shrineEnteringDuringUpkeepDoesNotTriggerThatUpkeep() {
         HondenOfCleansingFire shrine = new HondenOfCleansingFire();
         harness.setGraveyard(player1, List.of(shrine));
@@ -163,6 +166,7 @@ class SanctumOfAllTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(shrine.getId()));
 

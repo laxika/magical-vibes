@@ -37,6 +37,7 @@ class SunBlessedMountTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell -> ETB may on stack
         harness.passBothPriorities(); // resolve MayEffect -> may prompt
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of(huatli.getId()));
@@ -56,6 +57,7 @@ class SunBlessedMountTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect -> may prompt
         harness.handleMayAbilityChosen(player1, true);
 
+        harness.handleMayAbilityChosen(player1, true);
         // Library search prompt should appear
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
@@ -114,6 +116,7 @@ class SunBlessedMountTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(huatli.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(huatli);
@@ -131,6 +134,7 @@ class SunBlessedMountTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();

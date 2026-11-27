@@ -59,6 +59,7 @@ class OkosHospitalityTest extends BaseCardTest {
 
         castAndAcceptSearch();
 
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice.validCardIds()).containsExactly(libraryOko.getId(), graveyardOko.getId());

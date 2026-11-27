@@ -28,6 +28,7 @@ class RuneforgeChampionTest extends BaseCardTest {
 
         resolveEnterTheBattlefieldTrigger(true);
 
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice).isNotNull();
@@ -46,6 +47,7 @@ class RuneforgeChampionTest extends BaseCardTest {
 
         resolveEnterTheBattlefieldTrigger(true);
 
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice).isNotNull();
@@ -130,6 +132,7 @@ class RuneforgeChampionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Combined search returns only one rune")
     void combinedSearchReturnsOnlyOneRune() {
         RuneOfSustenance libraryRune = new RuneOfSustenance();
         RuneOfSustenance graveyardRune = new RuneOfSustenance();
@@ -138,6 +141,7 @@ class RuneforgeChampionTest extends BaseCardTest {
         castChampion();
         resolveEnterTheBattlefieldTrigger(true);
 
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice.pool()).containsExactlyInAnyOrder(libraryRune, graveyardRune);

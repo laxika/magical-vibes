@@ -35,6 +35,7 @@ class TaleOfMomoTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(graveyardAlly, graveyardNonAlly));
         castWithFullCost();
 
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice.validCardIds()).containsExactly(libraryAlly.getId(), graveyardAlly.getId());
@@ -55,6 +56,7 @@ class TaleOfMomoTest extends BaseCardTest {
         harness.castFromHand(player1, new TaleOfMomo(), "{W}");
         harness.passBothPriorities();
 
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class))
                 .isNotNull();
     }
@@ -69,6 +71,7 @@ class TaleOfMomoTest extends BaseCardTest {
         harness.castFromHand(player1, new TaleOfMomo(), "{W}");
         harness.passBothPriorities();
 
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class))
                 .isNotNull();
         harness.assertInGraveyard(player1, "Aardvark Sloth");
@@ -84,6 +87,7 @@ class TaleOfMomoTest extends BaseCardTest {
         harness.castFromHand(player1, new TaleOfMomo(), "{W}");
         harness.passBothPriorities();
 
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class))
                 .isNotNull();
         harness.assertNotOnBattlefield(player1, "Aardvark Sloth");
@@ -127,6 +131,7 @@ class TaleOfMomoTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of());
         castWithFullCost();
 
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(ally.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(ally);
@@ -148,6 +153,7 @@ class TaleOfMomoTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(ally));
         castWithFullCost();
 
+        harness.handleMayAbilityChosen(player1, false);
         harness.handleMultipleCardsChosen(player1, List.of(ally.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(ally);
@@ -167,12 +173,48 @@ class TaleOfMomoTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of());
         castWithFullCost();
 
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(ally);
         harness.passBothPriorities();
         harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Under an opponent's Opposition Agent, an Ally found in the graveyard with the library is exiled too")
+    @CardUsed({OppositionAgent.class})
+    void oppositionAgentExilesAGraveyardFind() {
+        Card ally = new AangAirNomad();
+        harness.addToBattlefield(player2, new OppositionAgent());
+        harness.setLibrary(player1, List.of(new Plains()));
+        harness.setGraveyard(player1, List.of(ally));
+        castWithFullCost();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player2, List.of(ally.getId()));
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(ally);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(ally);
+        assertThat(gd.exilePlayPermissionHolder(ally.getId())).isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("Without the library, an opponent's Opposition Agent doesn't control the search")
+    @CardUsed({OppositionAgent.class})
+    void oppositionAgentDoesNotControlAGraveyardOnlySearch() {
+        Card ally = new AangAirNomad();
+        harness.addToBattlefield(player2, new OppositionAgent());
+        harness.setLibrary(player1, List.of(new Plains()));
+        harness.setGraveyard(player1, List.of(ally));
+        castWithFullCost();
+
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction().decidingPlayerId()).isEqualTo(player1.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(ally.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(ally);
     }
 
     @Test
@@ -185,6 +227,9 @@ class TaleOfMomoTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of());
         castWithFullCost();
 
+        // The searcher chooses the zones before the search; the Agent's controller then controls the search.
+        assertThat(gd.interaction.activeInteraction().decidingPlayerId()).isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction interaction = gd.interaction.activeInteraction();
         assertThat(interaction).isNotNull();
         assertThat(interaction.decidingPlayerId()).isEqualTo(player2.getId());
@@ -216,6 +261,7 @@ class TaleOfMomoTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(opposingGraveyardAlly));
         castWithFullCost();
 
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice.validCardIds()).containsExactly(ally.getId());
@@ -235,6 +281,7 @@ class TaleOfMomoTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(graveyardAlly));
         castWithFullCost();
 
+        harness.handleMayAbilityChosen(player1, true);
         assertThatThrownBy(() -> harness.handleMultipleCardsChosen(
                 player1, List.of(libraryAlly.getId(), graveyardAlly.getId())))
                 .isInstanceOf(IllegalStateException.class);
@@ -252,6 +299,7 @@ class TaleOfMomoTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of());
         castWithFullCost();
 
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Tale of Momo");

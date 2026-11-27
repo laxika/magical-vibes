@@ -40,6 +40,7 @@ class ChandrasOutburstTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(chandraBold.getId()));
 
         // Damage dealt
@@ -91,6 +92,7 @@ class ChandrasOutburstTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Finds named card in library")
     void findsNamedCardInLibrary() {
         var chandra = new ChandraBoldPyromancer();
         harness.setLibrary(player1, List.of(chandra));
@@ -99,6 +101,7 @@ class ChandrasOutburstTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(chandra.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(chandra);
@@ -107,6 +110,7 @@ class ChandrasOutburstTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("May fail to find named card in library")
     void mayFailToFindNamedCardInLibrary() {
         var chandra = new ChandraBoldPyromancer();
         harness.setLibrary(player1, List.of(chandra));
@@ -115,6 +119,7 @@ class ChandrasOutburstTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();

@@ -29,6 +29,7 @@ class VisionQuestTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(ornithopter));
         castVisionQuest(0);
 
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice.pool()).containsExactly(ornithopter);
@@ -48,6 +49,7 @@ class VisionQuestTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of());
         castVisionQuest(4);
 
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice.pool()).containsExactly(ornithopter);
@@ -67,6 +69,7 @@ class VisionQuestTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of());
 
         castVisionQuest(4);
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Grizzly Bears"), Keyword.HASTE)).isFalse();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -80,6 +83,7 @@ class VisionQuestTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of());
 
         castVisionQuest(4);
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Grizzly Bears"), Keyword.HASTE)).isFalse();
@@ -95,6 +99,7 @@ class VisionQuestTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of());
 
         castVisionQuest(3);
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice.pool()).containsExactly(viv);
@@ -114,6 +119,7 @@ class VisionQuestTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new VivVisionTeenSynthezoid()));
 
         castVisionQuest(2);
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice.pool()).containsExactly(ornithopter);
@@ -134,6 +140,7 @@ class VisionQuestTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(ornithopter));
 
         castVisionQuest(4);
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(ornithopter.getId()));
 
         assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Ornithopter"), Keyword.HASTE)).isTrue();

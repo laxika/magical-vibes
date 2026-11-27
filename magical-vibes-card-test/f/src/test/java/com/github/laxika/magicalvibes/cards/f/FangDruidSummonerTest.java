@@ -40,6 +40,7 @@ class FangDruidSummonerTest extends BaseCardTest {
 
         resolveMay(true);
 
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice).isNotNull();
@@ -62,6 +63,7 @@ class FangDruidSummonerTest extends BaseCardTest {
 
         resolveMay(true);
 
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice).isNotNull();
@@ -82,6 +84,7 @@ class FangDruidSummonerTest extends BaseCardTest {
 
         resolveMay(true);
 
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(creatureWithAbility);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creatureWithAbility);
@@ -113,6 +116,7 @@ class FangDruidSummonerTest extends BaseCardTest {
         setupAndCast();
 
         resolveMay(true);
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -134,6 +138,7 @@ class FangDruidSummonerTest extends BaseCardTest {
 
         resolveMay(true);
 
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice).isNotNull();
@@ -157,6 +162,7 @@ class FangDruidSummonerTest extends BaseCardTest {
 
         resolveMay(true);
 
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice).isNotNull();

@@ -30,6 +30,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class TheFirstDoctorTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Searches the library or graveyard for TARDIS")
     void searchesForTardisInLibraryOrGraveyard() {
         Card libraryTardis = new Tardis();
         Card graveyardTardis = new Tardis();
@@ -39,6 +40,7 @@ class TheFirstDoctorTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice.validCardIds()).containsExactly(libraryTardis.getId(), graveyardTardis.getId());
@@ -79,6 +81,7 @@ class TheFirstDoctorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Retrieves TARDIS from the library and leaves the other cards there")
     void retrievesTardisFromLibraryAndLeavesOtherCardsThere() {
         Card tardis = new Tardis();
         Card other = new MindStone();
@@ -89,6 +92,7 @@ class TheFirstDoctorTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice.validCardIds()).containsExactly(tardis.getId());
@@ -99,6 +103,7 @@ class TheFirstDoctorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can fail to find TARDIS in the library")
     void canFailToFindTardisInLibrary() {
         Card tardis = new Tardis();
         harness.setLibrary(player1, List.of(tardis));
@@ -107,6 +112,7 @@ class TheFirstDoctorTest extends BaseCardTest {
         harness.castFromHand(player1, new TheFirstDoctor(), "{1}{W}{U}");
         harness.passBothPriorities();
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();

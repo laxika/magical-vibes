@@ -42,6 +42,7 @@ class GideonsBattleCryTest extends BaseCardTest {
 
         castBattleCry();
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(gideon.getId()));
 
         harness.assertInHand(player1, "Gideon, the Oathsworn");
@@ -57,6 +58,7 @@ class GideonsBattleCryTest extends BaseCardTest {
         castBattleCry();
         harness.handleMayAbilityChosen(player1, true);
 
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice.pool()).containsExactly(gideon);

@@ -25,6 +25,7 @@ class ElspethsDevoteeTest extends BaseCardTest {
         enterDevotee();
 
         chooseToSearch();
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice.validCardIds()).containsExactly(elspeth.getId());
@@ -45,6 +46,7 @@ class ElspethsDevoteeTest extends BaseCardTest {
         enterDevotee();
 
         chooseToSearch();
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice.validCardIds()).containsExactly(elspeth.getId());

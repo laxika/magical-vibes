@@ -35,6 +35,7 @@ class BasrisAegisTest extends BaseCardTest {
         assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(basri.getId()));
 
         harness.assertInHand(player1, "Basri, Devoted Paladin");
@@ -64,6 +65,7 @@ class BasrisAegisTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice search =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(search.pool()).containsExactly(basri);

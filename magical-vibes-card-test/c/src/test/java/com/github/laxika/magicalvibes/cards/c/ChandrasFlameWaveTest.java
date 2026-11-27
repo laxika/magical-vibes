@@ -2,12 +2,14 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.p.PsychogenicProbe;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -15,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ChandrasFlameWave.class, ChandraFlamesFury.class, GiantSpider.class, HillGiant.class})
+@CardUsed({ChandrasFlameWave.class, ChandraFlamesFury.class, GiantSpider.class, HillGiant.class, PsychogenicProbe.class})
 class ChandrasFlameWaveTest extends BaseCardTest {
 
     @Test
@@ -45,6 +47,7 @@ class ChandrasFlameWaveTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 5);
 
         harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(chandraFlamesFury.getId()));
 
         harness.assertInHand(player1, "Chandra, Flame's Fury");
@@ -61,6 +64,7 @@ class ChandrasFlameWaveTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, player2.getId());
 
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class)).isNotNull();
         harness.handleMultipleCardsChosen(player1, List.of(libraryCopy.getId()));
 
@@ -104,6 +108,7 @@ class ChandrasFlameWaveTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 5);
 
         harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of());
 
         harness.assertLife(player2, 18);
@@ -126,5 +131,56 @@ class ChandrasFlameWaveTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(graveyardCopy);
         harness.assertNotInHand(player1, "Chandra, Flame's Fury");
         assertThat(gd.interaction.activeInteraction()).isNotNull();
+    }
+
+    @Nested
+    @DisplayName("Choosing the zones of \"your library and/or graveyard\"")
+    class ZoneChoice {
+
+        @Test
+        @DisplayName("Without the library, a Chandra in the graveyard has to be found and the library isn't shuffled")
+        void graveyardOnlyMustFindAndDoesNotShuffle() {
+            ChandraFlamesFury graveyardCopy = new ChandraFlamesFury();
+            ChandraFlamesFury libraryCopy = new ChandraFlamesFury();
+            harness.setGraveyard(player1, List.of(graveyardCopy));
+            harness.setLibrary(player1, List.of(libraryCopy));
+            harness.addToBattlefield(player2, new PsychogenicProbe());
+            castFlameWave();
+
+            harness.handleMayAbilityChosen(player1, false);
+            assertThat(choice().validCardIds()).containsExactly(graveyardCopy.getId());
+            assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                    .isInstanceOf(IllegalStateException.class);
+            harness.handleMultipleCardsChosen(player1, List.of(graveyardCopy.getId()));
+
+            harness.assertInHand(player1, "Chandra, Flame's Fury");
+            assertThat(gd.playersWhoSearchedLibraryThisTurn).doesNotContain(player1.getId());
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
+        @DisplayName("With the library, the Chandra in the graveyard may be left and the library is searched")
+        void withLibraryMayFindNothing() {
+            ChandraFlamesFury graveyardCopy = new ChandraFlamesFury();
+            harness.setGraveyard(player1, List.of(graveyardCopy));
+            harness.setLibrary(player1, List.of(new HillGiant()));
+            castFlameWave();
+
+            harness.handleMayAbilityChosen(player1, true);
+            harness.handleMultipleCardsChosen(player1, List.of());
+
+            harness.assertInGraveyard(player1, "Chandra, Flame's Fury");
+            assertThat(gd.playersWhoSearchedLibraryThisTurn).contains(player1.getId());
+        }
+
+        private PendingInteraction.SearchLibraryAndOrGraveyardChoice choice() {
+            return gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
+        }
+
+        private void castFlameWave() {
+            harness.setHand(player1, List.of(new ChandrasFlameWave()));
+            harness.addMana(player1, ManaColor.RED, 5);
+            harness.castAndResolveSorcery(player1, 0, player2.getId());
+        }
     }
 }

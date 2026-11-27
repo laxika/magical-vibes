@@ -42,6 +42,7 @@ class VisageOfBolasTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(bolas.getId()));
 
         harness.assertInHand(player1, "Nicol Bolas, the Deceiver");
@@ -59,6 +60,7 @@ class VisageOfBolasTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
+        harness.handleMayAbilityChosen(player1, true);
         var choice = gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice.playerId()).isEqualTo(player1.getId());
         assertThat(choice.libraryCardIds()).containsExactly(bolas.getId());
@@ -162,6 +164,7 @@ class VisageOfBolasTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Selected library card is put into hand")
     void selectedLibraryCardIsPutIntoHand() {
         Card bolas = new NicolBolasTheDeceiver();
         harness.setLibrary(player1, List.of(bolas));
@@ -169,6 +172,7 @@ class VisageOfBolasTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(bolas.getId()));
 
@@ -178,6 +182,7 @@ class VisageOfBolasTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Library search can fail to find matching card")
     void librarySearchCanFailToFindMatchingCard() {
         Card bolas = new NicolBolasTheDeceiver();
         harness.setLibrary(player1, List.of(bolas));
@@ -185,6 +190,7 @@ class VisageOfBolasTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of());
 

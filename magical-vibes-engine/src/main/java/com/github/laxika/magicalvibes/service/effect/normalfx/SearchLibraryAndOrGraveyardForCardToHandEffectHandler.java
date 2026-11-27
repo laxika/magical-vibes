@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegi
 import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -31,7 +32,8 @@ import org.springframework.stereotype.Component;
 /**
  * Offers one matching card the controller owns from the effect's zones: their library (unless a rule prevents the
  * search), graveyard, cards outside the game (judged as they are: no effect of the game applies to them, CR 400.11)
- * and face-up exile (a face-down card has no characteristics to match, CR 406.3).
+ * and face-up exile (a face-down card has no characteristics to match, CR 406.3). When the library can be searched
+ * with another zone, the player first chooses whether to search it ({@code AndOrSearchZonesChoice}).
  */
 @Component
 @RequiredArgsConstructor
@@ -100,6 +102,24 @@ public class SearchLibraryAndOrGraveyardForCardToHandEffectHandler implements No
 
         String playerName = gameData.playerIdToName.get(playerId);
         String cardLabel = CardPredicateUtils.describeFilter(filter);
+        UUID oppositionAgentControllerId = librarySearchAllowed
+                ? librarySearchSupport.oppositionAgentControllerId(gameData, playerId)
+                : null;
+        PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
+                new PendingInteraction.SearchLibraryAndOrGraveyardChoice(
+                        playerId, new ArrayList<>(pool.values()), libraryCardIds, Set.of(), outsideGameCardIds,
+                        librarySearchAllowed, cardLabel, LibrarySearchDestination.HAND, null, null, 0,
+                        1, false, search.shuffleAfterSearch(), oppositionAgentControllerId,
+                        exileCardIds, search.optional());
+        Set<Zone> otherZones = EnumSet.noneOf(Zone.class);
+        otherZones.addAll(zones);
+        otherZones.remove(Zone.LIBRARY);
+        if (librarySearchAllowed && !otherZones.isEmpty()) {
+            // "And/or": the player chooses whether the library is among the zones searched (CR 701.23a).
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.AndOrSearchZonesChoice(choice,
+                    otherZones));
+            return;
+        }
         if (pool.isEmpty()) {
             if (!searchesLibrary) {
                 gameLogService.append(gameData, GameLog.text(playerName + " finds no " + cardLabel + " "
@@ -115,47 +135,12 @@ public class SearchLibraryAndOrGraveyardForCardToHandEffectHandler implements No
                 LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
             }
             if (librarySearchAllowed) {
-                gameLogService.append(gameData, GameLog.text(playerName + " searches their " + searched(zones)
-                        + " but finds no " + cardLabel + "." + (shuffled ? " Library is shuffled." : "")));
+                gameLogService.append(gameData, GameLog.text(playerName + " searches their library but finds no "
+                        + cardLabel + "." + (shuffled ? " Library is shuffled." : "")));
             }
             return;
         }
-
-        UUID oppositionAgentControllerId = librarySearchAllowed
-                ? librarySearchSupport.oppositionAgentControllerId(gameData, playerId)
-                : null;
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.SearchLibraryAndOrGraveyardChoice(
-                playerId, new ArrayList<>(pool.values()), libraryCardIds, Set.of(), outsideGameCardIds,
-                librarySearchAllowed, cardLabel, LibrarySearchDestination.HAND, null, null, 0,
-                1, false, searchesLibrary && search.shuffleAfterSearch(), oppositionAgentControllerId,
-                exileCardIds, search.optional()));
-        if (searchesLibrary) {
-            gameLogService.append(gameData, GameLog.text(playerName + " searches their " + searched(zones, "and/or")
-                    + "."));
-        }
-    }
-
-    /** "library and graveyard", "library, graveyard, and outside the game". */
-    private static String searched(Set<Zone> zones) {
-        return searched(zones, "and");
-    }
-
-    private static String searched(Set<Zone> zones, String conjunction) {
-        List<String> names = new ArrayList<>();
-        for (Zone zone : List.of(Zone.LIBRARY, Zone.GRAVEYARD, Zone.OUTSIDE_GAME, Zone.EXILE)) {
-            if (zones.contains(zone)) {
-                names.add(switch (zone) {
-                    case LIBRARY -> "library";
-                    case GRAVEYARD -> "graveyard";
-                    case OUTSIDE_GAME -> "outside the game";
-                    default -> "exile";
-                });
-            }
-        }
-        if (names.size() <= 2) {
-            return String.join(" " + conjunction + " ", names);
-        }
-        return String.join(", ", names.subList(0, names.size() - 1)) + ", " + conjunction + " " + names.getLast();
+        interactionHandlerRegistry.begin(gameData, choice);
     }
 
     /** Where a card taken without searching a library was looked for: "outside the game or face-up in exile". */

@@ -33,6 +33,7 @@ class LilianasScornTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Grizzly Bears");
 
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(liliana.getId()));
 
         harness.assertInHand(player1, "Liliana, Death Mage");
@@ -65,6 +66,7 @@ class LilianasScornTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of(liliana.getId()));
 

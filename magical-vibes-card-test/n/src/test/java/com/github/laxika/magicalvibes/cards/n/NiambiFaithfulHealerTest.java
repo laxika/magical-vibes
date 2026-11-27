@@ -38,6 +38,7 @@ class NiambiFaithfulHealerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell -> ETB may on stack
         harness.passBothPriorities(); // resolve MayEffect -> may prompt
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(teferi.getId()));
 
         harness.assertInHand(player1, "Teferi, Timebender");
@@ -55,6 +56,7 @@ class NiambiFaithfulHealerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect -> may prompt
         harness.handleMayAbilityChosen(player1, true);
 
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice).isNotNull();
@@ -112,6 +114,7 @@ class NiambiFaithfulHealerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(teferi.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(teferi);
@@ -126,6 +129,7 @@ class NiambiFaithfulHealerTest extends BaseCardTest {
         setupAndCast();
         harness.passBothPriorities();
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of());
 

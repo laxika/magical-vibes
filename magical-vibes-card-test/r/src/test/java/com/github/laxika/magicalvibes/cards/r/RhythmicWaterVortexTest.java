@@ -33,6 +33,7 @@ class RhythmicWaterVortexTest extends BaseCardTest {
                 .filteredOn(card -> "Grizzly Bears".equals(card.getName()))
                 .hasSize(2);
 
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice).isNotNull();
@@ -51,6 +52,7 @@ class RhythmicWaterVortexTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(muYanling));
         cast(List.of());
 
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice).isNotNull();
@@ -70,6 +72,7 @@ class RhythmicWaterVortexTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of());
 
         cast(List.of(creature.getId()));
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInHand(player1, "Grizzly Bears");
@@ -87,6 +90,7 @@ class RhythmicWaterVortexTest extends BaseCardTest {
 
         cast(List.of());
 
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice.validCardIds()).containsExactlyInAnyOrder(libraryCopy.getId(), graveyardCopy.getId());
@@ -108,6 +112,7 @@ class RhythmicWaterVortexTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of());
 
         cast(List.of());
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of());
 
         harness.assertNotInHand(player1, "Mu Yanling");
@@ -158,6 +163,7 @@ class RhythmicWaterVortexTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).remove(first);
 
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(muYanling.getId()));
 
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(second.getCard());

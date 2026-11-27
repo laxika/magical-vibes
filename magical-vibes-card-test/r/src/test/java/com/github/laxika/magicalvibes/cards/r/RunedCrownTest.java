@@ -27,6 +27,7 @@ class RunedCrownTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(rune));
 
         Permanent crown = castCrownAndAcceptSearch();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(rune.getId()));
 
         Permanent enteredRune = findPermanent(player1, "Rune of Sustenance");
@@ -44,6 +45,7 @@ class RunedCrownTest extends BaseCardTest {
 
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(rune.getId()));
 
         Permanent crown = findPermanent(player1, "Runed Crown");
@@ -60,6 +62,7 @@ class RunedCrownTest extends BaseCardTest {
 
         Permanent crown = castCrownAndAcceptSearch();
 
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice search =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(search).isNotNull();
@@ -106,6 +109,7 @@ class RunedCrownTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(rune, new BeskirShieldmate()));
 
         castCrownAndAcceptSearch();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of());
 
         harness.assertNotOnBattlefield(player1, "Rune of Sustenance");
@@ -119,6 +123,7 @@ class RunedCrownTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of());
 
         castCrownAndAcceptSearch();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertOnBattlefield(player1, "Runed Crown");
         harness.assertNotOnBattlefield(player1, "Rune of Sustenance");
@@ -144,6 +149,7 @@ class RunedCrownTest extends BaseCardTest {
         harness.castInstant(player2, 0, crown.getId());
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(rune.getId()));
         resolveAllTriggers();
 
@@ -164,6 +170,7 @@ class RunedCrownTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castArtifact(player1, 0);
         resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(rune.getId()));
         resolveAllTriggers();

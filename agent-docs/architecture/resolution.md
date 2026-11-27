@@ -74,6 +74,11 @@ A player who may search is asked whether to search (`PendingInteraction.MaySearc
 Owner: `MaySearchLibraryChoiceInteractionHandler`, `BasicLandSearchQueueSupport`.
 Why: one decline can't say both "didn't search" (no shuffle, Boldwyr Heavyweights ruling) and "found nothing".
 
+### An "and/or" search chooses its zones first (CR 701.23a, 701.23h)
+A search of the library "and/or" another zone asks whether the library is searched (`PendingInteraction.AndOrSearchZonesChoice`) before any card is shown; a searched library counts and shuffles whatever is found. An "and" search asks nothing and searches the library once.
+Owner: `AndOrSearchZonesChoiceInteractionHandler`, `SearchLibraryAndGraveyardForCardsToHandEffectHandler`.
+Why: reading the zones from the pick made a pick of nothing a library search and a graveyard pick none (the Dark Supplicant rulings).
+
 ### Refining a begun prompt is presentation-only
 `InteractionState.replaceActiveInteraction` keeps the decision id and never changes what is decided or the legal answers: a colour greyed by `ManaChoiceNarrowingService` stays answerable. (A `ManaPaymentIntent` also holds the tap's non-mana triggers until the spell or ability is on the stack.)
 Owner: `InteractionState`, `ManaPaymentIntent`.

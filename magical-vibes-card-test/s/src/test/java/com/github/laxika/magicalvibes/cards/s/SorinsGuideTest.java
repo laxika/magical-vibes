@@ -35,6 +35,7 @@ class SorinsGuideTest extends BaseCardTest {
         setupAndCast();
 
         resolveMayPrompt(true);
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of(sorin.getId()));
@@ -52,6 +53,7 @@ class SorinsGuideTest extends BaseCardTest {
 
         resolveMayPrompt(true);
 
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
@@ -108,6 +110,7 @@ class SorinsGuideTest extends BaseCardTest {
         setupAndCast();
 
         resolveMayPrompt(true);
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(sorin.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(sorin);
@@ -122,6 +125,7 @@ class SorinsGuideTest extends BaseCardTest {
         setupAndCast();
 
         resolveMayPrompt(true);
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of());
 
         harness.assertNotInHand(player1, "Sorin, Vampire Lord");

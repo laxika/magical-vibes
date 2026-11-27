@@ -33,6 +33,7 @@ class DomrisNodorogTest extends BaseCardTest {
         castNodorog();
 
         resolveSearch(true);
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(domri.getId()));
 
         harness.assertInHand(player1, "Domri, City Smasher");
@@ -49,6 +50,7 @@ class DomrisNodorogTest extends BaseCardTest {
 
         resolveSearch(true);
 
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice).isNotNull();

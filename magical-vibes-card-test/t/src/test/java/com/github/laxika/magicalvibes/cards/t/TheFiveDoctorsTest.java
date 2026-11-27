@@ -22,6 +22,30 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class TheFiveDoctorsTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Without the library, only the graveyard's Doctors are offered and the library isn't searched")
+    void searchingOnlyTheGraveyardOffersOnlyItsDoctors() {
+        Card libraryDoctor = new TheTenthDoctor();
+        Card graveyardDoctor = new TheFourthDoctor();
+        harness.setLibrary(player1, List.of(libraryDoctor));
+        harness.setGraveyard(player1, List.of(graveyardDoctor));
+        harness.setHand(player1, List.of(new TheFiveDoctors()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 10);
+
+        harness.castKickedSorcery(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class)
+                .validCardIds()).containsExactly(graveyardDoctor.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(graveyardDoctor.getId()));
+
+        harness.assertOnBattlefield(player1, "The Fourth Doctor");
+        assertThat(gd.playersWhoSearchedLibraryThisTurn).doesNotContain(player1.getId());
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryDoctor);
+    }
+
+    @Test
+    @DisplayName("May choose zero doctors even when doctors are available")
     void mayChooseZeroDoctorsEvenWhenDoctorsAreAvailable() {
         Card libraryDoctor = new TheTenthDoctor();
         Card graveyardDoctor = new TheFourthDoctor();
@@ -33,6 +57,7 @@ class TheFiveDoctorsTest extends BaseCardTest {
 
         harness.castKickedSorcery(player1, 0);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryDoctor);
@@ -43,6 +68,7 @@ class TheFiveDoctorsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Limits the selection to five Doctors and excludes the opponent's zones")
     void limitsSelectionToFiveDoctorsAndExcludesOpponentsZones() {
         List<Card> doctors = IntStream.range(0, 6)
                 .mapToObj(i -> (Card) new TheTenthDoctor()).toList();
@@ -59,6 +85,7 @@ class TheFiveDoctorsTest extends BaseCardTest {
         harness.castSorcery(player1, 0);
         harness.passBothPriorities();
 
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice.validCardIds()).containsExactlyInAnyOrderElementsOf(
@@ -77,6 +104,7 @@ class TheFiveDoctorsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Searches up to five doctors from library and graveyard into hand")
     void searchesUpToFiveDoctorsFromLibraryAndGraveyardIntoHand() {
         Card libraryDoctor = new TheTenthDoctor();
         Card graveyardDoctor = new TheFourthDoctor();
@@ -90,6 +118,7 @@ class TheFiveDoctorsTest extends BaseCardTest {
         harness.castSorcery(player1, 0);
         harness.passBothPriorities();
 
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice.maxCount()).isEqualTo(5);
@@ -103,6 +132,7 @@ class TheFiveDoctorsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Kicked search puts selected doctors onto the battlefield")
     void kickedSearchPutsSelectedDoctorsOntoTheBattlefield() {
         Card libraryDoctor = new TheTenthDoctor();
         Card graveyardDoctor = new TheFourthDoctor();
@@ -116,6 +146,7 @@ class TheFiveDoctorsTest extends BaseCardTest {
         harness.castKickedSorcery(player1, 0);
         harness.passBothPriorities();
 
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class))
                 .isNotNull();
         harness.handleMultipleCardsChosen(player1, List.of(libraryDoctor.getId(), graveyardDoctor.getId()));

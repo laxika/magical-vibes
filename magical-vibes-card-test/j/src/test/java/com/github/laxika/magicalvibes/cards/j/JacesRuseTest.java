@@ -33,6 +33,7 @@ class JacesRuseTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of(choice.pool().getFirst().getId()));
@@ -63,6 +64,7 @@ class JacesRuseTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice.pool()).hasSize(1);

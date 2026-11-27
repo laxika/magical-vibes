@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -25,6 +26,7 @@ class GarruksWarsteedTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Searches the library for Garruk, Savage Herald")
     void searchesLibraryForGarrukSavageHerald() {
         Card garruk = new GarrukSavageHerald();
         Card forest = new Forest();
@@ -33,6 +35,7 @@ class GarruksWarsteedTest extends BaseCardTest {
 
         resolveMay(true);
 
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice).isNotNull();
@@ -45,6 +48,7 @@ class GarruksWarsteedTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Searches the graveyard for Garruk, Savage Herald")
     void searchesGraveyardForGarrukSavageHerald() {
         Card garruk = new GarrukSavageHerald();
         harness.setGraveyard(player1, List.of(garruk));
@@ -52,6 +56,7 @@ class GarruksWarsteedTest extends BaseCardTest {
 
         resolveMay(true);
 
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(garruk.getId()));
 
         harness.assertInHand(player1, "Garruk, Savage Herald");
@@ -59,6 +64,7 @@ class GarruksWarsteedTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Search excludes cards with other names")
     void searchExcludesCardsWithOtherNames() {
         Card forest = new Forest();
         setLibrary(forest);
@@ -66,6 +72,7 @@ class GarruksWarsteedTest extends BaseCardTest {
 
         resolveMay(true);
 
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(forest);

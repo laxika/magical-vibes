@@ -59,6 +59,20 @@ class SpecializedInteractionProjectionTest {
     }
 
     @Test
+    @DisplayName("An and/or search's zones are asked as an accept/decline prompt naming the other zones")
+    void andOrSearchZonesChoiceIsAnAcceptDecline() {
+        InteractionPromptMessage message = prompt(new PendingInteraction.AndOrSearchZonesChoice(
+                new PendingInteraction.SearchLibraryAndOrGraveyardChoice(controllerId, List.of(), Set.of(), true,
+                        "Dragon card"),
+                Set.of(Zone.HAND, Zone.GRAVEYARD)));
+
+        assertThat(message.shape()).isEqualTo(InteractionShape.ACCEPT_DECLINE);
+        assertThat(message.prompt()).isEqualTo(
+                "Do you search your library for a Dragon card? If you don't, you search only your hand and your"
+                        + " graveyard.");
+    }
+
+    @Test
     void brilliantUltimatumPileAssignmentPileChoiceAndPlayChoiceAreRegistryProjected() {
         Card first = card("First");
         Card second = card("Second");

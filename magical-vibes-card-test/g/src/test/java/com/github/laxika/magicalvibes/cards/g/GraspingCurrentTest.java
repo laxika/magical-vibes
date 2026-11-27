@@ -78,6 +78,7 @@ class GraspingCurrentTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.castAndResolveSorcery(player1, 0, List.of(targetId));
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(jace.getId()));
 
         // Creature bounced
@@ -106,6 +107,7 @@ class GraspingCurrentTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Searches library with no creature targets")
     void searchesLibraryWithNoCreatureTargets() {
         Card jace = new JaceIngeniousMindMage();
         harness.setLibrary(player1, List.of(jace));
@@ -114,6 +116,7 @@ class GraspingCurrentTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.castAndResolveSorcery(player1, 0, List.of());
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(jace.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(jace);
@@ -122,6 +125,7 @@ class GraspingCurrentTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("May fail to find Jace in the library")
     void mayFailToFindJaceInLibrary() {
         Card jace = new JaceIngeniousMindMage();
         harness.setLibrary(player1, List.of(jace));
@@ -130,6 +134,7 @@ class GraspingCurrentTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.castAndResolveSorcery(player1, 0, List.of());
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -174,6 +179,7 @@ class GraspingCurrentTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Remaining legal target is bounced and search still happens")
     void remainingLegalTargetIsBouncedAndSearchStillHappens() {
         harness.addToBattlefield(player1, new JacesSentinel());
         harness.addToBattlefield(player2, new JacesSentinel());
@@ -188,6 +194,7 @@ class GraspingCurrentTest extends BaseCardTest {
         harness.castSorcery(player1, 0, List.of(first, second));
         gd.playerBattlefields.get(player2.getId()).clear();
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(jace.getId()));
 
         harness.assertNotOnBattlefield(player1, "Jace's Sentinel");

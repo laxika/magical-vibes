@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.cards.a.ArchivistOfOghma;
 import com.github.laxika.magicalvibes.cards.b.BrambleweftBehemoth;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FeralProwler;
+import com.github.laxika.magicalvibes.cards.l.LeoninArbiter;
+import com.github.laxika.magicalvibes.cards.p.PsychogenicProbe;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -18,7 +21,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({NissasEncouragement.class, Forest.class, BrambleweftBehemoth.class,
-        NissaGenesisMage.class, FeralProwler.class})
+        NissaGenesisMage.class, FeralProwler.class, ArchivistOfOghma.class, LeoninArbiter.class, PsychogenicProbe.class})
 class NissasEncouragementTest extends BaseCardTest {
 
     @Test
@@ -173,6 +176,71 @@ class NissasEncouragementTest extends BaseCardTest {
                 .containsExactly("Nissa, Genesis Mage");
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(e -> e.contains("shuffled"));
+    }
+
+    @Test
+    @DisplayName("Searches the library once even when every named card comes from the graveyard")
+    void searchesTheLibraryWhenEveryNameIsInTheGraveyard() {
+        harness.setGraveyard(player1, List.of(new Forest(), new BrambleweftBehemoth(), new NissaGenesisMage()));
+        harness.addToBattlefield(player2, new ArchivistOfOghma());
+        castEncouragement();
+        harness.setLibrary(player1, List.of(new FeralProwler()));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playersWhoSearchedLibraryThisTurn).contains(player1.getId());
+        assertThat(searchTriggers()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Searches the library once when every named card comes from it")
+    void searchesTheLibraryOnceForEveryName() {
+        harness.addToBattlefield(player2, new ArchivistOfOghma());
+        castEncouragement();
+        harness.setLibrary(player1, List.of(new Forest(), new BrambleweftBehemoth(), new NissaGenesisMage()));
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(searchTriggers()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Searches an empty library")
+    void searchesAnEmptyLibrary() {
+        castEncouragement();
+        harness.setLibrary(player1, List.of());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playersWhoSearchedLibraryThisTurn).contains(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Takes the named cards from the graveyard and shuffles once when the library can't be searched")
+    void shufflesOnceWhenTheLibraryCantBeSearched() {
+        harness.setGraveyard(player1, List.of(new Forest()));
+        harness.addToBattlefield(player2, new LeoninArbiter());
+        harness.addToBattlefield(player2, new PsychogenicProbe());
+        harness.setLife(player1, 20);
+        castEncouragement();
+        harness.setLibrary(player1, List.of(new BrambleweftBehemoth()));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.playersWhoSearchedLibraryThisTurn).doesNotContain(player1.getId());
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 18);
+    }
+
+    private long searchTriggers() {
+        return gd.stack.stream().filter(entry -> entry.getCard().getName().equals("Archivist of Oghma")).count();
     }
 
     private void castEncouragement() {

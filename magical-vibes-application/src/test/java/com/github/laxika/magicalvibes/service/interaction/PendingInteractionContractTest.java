@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.InteractionOptions;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingAllureOfTheUnknownChoice;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.PendingKarnRestart;
 import com.github.laxika.magicalvibes.model.PendingMakeAnExample;
@@ -231,6 +233,15 @@ class PendingInteractionContractTest {
                     LibrarySearchParams.builder(chooser, List.of()).canFailToFind(true).build(),
                     "p", true);
             assertThat(search.decidingPlayerId()).isEqualTo(chooser);
+
+            PendingInteraction.SearchLibraryAndOrGraveyardChoice agentControlled =
+                    new PendingInteraction.SearchLibraryAndOrGraveyardChoice(target, List.of(), Set.of(), Set.of(),
+                            Set.of(), true, "card", LibrarySearchDestination.HAND, null, null, 0, 1, false, true,
+                            chooser);
+            assertThat(agentControlled.decidingPlayerId()).isEqualTo(chooser);
+            PendingInteraction zones = new PendingInteraction.AndOrSearchZonesChoice(agentControlled,
+                    Set.of(Zone.GRAVEYARD));
+            assertThat(zones.decidingPlayerId()).isEqualTo(target);
         }
     }
 

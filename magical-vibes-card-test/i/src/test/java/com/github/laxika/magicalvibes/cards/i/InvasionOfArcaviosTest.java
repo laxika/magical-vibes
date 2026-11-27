@@ -39,6 +39,7 @@ class InvasionOfArcaviosTest extends BaseCardTest {
 
         castInvasion();
 
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice.pool()).containsExactlyInAnyOrder(libraryCard, graveyardCard, sideboardCard);
@@ -63,6 +64,7 @@ class InvasionOfArcaviosTest extends BaseCardTest {
 
         castInvasion();
 
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice.decidingPlayerId()).isEqualTo(player2.getId());
@@ -79,6 +81,7 @@ class InvasionOfArcaviosTest extends BaseCardTest {
     void defeatCastsBackFace() {
         gd.playerDecks.get(player1.getId()).clear();
         castInvasion();
+        harness.handleMayAbilityChosen(player1, true);
 
         Permanent battle = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> "Invasion of Arcavios".equals(permanent.getCard().getName()))
@@ -119,6 +122,7 @@ class InvasionOfArcaviosTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Returns instant from library and excludes battles")
     void returnsInstantFromLibraryAndExcludesBattles() {
         Card instant = new Shock();
         Card battle = new InvasionOfArcavios();
@@ -126,6 +130,7 @@ class InvasionOfArcaviosTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of());
         castInvasion();
 
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction(
                 PendingInteraction.SearchLibraryAndOrGraveyardChoice.class).pool())
                 .containsExactly(instant);
@@ -136,12 +141,14 @@ class InvasionOfArcaviosTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Returns sorcery from graveyard")
     void returnsSorceryFromGraveyard() {
         Card sorcery = new Divination();
         harness.setLibrary(player1, List.of());
         harness.setGraveyard(player1, List.of(sorcery));
         castInvasion();
 
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(sorcery.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(sorcery);
@@ -149,12 +156,14 @@ class InvasionOfArcaviosTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("May fail to find an instant in library")
     void mayFailToFindAnInstantInLibrary() {
         Card instant = new Shock();
         harness.setLibrary(player1, List.of(instant));
         harness.setGraveyard(player1, List.of());
         castInvasion();
 
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -249,9 +258,11 @@ class InvasionOfArcaviosTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("May decline casting defeated siege")
     void mayDeclineCastingDefeatedSiege() {
         harness.setLibrary(player1, List.of());
         castInvasion();
+        harness.handleMayAbilityChosen(player1, true);
         Permanent battle = gqs.findPermanentById(gd,
                 harness.getPermanentId(player1, "Invasion of Arcavios"));
         Card front = battle.getOriginalCard();

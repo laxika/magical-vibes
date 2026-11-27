@@ -50,6 +50,7 @@ class DarkSupplicantTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, third.getId());
         harness.handlePermanentChosen(player1, fourth.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
         harness.handleMultipleCardsChosen(player1, List.of(scion.getId()));
 
@@ -71,6 +72,7 @@ class DarkSupplicantTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(scion.getId()));
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -91,6 +93,7 @@ class DarkSupplicantTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(handScion.getId()));
         harness.assertOnBattlefield(player1, "Scion of Darkness");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -101,6 +104,7 @@ class DarkSupplicantTest extends BaseCardTest {
 
         harness.activateAbility(player1, 1, null, null);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of(libraryScion.getId()));
@@ -122,6 +126,7 @@ class DarkSupplicantTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().getId().equals(opponentScion.getId()));
@@ -141,6 +146,7 @@ class DarkSupplicantTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction())
                 .as("the controller must choose among matching cards in the graveyard and library")
                 .isInstanceOf(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
@@ -168,6 +174,7 @@ class DarkSupplicantTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, searchZone == Zone.LIBRARY);
         harness.handleMultipleCardsChosen(player1, List.of(scion.getId()));
         resolveAllTriggers();
 

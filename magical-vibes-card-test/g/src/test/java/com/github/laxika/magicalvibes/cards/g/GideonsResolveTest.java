@@ -40,6 +40,7 @@ class GideonsResolveTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(gideon.getId()));
 
         harness.assertInHand(player1, "Gideon, Martial Paragon");
@@ -57,6 +58,7 @@ class GideonsResolveTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
+        harness.handleMayAbilityChosen(player1, true);
         PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         assertThat(choice.playerId()).isEqualTo(player1.getId());
@@ -136,12 +138,14 @@ class GideonsResolveTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Library search puts chosen card into hand")
     void librarySearchPutsChosenCardIntoHand() {
         Card gideon = new GideonMartialParagon();
         harness.setLibrary(player1, List.of(gideon));
         setupAndCast();
         harness.passBothPriorities();
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(gideon.getId()));
 
@@ -150,12 +154,14 @@ class GideonsResolveTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("May fail to find in library")
     void mayFailToFindInLibrary() {
         Card gideon = new GideonMartialParagon();
         harness.setLibrary(player1, List.of(gideon));
         setupAndCast();
         harness.passBothPriorities();
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of());
 

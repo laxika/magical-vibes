@@ -145,9 +145,9 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
             return new ToHandPick(null, null, cardName, null, false);
         }
 
-        /** A named pick that also offers matching cards in the searching player's graveyard. */
-        public static ToHandPick ofNameInLibraryOrGraveyard(String cardName) {
-            return new ToHandPick(null, null, cardName, null, true);
+        /** This pick, also offering the matching cards in the searching player's graveyard. */
+        public ToHandPick alsoInGraveyard() {
+            return new ToHandPick(filter, label, cardName, searchableCardIds, true);
         }
 
         /** What the prompt searches for, with its article: "an Island card", "a card named Forest". */
@@ -738,19 +738,10 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
     }
 
     /**
-     * The queue of exact card names still to search for, one card per name to hand
-     * (Nissa's Encouragement library remainder).
+     * The queue of exact card names still to search for, one card per name to hand.
      */
     public static LibrarySearchFollowUp namedToHandPicks(List<String> names) {
         return toHandPicks(names.stream().map(ToHandPick::ofName).toList());
-    }
-
-    /**
-     * The queue of exact card names still to search for in the library or the graveyard, one card per
-     * name to hand (Nissa's Encouragement when a name is in both zones).
-     */
-    public static LibrarySearchFollowUp namedToHandPicksFromLibraryOrGraveyard(List<String> names) {
-        return toHandPicks(names.stream().map(ToHandPick::ofNameInLibraryOrGraveyard).toList());
     }
 
     /** The queue of picks still to search for, one card each to hand, in order. */

@@ -72,6 +72,7 @@ class GrandMasterOfFlowersTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of(monk.getId()));
@@ -175,6 +176,7 @@ class GrandMasterOfFlowersTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The second +1 finds Monk of the Open Hand in the graveyard")
     void secondPlusOneFindsMonkInGraveyard() {
         addReadyGrandMaster(player1, 5);
         Card monk = new MonkOfTheOpenHand();
@@ -183,6 +185,7 @@ class GrandMasterOfFlowersTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleMultipleCardsChosen(player1, List.of(monk.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).contains(monk);
@@ -190,6 +193,7 @@ class GrandMasterOfFlowersTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The search can resolve without any Monk")
     void searchCanResolveWithoutAnyMonk() {
         Permanent grandMaster = addReadyGrandMaster(player1, 5);
         harness.setLibrary(player1, List.of(new DwarfholdChampion()));
@@ -197,6 +201,7 @@ class GrandMasterOfFlowersTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(grandMaster.getCounterCount(CounterType.LOYALTY)).isEqualTo(6);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -204,6 +209,7 @@ class GrandMasterOfFlowersTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Retrieves only one Monk from the combined zones")
     void retrievesOnlyOneMonkFromCombinedZones() {
         addReadyGrandMaster(player1, 5);
         Card libraryMonk = new MonkOfTheOpenHand();
@@ -213,6 +219,7 @@ class GrandMasterOfFlowersTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
+        harness.handleMayAbilityChosen(player1, true);
         assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
                 List.of(libraryMonk.getId(), graveyardMonk.getId())))
                 .isInstanceOf(IllegalStateException.class);
@@ -223,6 +230,7 @@ class GrandMasterOfFlowersTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Graveyard only search does not cause shuffle damage")
     void graveyardOnlySearchDoesNotCauseShuffleDamage() {
         addReadyGrandMaster(player1, 5);
         harness.addToBattlefield(player2, new PsychogenicProbe());
@@ -233,6 +241,7 @@ class GrandMasterOfFlowersTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
         harness.handleMultipleCardsChosen(player1, List.of(monk.getId()));
         resolveAllTriggers();
 

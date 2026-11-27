@@ -150,6 +150,7 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.DoomsdayChoice.class, this::projectDoomsdayChoice);
         register(PendingInteraction.SearchLibraryAndOrGraveyardChoice.class,
                 this::projectSearchLibraryAndOrGraveyardChoice);
+        register(PendingInteraction.AndOrSearchZonesChoice.class, this::projectAndOrSearchZonesChoice);
         register(PendingInteraction.SearchLibraryToTopChoice.class,
                 this::projectSearchLibraryToTopChoice);
         register(PendingInteraction.IntuitionSearchChoice.class, this::projectIntuitionSearchChoice);
@@ -869,6 +870,27 @@ public class InteractionPromptProjectionRegistry {
                 1,
                 (interaction.optional() ? "You may choose a " : "Choose a ") + interaction.cardLabel() + " from "
                         + source + " to put " + (toBattlefield ? "onto the battlefield." : "into your hand."));
+    }
+
+    private InteractionPromptMessage projectAndOrSearchZonesChoice(
+            GameData gameData, PendingInteraction.AndOrSearchZonesChoice interaction) {
+        List<String> zones = new ArrayList<>();
+        for (Zone zone : List.of(Zone.HAND, Zone.GRAVEYARD, Zone.OUTSIDE_GAME, Zone.EXILE)) {
+            if (interaction.otherZones().contains(zone)) {
+                zones.add(switch (zone) {
+                    case HAND -> "your hand";
+                    case GRAVEYARD -> "your graveyard";
+                    case OUTSIDE_GAME -> "outside the game";
+                    default -> "face-up exile";
+                });
+            }
+        }
+        String others = zones.size() <= 2 ? String.join(" and ", zones)
+                : String.join(", ", zones.subList(0, zones.size() - 1)) + ", and " + zones.getLast();
+        String label = interaction.search().cardLabel();
+        String article = !label.isEmpty() && "aeiouAEIOU".indexOf(label.charAt(0)) >= 0 ? "an " : "a ";
+        return InteractionPromptMessage.acceptDecline("Do you search your library for " + article + label
+                + "? If you don't, you search only " + others + ".", true, null);
     }
 
     private InteractionPromptMessage projectSearchLibraryToTopChoice(

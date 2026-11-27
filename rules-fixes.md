@@ -47,7 +47,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | EB Entry and leave batches | EB-1, EB-2, EB-3 | EB-1, EB-2, EB-3 done 2026-11-27 |
 | PY Payments | PY-1, PY-2, PY-3 | PY-1, PY-2, PY-3 done 2026-11-27 |
 | TR Triggers, subjects and targeting | TR-1, TR-2, TR-3 | TR-1, TR-2, TR-3 done 2026-11-27 (TR-3: T5's caller sweep left) |
-| LS Library searches and reveals | LS-1, LS-2, LS-3 | LS-1 done 2026-11-27; LS-2 done 2026-11-27 (N35, E10 left) |
+| LS Library searches and reveals | LS-1, LS-2, LS-3 | LS-1, LS-2, LS-3 done 2026-11-27 (N89, N90 to MC-2e) |
 | TK Tokens and copies | TK-1, TK-2 | TK-1 done 2026-11-27; TK-2 done 2026-11-27 (T1 left: choices keyed by their linking ability) |
 | FD Face-down and hidden reads | FD-1, FD-2 | FD-1, FD-2 done 2026-11-27 (FD-2: H1 left, latent) |
 | LY Layers, protection, text changes, linked abilities | LY-1 to LY-5 | LY-1 to LY-5 done 2026-11-27 (LY-5: L11 left, O33's copied readers of every link left) |
@@ -914,7 +914,23 @@ Lines: E10 and N35, left by LS-1 and LS-2 (read both Outcomes): a zone choice on
 pool is shown (CR 701.23a; about 48 cards' tests answer the new prompt), and a library search recorded once per resolution for an
 "and" search (Journey for the Elixir; CR 701.23h). Also N41 and N42 if they fall out of the same change.
 
-Outcome:
+Outcome: 2026-11-27. Fixed: E10 (deleted from entry 18), N35, N41. Dropped: N42. E10: every "and/or" search of the library with
+another zone (`SearchLibraryAndOrGraveyardForCardToHandEffect`, `...ForCardToBattlefieldEffect`, `...ForCardsEffect`: Last Light
+of Durin's Day, Dark Supplicant and 45 more) first asks `PendingInteraction.AndOrSearchZonesChoice`, "do you search your
+library?" (an accept/decline, no client change), before any card is shown (CR 701.23a). Yes offers every zone's matches, records
+and shuffles the library whatever is found, and may find nothing (the library could be searched alone, CR 701.23b); no offers the
+other zones only, records and shuffles nothing, and a graveyard match must be found unless the hand is searched too or the text
+says "you may" (the Dark Supplicant rulings). With the library searched, Opposition Agent's player picks and every find, from any
+zone and for any destination, is exiled (its rulings; before, only a library card bound for the hand was). The AI answers yes.
+N35/N41: Journey for the Elixir, Nissa's Encouragement and Verdant Crescendo's second search are
+`SearchLibraryAndGraveyardForCardsToHandEffect(List<CardPredicate>)` (renamed from `...ForNamedCardsToHandEffect`, ledger row;
+ratchet unchanged): an "and" search asks no zones, searches the library once and records it whatever is found (CR 701.23h; Journey
+recorded two or none, Nissa three for three library picks and none from the graveyard or an empty library), takes a
+graveyard-only match, offers a library match in a pick of the single search that also offers the graveyard's and must find one
+when the graveyard holds one, and shuffles once, also under Leonin Arbiter (its ruling). On the way: `matchesToHandPick` lets a
+card with all names match only a name pick. N42 dropped, not a defect: the Opposition Agent ruling "If such an effect refers to
+the found cards, it can't see them in exile." New lines N89, N90 (MC-2e). No owner question. About 160 test methods in 47 card
+test classes answer the new prompt.
 
 ### TK. Tokens and copies
 
@@ -1324,7 +1340,7 @@ Outcome already settled.
 - MC-2c, multiplayer opponent readers and draws: N49, N50, N51, N65, N66, N67, N68, N69, N79.
 - MC-2d, casting, costs and the stack: N16, N17, N25, N26, N38, N39, N59, N80, N87, N88, O25 (Caged Sun).
 - MC-2e, zone moves and single cards: S3 and S21 (Ezuri's Predation), O5, O7, S8, O79's Behemoth part, N28, N36, N40, N54,
-  N70, N84, N86.
+  N70, N84, N86, N89, N90.
 - MC-2f, layers, perpetual changes and links: N64, N71, N73, N74, N75, N76, N81, N82, N83.
 
 Lines: O5 (Limitless Rekindling's pool), O7 (`ConjureCardToBattlefieldEffectHandler`: a conjured land gets no land-enter handling;
@@ -1562,6 +1578,15 @@ spell's mana value is less than the cascading spell's; sure of the code for the 
 New line N88 (seen in FC-4): Kefka, Dancing Mad records each exiled card's mana value as it is exiled
 (`ExileRandomCardFromEachOpponentGraveyardMayCastFreeEffectHandler`'s `PendingFreeCastLifeLoss`), so a card cast as its Adventure
 or back face makes its owner lose the card's mana value, not the spell's ("loses life equal to its mana value"); sure of the code.
+
+New line N89 (seen in LS-3): `SearchZonesForCardNamedToBattlefieldEffect`'s "graveyard, hand, and/or library" searches (Gate to the
+Afterlife; Arachnus Spinner; Mishra, Artificer Prodigy; Kassandra, Eagle Bearer; Say Its Name; Shaun & Rebecca, Agents; Agency
+Outfitter) offer a zone only when it holds a match, so the zone choice reveals the library and the library can't be searched to
+find nothing; they need `AndOrSearchZonesChoice` (CR 701.23a, the Dark Supplicant rulings); sure of the code.
+
+New line N90 (seen in LS-3): Verdant Crescendo searches its library twice before its one "then shuffle" (`SearchLibraryEffect` then
+`SearchLibraryAndGraveyardForCardsToHandEffect`), which is one search (CR 701.23h), but records two searches and shuffles twice;
+sure of the code, unverified by a test.
 
 Outcome:
 
