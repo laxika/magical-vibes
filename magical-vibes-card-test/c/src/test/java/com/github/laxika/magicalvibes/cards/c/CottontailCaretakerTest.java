@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PaintersServant;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -13,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CottontailCaretaker.class, GlorySeeker.class, GrizzlyBears.class})
+@CardUsed({CottontailCaretaker.class, GlorySeeker.class, GrizzlyBears.class, PaintersServant.class})
 class CottontailCaretakerTest extends BaseCardTest {
 
     @Test
@@ -157,5 +159,20 @@ class CottontailCaretakerTest extends BaseCardTest {
 
         assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains("Glory Seeker"));
         assertThat(gd.gameLog).anyMatch(line -> line.plainText().contains("perpetually gains"));
+    }
+    @Test
+    @DisplayName("A creature card in hand made white by Painter's Servant can be chosen")
+    void offersCreatureCardMadeWhiteByPaintersServant() {
+        harness.addToBattlefieldAndReturn(player2, new PaintersServant()).setChosenColor(CardColor.WHITE);
+        harness.setHand(player1, List.of(new CottontailCaretaker(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }

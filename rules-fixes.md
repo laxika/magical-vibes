@@ -49,7 +49,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | TR Triggers, subjects and targeting | TR-1, TR-2, TR-3 | TR-1, TR-2, TR-3 done 2026-11-27 (TR-3: T5's caller sweep left) |
 | LS Library searches and reveals | LS-1, LS-2, LS-3 | LS-1 done 2026-11-27; LS-2 done 2026-11-27 (N35, E10 left) |
 | TK Tokens and copies | TK-1, TK-2 | TK-1 done 2026-11-27; TK-2 done 2026-11-27 (T1 left: choices keyed by their linking ability) |
-| FD Face-down and hidden reads | FD-1, FD-2 | open |
+| FD Face-down and hidden reads | FD-1, FD-2 | FD-1 done 2026-11-27 |
 | LY Layers, protection, text changes, linked abilities | LY-1 to LY-5 | open |
 | DR Draws | DR-1 | open |
 | CB Combat | CB-1 | open |
@@ -948,7 +948,16 @@ New line N34 (seen in TR-1): `GameQueryService.countAdditionalCreatureDeathEffec
 time") skips a static source only on the lost-abilities flag, not a face-down one, on the battlefield and in the
 simultaneous-death scan (CR 708.2a); unverified.
 
-Outcome:
+Outcome: done 2026-11-27, all five fixed. F8: the off-battlefield colour scan asks `hasLostPrintedAbilities` (Painter's Servant
+under Humility). F11: `StaticReads.matchesLeaf` takes the game data and `staticSubjectNames` judges every set leaf from the
+layered queries (Daunting Defender protects a creature an effect made a Cleric; Katabatic Winds' attack half was already right,
+pinned). F12: the query already coloured cards off the battlefield and spells; about 20 readers that bypassed it (Cottontail
+Caretaker, Opal Titan's countered-spell colours, conspire, Guildmages' Forum, the red-spell mana copy, Vivid, colour-by-colour
+search, hand colour choice, exiled and graveyard card colours, imprint and snow-mana predicates, stack colour predicates outside
+targeting, damage-source colours) now read `getEffectiveCardColors`; `AnyColorManaChoiceSupport` left as N55. N1:
+`hasAuraWithEffect` / `collectAuraEffects` skip a face-down attachment or one that lost its abilities (Immovable Rod on Whispersilk
+Cloak). N34: Teysa Karlov's reader skips a face-down or Humility-affected source. New lines N55, N56, N57 (MC-2). No effect classes
+added or deleted.
 
 #### FD-2. Hidden faces
 
@@ -1202,6 +1211,18 @@ the higher mana value, and `performClash` still reads the opponent as the first 
 New line N54 (seen in TK-2): `CreateTokenAttachedToTargetEffectHandler` records its CREATE_TOKEN step as it returns, so a
 creation that stops for the replacement order (its tokens made and attached after the answer) records none, and a "when you do"
 reader of it (Curse of the Werefox) sees no token.
+
+New line N55 (seen in FD-1): `AnyColorManaChoiceSupport.imprintedCardColors` / `exiledCardColors` (the IMPRINTED_CARD_COLORS
+and EXILED_CARD_COLORS mana restrictions) read an exiled card's printed colours, not `getEffectiveCardColors`, so Painter's
+Servant's colour is missed (CR 613.1e); the class is static, its eight callers would pass the query service.
+
+New line N56 (seen in FD-1): `CastingPermissionService.colorsWhenCast` (Mana Maze) takes the spell's printed colours when a
+colour-change effect later applied to it, dropping a colour Painter's Servant or Celestial Dawn gave it as it was cast
+(CR 613.1e). Unverified.
+
+New line N57 (seen in FD-1): `PermanentRemovalService` records a simultaneously dying permanent's last-known colours from its
+snapshot's card (`removalSnapshot.getCard().getColors()`), its printed colours, not the colours it had as it died (CR 608.2h).
+Unverified.
 
 Outcome:
 

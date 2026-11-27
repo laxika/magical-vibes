@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import org.springframework.stereotype.Component;
 
 /**
@@ -32,6 +33,7 @@ import org.springframework.stereotype.Component;
 public class RevealHandChooseCreatureGainLifeDiscardEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final GameQueryService gameQueryService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
@@ -65,7 +67,7 @@ public class RevealHandChooseCreatureGainLifeDiscardEffectHandler implements Nor
             if (!card.hasType(CardType.CREATURE)) {
                 continue;
             }
-            if (!colors.isEmpty() && card.getColors().stream().noneMatch(colors::contains)) {
+            if (!colors.isEmpty() && gameQueryService.getEffectiveCardColors(gameData, card).stream().noneMatch(colors::contains)) {
                 continue;
             }
             validIndices.add(i);

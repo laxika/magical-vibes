@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.b.BeastWithin;
 import com.github.laxika.magicalvibes.cards.s.SolRing;
 import com.github.laxika.magicalvibes.cards.v.VoltaicKey;
+import com.github.laxika.magicalvibes.cards.w.WhispersilkCloak;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.Dungeon;
 import com.github.laxika.magicalvibes.model.DungeonProgress;
@@ -25,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ImmovableRod.class, GrizzlyBears.class, SolRing.class, VoltaicKey.class,
-        IndomitableMight.class, BeastWithin.class})
+        IndomitableMight.class, BeastWithin.class, WhispersilkCloak.class})
 class ImmovableRodTest extends BaseCardTest {
 
     @Test
@@ -261,6 +262,23 @@ class ImmovableRodTest extends BaseCardTest {
 
         assertThat(rod.isTapped()).isTrue();
         assertThatCode(() -> declareAttack(firstTarget)).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("An Equipment that lost its abilities no longer gives its creature its static ability")
+    void equipmentWithoutAbilitiesGrantsNothing() {
+        addReadyRod(player1);
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent cloak = harness.addToBattlefieldAndReturn(player2, new WhispersilkCloak());
+        cloak.setAttachedTo(bears.getId());
+        assertThat(gqs.hasCantBeBlocked(gd, bears)).isTrue();
+        addRodMana();
+
+        harness.activateAbility(player1, 0, null, cloak.getId());
+        harness.passBothPriorities();
+
+        assertThat(cloak.getAttachedTo()).isEqualTo(bears.getId());
+        assertThat(gqs.hasCantBeBlocked(gd, bears)).isFalse();
     }
 
     private Permanent addReadyRod(Player player) {

@@ -189,7 +189,8 @@ target, subject, StaticReads)` takes whose battlefield the target is on, or is e
 permanent (an emblem's: `source()` and `attached()` then name nothing). The layered pass answers creature and land from
 the states of the board it is building (`LayerSystemService.scopeTargets`; an effect's own filter is judged and
 memoized apart, per filter instance, CR 613.6); a continuous query outside the pass asks
-`GameQueryService.staticSubjectNames`, which answers them with the layered queries; a caller that already judged the
+`GameQueryService.staticSubjectNames`, which answers them, and every other characteristic part of a set ("Cleric
+creatures", "creatures with flying"), with the layered queries (CR 611.3a); a caller that already judged the
 permanent's type passes `StaticReads.knownCreature()` or `knownLand()` (that part of a set holds, any other does not).
 
 A static restriction on players asks about one player: `SubjectResolutionService.namesPlayer(source,

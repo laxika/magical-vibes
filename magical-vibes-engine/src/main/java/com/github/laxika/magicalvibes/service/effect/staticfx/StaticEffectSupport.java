@@ -130,7 +130,7 @@ public class StaticEffectSupport implements SubjectResolutionService.StaticReads
     }
 
     @Override
-    public boolean matchesLeaf(Permanent permanent, PermanentPredicate leaf) {
+    public boolean matchesLeaf(GameData gameData, Permanent permanent, PermanentPredicate leaf) {
         return predicateEvaluationService.matchesStaticLeaf(permanent, leaf);
     }
 

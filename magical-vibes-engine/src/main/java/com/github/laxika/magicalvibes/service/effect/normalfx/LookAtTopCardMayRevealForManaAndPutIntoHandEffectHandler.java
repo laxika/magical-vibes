@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealForMana
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -23,6 +24,7 @@ import java.util.UUID;
 public class LookAtTopCardMayRevealForManaAndPutIntoHandEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -51,7 +53,7 @@ public class LookAtTopCardMayRevealForManaAndPutIntoHandEffectHandler implements
                 gameData.playerIdToName.get(controllerId) + " looks at the top card of their library ("
                         + entry.getCard().getName() + ")."));
 
-        List<ManaColor> colors = coloredManaColors(topCard);
+        List<ManaColor> colors = coloredManaColors(gameData, topCard);
         int coloredSymbols = topCard.getParsedManaCost() == null
                 ? 0
                 : topCard.getParsedManaCost().countSymbolsOfAnyColor(Set.copyOf(ManaColor.COLORS));
@@ -69,9 +71,9 @@ public class LookAtTopCardMayRevealForManaAndPutIntoHandEffectHandler implements
                 gameData.id, gameData.playerIdToName.get(controllerId), topCard.getName(), entry.getCard().getName());
     }
 
-    static List<ManaColor> coloredManaColors(Card card) {
+    private List<ManaColor> coloredManaColors(GameData gameData, Card card) {
         return ManaColor.COLORS.stream()
-                .filter(color -> card.getColors().stream()
+                .filter(color -> gameQueryService.getEffectiveCardColors(gameData, card).stream()
                         .anyMatch(cardColor -> cardColor.name().equals(color.name())))
                 .toList();
     }

@@ -396,7 +396,7 @@ public class LibrarySearchSupport {
             List<Card> matches = deck.stream()
                     .filter(card -> queue.searchableCardIds().contains(card.getId()))
                     .filter(card -> !selectedIds.contains(card.getId()))
-                    .filter(card -> card.getColors().contains(color))
+                    .filter(card -> gameQueryService.getEffectiveCardColors(gameData, card).contains(color))
                     .filter(card -> queue.requiredType() == null || card.hasType(queue.requiredType()))
                     .toList();
             if (matches.isEmpty()) {

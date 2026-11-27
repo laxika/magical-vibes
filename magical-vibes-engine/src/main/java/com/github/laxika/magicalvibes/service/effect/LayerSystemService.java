@@ -2788,7 +2788,7 @@ public class LayerSystemService {
         }
 
         @Override
-        public boolean matchesLeaf(Permanent permanent, PermanentPredicate leaf) {
+        public boolean matchesLeaf(GameData gameData, Permanent permanent, PermanentPredicate leaf) {
             if (!(leaf instanceof PermanentIsLandPredicate)) {
                 throw new UnsupportedOperationException("No layered-pass read for " + leaf);
             }

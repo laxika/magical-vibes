@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsInGraveyardE
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.ManaProductionSupport;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -21,9 +22,12 @@ import java.util.UUID;
 public class AwardManaOfColorsInGraveyardEffectHandler implements ManaAbilityEffectHandler {
 
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final GameQueryService gameQueryService;
 
-    public AwardManaOfColorsInGraveyardEffectHandler(InteractionHandlerRegistry interactionHandlerRegistry) {
+    public AwardManaOfColorsInGraveyardEffectHandler(InteractionHandlerRegistry interactionHandlerRegistry,
+                                                     GameQueryService gameQueryService) {
         this.interactionHandlerRegistry = interactionHandlerRegistry;
+        this.gameQueryService = gameQueryService;
     }
 
     @Override
@@ -61,10 +65,10 @@ public class AwardManaOfColorsInGraveyardEffectHandler implements ManaAbilityEff
         return true;
     }
 
-    private static boolean hasColorInGraveyard(GameData gameData, UUID playerId, ManaColor manaColor) {
+    private boolean hasColorInGraveyard(GameData gameData, UUID playerId, ManaColor manaColor) {
         CardColor cardColor = CardColor.valueOf(manaColor.name());
         return gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
-                .anyMatch(card -> card.getColors().contains(cardColor));
+                .anyMatch(card -> gameQueryService.getEffectiveCardColors(gameData, card).contains(cardColor));
     }
 
     private static void addMana(GameData gameData, UUID sourceControllerId, ManaPool manaPool,

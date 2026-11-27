@@ -69,6 +69,9 @@ triggered ability is a `TemporaryGlobalTriggeredAbility`. Never a `Permanent` or
   copies read copiable values.
 - An effect that cares about a spell's characteristics judges `CastingPermissionService.spellAsEffectsSeeIt(entry)` (a spell cast
   face down has only its face-down characteristics).
+- A card's or spell's colours, in any zone, are `GameQueryService.getEffectiveCardColors(gameData, card)`, never
+  `card.getColors()`: Painter's Servant, Celestial Dawn and spell colour changes apply off the battlefield (CR 613.1e);
+  only copiable values (a copy, a token copy, CR 707.2) read the printed colours.
 - A face-down permanent's mana value is 0 and it has none of its card's abilities or perpetual changes (CR 708.2a): read the
   permanent, not its card. The reads: `GameQueryService.getPermanentManaValue` (a sacrificed permanent's snapshot too),
   `getEffectiveName` (null while face down) / `permanentHasName`, `hasEffectiveCardType`, `activeStaticEffects` for a static ability;

@@ -3682,7 +3682,7 @@ public class SpellCastingService {
                 instantOrSorcery = candidate.hasType(CardType.INSTANT)
                         || candidate.hasType(CardType.SORCERY);
                 if (casterPool != null) {
-                    previousCopyRiderHoldBack = spendUnmatchedCopyRiderManaLast(casterPool, candidate);
+                    previousCopyRiderHoldBack = spendUnmatchedCopyRiderManaLast(gameData, casterPool, candidate);
                 }
                 bargainedFromHand = candidate.hasKeyword(Keyword.BARGAIN);
                 if (candidate.getAdditionalCostPerExtraTarget() > 0 && targetIds != null
@@ -5700,8 +5700,8 @@ public class SpellCastingService {
                     || conspireCreatureIds.stream().distinct().count() != conspireCreatureIds.size()) {
                 throw new IllegalStateException("Conspire requires two different untapped creatures you control");
             }
-            List<CardColor> spellColors = card.getColors();
-            if (spellColors == null || spellColors.isEmpty()) {
+            Set<CardColor> spellColors = gameQueryService.getEffectiveCardColors(gameData, card);
+            if (spellColors.isEmpty()) {
                 throw new IllegalStateException(card.getName() + " is colorless and can't be cast with conspire");
             }
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -10322,7 +10322,7 @@ public class SpellCastingService {
                 ? graveyard.get(graveyardCardIndex) : null;
         ManaPool casterPool = gameData.playerManaPools.get(player.getId());
         Set<ManaCopyRider> previousCopyRiderHoldBack = casterPool != null && attempted != null
-                ? spendUnmatchedCopyRiderManaLast(casterPool, attempted) : null;
+                ? spendUnmatchedCopyRiderManaLast(gameData, casterPool, attempted) : null;
         try {
             playFlashbackSpellFromLocationOnce(gameData, player, graveyard, graveyardCardIndex, xValue, targetId,
                     targetIds, exileGraveyardCardIndices, chosenGraveyardType, tapPermanentIds,
@@ -13959,7 +13959,7 @@ public class SpellCastingService {
         if (!cost.canPayWithAdditionalGenericCost(pool, 0, additionalCost)) {
             throw new IllegalStateException("Not enough mana to pay spell");
         }
-        Set<ManaCopyRider> previousCopyRiderHoldBack = spendUnmatchedCopyRiderManaLast(pool, card);
+        Set<ManaCopyRider> previousCopyRiderHoldBack = spendUnmatchedCopyRiderManaLast(gameData, pool, card);
         try {
             cost.payWithAdditionalGenericCost(pool, 0, additionalCost);
         } finally {
@@ -14874,19 +14874,19 @@ public class SpellCastingService {
      * {@code spell} the last mana {@code pool}'s owner spends on it, wherever the spell is cast from.
      * Returns the previous hold-back for the caller to restore.
      */
-    private static Set<ManaCopyRider> spendUnmatchedCopyRiderManaLast(ManaPool pool, Card spell) {
+    private Set<ManaCopyRider> spendUnmatchedCopyRiderManaLast(GameData gameData, ManaPool pool, Card spell) {
         Set<ManaCopyRider> previous = pool.getCopyGrantingManaHeldBack();
-        pool.setCopyGrantingManaHeldBack(copyRidersUnmatchedBySpell(spell));
+        pool.setCopyGrantingManaHeldBack(copyRidersUnmatchedBySpell(gameData, spell));
         return previous;
     }
 
-    private static Set<ManaCopyRider> copyRidersUnmatchedBySpell(Card spell) {
+    private Set<ManaCopyRider> copyRidersUnmatchedBySpell(GameData gameData, Card spell) {
         boolean instantOrSorcery = spell.hasType(CardType.INSTANT) || spell.hasType(CardType.SORCERY);
         EnumSet<ManaCopyRider> unmatched = EnumSet.noneOf(ManaCopyRider.class);
         if (!instantOrSorcery) {
             unmatched.add(ManaCopyRider.INSTANT_OR_SORCERY_SPELL);
         }
-        if (!instantOrSorcery || spell.getColors() == null || !spell.getColors().contains(CardColor.RED)) {
+        if (!instantOrSorcery || !gameQueryService.getEffectiveCardColors(gameData, spell).contains(CardColor.RED)) {
             unmatched.add(ManaCopyRider.RED_INSTANT_OR_SORCERY_SPELL);
         }
         return unmatched;
@@ -14913,7 +14913,7 @@ public class SpellCastingService {
             pool.setKickedOrInstantSorceryOnlyManaUsableForKickedSpell(false);
             pool.setKickedOrInstantSorceryOnlyManaUsableForInstantSorcery(true);
         }
-        Set<ManaCopyRider> previousCopyRiderHoldBack = spendUnmatchedCopyRiderManaLast(pool, card);
+        Set<ManaCopyRider> previousCopyRiderHoldBack = spendUnmatchedCopyRiderManaLast(gameData, pool, card);
         final Zone effectiveSourceZone = playerId.equals(gameData.commandCastPlayerId) ? Zone.COMMAND : sourceZone;
         ManaPool.InstantSorceryOrSubtypeSpellManaState seanceBoardMana = isSeanceBoardSpell(gameData, playerId, card)
                 ? pool.promoteInstantSorceryOrSubtypeSpellOnlyMana(SEANCE_BOARD_SUBTYPES) : null;
@@ -16579,7 +16579,7 @@ public class SpellCastingService {
     /** Guildmages' Forum: each tagged mana spent on a multicolored creature spell grants one additional counter. */
     private void applyAdditionalCounterGrantingMana(GameData gameData, UUID playerId, Card card,
                                                     int additionalCounterGrantingBefore) {
-        if (!card.hasType(CardType.CREATURE) || card.getColors() == null || card.getColors().size() < 2) {
+        if (!card.hasType(CardType.CREATURE) || gameQueryService.getEffectiveCardColors(gameData, card).size() < 2) {
             return;
         }
         int spent = additionalCounterGrantingBefore

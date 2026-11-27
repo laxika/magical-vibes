@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantOffspringToWhiteCreatureCardInHandEffect;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -21,6 +22,7 @@ import java.util.List;
 public class GrantOffspringToWhiteCreatureCardInHandEffectHandler implements NormalEffectHandlerBean {
 
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -39,7 +41,8 @@ public class GrantOffspringToWhiteCreatureCardInHandEffectHandler implements Nor
         List<Integer> validIndices = new ArrayList<>();
         for (int i = 0; i < hand.size(); i++) {
             Card card = hand.get(i);
-            if (card.hasType(CardType.CREATURE) && card.getColors().contains(CardColor.WHITE)) {
+            if (card.hasType(CardType.CREATURE)
+                    && gameQueryService.getEffectiveCardColors(gameData, card).contains(CardColor.WHITE)) {
                 validIndices.add(i);
             }
         }

@@ -75,6 +75,7 @@ public class GrantProtectionFromTriggeringSpellColorsEffectHandler implements No
         }
         StackEntry spell = entry.getTriggeringSpellSnapshot();
         return spell == null ? null
-                : Set.copyOf(CastingPermissionService.spellAsEffectsSeeIt(spell).getCard().getColors());
+                : gameQueryService.getEffectiveCardColors(gameData,
+                        CastingPermissionService.spellAsEffectsSeeIt(spell).getCard());
     }
 }

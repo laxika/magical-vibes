@@ -487,10 +487,13 @@ public class GameQueryService {
             return GameQueryService.this.isCreature(gameData, permanent);
         }
 
-        /** A set's other characteristic part (a land), read from the permanent's printed and granted types. */
+        /**
+         * A set's other characteristic part ("Cleric creatures", "creatures with flying"), judged on the permanent as
+         * the layers leave it (CR 611.3a, 613.1d, 613.1f), not on its printed characteristics.
+         */
         @Override
-        public boolean matchesLeaf(Permanent permanent, PermanentPredicate leaf) {
-            return predicateEvaluationService.matchesPermanentPredicate(null, permanent, leaf);
+        public boolean matchesLeaf(GameData gameData, Permanent permanent, PermanentPredicate leaf) {
+            return predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, leaf);
         }
 
         @Override
@@ -512,7 +515,7 @@ public class GameQueryService {
         }
 
         @Override
-        public boolean matchesLeaf(Permanent permanent, PermanentPredicate leaf) {
+        public boolean matchesLeaf(GameData gameData, Permanent permanent, PermanentPredicate leaf) {
             if (!(leaf instanceof PermanentIsLandPredicate)) {
                 throw new UnsupportedOperationException("No assembly read for " + leaf);
             }
@@ -4456,7 +4459,8 @@ public class GameQueryService {
     /**
      * Returns the card's effective colors, using its battlefield permanent's layered colors when
      * present. During static evaluation the recursion-safe card path is retained. Cards outside
-     * the battlefield, including spells, retain applicable global color-setting effects.
+     * the battlefield, including spells, retain applicable global color-setting effects (Painter's
+     * Servant, Celestial Dawn) of sources that still have their abilities (CR 613.1f).
      */
     public Set<CardColor> getEffectiveCardColors(GameData gameData, Card card) {
         if (card == null) {
@@ -4488,8 +4492,7 @@ public class GameQueryService {
             List<CardColorLayerEffect> colorLayerEffects = new ArrayList<>();
             for (Map.Entry<UUID, List<Permanent>> battlefield : gameData.playerBattlefields.entrySet()) {
                 for (Permanent permanent : battlefield.getValue()) {
-                    if (permanent.isFaceDown() || gameData.losesAllAbilitiesByEffect(permanent)
-                            || gameData.losesAllAbilitiesByEffect(permanent)) continue;
+                    if (permanent.isFaceDown() || hasLostPrintedAbilities(gameData, permanent)) continue;
                     for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                         if (gameData.removesOwnStaticAbility(permanent.getId(), effect.getClass())) continue;
                         Set<CardColor> colors = null;
@@ -11235,9 +11238,13 @@ public class GameQueryService {
         return count;
     }
 
+    /**
+     * The additional-trigger statics ({@link AdditionalCreatureDeathTriggerEffect}) {@code staticSource} has: none when it
+     * is face down (CR 708.2a) or lost its printed abilities (CR 613.1f), whether to a resolved effect or a static one.
+     */
     private int countAdditionalCreatureDeathEffects(Permanent staticSource, Permanent triggeringPermanent,
                                                      FilterContext filterContext) {
-        if (filterContext.gameData().losesAllAbilitiesByEffect(staticSource)) return 0;
+        if (staticSource.isFaceDown() || hasLostPrintedAbilities(filterContext.gameData(), staticSource)) return 0;
 
         int count = 0;
         for (CardEffect effect : staticSource.getCard().getStaticEffects()) {
@@ -11252,8 +11259,8 @@ public class GameQueryService {
 
     private int countAdditionalEmblemCreatureDeathEffects(GameData gameData, UUID controllerId,
                                                             Permanent staticSource) {
-        if (gameData.losesAllAbilitiesByEffect(staticSource)
-                || !staticSource.isAttached()) {
+        if (staticSource.isFaceDown() || !staticSource.isAttached()
+                || hasLostPrintedAbilities(gameData, staticSource)) {
             return 0;
         }
 
@@ -11449,7 +11456,9 @@ public class GameQueryService {
      * that carries a static effect of the given type. Also unwraps
      * {@link EnchantedPermanentConditionalEffect} wrappers: if the currently active
      * inner effect (based on the enchanted permanent predicate) matches, returns {@code true}.
-     * An Aura whose effects are being ignored this turn (Volrath's Curse) is skipped entirely.
+     * An Aura whose effects are being ignored this turn (Volrath's Curse) is skipped entirely, and so
+     * is an attachment that is face down (CR 708.2a) or lost its printed abilities (CR 613.1f):
+     * an Equipment stays attached when Immovable Rod takes its abilities.
      */
     public boolean hasAuraWithEffect(GameData gameData, Permanent creature, Class<? extends CardEffect> effectClass) {
         return hasAuraWithEffect(gameData, creature, effectClass::isInstance);
@@ -11486,6 +11495,7 @@ public class GameQueryService {
         return gameData.anyPermanentMatches(p ->
                 p.isAttached() && p.getAttachedTo().equals(creature.getId())
                         && !gameData.ignoresEffectOf(p.getId(), IgnoreSourceAuraEffectsUntilEndOfTurnEffect.class, findPermanentController(gameData, creature.getId()))
+                        && !p.isFaceDown() && !hasLostPrintedAbilities(gameData, p)
                         && p.getCard().getStaticEffects().stream()
                         .anyMatch(e -> isActiveEffect(gameData, p, creature, e, effectMatcher)));
     }
@@ -11496,14 +11506,16 @@ public class GameQueryService {
      * {@link #hasAuraWithEffect(GameData, Permanent, Class)} for callers that need the effect's own
      * data (e.g. the attacker predicate of a block restriction) and not just its presence.
      * {@link EnchantedPermanentConditionalEffect} wrappers are unwrapped to their currently active
-     * inner effect; an Aura whose effects are ignored this turn (Volrath's Curse) is skipped.
+     * inner effect; an Aura whose effects are ignored this turn (Volrath's Curse), or an attachment
+     * that is face down or lost its printed abilities, is skipped.
      */
     public <T extends CardEffect> List<T> collectAuraEffects(GameData gameData, Permanent creature, Class<T> effectClass) {
         List<T> collected = new ArrayList<>();
         UUID enchantedControllerId = findPermanentController(gameData, creature.getId());
         gameData.forEachPermanent((id, permanent) -> {
             if (!permanent.isAttached() || !creature.getId().equals(permanent.getAttachedTo())
-                    || gameData.ignoresEffectOf(permanent.getId(), IgnoreSourceAuraEffectsUntilEndOfTurnEffect.class, enchantedControllerId)) {
+                    || gameData.ignoresEffectOf(permanent.getId(), IgnoreSourceAuraEffectsUntilEndOfTurnEffect.class, enchantedControllerId)
+                    || permanent.isFaceDown() || hasLostPrintedAbilities(gameData, permanent)) {
                 return;
             }
             for (CardEffect effect : permanent.getCard().getStaticEffects()) {
@@ -12860,14 +12872,15 @@ public class GameQueryService {
     /**
      * The colors a damage source has now: a permanent source on the battlefield uses its effective
      * colors (a source changed to another color by a color-changing effect no longer counts as its
-     * printed color), anything else uses the printed colors of {@code sourceCard}.
+     * printed color), anything else uses the colors of {@code sourceCard} where it is now
+     * ({@link #getEffectiveCardColors}: a spell Painter's Servant colors has that color too).
      */
     private List<CardColor> damageSourceColors(GameData gameData, Permanent source, Card sourceCard) {
         if (source != null && sourceCard != null && source.getCard() == sourceCard
                 && findPermanentById(gameData, source.getId()) != null) {
             return List.copyOf(getEffectiveColors(gameData, source));
         }
-        return sourceCard != null ? sourceCard.getColors() : List.of();
+        return sourceCard != null ? List.copyOf(getEffectiveCardColors(gameData, sourceCard)) : List.of();
     }
 
     private Permanent dealingSourcePermanent(GameData gameData, StackEntry entry) {
@@ -13205,7 +13218,7 @@ public class GameQueryService {
             if (!playerId.equals(entry.getControllerId()) || hasLostPrintedAbilities(gameData, p)) return;
             for (CardEffect effect : p.getCard().getStaticEffects()) {
                 if (effect instanceof GrantLifelinkToControllerSpellsByColorEffect glse
-                        && (glse.color() == null || entry.getCard().getColors().contains(glse.color()))
+                        && (glse.color() == null || getEffectiveCardColors(gameData, entry.getCard()).contains(glse.color()))
                         && predicateEvaluationService.matchesCardPredicate(entry.getCard(), glse.filter(),
                         p.getCard().getId(), gameData, entry.getCard().getOwnerId())) {
                     hasLifelink[0] = true;

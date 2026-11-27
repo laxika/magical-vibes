@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.cards.c.CeruleanWisps;
 import com.github.laxika.magicalvibes.cards.o.OonaQueenOfTheFae;
 import com.github.laxika.magicalvibes.model.Card;
@@ -18,7 +20,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PaintersServant.class, Forest.class, CeruleanWisps.class, OonaQueenOfTheFae.class})
+@CardUsed({PaintersServant.class, Forest.class, CeruleanWisps.class, OonaQueenOfTheFae.class, GrizzlyBears.class,
+        Humility.class})
 class PaintersServantTest extends BaseCardTest {
 
     private static Card createCreature(String name, CardColor color) {
@@ -108,6 +111,7 @@ class PaintersServantTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cards in both players' hands, libraries, graveyards and exile are the chosen color")
     void colorsCardsInBothPlayersNonBattlefieldZones() {
         addPaintersServant(CardColor.RED);
         for (var player : List.of(player1, player2)) {
@@ -127,6 +131,7 @@ class PaintersServantTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent's spell on the stack is the chosen color in addition to its own")
     void colorsOpponentSpellOnStackAdditively() {
         addPaintersServant(CardColor.RED);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new PaintersServant());
@@ -141,6 +146,7 @@ class PaintersServantTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cards Oona exiles count as the chosen color")
     void chosenColorCountsForCardsExiledByOona() {
         harness.addToBattlefield(player1, new OonaQueenOfTheFae());
         addPaintersServant(CardColor.RED);
@@ -156,6 +162,7 @@ class PaintersServantTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Two Painter's Servants add both chosen colors")
     void multipleServantsAddBothChosenColors() {
         Permanent first = addPaintersServant(CardColor.RED);
         Permanent second = addPaintersServant(CardColor.BLUE);
@@ -167,6 +174,7 @@ class PaintersServantTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The color grant ends when Painter's Servant leaves the battlefield")
     void colorGrantEndsWhenServantLeavesBattlefield() {
         Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
         Permanent servant = addPaintersServant(CardColor.RED);
@@ -179,6 +187,7 @@ class PaintersServantTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A later color-setting effect overwrites the chosen color")
     void laterColorSettingEffectOverwritesChosenColor() {
         Permanent servant = addPaintersServant(CardColor.RED);
         harness.setHand(player1, List.of(new CeruleanWisps()));
@@ -188,5 +197,15 @@ class PaintersServantTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, servant.getId());
 
         assertThat(gqs.getEffectiveColors(gd, servant)).containsExactly(CardColor.BLUE);
+    }
+    @Test
+    @DisplayName("A Painter's Servant that lost its abilities to a static effect doesn't color cards off the battlefield")
+    void lostAbilitiesStopColoringCardsOffTheBattlefield() {
+        harness.addToBattlefield(player2, new Humility());
+        addPaintersServant(CardColor.RED);
+        GrizzlyBears handCard = new GrizzlyBears();
+        harness.setHand(player1, List.of(handCard));
+
+        assertThat(gqs.getEffectiveCardColors(gd, handCard)).containsExactly(CardColor.GREEN);
     }
 }

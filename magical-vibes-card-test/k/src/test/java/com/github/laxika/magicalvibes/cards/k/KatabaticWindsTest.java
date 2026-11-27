@@ -38,6 +38,18 @@ class KatabaticWindsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A creature given flying by an effect cannot attack")
+    void creatureGivenFlyingCannotAttack() {
+        harness.addToBattlefield(player1, new KatabaticWinds());
+        Permanent ground = addCreatureReady(player1, new PantherWarriors());
+        PermanentGrants.keyword(gd, ground, Keyword.FLYING);
+
+        int idx = gd.playerBattlefields.get(player1.getId()).indexOf(ground);
+        assertThatThrownBy(() -> declareAttackers(List.of(idx)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     @DisplayName("Non-flying creature attacks normally while Katabatic Winds is on the battlefield")
     void nonFlyingCreatureCanAttack() {
         harness.addToBattlefield(player1, new KatabaticWinds());

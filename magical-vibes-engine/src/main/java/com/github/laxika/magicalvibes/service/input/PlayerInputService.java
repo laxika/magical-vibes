@@ -762,7 +762,7 @@ public class PlayerInputService {
             List<CardColor> handColors = List.of(CardColor.WHITE, CardColor.BLUE, CardColor.BLACK,
                             CardColor.RED, CardColor.GREEN).stream()
                     .filter(color -> gameData.playerHands.getOrDefault(playerId, List.of()).stream()
-                            .anyMatch(card -> card.getColors() != null && card.getColors().contains(color)))
+                            .anyMatch(card -> gameQueryService.getEffectiveCardColors(gameData, card).contains(color)))
                     .toList();
             if (handColors.isEmpty()) {
                 Permanent permanent = gameData.playerBattlefields.values().stream()

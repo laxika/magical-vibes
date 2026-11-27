@@ -1292,7 +1292,7 @@ that turns out not to be a defect is removed with the reason in the report. Run 
 Don't commit.
 ```
 
-#### Face-down and lost-ability reads (CR 613.1f, 708.2a) (10)
+#### Face-down and lost-ability reads (CR 613.1f, 708.2a) (7)
 
 - Kappa Cannoneer, Lockjaw, Slicer, Full Steam Ahead, Vines of Vastwood: "can't be blocked / sacrificed / the target" are granted abilities "loses all abilities" removes, but are rules of the game (CR 611.2c). Unverified.
 - `cardsThisWay(kind, filter)`, the copy, cast and name / mana-value readers, the entry batch's "can't enter" filter read a face-down exiled card's hidden face (CR 406.3a). Unverified.
@@ -1300,10 +1300,7 @@ Don't commit.
 - Soulless Jailer: `canCastSpellFromZone` reads `card.hasType(CREATURE)`, not the spell (an Adventure, a modal back face). Unsure, low.
 - Stoic Star-Captain and Zilortha model their source's rule as a granted ability, which "loses all abilities" on the creature removes (CR 613.1f). Fairly sure.
 - `CastingPermissionService` spell-limit, Ethersworn Canonist, most-recent-spell and global land-restriction readers skip lost abilities but not face-down sources (CR 708.2a). Sure of the code.
-- `GameQueryService.getEffectiveCardColors`' off-battlefield scan (Celestial Dawn) asks only the floating flag (CR 613.1f). Sure of the code, low.
 - `DrawService` Alms Collector, Words-return and Quantum Riddler readers skip no face-down source (CR 708.2a). Sure of the code.
-- The static-set filter reads in `GameQueryService.layeredQueryReads` (`matchesLeaf`) use printed keywords and types ("creatures with flying" in static locks other than the tap lock; Katabatic Winds' attack/block half unverified). Fairly sure.
-- Painter's Servant doesn't colour cards that aren't on the battlefield, or spells (Oracle text). Sure.
 
 #### Two-player assumptions (`getOpponentId`, first seat) (9)
 

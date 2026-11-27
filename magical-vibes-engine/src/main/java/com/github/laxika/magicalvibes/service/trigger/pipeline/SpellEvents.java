@@ -138,7 +138,7 @@ public class SpellEvents {
         ManaPool pool = gameData.playerManaPools.get(castingPlayerId);
         if (pool != null) {
             boolean instantOrSorcery = spellCard.hasType(CardType.INSTANT) || spellCard.hasType(CardType.SORCERY);
-            boolean red = spellCard.getColors() != null && spellCard.getColors().contains(CardColor.RED);
+            boolean red = gameQueryService.getEffectiveCardColors(gameData, spellCard).contains(CardColor.RED);
             int instantOrSorceryCopies = pool.takeSpentCopyGrantingMana(ManaCopyRider.INSTANT_OR_SORCERY_SPELL);
             int redInstantOrSorceryCopies = pool.takeSpentCopyGrantingMana(ManaCopyRider.RED_INSTANT_OR_SORCERY_SPELL);
             if (instantOrSorcery) {

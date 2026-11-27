@@ -5688,7 +5688,7 @@ public class TargetLegalityService {
         }
         if (predicate instanceof StackEntrySnowManaOfItsColorSpentPredicate) {
             UUID spellCardId = stackEntry.getCard().getId();
-            return stackEntry.getCard().getColors().stream()
+            return gameQueryService.getEffectiveCardColors(gameData, stackEntry.getCard()).stream()
                     .map(color -> ManaColor.valueOf(color.name()))
                     .anyMatch(color -> gameData.getSpellCastSnowManaSpentByColor(spellCardId, color) > 0);
         }
@@ -5812,8 +5812,8 @@ public class TargetLegalityService {
             if (imprintedCard == null || gameData.findExiledCard(imprintedCard.getId()) == null) {
                 return false;
             }
-            boolean sharesColor = imprintedCard.getColors().stream()
-                    .anyMatch(stackEntry.getCard().getColors()::contains);
+            boolean sharesColor = gameQueryService.getEffectiveCardColors(gameData, imprintedCard).stream()
+                    .anyMatch(gameQueryService.getEffectiveCardColors(gameData, stackEntry.getCard())::contains);
             int spellManaValue = stackEntry.getSpellManaValue();
             return sharesColor || spellManaValue == imprintedCard.getManaValue();
         }

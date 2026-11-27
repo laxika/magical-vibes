@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.DestroyOtherCreaturesSharingC
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -79,10 +78,10 @@ public class DestroyOtherCreaturesSharingColorWithEnteringCreatureEffectHandler
         }
 
         Card enteringCard = findCardById(gameData, entry.getTriggeringCardId());
-        if (enteringCard == null || enteringCard.getColors() == null || enteringCard.getColors().isEmpty()) {
+        if (enteringCard == null) {
             return Set.of();
         }
-        return EnumSet.copyOf(enteringCard.getColors());
+        return gameQueryService.getEffectiveCardColors(gameData, enteringCard);
     }
 
     private Card findCardById(GameData gameData, UUID cardId) {

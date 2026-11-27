@@ -1718,7 +1718,7 @@ public class SubjectResolutionService {
         boolean isCreature(GameData gameData, Permanent permanent);
 
         /** Whether {@code permanent} matches a single characteristic predicate of a subject's set. */
-        boolean matchesLeaf(Permanent permanent, PermanentPredicate leaf);
+        boolean matchesLeaf(GameData gameData, Permanent permanent, PermanentPredicate leaf);
 
         /** Whether {@code permanent} matches an effect's own filter, judged for the context's source. */
         boolean matchesFilter(StaticEffectContext context, Permanent permanent, PermanentPredicate filter);
@@ -1748,7 +1748,7 @@ public class SubjectResolutionService {
         }
 
         @Override
-        public boolean matchesLeaf(Permanent permanent, PermanentPredicate leaf) {
+        public boolean matchesLeaf(GameData gameData, Permanent permanent, PermanentPredicate leaf) {
             return this == LAND && leaf instanceof PermanentIsLandPredicate;
         }
 
@@ -1858,7 +1858,7 @@ public class SubjectResolutionService {
                     predicateEvaluationService.matchesPermanentPredicate(target, predicate,
                             FilterContext.of(gameData).withSourceControllerId(controllerId));
             case PermanentIsCreaturePredicate ignored -> reads.isCreature(gameData, target);
-            default -> reads.matchesLeaf(target, predicate);
+            default -> reads.matchesLeaf(gameData, target, predicate);
         };
     }
 

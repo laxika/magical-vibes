@@ -67,7 +67,7 @@ public class VividRevealSupport {
         for (int i = nextColorIndex; i < colors.size(); i++) {
             CardColor color = colors.get(i);
             List<UUID> validCardIds = revealedCards.stream()
-                    .filter(card -> !selectedCardIds.contains(card.getId()) && hasColor(card, color))
+                    .filter(card -> !selectedCardIds.contains(card.getId()) && hasColor(gameData, card, color))
                     .map(Card::getId)
                     .toList();
             if (validCardIds.isEmpty()) {
@@ -108,7 +108,7 @@ public class VividRevealSupport {
         }
     }
 
-    private boolean hasColor(Card card, CardColor color) {
-        return card.getColors() != null && card.getColors().contains(color);
+    private boolean hasColor(GameData gameData, Card card, CardColor color) {
+        return gameQueryService.getEffectiveCardColors(gameData, card).contains(color);
     }
 }

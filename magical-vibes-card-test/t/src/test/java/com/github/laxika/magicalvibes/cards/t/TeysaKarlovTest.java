@@ -3,25 +3,29 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.d.DoomedTraveler;
 import com.github.laxika.magicalvibes.cards.d.DarkProphecy;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.cards.p.ProfaneMemento;
 import com.github.laxika.magicalvibes.cards.r.RiteOfReplication;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.SoulWarden;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({TeysaKarlov.class, DarkProphecy.class, DoomedTraveler.class, GrizzlyBears.class,
         Shock.class, SoulWarden.class, com.github.laxika.magicalvibes.cards.w.WrathOfGod.class,
-        Thragtusk.class, ProfaneMemento.class, RiteOfReplication.class})
+        Thragtusk.class, ProfaneMemento.class, RiteOfReplication.class, Humility.class})
 class TeysaKarlovTest extends BaseCardTest {
 
     @Test
@@ -175,6 +179,33 @@ class TeysaKarlovTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(21);
+    }
+    @Test
+    @DisplayName("A face-down Teysa Karlov doesn't make death triggers trigger an additional time")
+    void faceDownTeysaDoesNotDouble() {
+        harness.addToBattlefieldAndReturn(player1, new TeysaKarlov()).setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        assertProfaneMementoTriggersOnce();
+    }
+
+    @Test
+    @DisplayName("A Teysa Karlov that lost its abilities to Humility doesn't make death triggers trigger an additional time")
+    void teysaUnderHumilityDoesNotDouble() {
+        harness.addToBattlefield(player1, new TeysaKarlov());
+        harness.addToBattlefield(player2, new Humility());
+        assertProfaneMementoTriggersOnce();
+    }
+
+    private void assertProfaneMementoTriggersOnce() {
+        harness.addToBattlefield(player1, new ProfaneMemento());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
         harness.passBothPriorities();
         resolveAllTriggers();
 

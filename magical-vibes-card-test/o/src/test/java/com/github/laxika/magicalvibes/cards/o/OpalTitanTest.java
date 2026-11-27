@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.c.Clone;
 import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.g.GorillaWarrior;
 import com.github.laxika.magicalvibes.cards.h.HussarPatrol;
+import com.github.laxika.magicalvibes.cards.p.PaintersServant;
 import com.github.laxika.magicalvibes.cards.t.Thoughtlace;
 import com.github.laxika.magicalvibes.cards.v.VoltaicKey;
 import com.github.laxika.magicalvibes.cards.w.WoollyThoctar;
@@ -26,7 +27,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Willbender.class, OpalTitan.class, WoollyThoctar.class, GorillaWarrior.class, Cathodion.class,
-        VoltaicKey.class, HussarPatrol.class, Counterspell.class, Clone.class, Thoughtlace.class})
+        VoltaicKey.class, HussarPatrol.class, Counterspell.class, Clone.class, Thoughtlace.class,
+        PaintersServant.class})
 class OpalTitanTest extends BaseCardTest {
 
     private Permanent addOpalTitan() {
@@ -290,6 +292,25 @@ class OpalTitanTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, opal)).isEqualTo(4);
+        assertThat(gqs.hasProtectionFrom(gd, opal, CardColor.BLUE)).isFalse();
+    }
+    @Test
+    @DisplayName("A countered spell supplies the color Painter's Servant gave it too")
+    void counteredSpellSuppliesPaintersServantColor() {
+        Permanent opal = addOpalTitan();
+        harness.addToBattlefieldAndReturn(player2, new PaintersServant()).setChosenColor(CardColor.RED);
+        prepareOpponentCast();
+        GorillaWarrior gorillaWarrior = new GorillaWarrior();
+        harness.castFromHand(player2, gorillaWarrior, "{2}{G}");
+        harness.passPriority(player2);
+
+        harness.setHand(player1, List.of(new Counterspell()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castInstant(player1, 0, gorillaWarrior.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.hasProtectionFrom(gd, opal, CardColor.GREEN)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, opal, CardColor.RED)).isTrue();
         assertThat(gqs.hasProtectionFrom(gd, opal, CardColor.BLUE)).isFalse();
     }
 }

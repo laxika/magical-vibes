@@ -2919,7 +2919,7 @@ public class DamageTriggers {
         }
         boolean red = sourcePermanent != null
                 ? gameQueryService.getEffectiveColors(gameData, sourcePermanent).contains(CardColor.RED)
-                : sourceCard.getColors().contains(CardColor.RED);
+                : gameQueryService.getEffectiveCardColors(gameData, sourceCard).contains(CardColor.RED);
         if (!red) return;
 
         boolean redSpell = entry.getEntryType() == StackEntryType.INSTANT_SPELL

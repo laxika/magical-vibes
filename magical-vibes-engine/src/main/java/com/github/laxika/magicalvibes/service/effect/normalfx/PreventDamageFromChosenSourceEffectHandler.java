@@ -55,11 +55,11 @@ public class PreventDamageFromChosenSourceEffectHandler implements NormalEffectH
         if (e.sourceSharesColorWithImprintedCard()) {
             Card imprintedCard = gameData.getImprintedCard(entry.getCard());
             if (imprintedCard == null || gameData.findExiledCard(imprintedCard.getId()) == null
-                    || imprintedCard.getColors() == null || imprintedCard.getColors().isEmpty()) {
+                    || gameQueryService.getEffectiveCardColors(gameData, imprintedCard).isEmpty()) {
                 preventionSupport.broadcastNoPermanentsForDamageSourceChoice(gameData);
                 return;
             }
-            sourceFilter = new PermanentColorInPredicate(Set.copyOf(imprintedCard.getColors()));
+            sourceFilter = new PermanentColorInPredicate(gameQueryService.getEffectiveCardColors(gameData, imprintedCard));
         } else if (e.sourceChosenColor()) {
             Permanent source = entry.getSourcePermanentId() == null
                     ? null

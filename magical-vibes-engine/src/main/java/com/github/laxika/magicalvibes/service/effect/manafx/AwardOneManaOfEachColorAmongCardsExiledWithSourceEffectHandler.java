@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.AwardOneManaOfEachColorAmongCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.effect.ManaProductionSupport;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import org.springframework.stereotype.Component;
 
 import java.util.EnumSet;
@@ -17,6 +18,12 @@ import java.util.UUID;
 @Component
 public class AwardOneManaOfEachColorAmongCardsExiledWithSourceEffectHandler
         implements ManaAbilityEffectHandler {
+
+    private final GameQueryService gameQueryService;
+
+    public AwardOneManaOfEachColorAmongCardsExiledWithSourceEffectHandler(GameQueryService gameQueryService) {
+        this.gameQueryService = gameQueryService;
+    }
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -27,7 +34,7 @@ public class AwardOneManaOfEachColorAmongCardsExiledWithSourceEffectHandler
     public void resolve(GameData gameData, UUID playerId, Player player, Permanent permanent,
                         CardEffect effect, int manaMultiplier, boolean creatureSource) {
         EnumSet<CardColor> colors = EnumSet.noneOf(CardColor.class);
-        gameData.getCardsExiledByPermanent(permanent.getId()).forEach(card -> colors.addAll(card.getColors()));
+        gameData.getCardsExiledByPermanent(permanent.getId()).forEach(card -> colors.addAll(gameQueryService.getEffectiveCardColors(gameData, card)));
 
         ManaPool pool = gameData.playerManaPools.get(playerId);
         for (CardColor color : colors) {

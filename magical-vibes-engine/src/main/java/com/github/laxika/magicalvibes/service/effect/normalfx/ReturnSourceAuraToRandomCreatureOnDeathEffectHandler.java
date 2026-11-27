@@ -106,7 +106,7 @@ public class ReturnSourceAuraToRandomCreatureOnDeathEffectHandler implements Nor
             return false;
         }
 
-        if (auraCard.getColors().stream()
+        if (gameQueryService.getEffectiveCardColors(gameData, auraCard).stream()
                 .anyMatch(color -> gameQueryService.hasProtectionFrom(gameData, permanent, color))) {
             return false;
         }

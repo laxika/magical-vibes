@@ -4779,7 +4779,7 @@ public class AmountEvaluationService {
     private int colorsAmongCardsExiledWithSource(GameData gameData, AmountContext ctx) {
         if (ctx.sourcePermanent() == null) return 0;
         return (int) gameData.getCardsExiledByPermanent(ctx.sourcePermanent().getId()).stream()
-                .flatMap(card -> card.getColors().stream())
+                .flatMap(card -> gameQueryService.getEffectiveCardColors(gameData, card).stream())
                 .distinct()
                 .count();
     }
