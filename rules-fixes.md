@@ -908,9 +908,7 @@ New line N28 (seen in EB-2): `ReturnDyingCreatureToBattlefieldEffectHandler` (Ni
 Oathkeeper, Meathook Massacre II) never asks `isCardBlockedFromEnteringFromZone`, so a Grafdigger's Cage doesn't stop its creature
 return; unverified.
 
-New line N31 (seen in EB-2): `TergridGodOfFrightTest`'s `lanternLetsTargetSacrificeInsteadOfLosingLife` and
-`lanternCanTargetItsControllerAndSacrificeItself` fail on `80c2994e284` ("Permanent not found" at `handlePermanentChosen`): a lone
-sacrifice ransom is now paid unasked (PY-1), so the tests' permanent choice comes after the sacrifice; the tests need updating.
+N31 (seen in EB-2): fixed by the orchestrator after EB-2 (the two Tergrid tests no longer answer a pick PY-1 made unasked).
 
 Outcome:
 

@@ -164,7 +164,6 @@ class TergridGodOfFrightTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, player2.getId(), null);
         harness.passBothPriorities();
         payUnlessAlternative(player2, "Sacrifice");
-        harness.handlePermanentChosen(player2, harness.getPermanentId(player2, "Grizzly Bears"));
         harness.passBothPriorities();
 
         harness.assertLife(player2, 20);
@@ -212,7 +211,6 @@ class TergridGodOfFrightTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, player1.getId(), null);
         harness.passBothPriorities();
         payUnlessAlternative(player1, "Sacrifice");
-        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Tergrid's Lantern"));
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);
