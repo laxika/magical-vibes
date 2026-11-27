@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.FreeCastKickerOffer;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -58,9 +57,10 @@ public class FreeCastCostIncreaseSupport {
      * Pays {@code card}'s cost increases from the pool, or pauses the cast on the payment question.
      *
      * @param cardId the id the paused flow resumes by (the exile id for an exile cast)
+     * @param paused the paused flow and what it needs to go on
      */
     public Payment payOrAsk(GameData gameData, UUID casterId, Card card, UUID cardId, Zone zone,
-                            PayFreeCastCostIncreaseEffect.Resume resume, FreeCastKickerOffer exileCast) {
+                            PayFreeCastCostIncreaseEffect.PausedCast paused) {
         if (spellCastingService.payFreeCastCostIncreases(gameData, casterId, card, zone)) {
             return Payment.PAID;
         }
@@ -70,7 +70,7 @@ public class FreeCastCostIncreaseSupport {
         int increase = castingCostService.getCastCostModifier(gameData, casterId, card, 0, zone);
         String cost = "{" + increase + "}";
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(card, casterId,
-                List.of(new PayFreeCastCostIncreaseEffect(cardId, zone, resume, exileCast)),
+                List.of(new PayFreeCastCostIncreaseEffect(cardId, zone, paused)),
                 "Pay " + cost + " to cast " + card.getName() + " (its cost increase)?", cardId, cost));
         if (!gameData.interaction.isAwaitingInput()) {
             playerInputService.processNextMayAbility(gameData);

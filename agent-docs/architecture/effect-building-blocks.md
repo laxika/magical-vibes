@@ -113,8 +113,9 @@ triggered ability is a `TemporaryGlobalTriggeredAbility`. Never a `Permanent` or
   Ethersworn Canonist, split second; it asks `isPlayerPreventedFromCasting`, the one player-level check) on every casting path, and
   `canCastDuringResolution(gameData, player, card)` / `mayBeginCastDuringResolution` (a land is played, not cast; a split card is
   judged half by half, CR 709.3a) before any cast during a resolution (CR 601.3, 608.2g). Refused, the flow ends as a decline does.
-  A free cast pays its cost increases through `SpellCastingService.payFreeCastCostIncreases` / `canPayFreeCastCostIncreases`
-  (CR 601.2f).
+  A free cast pays its cost increases (CR 601.2f) through `FreeCastCostIncreaseSupport.payOrAsk`: from the pool, or after a
+  `PayFreeCastCostIncreaseEffect` question in which mana abilities may be activated (CR 601.2g), with a `PausedCast` that says how
+  the flow resumes and where an uncast card goes; a flow's "can it be cast" check asks `payableWithManaAbilities`.
 - "Until [source] leaves the battlefield" is `UNTIL_SOURCE_LEAVES`, and a control effect with it (or "until you lose control")
   holds while its source is phased out (`DurationClock.holds`; CR 702.26d); a resolution's "for as long as that Aura is attached"
   is `WHILE_REMAINS_ATTACHED` (CR 702.26f).

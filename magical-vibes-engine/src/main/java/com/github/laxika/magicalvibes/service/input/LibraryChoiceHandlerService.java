@@ -68,6 +68,9 @@ import com.github.laxika.magicalvibes.model.effect.MayCastExiledCardWithNormalCo
 import com.github.laxika.magicalvibes.model.effect.MayCastExiledCardWithoutPayingManaCostOrPutIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPlayExiledCardWithoutPayingManaCostEffect;
+import com.github.laxika.magicalvibes.model.effect.PayFreeCastCostIncreaseEffect;
+import com.github.laxika.magicalvibes.model.effect.PayFreeCastCostIncreaseEffect.IfNotCast;
+import com.github.laxika.magicalvibes.service.effect.normalfx.FreeCastCostIncreaseSupport;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -194,6 +197,9 @@ public class LibraryChoiceHandlerService {
 
     @Autowired @Lazy
     private SpellCastingService spellCastingService;
+
+    @Autowired @Lazy
+    private com.github.laxika.magicalvibes.service.effect.normalfx.FreeCastCostIncreaseSupport freeCastCostIncreaseSupport;
 
     @Autowired @Lazy
     private TargetLegalityService targetLegalityService;
@@ -485,7 +491,7 @@ public class LibraryChoiceHandlerService {
             // Sunbird's Invocation: cast chosen card without paying, rest to bottom in random order
             if (destination == LibrarySearchDestination.CAST_WITHOUT_PAYING) {
                 handleCastWithoutPayingChoice(gameData, player, cardIndex, canFailToFind,
-                        searchCards, sourceCards, deck, grantHaste, sacrificeAtEndStep,
+                        searchCards, sourceCards, deck, deckOwnerId, grantHaste, sacrificeAtEndStep,
                         librarySearch.mayCastManaValueAtMost() == null
                                 ? Integer.MAX_VALUE : librarySearch.mayCastManaValueAtMost(),
                         restToExile, reorderRemainingToTop && !reorderRemainingToBottom);
@@ -1385,7 +1391,8 @@ public class LibraryChoiceHandlerService {
             // or sorcery card. You may cast that card without paying its mana cost. Then that player
             // shuffles." A card that can't be cast (CR 601.2c: no legal target) is therefore simply
             // left in the library it was found in, and is shuffled back in with the rest.
-            boolean castable = canCastWithoutPaying(gameData, playerId, chosenCard);
+            String refusal = freeCastRefusal(gameData, playerId, chosenCard);
+            boolean castable = refusal == null;
             if (!castable) {
                 deck.add(chosenCard);
             }
@@ -1397,9 +1404,8 @@ public class LibraryChoiceHandlerService {
                 }
             }
             if (!castable) {
-                gameLogService.append(gameData, GameLog.cardThen(chosenCard,
-                        " has no legal targets, so it can't be cast and stays in the library."));
-                log.info("Game {} - {} cast-without-paying has no legal targets; card stays in library",
+                gameLogService.append(gameData, GameLog.cardThen(chosenCard, refusal + " and stays in the library."));
+                log.info("Game {} - {} cast-without-paying can't be cast; card stays in library",
                         gameData.id, chosenCard.getName());
                 finishSearchAndResume(gameData);
                 return;
@@ -1409,7 +1415,10 @@ public class LibraryChoiceHandlerService {
             boolean inExile = gameData.exiledCards.stream()
                     .anyMatch(exiled -> exiled.card().getId().equals(chosenCard.getId()));
             castCardWithoutPaying(gameData, player, chosenCard, null, grantHaste, sacrificeAtEndStep,
-                    inExile ? Zone.EXILE : Zone.LIBRARY);
+                    inExile ? Zone.EXILE : Zone.LIBRARY, Integer.MAX_VALUE,
+                    inExile ? IfNotCast.STAYS_EXILED
+                            : shuffleAfterSelection ? IfNotCast.LIBRARY_SHUFFLED_IN : IfNotCast.LIBRARY_BOTTOM,
+                    deckOwnerId);
             return;
         }
 
@@ -4594,7 +4603,7 @@ public class LibraryChoiceHandlerService {
      */
     private void handleCastWithoutPayingChoice(GameData gameData, Player player, int cardIndex,
                                                 boolean canFailToFind, List<Card> searchCards,
-                                                List<Card> sourceCards, List<Card> deck,
+                                                List<Card> sourceCards, List<Card> deck, UUID deckOwnerId,
                                                 boolean grantHaste, boolean sacrificeAtEndStep,
                                                 int spellManaValueLimit, boolean restToExile,
                                                 boolean restStays) {
@@ -4652,7 +4661,8 @@ public class LibraryChoiceHandlerService {
                 throw new IllegalStateException("Invalid card index: " + cardIndex);
             }
             Card picked = searchCards.get(cardIndex);
-            if (canCastWithoutPaying(gameData, player.getId(), picked, spellManaValueLimit)) {
+            String refusal = freeCastRefusal(gameData, player.getId(), picked, spellManaValueLimit);
+            if (refusal == null) {
                 chosenCard = picked;
                 // Remove chosen card from sourceCards
                 for (int i = 0; i < sourceCards.size(); i++) {
@@ -4663,9 +4673,8 @@ public class LibraryChoiceHandlerService {
                 }
             } else {
                 uncastable = true;
-                gameLogService.append(gameData, GameLog.cardThen(picked,
-                        " has no legal targets, so it can't be cast."));
-                log.info("Game {} - {} cast-without-paying has no legal targets; card is bottomed",
+                gameLogService.append(gameData, GameLog.cardThen(picked, refusal + "."));
+                log.info("Game {} - {} cast-without-paying can't be cast; card is bottomed",
                         gameData.id, picked.getName());
             }
         }
@@ -4692,9 +4701,6 @@ public class LibraryChoiceHandlerService {
         // A hit that stays exiled when declined (Jodah's cascade) is not in sourceCards but is still exiled.
         boolean castFromExile = exiledSourceIds.contains(chosenCard.getId())
                 || gameData.findExiledCard(chosenCard.getId()) != null;
-        if (castFromExile) {
-            gameData.removeFromExile(chosenCard.getId());
-        }
         UUID chosenCardId = chosenCard.getId();
         deck.removeIf(card -> card.getId().equals(chosenCardId));
         // "Do this only once each turn" (CR 603.2h; Planetarium of Wan Shi Tong): choosing to cast takes the action.
@@ -4702,8 +4708,11 @@ public class LibraryChoiceHandlerService {
             com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService
                     .markActionTaken(gameData, gameData.pendingEffectResolutionEntry);
         }
+        // A card whose cost increase isn't paid goes where the effect puts the cards it doesn't cast.
+        IfNotCast ifNotCast = castFromExile && (restToExile || restStays) ? IfNotCast.STAYS_EXILED
+                : !castFromExile && restStays ? IfNotCast.LIBRARY_TOP : IfNotCast.LIBRARY_BOTTOM;
         castCardWithoutPaying(gameData, player, chosenCard, null, grantHaste, sacrificeAtEndStep,
-                castFromExile ? Zone.EXILE : Zone.LIBRARY, spellManaValueLimit);
+                castFromExile ? Zone.EXILE : Zone.LIBRARY, spellManaValueLimit, ifNotCast, deckOwnerId);
     }
 
     private void handleCastWithoutPayingAndShuffleLibraryChoice(
@@ -4719,13 +4728,13 @@ public class LibraryChoiceHandlerService {
                 throw new IllegalStateException("Invalid card index: " + cardIndex);
             }
             Card picked = searchCards.get(cardIndex);
-            if (canCastWithoutPaying(gameData, player.getId(), picked)) {
+            String refusal = freeCastRefusal(gameData, player.getId(), picked);
+            if (refusal == null) {
                 chosenCard = picked;
                 UUID chosenCardId = chosenCard.getId();
                 sourceCards.removeIf(card -> card.getId().equals(chosenCardId));
             } else {
-                gameLogService.append(gameData, GameLog.cardThen(picked,
-                        " has no legal targets, so it can't be cast and stays in the library."));
+                gameLogService.append(gameData, GameLog.cardThen(picked, refusal + " and stays in the library."));
             }
         }
 
@@ -4741,7 +4750,7 @@ public class LibraryChoiceHandlerService {
         // The shuffle follows the cast: the spell and its targets are chosen first and the shuffle
         // triggers then go on the stack above the spell.
         gameData.libraryToShuffleAfterFreeCast = deckOwnerId;
-        castCardWithoutPaying(gameData, player, chosenCard);
+        castCardWithoutPaying(gameData, player, chosenCard, IfNotCast.LIBRARY_SHUFFLED_IN, deckOwnerId);
     }
 
     private void handleExileAndMayCastWithoutPayingChoice(GameData gameData, Player player,
@@ -4877,17 +4886,18 @@ public class LibraryChoiceHandlerService {
             checkDiscoverTriggers(gameData, player.getId(), discoverValue);
             return;
         }
-        gameData.removeFromExile(discovered.getId());
         putExiledCardsOnBottom(gameData, deck, sourceCards);
 
         if (!cast) {
+            gameData.removeFromExile(discovered.getId());
             gameData.addCardToHand(player.getId(), discovered);
             checkDiscoverTriggers(gameData, player.getId(), discoverValue);
             finishSearchAndResume(gameData);
             return;
         }
 
-        castCardWithoutPaying(gameData, player, discovered, discoverValue, false, false, Zone.EXILE);
+        castCardWithoutPaying(gameData, player, discovered, discoverValue, false, false, Zone.EXILE,
+                Integer.MAX_VALUE, IfNotCast.HAND, player.getId());
     }
 
     /**
@@ -4904,9 +4914,9 @@ public class LibraryChoiceHandlerService {
         }
 
         Card chosenCard = searchCards.get(cardIndex);
-        if (!canCastWithoutPaying(gameData, player.getId(), chosenCard)) {
-            gameLogService.append(gameData, GameLog.cardThen(chosenCard,
-                    " has no legal targets, so it can't be cast."));
+        String refusal = freeCastRefusal(gameData, player.getId(), chosenCard);
+        if (refusal != null) {
+            gameLogService.append(gameData, GameLog.cardThen(chosenCard, refusal + "."));
             beginPutOneIntoHandChoice(gameData, searchCards, sourceCards, player.getId());
             return;
         }
@@ -4927,7 +4937,7 @@ public class LibraryChoiceHandlerService {
             gameLogService.append(gameData, GameLog.cardThen(handCard,
                     " is put into " + player.getUsername() + "'s hand."));
         }
-        castCardWithoutPaying(gameData, player, chosenCard);
+        castCardWithoutPaying(gameData, player, chosenCard, IfNotCast.LIBRARY_BOTTOM, player.getId());
     }
 
     private void handleCastOneAndPutRestIntoHandChoice(GameData gameData, Player player, int cardIndex,
@@ -4940,9 +4950,9 @@ public class LibraryChoiceHandlerService {
         }
 
         Card chosenCard = searchCards.get(cardIndex);
-        if (!canCastWithoutPaying(gameData, player.getId(), chosenCard)) {
-            gameLogService.append(gameData, GameLog.cardThen(chosenCard,
-                    " has no legal targets, so it can't be cast."));
+        String refusal = freeCastRefusal(gameData, player.getId(), chosenCard);
+        if (refusal != null) {
+            gameLogService.append(gameData, GameLog.cardThen(chosenCard, refusal + "."));
             putAllExiledCardsIntoHand(gameData, sourceCards, handOwnerId);
             finishSearchAndResume(gameData);
             return;
@@ -4955,7 +4965,7 @@ public class LibraryChoiceHandlerService {
                 gameData.addCardToHand(handOwnerId, card);
             }
         }
-        castCardWithoutPaying(gameData, player, chosenCard);
+        castCardWithoutPaying(gameData, player, chosenCard, IfNotCast.HAND, handOwnerId);
     }
 
     private void putAllExiledCardsIntoHand(GameData gameData, List<Card> cards, UUID handOwnerId) {
@@ -5361,17 +5371,47 @@ public class LibraryChoiceHandlerService {
 
     private boolean canCastWithoutPaying(GameData gameData, UUID controllerId, Card card, int spellManaValueLimit,
                                          Zone sourceZone) {
-        if (!gameQueryService.canCastSpellFromZone(gameData, card, sourceZone, controllerId)) return false;
-        if (!castingPermissionService.canCastDuringResolution(gameData, controllerId, card)) return false;
-        if (!castingPermissionService.canCastWithSpellTimingRestriction(gameData, controllerId, card)) return false;
+        return freeCastRefusal(gameData, controllerId, card, spellManaValueLimit, sourceZone) == null;
+    }
+
+    /** {@link #freeCastRefusal(GameData, UUID, Card, int, Zone)} with no mana value limit, from its zone. */
+    private String freeCastRefusal(GameData gameData, UUID controllerId, Card card) {
+        return freeCastRefusal(gameData, controllerId, card, Integer.MAX_VALUE);
+    }
+
+    private String freeCastRefusal(GameData gameData, UUID controllerId, Card card, int spellManaValueLimit) {
+        Zone sourceZone = gameData.findExiledCard(card.getId()) == null ? Zone.LIBRARY : Zone.EXILE;
+        return freeCastRefusal(gameData, controllerId, card, spellManaValueLimit, sourceZone);
+    }
+
+    /**
+     * Why {@code card} can't be cast without paying its mana cost from {@code sourceZone} now, as the log puts it
+     * after the card's name, or null when it can (see {@link #canCastWithoutPaying(GameData, UUID, Card)}). A cast
+     * from a library or exile must also be able to pay its cost increases, with the mana abilities its caster may
+     * activate (CR 601.2f, 601.2g); a cast from a hand asks for them itself.
+     */
+    private String freeCastRefusal(GameData gameData, UUID controllerId, Card card, int spellManaValueLimit,
+                                   Zone sourceZone) {
+        if (!gameQueryService.canCastSpellFromZone(gameData, card, sourceZone, controllerId)
+                || !castingPermissionService.canCastDuringResolution(gameData, controllerId, card)
+                || !castingPermissionService.canCastWithSpellTimingRestriction(gameData, controllerId, card)) {
+            return " can't be cast";
+        }
         if (!castingCostService.canPayAdditionalSpellCosts(gameData, controllerId, card)) {
-            return false;
+            return " can't be cast: its additional cost can't be paid";
         }
-        if (spellModal(card) != null) {
-            return legalModalOptions(gameData, card, controllerId, spellManaValueLimit) != null;
-        }
-        return !(EffectResolution.needsTarget(card) || EffectResolution.needsSpellTarget(card))
+        boolean legalChoices = spellModal(card) != null
+                ? legalModalOptions(gameData, card, controllerId, spellManaValueLimit) != null
+                : !(EffectResolution.needsTarget(card) || EffectResolution.needsSpellTarget(card))
                 || !computeCastWithoutPayingTargets(gameData, card, controllerId).isEmpty();
+        if (!legalChoices) {
+            return " has no legal targets, so it can't be cast";
+        }
+        if (sourceZone != Zone.HAND
+                && !freeCastCostIncreaseSupport.payableWithManaAbilities(gameData, controllerId, card, sourceZone)) {
+            return " can't be cast: its cost increase can't be paid";
+        }
+        return null;
     }
 
     /**
@@ -5399,32 +5439,40 @@ public class LibraryChoiceHandlerService {
         return ownerId == null || ownerId.equals(controllerId) ? null : ownerId;
     }
 
-    private void castCardWithoutPaying(GameData gameData, Player player, Card chosenCard) {
-        castCardWithoutPaying(gameData, player, chosenCard, null, false, false);
+    private void castCardWithoutPaying(GameData gameData, Player player, Card chosenCard, IfNotCast ifNotCast,
+                                       UUID ifNotCastZoneOwnerId) {
+        castCardWithoutPaying(gameData, player, chosenCard, null, false, false, Zone.LIBRARY, Integer.MAX_VALUE,
+                ifNotCast, ifNotCastZoneOwnerId);
     }
 
-    private void castCardWithoutPaying(GameData gameData, Player player, Card chosenCard,
-                                       Integer discoverValue) {
-        castCardWithoutPaying(gameData, player, chosenCard, discoverValue, false, false);
-    }
-
-    private void castCardWithoutPaying(GameData gameData, Player player, Card chosenCard,
-                                       Integer discoverValue, boolean grantHaste,
-                                       boolean sacrificeAtEndStep) {
-        castCardWithoutPaying(gameData, player, chosenCard, discoverValue, grantHaste,
-                sacrificeAtEndStep, Zone.LIBRARY);
-    }
-
+    /**
+     * Casts {@code chosenCard}, already out of its library (a card cast from exile leaves exile once its cost
+     * increases are paid), without paying its mana cost; {@link #canCastWithoutPaying} must hold.
+     *
+     * @param ifNotCast            where the card goes when its cost increase isn't paid
+     * @param ifNotCastZoneOwnerId the player whose library or hand {@code ifNotCast} names
+     */
     private void castCardWithoutPaying(GameData gameData, Player player, Card chosenCard,
                                        Integer discoverValue, boolean grantHaste,
-                                       boolean sacrificeAtEndStep, Zone sourceZone) {
-        castCardWithoutPaying(gameData, player, chosenCard, discoverValue, grantHaste, sacrificeAtEndStep,
-                sourceZone, Integer.MAX_VALUE);
-    }
-
-    private void castCardWithoutPaying(GameData gameData, Player player, Card chosenCard,
-                                       Integer discoverValue, boolean grantHaste,
-                                       boolean sacrificeAtEndStep, Zone sourceZone, int spellManaValueLimit) {
+                                       boolean sacrificeAtEndStep, Zone sourceZone, int spellManaValueLimit,
+                                       IfNotCast ifNotCast, UUID ifNotCastZoneOwnerId) {
+        // Its total cost is its cost increases (CR 601.2f), paid once nothing else can stop the cast, from the pool or
+        // after a question during which mana abilities may be activated (CR 601.2g).
+        FreeCastCostIncreaseSupport.Payment payment = freeCastCostIncreaseSupport.payOrAsk(gameData, player.getId(),
+                chosenCard, chosenCard.getId(), sourceZone, new PayFreeCastCostIncreaseEffect.LibraryCast(
+                        ifNotCastZoneOwnerId, discoverValue, grantHaste, sacrificeAtEndStep, spellManaValueLimit,
+                        ifNotCast));
+        if (payment == FreeCastCostIncreaseSupport.Payment.ASKED) {
+            return;
+        }
+        if (payment == FreeCastCostIncreaseSupport.Payment.UNPAYABLE) {
+            abandonForUnpaidCostIncrease(gameData, player, chosenCard, discoverValue, ifNotCast,
+                    ifNotCastZoneOwnerId);
+            return;
+        }
+        if (sourceZone == Zone.EXILE) {
+            gameData.removeFromExile(chosenCard.getId());
+        }
         UUID playerId = player.getId();
         String playerName = player.getUsername();
         boolean creatureSpell = chosenCard.hasType(CardType.CREATURE);
@@ -5501,6 +5549,54 @@ public class LibraryChoiceHandlerService {
         // mid-resolution. Only the shared tail drains that park; a bare view invalidation leaves it
         // dangling, which strands any later effect on the same ability and wedges
         // deferPlayerLossCheck so no player can lose to a state-based action again.
+        finishSearchAndResume(gameData);
+    }
+
+    /**
+     * Answers the cost-increase payment question of a search cast {@link #castCardWithoutPaying} paused on: paid (and
+     * still castable), the card is cast again, paying from the pool; otherwise it isn't cast and goes where the cast
+     * said a card it doesn't cast goes.
+     */
+    public void resumeAfterCostIncreaseDecision(GameData gameData, Player player, Card card, Zone sourceZone,
+                                                PayFreeCastCostIncreaseEffect.LibraryCast cast, boolean paid) {
+        if (paid && canCastWithoutPaying(gameData, player.getId(), card, cast.spellManaValueLimit(), sourceZone)) {
+            castCardWithoutPaying(gameData, player, card, cast.discoverValue(), cast.grantHaste(),
+                    cast.sacrificeAtEndStep(), sourceZone, cast.spellManaValueLimit(), cast.ifNotCast(),
+                    cast.ownerId());
+            return;
+        }
+        abandonForUnpaidCostIncrease(gameData, player, card, cast.discoverValue(), cast.ifNotCast(), cast.ownerId());
+    }
+
+    private void abandonForUnpaidCostIncrease(GameData gameData, Player player, Card card, Integer discoverValue,
+                                              IfNotCast ifNotCast, UUID zoneOwnerId) {
+        if (ifNotCast != IfNotCast.STAYS_EXILED) {
+            gameData.removeFromExile(card.getId());
+        }
+        List<Card> library = gameData.playerDecks.computeIfAbsent(zoneOwnerId, ignored -> new ArrayList<>());
+        String destination = switch (ifNotCast) {
+            case LIBRARY_BOTTOM -> {
+                library.add(card);
+                yield " It is put on the bottom of its owner's library.";
+            }
+            case LIBRARY_TOP -> {
+                library.addFirst(card);
+                yield " It stays on top of its owner's library.";
+            }
+            case LIBRARY_SHUFFLED_IN -> {
+                library.add(java.util.concurrent.ThreadLocalRandom.current().nextInt(library.size() + 1), card);
+                yield " It stays in its owner's library.";
+            }
+            case STAYS_EXILED -> " It stays exiled.";
+            case HAND -> {
+                gameData.addCardToHand(zoneOwnerId, card);
+                yield " It is put into " + gameData.playerIdToName.get(zoneOwnerId) + "'s hand.";
+            }
+        };
+        gameLogService.append(gameData, GameLog.cardThen(card, " can't be cast: its cost increase isn't paid."
+                + destination));
+        checkDiscoverTriggers(gameData, player.getId(), discoverValue);
+        LibraryShuffleHelper.shuffleLibraryPendingAfterFreeCast(gameData);
         finishSearchAndResume(gameData);
     }
 

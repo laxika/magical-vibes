@@ -10,6 +10,9 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CastCardWithoutPayingManaCostIfAbleEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastQueueSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.SplitCardCastSupport;
+import com.github.laxika.magicalvibes.service.input.LibraryChoiceHandlerService;
+import com.github.laxika.magicalvibes.service.input.MayCastHandlerService;
 import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -36,6 +39,15 @@ public class PayFreeCastCostIncreaseHandler implements MayEffectHandlerBean {
     @Autowired
     @Lazy
     private CastCardWithoutPayingManaCostIfAbleEffectHandler castCardWithoutPayingManaCostIfAbleEffectHandler;
+    @Autowired
+    @Lazy
+    private LibraryChoiceHandlerService libraryChoiceHandlerService;
+    @Autowired
+    @Lazy
+    private MayCastHandlerService mayCastHandlerService;
+    @Autowired
+    @Lazy
+    private SplitCardCastSupport splitCardCastSupport;
 
     public PayFreeCastCostIncreaseHandler(GameLogService gameLogService) {
         this.gameLogService = gameLogService;
@@ -59,13 +71,23 @@ public class PayFreeCastCostIncreaseHandler implements MayEffectHandlerBean {
             gameLogService.append(gameData, GameLog.textCardText(player.getUsername()
                     + " doesn't pay the cost increase of ", ability.sourceCard(), "."));
         }
-        switch (payment.resume()) {
-            case EXILE_CAST -> exileFreeCastSupport.resumeAfterCostIncreaseDecision(
-                    gameData, player, payment.cardId(), payment.exileCast(), paid);
-            case FREE_CAST_QUEUE -> exileFreeCastQueueSupport.resumeAfterCostIncreaseDecision(
-                    gameData, player.getId(), payment.cardId(), paid);
-            case HAND_CAST -> castCardWithoutPayingManaCostIfAbleEffectHandler.resumeAfterCostIncreaseDecision(
-                    gameData, player, ability.sourceCard(), paid);
+        switch (payment.paused()) {
+            case PayFreeCastCostIncreaseEffect.ExileCast exile -> exileFreeCastSupport.resumeAfterCostIncreaseDecision(
+                    gameData, player, payment.cardId(), exile.offer(), paid);
+            case PayFreeCastCostIncreaseEffect.QueueCast ignored -> exileFreeCastQueueSupport
+                    .resumeAfterCostIncreaseDecision(gameData, player.getId(), payment.cardId(), paid);
+            case PayFreeCastCostIncreaseEffect.HandCast ignored -> castCardWithoutPayingManaCostIfAbleEffectHandler
+                    .resumeAfterCostIncreaseDecision(gameData, player, ability.sourceCard(), paid);
+            case PayFreeCastCostIncreaseEffect.LibraryCast library -> libraryChoiceHandlerService
+                    .resumeAfterCostIncreaseDecision(gameData, player, ability.sourceCard(), payment.zone(), library,
+                            paid);
+            case PayFreeCastCostIncreaseEffect.RevealedCast revealed -> mayCastHandlerService
+                    .resumeRevealedCastAfterCostIncreaseDecision(gameData, player, ability.sourceCard(), revealed,
+                            paid);
+            case PayFreeCastCostIncreaseEffect.LibraryTopCast top -> mayCastHandlerService
+                    .resumeLibraryTopCastAfterCostIncreaseDecision(gameData, player, top, paid);
+            case PayFreeCastCostIncreaseEffect.SplitCast split -> splitCardCastSupport
+                    .resumeAfterCostIncreaseDecision(gameData, split.targeting(), paid);
         }
     }
 }

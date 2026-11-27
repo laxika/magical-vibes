@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.effect.ExilePlayPermissionEffect;
+import com.github.laxika.magicalvibes.model.effect.PayFreeCastCostIncreaseEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -89,6 +90,9 @@ public class SplitCardCastSupport {
     @org.springframework.beans.factory.annotation.Autowired
     @Lazy
     private com.github.laxika.magicalvibes.service.battlefield.DepartureService departureService;
+    @org.springframework.beans.factory.annotation.Autowired
+    @Lazy
+    private FreeCastCostIncreaseSupport freeCastCostIncreaseSupport;
 
     public SplitCardCastSupport(GameLogService gameLogService,
                                 PlayerInputService playerInputService,
@@ -342,6 +346,10 @@ public class SplitCardCastSupport {
             if (cast.payManaCost() && !canPayCost(gameData, cast, prepared.card())) {
                 return false;
             }
+            if (paysFreeCastCostIncreases(cast) && !freeCastCostIncreaseSupport.payableWithManaAbilities(
+                    gameData, cast.controllerId(), prepared.card(), costZone(cast))) {
+                return false;
+            }
             return !needsTargets(prepared.card(), prepared.effects())
                     || hasLegalTargets(gameData, cast.controllerId(), prepared, modeEncoding(modal, modeIndex));
         } catch (IllegalStateException | IllegalArgumentException ignored) {
@@ -397,8 +405,22 @@ public class SplitCardCastSupport {
     }
 
     private int costModifier(GameData gameData, SplitCardCast cast, Card half) {
-        Zone castZone = cast.revealedCast() != null ? Zone.LIBRARY : cast.sourceZone();
-        return castingCostService.getCastCostModifier(gameData, cast.controllerId(), half, 0, castZone);
+        return castingCostService.getCastCostModifier(gameData, cast.controllerId(), half, 0, costZone(cast));
+    }
+
+    /** The zone the cast's cost changes are judged for: a revealed card held outside every zone left its library. */
+    private static Zone costZone(SplitCardCast cast) {
+        return cast.revealedCast() != null ? Zone.LIBRARY : cast.sourceZone();
+    }
+
+    /**
+     * Whether the cast is one "without paying its mana cost" that still pays its cost increases (CR 601.2f) through
+     * {@link FreeCastCostIncreaseSupport}. A cast from outside the game pays them with its own sideboard tax, and the
+     * card Word of Command plays is cast from its hand the usual way.
+     */
+    private static boolean paysFreeCastCostIncreases(SplitCardCast cast) {
+        return !cast.payManaCost() && !(cast.origin() instanceof SplitCardCast.OutsideGameCast)
+                && !(cast.origin() instanceof SplitCardCast.WordOfCommandCast);
     }
 
     private ExileFreeCastQueueSupport.PreparedModalCast prepare(GameData gameData, SplitCardCast cast,
@@ -613,6 +635,17 @@ public class SplitCardCastSupport {
                 return;
             }
             mayCastHandlerService.paySideboardRevealOrManaCosts(gameData, controllerId, card, true);
+        } else if (paysFreeCastCostIncreases(cast)) {
+            FreeCastCostIncreaseSupport.Payment payment = freeCastCostIncreaseSupport.payOrAsk(gameData, controllerId,
+                    card, cast.physicalCard().getId(), costZone(cast),
+                    new PayFreeCastCostIncreaseEffect.SplitCast(targeting));
+            if (payment == FreeCastCostIncreaseSupport.Payment.ASKED) {
+                return;
+            }
+            if (payment == FreeCastCostIncreaseSupport.Payment.UNPAYABLE) {
+                abandonForUnpaidCostIncrease(gameData, cast);
+                return;
+            }
         }
         leaveSourceZone(gameData, cast);
         if (exileFreeCastQueueSupport.beginSacrificeCostIfNeeded(gameData, entry)) {
@@ -651,6 +684,25 @@ public class SplitCardCastSupport {
         if (cast.revealedCast() != null && cast.revealedCast().cardsToBottom() != null) {
             putOnLibraryBottom(gameData, cast.ownerId(), cast.revealedCast().cardsToBottom());
         }
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * Answers the cost-increase payment question of a half {@link #putOnStack} paused on: paid, the half is put onto
+     * the stack again, paying from the pool; otherwise the card is not cast and goes back where it was taken from.
+     */
+    public void resumeAfterCostIncreaseDecision(GameData gameData, SplitCardCast.Targeting targeting, boolean paid) {
+        if (paid) {
+            putOnStack(gameData, targeting);
+            return;
+        }
+        abandonForUnpaidCostIncrease(gameData, targeting.cast());
+    }
+
+    private void abandonForUnpaidCostIncrease(GameData gameData, SplitCardCast cast) {
+        returnToSourceZone(gameData, cast);
+        gameLogService.append(gameData, GameLog.cardThen(cast.physicalCard(),
+                " can't be cast: its cost increase isn't paid."));
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 

@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.input;
+import com.github.laxika.magicalvibes.service.effect.normalfx.FreeCastCostIncreaseSupport;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -92,6 +93,7 @@ class MayCastHandlerServiceTest {
     @Mock private com.github.laxika.magicalvibes.service.cast.CastingPermissionService castingPermissionService;
     @Mock private com.github.laxika.magicalvibes.service.GameActionAvailabilityService gameActionAvailabilityService;
     @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastQueueSupport exileFreeCastQueueSupport;
+    @Mock private FreeCastCostIncreaseSupport freeCastCostIncreaseSupport;
 
     @InjectMocks
     private MayCastHandlerService svc;
@@ -124,6 +126,12 @@ class MayCastHandlerServiceTest {
 
         org.springframework.test.util.ReflectionTestUtils.setField(
                 svc, "exileFreeCastQueueSupport", exileFreeCastQueueSupport);
+        org.springframework.test.util.ReflectionTestUtils.setField(
+                svc, "freeCastCostIncreaseSupport", freeCastCostIncreaseSupport);
+        lenient().when(freeCastCostIncreaseSupport.payOrAsk(any(), any(), any(), any(), any(), any()))
+                .thenReturn(FreeCastCostIncreaseSupport.Payment.PAID);
+        lenient().when(freeCastCostIncreaseSupport.payableWithManaAbilities(any(), any(), any(), any()))
+                .thenReturn(true);
         lenient().when(additionalSpellCostService.satisfiable(any(), any(), any())).thenReturn(true);
         lenient().when(additionalSpellCostService.satisfiableForGraveyardCast(any(), any(), any())).thenReturn(true);
         lenient().when(additionalSpellCostService.satisfiableWithoutManaCost(any(), any(), any())).thenReturn(true);
@@ -409,6 +417,37 @@ class MayCastHandlerServiceTest {
             verify(exileService).exileCard(gd, PLAYER1_ID, card);
             assertThat(gd.playerDecks.get(PLAYER1_ID)).isEmpty();
             verify(inputCompletionService).processMayAbilitiesThenAutoPass(gd);
+        }
+
+        @Test
+        @DisplayName("A cost increase the pool can't cover pauses the play on its payment question, the card on top")
+        void costIncreasePausesThePlay() {
+            Card card = createSorcery("Taxed Spell");
+            gd.playerDecks.get(PLAYER1_ID).add(card);
+            PendingMayAbility ability = abilityFor(card);
+            when(freeCastCostIncreaseSupport.payOrAsk(eq(gd), eq(PLAYER1_ID), eq(card), eq(card.getId()),
+                    eq(Zone.LIBRARY), any())).thenReturn(FreeCastCostIncreaseSupport.Payment.ASKED);
+
+            svc.handlePlayFromLibraryOrExileChoice(gd, player1, true, ability);
+
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.playerDecks.get(PLAYER1_ID)).containsExactly(card);
+            verify(inputCompletionService, never()).processMayAbilitiesThenAutoPass(gd);
+        }
+
+        @Test
+        @DisplayName("An unpayable cost increase leaves the card unplayed, and it goes where an unplayed card goes")
+        void unpayableCostIncreaseExilesTheCard() {
+            Card card = createSorcery("Taxed Spell");
+            gd.playerDecks.get(PLAYER1_ID).add(card);
+            PendingMayAbility ability = abilityFor(card);
+            when(freeCastCostIncreaseSupport.payOrAsk(eq(gd), eq(PLAYER1_ID), eq(card), eq(card.getId()),
+                    eq(Zone.LIBRARY), any())).thenReturn(FreeCastCostIncreaseSupport.Payment.UNPAYABLE);
+
+            svc.handlePlayFromLibraryOrExileChoice(gd, player1, true, ability);
+
+            assertThat(gd.stack).isEmpty();
+            verify(exileService).exileCard(gd, PLAYER1_ID, card);
         }
 
         @Test

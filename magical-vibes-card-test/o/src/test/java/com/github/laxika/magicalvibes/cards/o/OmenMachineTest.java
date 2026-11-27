@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.w.WearTear;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.cards.a.Artillerize;
+import com.github.laxika.magicalvibes.cards.b.BurstLightning;
 import com.github.laxika.magicalvibes.cards.a.AuraOfSilence;
 import com.github.laxika.magicalvibes.cards.d.Dismember;
 import com.github.laxika.magicalvibes.cards.r.RuleOfLaw;
@@ -514,5 +515,27 @@ class OmenMachineTest extends BaseCardTest {
         assertThat(gd.stack).noneMatch(se -> se.getCard() == pyroclasm);
         assertThat(mountain.isTapped()).isFalse();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed(BurstLightning.class)
+    @DisplayName("The spell it must cast may still be kicked: the kicker is offered before its target")
+    void mandatoryCastOffersTheKicker() {
+        harness.addToBattlefield(player1, new OmenMachine());
+        Card burst = new BurstLightning();
+        harness.setLibrary(player1, List.of(burst));
+
+        advanceToDraw(player1);
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(16);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.pendingEffectResolutionEntry).isNull();
     }
 }

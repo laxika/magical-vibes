@@ -4,13 +4,17 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.r.ResoundingThunder;
+import com.github.laxika.magicalvibes.cards.s.Shatter;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.t.ThaliaGuardianOfThraben;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -29,6 +33,30 @@ class BrilliantUltimatumTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 3);
         harness.addMana(player1, ManaColor.BLUE, 3);
         harness.addMana(player1, ManaColor.BLACK, 3);
+    }
+
+    @Test
+    @CardUsed({ThaliaGuardianOfThraben.class, Shatter.class, Mountain.class})
+    @DisplayName("A chosen spell with no legal target isn't cast and its cost increase is never asked for")
+    void spellWithoutLegalTargetIsNotAskedForItsCostIncrease() {
+        harness.addToBattlefield(player2, new ThaliaGuardianOfThraben());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        Card shatter = new Shatter();
+        harness.setLibrary(player1, List.of(shatter, new Forest(), new Swamp(), new Island(), new Plains()));
+        harness.setHand(player1, List.of(new BrilliantUltimatum()));
+        harness.addMana(player1, ManaColor.WHITE, 3); // {W}{W}{U}{U}{U}{B}{B} plus Thalia's {1}
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player2, List.of(shatter.getId()));
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of(shatter.getId()));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard() == shatter);
+        assertThat(gd.findExiledCard(shatter.getId())).isNotNull();
+        assertThat(mountain.isTapped()).isFalse();
     }
 
     @Test

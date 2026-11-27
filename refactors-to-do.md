@@ -1396,20 +1396,17 @@ Don't commit.
 - Avatar's Wrath's airbend is scored by `SpellEvaluator` as single-target exile removal (AI). Unverified.
 - Rasaad, Radiant Monk: the specialize trigger's target spec is any exiled creature card, not one exiled with this creature. Sure of the code.
 
-#### Payments and costs (25)
+#### Payments and costs (22)
 
 - Moxite Refinery's `CounterType.ANY` cost removes kinds in enum order; the player should choose (the kind prompt serves one counter only).
 - Feather, Radiant Arbiter's {2} per creature is paid only from the pool: no mana abilities (CR 605.3a). Fairly sure.
 - Jaya Ballard's emblem grants flashback (an alternative cost, CR 702.34a, 118.9a) where the text permits casting for the mana cost. Fairly sure.
 - Charmed Pendant offers a monocoloured hybrid symbol's generic half; Animation Module offers only poison and energy player counters; Thran Portal's added life cost applies to its non-mana abilities; Tevesh Szat's -10 puts commanders outside the entry batch.
 - `ExileTopCardMayPlayThisTurnEffect.withAnyManaType()` skips land cards (a land's Adventure).
-- The library and exile free-cast flows (`LibraryChoiceHandlerService.castCardWithoutPaying`, `ExileFreeCastQueueSupport`) pay no cost increases (CR 601.2f): cascade, Sunbird's Invocation, Aetherworks Marvel, Kiora and the rest (fold run 18b fixed the graveyard flow only). Sure of the code.
 - The library `CAST_WITHOUT_PAYING` flow offers no Adventure (CR 716.3): Kiora, Velomachus, Aetherworks. Sure of the code.
 - A modal double-faced card offered by a matching back face can then be cast as either face (`legalModalOptions` ignores the cast filter; Velomachus with Jadzi). Fairly sure.
 - Whispersteel Dagger and Xanathar's "as though it were mana of any color" is applied as any type, so coloured mana pays {C} (CR 609.4b). Fairly sure.
-- `MayCastHandlerService.castRevealedCardWithoutPaying`, `SplitCardCastSupport`'s `payManaCost=false` casts and `LibraryChoiceHandlerService`'s search casts pay no cost increase (CR 601.2f); move them onto `payFreeCastCostIncreases` and its mana window. Sure.
-- A mandatory exile free cast (`completeInput=false`: Omen Machine, suspend) offers no kicker, though the rulings allow optional additional costs. Sure.
-- The free-cast queue asks for the cost-increase mana before modes and targets; a spell then left with no legal target leaves the mana in the pool. Sure of the code.
+- The free casts ask for their cost-increase mana before their targets are chosen (the queue also before its modes; since FC-1 none asks for a spell with no legal mode or target): a mana ability activated in that window that removes the only target leaves the mana in the pool and the card uncast, where the target is chosen first and the spell cast (CR 601.2c, 601.2g). Sure of the code.
 - The per-target cost readers have no lost-abilities or face-down check (CR 613.1f, 708.2a). Sure.
 - `XValueChoiceAiStrategy` answers a life payment with its maximum, so the AI pays its whole life (Plunge into Darkness, Vizkopa Confessor; CR 119.4). Sure of the code.
 - `AbilityActivationService.getActivatedAbilityAdditionalGenericCost`: with a {0} equip or power-up cost, the tax is returned without cost reductions applied (CR 601.2f). Fairly sure of the code.
@@ -1446,12 +1443,11 @@ Don't commit.
 - `TextChangeTransformer` rewrites change effect identity, so a text-changed targeted trigger can lose its target group. Unsure.
 - Whether a text change made to a spell on the stack (Sleight of Mind on an instant, `spellTextReplacements`) reaches its resolution was not traced. Unverified.
 
-#### Logs and hidden information (10)
+#### Logs and hidden information (9)
 
 - `cardsThisWay(REVEAL)` names a card a later step reordered within its library (CR 701.20d); no card reads it so. Unverified.
 - Found in D10: Support Skyforge's spellbook selection exiles the two cards not chosen face up and logs their names before the follow-up removes them (`LibraryChoiceHandlerService` rest-to-exile branch); a spellbook card not drafted goes nowhere.
 - `ChooseCardEffectHandler` logs a chosen card unnamed whenever it is in a hand (fold run 12e's zone check), even a revealed one; keep hidden-ness on the subject (fold run 20's note: a zone-based prompt check broke Addle and Intuition). Sure, low.
-- A free cast refused by Teferi or Rule of Law logs "has no legal targets".
 - `SetBasePowerToughnessEffectHandler`'s set and player-target log lines print "null" for a null side. Sure.
 - Shadow of Doubt logs nothing since fold run 34: `GrantStaticEffectToPlayerEffect` has no log line. Sure, low.
 - `getRevealedOpponentHand` returns only the first opponent's hand (multiplayer). Sure of the code.

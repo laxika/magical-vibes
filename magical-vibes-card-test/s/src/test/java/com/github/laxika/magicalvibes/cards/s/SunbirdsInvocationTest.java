@@ -12,9 +12,11 @@ import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.Memnite;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.t.ThaliaGuardianOfThraben;
 import com.github.laxika.magicalvibes.cards.w.WearTear;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -440,6 +442,118 @@ class SunbirdsInvocationTest extends BaseCardTest {
         assertThat(gd.stack.getLast().getCard()).isSameAs(fling);
         harness.passBothPriorities();
         harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @CardUsed({ThaliaGuardianOfThraben.class, FountainOfYouth.class})
+    @DisplayName("A spell cast with the trigger pays its cost increase from the mana pool")
+    void freeCastPaysCostIncreaseFromThePool() {
+        setupSunbirdsOnBattlefield();
+        harness.addToBattlefield(player2, new ThaliaGuardianOfThraben());
+        FountainOfYouth fountain = new FountainOfYouth();
+        harness.setLibrary(player1, List.of(fountain, new Forest()));
+
+        castGrizzlyBears();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.stack).anyMatch(se -> se.getCard() == fountain);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @CardUsed({ThaliaGuardianOfThraben.class, FountainOfYouth.class})
+    @DisplayName("A spell whose cost increase can't be paid isn't cast and goes to the bottom")
+    void unpayableCostIncreaseLeavesTheSpellUncast() {
+        setupSunbirdsOnBattlefield();
+        harness.addToBattlefield(player2, new ThaliaGuardianOfThraben());
+        FountainOfYouth fountain = new FountainOfYouth();
+        harness.setLibrary(player1, List.of(fountain, new Forest()));
+
+        castGrizzlyBears();
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class) != null) {
+            harness.handleCardChosen(player1, 0);
+        }
+
+        assertThat(gd.stack).noneMatch(se -> se.getCard() == fountain);
+        assertThat(gd.playerDecks.get(player1.getId())).contains(fountain);
+    }
+
+    @Test
+    @CardUsed({ThaliaGuardianOfThraben.class, FountainOfYouth.class})
+    @DisplayName("A spell's cost increase may be paid by tapping a land while the payment is asked")
+    void costIncreaseIsPaidWithAnUntappedLand() {
+        setupSunbirdsOnBattlefield();
+        harness.addToBattlefield(player2, new ThaliaGuardianOfThraben());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        FountainOfYouth fountain = new FountainOfYouth();
+        harness.setLibrary(player1, List.of(fountain, new Forest()));
+
+        castGrizzlyBears();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).indexOf(mountain));
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).anyMatch(se -> se.getCard() == fountain);
+        assertThat(mountain.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @CardUsed({ThaliaGuardianOfThraben.class, FountainOfYouth.class})
+    @DisplayName("Declining to pay the cost increase leaves the spell uncast, on the bottom with the rest")
+    void decliningTheCostIncreaseBottomsTheSpell() {
+        setupSunbirdsOnBattlefield();
+        harness.addToBattlefield(player2, new ThaliaGuardianOfThraben());
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        FountainOfYouth fountain = new FountainOfYouth();
+        LlanowarElves untouched = new LlanowarElves();
+        harness.setLibrary(player1, List.of(fountain, new Forest(), untouched));
+
+        castGrizzlyBears();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.stack).noneMatch(se -> se.getCard() == fountain);
+        assertThat(mountain.isTapped()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3).contains(fountain);
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(untouched);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @CardUsed({ThaliaGuardianOfThraben.class, WearTear.class, AngelicChorus.class})
+    @DisplayName("A split card's half cast with the trigger pays its cost increase")
+    void splitHalfPaysCostIncrease() {
+        setupSunbirdsOnBattlefield();
+        harness.addToBattlefield(player2, new ThaliaGuardianOfThraben());
+        harness.addToBattlefield(player2, new AngelicChorus());
+        UUID chorusId = harness.getPermanentId(player2, "Angelic Chorus");
+        harness.setLibrary(player1, List.of(new WearTear(), new Forest()));
+
+        harness.setHand(player1, List.of(new LlanowarElves()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castCreature(player1, 0);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleListChoice(player1, "Tear — Destroy target enchantment");
+        harness.handlePermanentChosen(player1, chorusId);
+
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getName().equals("Tear"));
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    private void castGrizzlyBears() {
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
     }
 
     private void setupSunbirdsOnBattlefield() {

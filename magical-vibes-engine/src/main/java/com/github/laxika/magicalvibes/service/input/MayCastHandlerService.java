@@ -37,7 +37,9 @@ import com.github.laxika.magicalvibes.model.effect.MayCastForMiracleCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastSpellWithSuspendCostFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromSideboardWithoutPayingManaCostEffect;
+import com.github.laxika.magicalvibes.model.effect.PayFreeCastCostIncreaseEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayTargetCardFromGraveyardWithoutPayingManaCostEffect;
+import com.github.laxika.magicalvibes.service.effect.normalfx.FreeCastCostIncreaseSupport;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TieredManaCost;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -80,6 +82,8 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class MayCastHandlerService {
+    @org.springframework.beans.factory.annotation.Autowired @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.effect.normalfx.FreeCastCostIncreaseSupport freeCastCostIncreaseSupport;
     @org.springframework.beans.factory.annotation.Autowired @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService;
     @org.springframework.beans.factory.annotation.Autowired @org.springframework.context.annotation.Lazy
@@ -469,6 +473,10 @@ public class MayCastHandlerService {
                     notPlayedDestination, publiclyRevealed);
             return;
         } else {
+            if (!payLibraryTopCostIncreases(gameData, player, cardToPlay, ability, notPlayedDestination,
+                    publiclyRevealed)) {
+                return;
+            }
             // CR 601.2b: a modal spell's mode is chosen as it is cast, before it can be responded to.
             ChooseOneEffect modal = singleChoiceModal(cardToPlay);
             if (modal != null) {
@@ -576,6 +584,45 @@ public class MayCastHandlerService {
     }
 
     /**
+     * Pays the cost increases (CR 601.2f) of the library's top card being played without paying its mana cost, from
+     * the pool or after a question during which mana abilities may be activated (CR 601.2g). A targeted spell with no
+     * legal target pays nothing: the flow then puts it where a card that isn't played goes. Returns {@code false}
+     * when the flow stops here: paused on the question, or ended as a card that isn't played.
+     */
+    private boolean payLibraryTopCostIncreases(GameData gameData, Player player, Card card, PendingMayAbility ability,
+                                               LookDestination notPlayedDestination, boolean publiclyRevealed) {
+        if (singleChoiceModal(card) == null
+                && (EffectResolution.needsTarget(card) || EffectResolution.needsSpellTarget(card))
+                && buildValidSpellTargets(gameData, card, permanentSpell(card) ? List.of()
+                : new ArrayList<>(card.getCastingCostsAndSpellEffects()), player.getId()).isEmpty()) {
+            return true;
+        }
+        FreeCastCostIncreaseSupport.Payment payment = freeCastCostIncreaseSupport.payOrAsk(gameData, player.getId(),
+                card, card.getId(), Zone.LIBRARY,
+                new PayFreeCastCostIncreaseEffect.LibraryTopCast(ability, notPlayedDestination, publiclyRevealed));
+        if (payment == FreeCastCostIncreaseSupport.Payment.PAID) {
+            return true;
+        }
+        if (payment == FreeCastCostIncreaseSupport.Payment.UNPAYABLE) {
+            gameLogService.append(gameData, GameLog.cardThen(card, " can't be cast: its cost increase can't be paid."));
+            handlePlayFromLibraryOrExileChoice(gameData, player, false, ability, notPlayedDestination,
+                    publiclyRevealed);
+        }
+        return false;
+    }
+
+    /**
+     * Answers the cost-increase payment question {@link #payLibraryTopCostIncreases} paused on: paid, the card is
+     * played again, paying from the pool; otherwise it isn't played and goes where the effect puts such a card.
+     */
+    public void resumeLibraryTopCastAfterCostIncreaseDecision(GameData gameData, Player player,
+                                                              PayFreeCastCostIncreaseEffect.LibraryTopCast cast,
+                                                              boolean paid) {
+        handlePlayFromLibraryOrExileChoice(gameData, player, paid, cast.ability(), cast.notPlayedDestination(),
+                cast.publiclyRevealed());
+    }
+
+    /**
      * Casts a revealed card that is currently held outside every zone (Talent of the Telepath)
      * without paying its mana cost. A targeted spell pauses for target selection; a spell with no
      * legal target can't be cast (CR 601.2c) and joins the rest of the revealed cards in
@@ -587,8 +634,9 @@ public class MayCastHandlerService {
 
     /**
      * Whether {@code card} can legally be cast without paying its mana cost right now: nothing prohibits the cast
-     * (CR 601.3), its required creature sacrifice (an additional cost, not waived by a free cast) must be payable,
-     * and a targeted non-split spell needs at least one legal target (CR 601.2c). Split cards are left to their own
+     * (CR 601.3), its required creature sacrifice (an additional cost, not waived by a free cast) and its cost
+     * increases (CR 601.2f, with the mana abilities its caster may activate) must be payable, and a targeted
+     * non-split spell needs at least one legal target (CR 601.2c). Split cards are left to their own
      * half-selection flow and are reported as castable when the player may cast spells.
      */
     public boolean hasLegalFreeCastTarget(GameData gameData, Player player, Card card) {
@@ -597,6 +645,9 @@ public class MayCastHandlerService {
         }
         if (SplitCardCastSupport.isSplitCard(card)) {
             return true;
+        }
+        if (!freeCastCostIncreaseSupport.payableWithManaAbilities(gameData, player.getId(), card, Zone.LIBRARY)) {
+            return false;
         }
         boolean permanentSpell = card.hasType(CardType.CREATURE)
                 || card.hasType(CardType.ARTIFACT)
@@ -655,7 +706,23 @@ public class MayCastHandlerService {
                 ? List.of()
                 : new ArrayList<>(card.getCastingCostsAndSpellEffects());
 
-        if (EffectResolution.needsTarget(card) || EffectResolution.needsSpellTarget(card)) {
+        boolean targeted = EffectResolution.needsTarget(card) || EffectResolution.needsSpellTarget(card);
+        if (!targeted || !buildValidSpellTargets(gameData, card, spellEffects, player.getId()).isEmpty()) {
+            // Its total cost is its cost increases (CR 601.2f), paid once nothing else can stop the cast, from the
+            // pool or after a question during which mana abilities may be activated (CR 601.2g).
+            FreeCastCostIncreaseSupport.Payment payment = freeCastCostIncreaseSupport.payOrAsk(gameData,
+                    player.getId(), card, card.getId(), Zone.LIBRARY,
+                    new PayFreeCastCostIncreaseEffect.RevealedCast(ownerId, cardsToBottom, deferCompletion));
+            if (payment == FreeCastCostIncreaseSupport.Payment.ASKED) {
+                return;
+            }
+            if (payment == FreeCastCostIncreaseSupport.Payment.UNPAYABLE) {
+                abandonRevealedCast(gameData, card, ownerId, cardsToBottom, deferCompletion);
+                return;
+            }
+        }
+
+        if (targeted) {
             List<UUID> validTargets = buildValidSpellTargets(gameData, card, spellEffects, player.getId());
             if (validTargets.isEmpty()) {
                 if (cardsToBottom == null) {
@@ -700,6 +767,38 @@ public class MayCastHandlerService {
             }
         }
 
+        if (!deferCompletion && !gameData.interaction.isAwaitingInput()) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        }
+    }
+
+    /**
+     * Answers the cost-increase payment question of a revealed cast {@link #castRevealedCardWithoutPaying} paused on:
+     * paid, the card is cast again, paying from the pool; otherwise it isn't cast and goes where the revealed cards
+     * not cast go.
+     */
+    public void resumeRevealedCastAfterCostIncreaseDecision(GameData gameData, Player player, Card card,
+                                                            PayFreeCastCostIncreaseEffect.RevealedCast cast,
+                                                            boolean paid) {
+        if (paid) {
+            castRevealedCardWithoutPaying(gameData, player, card, cast.ownerId(), cast.cardsToBottom(), false);
+            return;
+        }
+        abandonRevealedCast(gameData, card, cast.ownerId(), cast.cardsToBottom(), false);
+    }
+
+    private void abandonRevealedCast(GameData gameData, Card card, UUID ownerId, List<Card> cardsToBottom,
+                                     boolean deferCompletion) {
+        if (cardsToBottom == null) {
+            graveyardService.addCardToGraveyard(gameData, ownerId, card, Zone.LIBRARY);
+            gameLogService.append(gameData, GameLog.cardThen(card,
+                    " can't be cast: its cost increase isn't paid. It is put into the graveyard."));
+        } else {
+            gameLogService.append(gameData, GameLog.cardThen(card, " can't be cast: its cost increase isn't paid."));
+            List<Card> uncastCards = new ArrayList<>(cardsToBottom);
+            uncastCards.add(card);
+            beginBottomReorder(gameData, ownerId, uncastCards);
+        }
         if (!deferCompletion && !gameData.interaction.isAwaitingInput()) {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
         }

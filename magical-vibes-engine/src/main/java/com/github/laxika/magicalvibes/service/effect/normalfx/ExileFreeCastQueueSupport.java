@@ -1129,19 +1129,44 @@ public class ExileFreeCastQueueSupport {
      * Before the next queued spell is cast: when the pool can't cover its cost increases (CR 601.2f) but the mana its
      * caster's untapped sources could make can, the queue pauses with the card still first on the payment question,
      * during which mana abilities may be activated (CR 601.2g, 608.2g). Its answer is
-     * {@link #resumeAfterCostIncreaseDecision}.
+     * {@link #resumeAfterCostIncreaseDecision}. A spell that can't be cast, or has no legal mode or target to be cast
+     * with (CR 601.2c), is skipped as the queue reaches it, never asked for mana it can't use.
      */
     private boolean asksForCostIncreaseMana(GameData gameData, UUID playerId, UUID cardId) {
         ExiledCardEntry exiled = gameData.findExiledCard(cardId);
         if (exiled == null || exiled.card().hasType(CardType.LAND)
                 || spellCastingService.canPayFreeCastCostIncreases(gameData, playerId, queuedFace(gameData, exiled),
                 Zone.EXILE)
-                || !castableFromExile(gameData, playerId, exiled.card())) {
+                || !castableFromExile(gameData, playerId, exiled.card())
+                || !hasLegalModeOrTarget(gameData, playerId, queuedFace(gameData, exiled))) {
             return false;
         }
         return freeCastCostIncreaseSupport.payOrAsk(gameData, playerId, queuedFace(gameData, exiled), cardId,
-                Zone.EXILE, PayFreeCastCostIncreaseEffect.Resume.FREE_CAST_QUEUE, null)
+                Zone.EXILE, new PayFreeCastCostIncreaseEffect.QueueCast())
                 == FreeCastCostIncreaseSupport.Payment.ASKED;
+    }
+
+    /**
+     * Whether {@code card} has a mode it may be cast with, and a legal target for a spell that needs one: what the
+     * queue checks as it casts it ({@link #castNextFromQueue}, {@link #castPreparedSpell}).
+     */
+    private boolean hasLegalModeOrTarget(GameData gameData, UUID playerId, Card card) {
+        List<CardEffect> spellEffects = new ArrayList<>(card.getCastingCostsAndSpellEffects());
+        ChooseOneEffect modal = spellEffects.stream()
+                .filter(ChooseOneEffect::isCastersModal)
+                .map(ChooseOneEffect.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (modal != null) {
+            return !legalNextModeIndices(gameData, card.createRuntimeCopy(), playerId, modal, List.of(),
+                    modal.choicesMax()).isEmpty();
+        }
+        if (!needsCastTarget(card, spellEffects)) {
+            return true;
+        }
+        return card.getMaxTargets() > 1
+                ? exileCastTargetSupport.hasLegalTargetSet(gameData, card, playerId)
+                : !exileCastTargetSupport.firstSlotCandidates(gameData, card, spellEffects, playerId).isEmpty();
     }
 
     /** The face the queued card will be cast as: its Adventure when the queue says so, else the card. */

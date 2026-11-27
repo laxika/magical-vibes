@@ -397,8 +397,8 @@ public class ExileFreeCastSupport {
                                      boolean grantHaste, boolean returnToHandIfUnable, boolean suspendHaste,
                                      boolean completeInput, int face) {
         FreeCastCostIncreaseSupport.Payment payment = freeCastCostIncreaseSupport.payOrAsk(gameData, playerId, card,
-                exileCardId, Zone.EXILE, PayFreeCastCostIncreaseEffect.Resume.EXILE_CAST,
-                new FreeCastKickerOffer(grantHaste, returnToHandIfUnable, suspendHaste, true, face));
+                exileCardId, Zone.EXILE, new PayFreeCastCostIncreaseEffect.ExileCast(
+                        new FreeCastKickerOffer(grantHaste, returnToHandIfUnable, suspendHaste, true, face)));
         if (payment == FreeCastCostIncreaseSupport.Payment.PAID) {
             return true;
         }
@@ -441,14 +441,16 @@ public class ExileFreeCastSupport {
 
     /**
      * Kicker is an optional additional cost, so a spell cast without paying its mana cost may still be
-     * kicked (CR 118.9, CR 601.2b). Offers a mana-only kicker the controller can currently afford and
-     * pauses the cast until that offer is answered.
+     * kicked (CR 118.9, CR 601.2b), a mandatory cast ("casts it ... if able", suspend) too. Offers a
+     * mana-only kicker the controller can currently afford and pauses the cast until that offer is
+     * answered. The answer resumes the cast through the input epilogue; a cast made inside a running
+     * resolution only puts the question up, and that resolution parks behind it.
      *
      * @return true when the cast is paused on the offer
      */
     private boolean offerKickerForFreeCast(GameData gameData, Player player, Card card, UUID exileCardId,
                                            FreeCastKickerOffer offer) {
-        if (!offer.completeInput() || gameData.freeCastKickerDecidedIds.contains(exileCardId)) {
+        if (gameData.freeCastKickerDecidedIds.contains(exileCardId)) {
             return false;
         }
         KickerEffect kicker = card.getStaticEffects().stream()
@@ -466,11 +468,16 @@ public class ExileFreeCastSupport {
         if (cost.hasX() || pool == null || !cost.canPay(pool, 0)) {
             return false;
         }
-        gameData.pendingFreeCastKickerOffers.put(exileCardId, offer);
+        gameData.pendingFreeCastKickerOffers.put(exileCardId, new FreeCastKickerOffer(offer.grantHaste(),
+                offer.returnToHandIfUnable(), offer.suspendHaste(), true, offer.face()));
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(card, player.getId(),
                 List.of(new MayPayKickerForFreeCastEffect()),
                 "Pay the kicker cost " + kicker.cost() + " for " + card.getName() + "?", exileCardId));
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        if (offer.completeInput()) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        } else if (!gameData.interaction.isAwaitingInput()) {
+            playerInputService.processNextMayAbility(gameData);
+        }
         return true;
     }
 

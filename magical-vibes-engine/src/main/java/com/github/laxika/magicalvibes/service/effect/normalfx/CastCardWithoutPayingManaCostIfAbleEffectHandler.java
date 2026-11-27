@@ -150,7 +150,7 @@ public class CastCardWithoutPayingManaCostIfAbleEffectHandler implements NormalE
             return;
         }
         FreeCastCostIncreaseSupport.Payment payment = freeCastCostIncreaseSupport.payOrAsk(gameData, casterId, card,
-                card.getId(), Zone.HAND, PayFreeCastCostIncreaseEffect.Resume.HAND_CAST, null);
+                card.getId(), Zone.HAND, new PayFreeCastCostIncreaseEffect.HandCast());
         if (payment == FreeCastCostIncreaseSupport.Payment.ASKED) {
             return;
         }

@@ -40,7 +40,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 |---|---|---|
 | 0 Owner and bookkeeping | 0 | moves done; owner questions asked after the last run |
 | DM Damage | DM-1, DM-2, DM-3 | DM-1 done 2026-11-27; DM-2, DM-3 open |
-| FC Free casts and casting from other zones | FC-1, FC-2, FC-3 | open |
+| FC Free casts and casting from other zones | FC-1, FC-2, FC-3 | FC-1 done 2026-11-27; FC-2, FC-3 open |
 | CP Casting permissions and cost readers | CP-1 | open |
 | MP Multiplayer opponent choices | MP-1, MP-2 | open |
 | CT Counters | CT-1, CT-2 | open |
@@ -261,7 +261,15 @@ Likely touches: `ExileFreeCastQueueSupport`, `LibraryChoiceHandlerService.castCa
 Avoid: LS-1, LS-2, CP-1.
 Notes: Fold run 18b fixed the graveyard flow; start from it.
 
-Outcome:
+Outcome: 2026-11-27. Fixed: P6, P10, P11, H4 (deleted from entry 18); P12 fixed for the "no legal mode or target" case and
+edited down (the free casts still ask for the mana before the target is chosen). Left: O86, moved to FC-3 (the chooser must come
+before every free-cast flow's target prompt, which is FC-3's one additional-cost path; it changes play for no card). Every
+resolution free cast now pays its cost increases (CR 601.2f) through `FreeCastCostIncreaseSupport.payOrAsk`, pool or mana window
+(CR 601.2g): `PayFreeCastCostIncreaseEffect` carries a sealed `PausedCast` (exile, queue, hand, library search with its
+`IfNotCast` destination, revealed card, library top card, split half) instead of `Resume` + `FreeCastKickerOffer`; the search,
+revealed and split castability checks ask `payableWithManaAbilities`. The library-top free plays (`RevealTopCardMayPlayFreeEffect`:
+Djinn of Wishes) were fixed too. A mandatory exile free cast offers a mana kicker (CR 601.2b). The library searches log why a
+card can't be cast. No effect class added or deleted, so no ledger or ratchet change.
 
 #### FC-2. Faces: Adventures, modal double-faced cards, split cards
 
@@ -289,6 +297,18 @@ Missile and Souls of the Lost), P19 (tap-escalate spells cast through a flashbac
 
 Notes: One path for picking an additional cost in every cast zone is the aim. If that needs client work, stop at the server part
 and report what the client needs (O85 is the owner's question).
+
+Moved from FC-1: O86 (the free-cast "Choose how to pay the additional cost." chooser comes after the targets, CR 601.2b).
+
+New line N4 (seen in FC-1): a graveyard play without paying its mana cost (`MayCastHandlerService.payGraveyardPlayCostIncrease`)
+pays its cost increase from the pool only, with no mana-ability window (CR 601.2g); move it onto `FreeCastCostIncreaseSupport`.
+
+New line N5 (seen in FC-1): an exile free cast offers its kicker only when the pool alone pays it
+(`ExileFreeCastSupport.offerKickerForFreeCast`), with no mana-ability window (CR 601.2g), and never a kicker with a non-mana cost.
+
+New line N6 (seen in FC-1): Invasion of Alara's chosen card whose cost increase isn't paid goes to the bottom
+(`LibraryChoiceHandlerService.handleCastOneAndPutOtherIntoHandChoice`), though the other card already went to the hand, so the
+player can't keep the uncast one instead.
 
 Outcome:
 

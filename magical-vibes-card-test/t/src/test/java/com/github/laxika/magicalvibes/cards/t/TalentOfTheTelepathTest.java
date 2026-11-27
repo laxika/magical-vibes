@@ -47,6 +47,23 @@ class TalentOfTheTelepathTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(ThaliaGuardianOfThraben.class)
+    @DisplayName("A revealed spell cast without paying its mana cost pays its cost increase from the pool")
+    void revealedCastPaysCostIncrease() {
+        harness.addToBattlefield(player2, new ThaliaGuardianOfThraben());
+        CounselOfTheSoratami counsel = new CounselOfTheSoratami();
+        harness.setLibrary(player2, topSeven(counsel));
+        harness.setHand(player1, new ArrayList<>(List.of(new TalentOfTheTelepath())));
+        harness.addMana(player1, ManaColor.BLUE, 6); // {2}{U}{U} plus Thalia's {1}, then {1} for Counsel
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).anyMatch(se -> se.getCard() == counsel);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
     @DisplayName("Seven cards leave the opponent's library and the uncast rest hit their graveyard")
     void revealsSevenAndDumpsTheRest() {
         harness.setLibrary(player2, topSeven());
