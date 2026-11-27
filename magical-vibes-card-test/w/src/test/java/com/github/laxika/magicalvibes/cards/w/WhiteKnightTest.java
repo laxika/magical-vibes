@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.p.Pestilence;
 import com.github.laxika.magicalvibes.cards.s.SwordsToPlowshares;
 import com.github.laxika.magicalvibes.cards.t.Terror;
 import com.github.laxika.magicalvibes.cards.u.UnholyStrength;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -180,6 +181,17 @@ class WhiteKnightTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard()).isSameAs(swordsToPlowshares);
 
+    }
+
+    @Test
+    @DisplayName("Its protection stays its own when it is attached to another creature")
+    void protectionStaysItsOwnWhenAttached() {
+        Permanent knight = addCreatureReady(player1, new WhiteKnight());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        knight.setAttachedTo(bears.getId());
+
+        assertThat(gqs.hasProtectionFrom(gd, knight, CardColor.BLACK)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, bears, CardColor.BLACK)).isFalse();
     }
     // ===== Protection - aura enchantment =====
 

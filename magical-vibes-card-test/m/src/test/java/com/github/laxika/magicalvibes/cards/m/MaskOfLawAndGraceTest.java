@@ -17,7 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MaskOfLawAndGrace.class, MetathranSoldier.class, ThranDynamo.class, CinderSeer.class, Eradicate.class})
+@CardUsed({MaskOfLawAndGrace.class, MetathranSoldier.class, ThranDynamo.class, CinderSeer.class, Eradicate.class,
+        MindBend.class})
 class MaskOfLawAndGraceTest extends BaseCardTest {
 
     @Test
@@ -198,5 +199,22 @@ class MaskOfLawAndGraceTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Mask goes to the graveyard when a text change makes it grant protection from white")
+    void textChangedToWhiteRemovesItself() {
+        Permanent creature = addCreatureReady(player1, new MetathranSoldier());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new MaskOfLawAndGrace());
+        aura.setAttachedTo(creature.getId());
+        harness.setHand(player1, List.of(new MindBend()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, aura.getId());
+        harness.handleListChoice(player1, "BLACK");
+        harness.handleListChoice(player1, "WHITE");
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(aura);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(aura.getCard());
     }
 }

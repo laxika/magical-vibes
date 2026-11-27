@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.c.CripplingFatigue;
 import com.github.laxika.magicalvibes.cards.c.CabalTorturer;
+import com.github.laxika.magicalvibes.cards.m.MindBend;
 import com.github.laxika.magicalvibes.cards.t.TaintedField;
 import com.github.laxika.magicalvibes.cards.t.TerohsFaithful;
 import com.github.laxika.magicalvibes.cards.u.Unhinge;
@@ -22,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({StrengthOfIsolation.class, TerohsFaithful.class, TaintedField.class,
-        Unhinge.class, CripplingFatigue.class, CabalTorturer.class})
+        Unhinge.class, CripplingFatigue.class, CabalTorturer.class, MindBend.class})
 class StrengthOfIsolationTest extends BaseCardTest {
 
     @Test
@@ -237,5 +238,22 @@ class StrengthOfIsolationTest extends BaseCardTest {
         harness.castAndResolveSorcery(player2, 0, player1.getId());
         harness.handleCardChosen(player1, 0);
         return isolation;
+    }
+
+    @Test
+    @DisplayName("Strength of Isolation goes to the graveyard when a text change makes it grant protection from white")
+    void textChangedToWhiteRemovesItself() {
+        Permanent faithful = addCreatureReady(player1, new TerohsFaithful());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new StrengthOfIsolation());
+        aura.setAttachedTo(faithful.getId());
+        harness.setHand(player1, List.of(new MindBend()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, aura.getId());
+        harness.handleListChoice(player1, "BLACK");
+        harness.handleListChoice(player1, "WHITE");
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(aura);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(aura.getCard());
     }
 }

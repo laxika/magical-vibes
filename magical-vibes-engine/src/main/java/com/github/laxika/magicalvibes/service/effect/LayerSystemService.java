@@ -3500,12 +3500,10 @@ public class LayerSystemService {
             return;
         }
 
-        // An unattached scope-less protection static is the object's OWN printed protection
-        // ability — already seeded into its state (and removable by a lose-all there); the
-        // attachment handler would no-op anyway.
+        // A scope-less protection static is the object's OWN printed protection ability, attached or not
+        // (CR 702.16a): already seeded into its state (and removable by a lose-all there).
         if (instance.effect() instanceof ProtectionFromColorsEffect protection
-                && protection.subject() == null && !protection.colorSet().readsBoard() && instance.source() != null
-                && !instance.source().permanent().isAttached()) {
+                && protection.subject() == null && !protection.colorSet().readsBoard() && instance.source() != null) {
             return;
         }
         // CR 613.8a(1): the ability no longer exists — its source lost all abilities (an

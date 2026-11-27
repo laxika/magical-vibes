@@ -1337,13 +1337,11 @@ Don't commit.
 - Development (Research // Development): two or more opponents letting its controller draw in one round draw one card, not one per accepting opponent (CR 118.12a: each paid cost is that player's; its 2006 rulings don't settle it). Sure of the code.
 - Madame Null, Power Broker asks "pay 0 life" for a creature with 0 power (HEAD's behaviour, pinned in U8: `MadameNullPowerBrokerTest.zeroPowerAsksForZeroLife`); the U3b orchestrator's decision (Q4) says it doesn't ask (CR 119.4).
 
-#### Layers and copy values (8)
+#### Layers and copy values (6)
 
 - Esix's copies keep none of the replaced copy's instructions (Faerie Artisans); Dance of Many waits for it. Sure of the code.
 - Thought Partition and Hydroponics Architect write colour, mana cost, supertype and subtype into runtime copies (layer 1, CR 613). Sure of the code.
 - Ability borrowers in a CR 613.8b dependency loop are approximated by assembly order, so a three-borrower cycle can miss a lender's borrowed abilities. Sure of the code, rare.
-- `ProtectionFromColorsEffectHandler` gives a self-subject fixed protection to the host when its source is attached (a bestowed or reconfigured creature with printed protection); CR 702.16a makes it the object's own. Sure of the code.
-- Mask of Law and Grace, Shield of Duty and Reason, Strength of Isolation and Strength of Lunacy stay exempt from their own protection when recoloured, though they have no "doesn't remove" text (CR 702.16c). Fairly sure.
 - `PerpetuallyGrantStaticEffectToTargetCreatureEffectHandler`, `PerpetuallyGrantStaticEffectToSourceEffectHandler`, `DealDamageToAnyTargetThenPerpetuallyGrantStaticEffectsIfCreatureDamagedEffectHandler`, `PerpetuallyBecomeCreatureEffectHandler` and `ExileArtifactThenSeekArtifactAndPerpetuallyBecomeCreatureEffectHandler` write perpetual changes into an exchanged card, which a copy then copies (CR 707.2). Sure of the code.
 - `TextChangeTransformer` rewrites change effect identity, so a text-changed targeted trigger can lose its target group. Unsure.
 - Whether a text change made to a spell on the stack (Sleight of Mind on an instant, `spellTextReplacements`) reaches its resolution was not traced. Unverified.

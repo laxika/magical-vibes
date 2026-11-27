@@ -13,6 +13,7 @@ public class ChoMannosBlessing extends Card {
     public ChoMannosBlessing() {
         target(TargetFilters.creature())
                 .addStaticEffect(new ChooseColorOnEnterEffect())
-                .addStaticEffect(ProtectionFromColorsEffect.chosenColor(Subjects.attachedCreature()));
+                .addStaticEffect(ProtectionFromColorsEffect.chosenColor(Subjects.attachedCreature())
+                        .withAuraRemoval(ProtectionFromColorsEffect.AuraRemoval.KEEPS_THIS_AURA));
     }
 }

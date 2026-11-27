@@ -18,6 +18,7 @@ public class WardOfLights extends Card {
         target(TargetFilters.creature())
                 .addStaticEffect(new FlashCastWithCleanupSacrificeEffect())
                 .addStaticEffect(new ChooseColorOnEnterEffect())
-                .addStaticEffect(ProtectionFromColorsEffect.chosenColor(Subjects.attachedCreature()));
+                .addStaticEffect(ProtectionFromColorsEffect.chosenColor(Subjects.attachedCreature())
+                        .withAuraRemoval(ProtectionFromColorsEffect.AuraRemoval.KEEPS_THIS_AURA));
     }
 }

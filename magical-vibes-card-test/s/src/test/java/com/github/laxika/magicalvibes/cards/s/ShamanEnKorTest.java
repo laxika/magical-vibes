@@ -1,7 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.b.Bullwhip;
+import com.github.laxika.magicalvibes.cards.g.GreenWard;
 import com.github.laxika.magicalvibes.cards.h.HonorGuard;
+import com.github.laxika.magicalvibes.cards.t.Tracker;
+import com.github.laxika.magicalvibes.cards.w.WhiteKnight;
+import com.github.laxika.magicalvibes.cards.w.WhiteWard;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -16,7 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ShamanEnKor.class, Bullwhip.class, HonorGuard.class, Shock.class})
+@CardUsed({ShamanEnKor.class, Bullwhip.class, HonorGuard.class, Shock.class, GreenWard.class, Tracker.class,
+        WhiteKnight.class, WhiteWard.class})
 class ShamanEnKorTest extends BaseCardTest {
 
     @Test
@@ -272,6 +277,53 @@ class ShamanEnKorTest extends BaseCardTest {
 
         assertThat(shaman.getMarkedDamage()).isZero();
         harness.assertInGraveyard(player1, "Honor Guard");
+    }
+
+    @Test
+    @DisplayName("Redirected damage from the creature Tracker damaged is judged by that creature's colour, not Tracker's")
+    void redirectedReturnDamageIsJudgedByItsDealer() {
+        Permanent tracker = addCreatureReady(player1, new Tracker());
+        Permanent shaman = addCreatureReady(player1, new ShamanEnKor());
+        Permanent ward = harness.addToBattlefieldAndReturn(player1, new GreenWard());
+        ward.setAttachedTo(shaman.getId());
+        Permanent knight = addCreatureReady(player2, new WhiteKnight());
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, indexOf(player1, shaman), 1, null, tracker.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, knight.getId());
+
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.activateAbility(player1, indexOf(player1, tracker), null, knight.getId());
+        harness.passBothPriorities();
+
+        assertThat(tracker.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Shaman en-Kor");
+    }
+
+    @Test
+    @DisplayName("Redirected damage from a colour Shaman en-Kor has protection from is prevented")
+    void redirectedDamageFromProtectedColourIsPrevented() {
+        Permanent tracker = addCreatureReady(player1, new Tracker());
+        Permanent shaman = addCreatureReady(player1, new ShamanEnKor());
+        Permanent ward = harness.addToBattlefieldAndReturn(player1, new WhiteWard());
+        ward.setAttachedTo(shaman.getId());
+        Permanent knight = addCreatureReady(player2, new WhiteKnight());
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, indexOf(player1, shaman), 1, null, tracker.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, knight.getId());
+
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.activateAbility(player1, indexOf(player1, tracker), null, knight.getId());
+        harness.passBothPriorities();
+
+        assertThat(tracker.getMarkedDamage()).isZero();
+        assertThat(shaman.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Shaman en-Kor");
     }
 
     private int indexOf(Player player, Permanent perm) {

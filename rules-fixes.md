@@ -50,7 +50,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | LS Library searches and reveals | LS-1, LS-2, LS-3 | LS-1 done 2026-11-27; LS-2 done 2026-11-27 (N35, E10 left) |
 | TK Tokens and copies | TK-1, TK-2 | TK-1 done 2026-11-27; TK-2 done 2026-11-27 (T1 left: choices keyed by their linking ability) |
 | FD Face-down and hidden reads | FD-1, FD-2 | FD-1, FD-2 done 2026-11-27 (FD-2: H1 left, latent) |
-| LY Layers, protection, text changes, linked abilities | LY-1 to LY-5 | LY-1, LY-2 done 2026-11-27 |
+| LY Layers, protection, text changes, linked abilities | LY-1 to LY-5 | LY-1, LY-2, LY-3 done 2026-11-27 |
 | DR Draws | DR-1 | DR-1 done 2026-11-27 (E6's plural "one of them" readers: owner question) |
 | CB Combat | CB-1 | CB-1 done 2026-11-27 (M11's block half left: it needs multi-defender combat damage) |
 | PP Perpetual changes | PP-1 | open |
@@ -1062,7 +1062,21 @@ New line N24 (seen in DM-3): `DamageSupport.isRedirectedToProtectedCreature` pre
 stack entry's source card, not from the event's `explicitSource`, so a fought creature's damage redirected to another creature
 (Shaman en-Kor) is judged as the fight's source; the pool's `Protection` rule already reads the right source (unverified).
 
-Outcome:
+Outcome: done 2026-11-27. Fixed L12, L13, N24 (L12 and L13 deleted from entry 18). L12: a `null`-subject (self) fixed
+protection stays the permanent's own while it is attached (CR 702.16a): `ProtectionFromColorsEffectHandler` no longer gives it
+to the host, and the layer system's seeded-protection skip no longer depends on attachment (White Knight attached to Grizzly
+Bears gave the Bears protection from black; no printed card reaches it). L13: `ProtectionFromColorsEffect`'s
+`boolean doesNotRemoveAuras` is now `AuraRemoval` (`REMOVES` default, `KEEPS_THIS_AURA`, `KEEPS_AURAS`), and
+`AuraAttachmentService` exempts an Aura from its own grant only when it is not `REMOVES` (CR 702.16c; Mask of Law and Grace
+ruling 2004-10-04: changed to grant protection from white, it puts itself into the graveyard). The five colour Wards, Ward of
+Lights, Pentarch Ward, Flickering Ward, Cho-Manno's Blessing, Floating Shield and Pledge of Loyalty print "doesn't remove this
+Aura" and set `KEEPS_THIS_AURA`; Spectra Ward `KEEPS_AURAS`. Mask of Law and Grace, Shield of Duty and Reason, Strength of
+Isolation and Strength of Lunacy now fall off when recoloured; Crown of Awe already did (its grant is a `GrantEffectEffect`).
+Tattoo Ward's card-type form keeps its "protection from enchantments" exemption (only Tattoo Ward reaches it, and it prints the
+clause). N24: `DamageSupport.isRedirectedToProtectedCreature` deleted; the pool's protection rule judges a redirected event by
+its dealer (CR 702.16e): Tracker's ability with White Knight's return damage redirected to a Shaman en-Kor wearing Green Ward
+was prevented as Tracker's green. Fights were already correct (each fighter deals through its own carrier entry). New line N72
+(MC-2), a failure on HEAD. No effect class added or deleted, so no ledger or ratchet change.
 
 #### LY-4. Text changes
 
@@ -1361,6 +1375,10 @@ returns attacking while another prompt is open (an entry prompt), so with two or
 New line N71 (seen in LY-2): `ReturnOpponentCreaturesFromGraveyardAsFoodEffectHandler` (Supper for Spiders) still makes each
 returned card a Food by swapping in a runtime copy (`Permanent.becomeCreatureBaseCard`), the shape L15 removed from
 `BecomeCreatureEffect`, so a later copy effect on the Food drops its Food types (CR 613.1a, 613.1d); unverified.
+
+New line N72 (seen in LY-3): `WardOfPietyTest.redirectsAfterAuraLeavesBeforeResolution` fails on HEAD: Ward of Piety's ability
+resolving after the Aura was exiled redirects nothing, though "enchanted creature" should be the creature it last enchanted
+(CR 608.2h); `RedirectNextDamageEffect`'s `RedirectRole.ENCHANTED_PERMANENT` reads no last-known attachment.
 
 Outcome:
 

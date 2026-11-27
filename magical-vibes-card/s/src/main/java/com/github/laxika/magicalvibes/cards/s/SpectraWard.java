@@ -18,6 +18,6 @@ public class SpectraWard extends Card {
                 .addStaticEffect(new StaticBoostEffect(2, 2, Subjects.attachedCreature()))
                 .addStaticEffect(new ProtectionFromColorsEffect(Set.of(
                         CardColor.WHITE, CardColor.BLUE, CardColor.BLACK, CardColor.RED, CardColor.GREEN),
-                        Subjects.attachedCreature(), true));
+                        Subjects.attachedCreature(), ProtectionFromColorsEffect.AuraRemoval.KEEPS_AURAS));
     }
 }

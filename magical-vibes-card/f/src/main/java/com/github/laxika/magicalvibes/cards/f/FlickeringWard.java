@@ -22,7 +22,8 @@ public class FlickeringWard extends Card {
         // colour can be re-chosen on the next cast.
         target(TargetFilters.creature())
                 .addStaticEffect(new ChooseColorOnEnterEffect())
-                .addStaticEffect(ProtectionFromColorsEffect.chosenColor(Subjects.attachedCreature()));
+                .addStaticEffect(ProtectionFromColorsEffect.chosenColor(Subjects.attachedCreature())
+                        .withAuraRemoval(ProtectionFromColorsEffect.AuraRemoval.KEEPS_THIS_AURA));
         addActivatedAbility(new ActivatedAbility(false, "{W}", List.of(ReturnToHandEffect.self()),
                 "{W}: Return Flickering Ward to its owner's hand."));
     }

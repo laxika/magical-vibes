@@ -653,7 +653,7 @@ public class AuraAttachmentService {
                 if (!host.getId().equals(candidate.getAttachedTo())) continue;
                 boolean safe = candidate.getCard().getStaticEffects().stream()
                         .anyMatch(effect -> effect instanceof ProtectionFromColorsEffect protection
-                                && protection.doesNotRemoveAuras());
+                                && protection.auraRemoval() == ProtectionFromColorsEffect.AuraRemoval.KEEPS_AURAS);
                 if (safe) return true;
             }
         }
@@ -662,15 +662,17 @@ public class AuraAttachmentService {
 
     /**
      * Whether an Aura gives its creature protection that doesn't remove that Aura ("This effect doesn't remove this
-     * Aura": the colour Wards, Ward of Lights, Pledge of Loyalty; Tattoo Ward's card-type form). Only an Aura's text
-     * says so; an Equipment with the quality its creature has protection from becomes unattached (CR 702.16d).
+     * Aura": the colour Wards, Ward of Lights, Pledge of Loyalty; "doesn't remove Auras": Spectra Ward; Tattoo Ward's
+     * card-type form). Only an Aura's text says so: one without it (Mask of Law and Grace made to grant protection
+     * from white) is put into its owner's graveyard (CR 702.16c), and an Equipment with the quality its creature has
+     * protection from becomes unattached (CR 702.16d).
      */
     private boolean grantsSelfExemptProtection(Permanent attachment) {
         return attachment.getCard().getStaticEffects().stream()
                 .anyMatch(effect -> {
                     if (effect instanceof ProtectionFromColorsEffect fixedProtection) {
-                        return fixedProtection.subject() != null
-                                && fixedProtection.subject() instanceof PermanentSubject.Attached;
+                        return fixedProtection.subject() instanceof PermanentSubject.Attached
+                                && fixedProtection.auraRemoval() != ProtectionFromColorsEffect.AuraRemoval.REMOVES;
                     }
                     if (effect instanceof GrantEffectEffect grant
                             && grant.subject() instanceof PermanentSubject.Attached

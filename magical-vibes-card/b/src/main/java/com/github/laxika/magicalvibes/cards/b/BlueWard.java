@@ -20,6 +20,6 @@ public class BlueWard extends Card {
     public BlueWard() {
         // Enchant creature; enchanted creature has protection from blue.
         target(TargetFilters.creature()).addStaticEffect(new ProtectionFromColorsEffect(
-                Set.of(CardColor.BLUE), Subjects.attachedCreature()));
+                Set.of(CardColor.BLUE), Subjects.attachedCreature(), ProtectionFromColorsEffect.AuraRemoval.KEEPS_THIS_AURA));
     }
 }

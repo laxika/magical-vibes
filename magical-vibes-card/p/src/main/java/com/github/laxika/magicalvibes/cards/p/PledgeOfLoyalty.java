@@ -11,6 +11,7 @@ public class PledgeOfLoyalty extends Card {
 
     public PledgeOfLoyalty() {
         target(TargetFilters.creature())
-                .addStaticEffect(ProtectionFromColorsEffect.amongPermanentsYouControl(Subjects.attachedCreature()));
+                .addStaticEffect(ProtectionFromColorsEffect.amongPermanentsYouControl(Subjects.attachedCreature())
+                        .withAuraRemoval(ProtectionFromColorsEffect.AuraRemoval.KEEPS_THIS_AURA));
     }
 }

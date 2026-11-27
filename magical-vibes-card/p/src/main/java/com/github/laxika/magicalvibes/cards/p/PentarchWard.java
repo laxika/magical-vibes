@@ -19,6 +19,7 @@ public class PentarchWard extends Card {
         target(TargetFilters.creature())
                 .addStaticEffect(new ChooseColorOnEnterEffect())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(1))
-                .addStaticEffect(ProtectionFromColorsEffect.chosenColor(Subjects.attachedCreature()));
+                .addStaticEffect(ProtectionFromColorsEffect.chosenColor(Subjects.attachedCreature())
+                        .withAuraRemoval(ProtectionFromColorsEffect.AuraRemoval.KEEPS_THIS_AURA));
     }
 }

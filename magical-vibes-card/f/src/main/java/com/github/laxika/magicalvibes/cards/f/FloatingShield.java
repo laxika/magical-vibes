@@ -18,7 +18,8 @@ public class FloatingShield extends Card {
     public FloatingShield() {
         target(TargetFilters.creature())
                 .addStaticEffect(new ChooseColorOnEnterEffect())
-                .addStaticEffect(ProtectionFromColorsEffect.chosenColor(Subjects.attachedCreature()));
+                .addStaticEffect(ProtectionFromColorsEffect.chosenColor(Subjects.attachedCreature())
+                        .withAuraRemoval(ProtectionFromColorsEffect.AuraRemoval.KEEPS_THIS_AURA));
 
         addActivatedAbility(new ActivatedAbility(
                 false,
