@@ -203,6 +203,7 @@ class WardOfPietyTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Scour()));
         harness.addMana(player2, ManaColor.WHITE, 4);
         harness.castAndResolveInstant(player2, 0, aura.getId());
+        harness.handleMultipleCardsChosen(player2, List.of());
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(aura);
         harness.passBothPriorities();
 

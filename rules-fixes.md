@@ -1376,9 +1376,9 @@ New line N71 (seen in LY-2): `ReturnOpponentCreaturesFromGraveyardAsFoodEffectHa
 returned card a Food by swapping in a runtime copy (`Permanent.becomeCreatureBaseCard`), the shape L15 removed from
 `BecomeCreatureEffect`, so a later copy effect on the Food drops its Food types (CR 613.1a, 613.1d); unverified.
 
-New line N72 (seen in LY-3): `WardOfPietyTest.redirectsAfterAuraLeavesBeforeResolution` fails on HEAD: Ward of Piety's ability
-resolving after the Aura was exiled redirects nothing, though "enchanted creature" should be the creature it last enchanted
-(CR 608.2h); `RedirectNextDamageEffect`'s `RedirectRole.ENCHANTED_PERMANENT` reads no last-known attachment.
+N72 (seen in LY-3): fixed by the orchestrator after LY-3. Not a Ward of Piety defect: LS-1's same-name search shows the searched zones
+when nothing matches, and `WardOfPietyTest` and `ArcheryTrainingTest` cast Scour as a helper without answering that prompt; both
+now answer it.
 
 Outcome:
 

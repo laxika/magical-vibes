@@ -240,6 +240,7 @@ class ArcheryTrainingTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 4);
         harness.castInstant(player2, 0, aura.getId());
         harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player2, List.of());
         harness.assertNotOnBattlefield(player1, "Archery Training");
         harness.passBothPriorities();
 
