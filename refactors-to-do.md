@@ -425,7 +425,7 @@ Run the test classes of every card that used a deleted class (scripts/effect-inv
 - Transcantation (`TargetSpellBecomesCopyOfCardEffectHandler`) queues its own new-targets offer; fold it onto `MayEffect(ChooseNewTargetsForTargetSpellEffect…)` (CR 115.7d). Sure.
 - Demonic Hordes' `OpponentChoosesPermanentToSacrificeEffect` and Infernal Denizen's `OpponentMayGainControlOfCreatureYouControlEffect` were `blocked-other` on the old forced-cost fallback list; both are now ordinary steps of their resolution (U4a), so their folds (`ChoosePlayerEffect` + `ChoosePermanentsEffect.chosenBy(playersThisWay(CHOOSE))` + the verb) are open for a fold run. Sure of the code.
 
-#### Blocked records by cause (695)
+#### Blocked records by cause (693)
 
 #### The first half prompts mid-step (blocked-step-model) (127)
 
@@ -559,7 +559,7 @@ The fused record's first half pauses mid-step for a prompt, so it can't be an ea
 - `TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicateEffect`: fused: sacrifice then conjure; step 7/8.
 - `TargetPlayerSacrificesPermanentThenDealsManaValueDamageEffect`: fused: sacrifice then damage by its mana value; step 7/8.
 
-#### Each player chooses, then all act (blocked-player-loop) (90)
+#### Each player chooses, then all act (blocked-player-loop) (88)
 
 Each player chooses in its own continuation; unblocked by a generic "each player chooses, then all act" loop (CR 101.4, 608.2e).
 
@@ -644,9 +644,7 @@ Each player chooses in its own continuation; unblocked by a generic "each player
 - `ExplosionOfRichesEffect`: Explosion of Riches: 'each other player may draw a card' is each asked in turn, then all draw (CR 101.4); no MayEffect over several players.
 - `MakeAnExampleEffect`: all opponents separate (APNAP), then the controller chooses every pile, then one sacrifice batch (CR 608.2e); PendingMakeAnExample carries the separations and chosen creatures.
 - `ManifoldInsightsEffect`: Manifold Insights: reveal the top ten, then starting with the next opponent in turn order each opponent chooses a different nonland card from among them, the chosen into your hand and the rest on the bottom in a random order: ChooseCardEffect takes one ….
-- `MorphicTideAuraEffect`: no card (engine-built by MorphicTideEffectHandler): the Aura-host continuation of Morphic Tide / Glimpse of Tomorrow; goes with MorphicTideEffect.
-- `MorphicTideBottomCardsEffect`: no card (engine-built by MorphicTideEffectHandler): the bottom-of-library continuation of Morphic Tide / Glimpse of Tomorrow; goes with MorphicTideEffect.
-- `MorphicTideEffect`: Morphic Tide, Glimpse of Tomorrow (already one record): every player at once shuffles their owned permanents in, reveals that many and puts the revealed cards in type batches that enter together.
+- `MorphicTideEffect`: Morphic Tide, Glimpse of Tomorrow: each player's shuffle of the permanents they own and the reveal of that many (a per-player count); the type batches and the bottom are steps since rules-fixes EB-1.
 - `NaturalBalanceEffect`: Natural Balance: land counts read once, then each player with six or more lands chooses five and sacrifices the rest and each with four or fewer may search for up to five minus that many basic lands, in APNAP order through BasicLandSearchQueueSupport and the ….
 - `OrderOfSuccessionEffect`: Order of Succession: starting with you, each player in turn chooses a creature controlled by the next player in the chosen direction, then each gains control of the creature they chose: one choice per player over a different player's creatures before anyone ….
 - `RebirthAnteEffect`: Rebirth: each player may ante the top card of their library, then each who did has 20 life: AnteTopCardEffect(eachPlayer()) + a set-life step over the players who anted once the choose-then-act loop exists.
@@ -1326,14 +1324,12 @@ Don't commit.
 - Wake to Slaughter's opponent choice (`opponentChoosesOneForHand`, its own `wakeToSlaughterChosenCardId` state) is unchecked for multiplayer. Fairly sure from the code.
 - Vislor Turlough with 3+ players: whether the goad step resolves after the opponent prompt, with the new controller. Unverified.
 
-#### Simultaneity and APNAP (CR 101.4, 603.10a, 608.2e) (18)
+#### Simultaneity and APNAP (CR 101.4, 603.10a, 608.2e) (16)
 
 - Disorienting Choice exiles, Eumidian Wastewaker sacrifices or discards at each player's answer. Sure.
 - Ezuri's Predation pairs by battlefield order and fights one at a time (rulings: you choose the pairs, fights are simultaneous). Sure.
-- Glimpse of Tomorrow, Morphic Tide put each Aura in its own continuation, not one batch.
 - Ol Rin's Searing Light, Gilded Ambusher exile each opponent's choice before the next chooses; Dispersal returns and discards one opponent at a time; The Second Doctor, Kwain draw before the next player chooses (CR 121.2c). Unverified.
 - Kairi, Leadership Vacuum, Resounding Wave's cycling return one permanent at a time. Likely the same, untested.
-- Unfinished Business puts its two attachments onto the battlefield one after the other. Unverified.
 - Mythweaver Poq's simultaneous duplicates are one conjure event each (unsettled). Unverified.
 - An additional time a triggered ability triggers (CR 603.2d) is made by `GameData.TriggerAwareStackList.add` copying the first entry (`copyForNewStackObject`) once it reaches the stack, so the copies keep the first instance's targets and any mode announced before it got there; each instance should choose its own (CR 603.3c, 603.3d). Unsure.
 - `ParleyEffect`'s token form (Cutthroat Negotiator, Innocuous Researcher) creates the tokens inside its own handler, so a token-creation prompt pauses it after the draws' order is set and a rerun would reveal and draw again; Storm Fleet Negotiator and Phabine now use the step form. Unsure (by reading).
@@ -1363,7 +1359,7 @@ Don't commit.
 - Journey for the Elixir: taking both cards from the graveyard doesn't shuffle, though its text says "search your library and graveyard … then shuffle". Sure of the code.
 - `CoinFlipService`'s Pokey d20 (the roll that replaces a flip) ignores dice advantage (Pixie Guide). Unverified.
 
-#### Wrong targets and choices (20)
+#### Wrong targets and choices (19)
 
 - `ChoosePermanentsEffect` keeps a lone chosen permanent as the source's chosen permanent, so Deepfathom Echo (if folded onto it) or any copier choosing its model would leave a "the chosen creature" card's copy with a choice it never made (Dauntless Bodyguard) (CR 607.2d). Sure of the code.
 - `CardSubject.TriggeringCards` names a card only in the stay its event put it in, so `bindCardSubjects` reads no type for a discarded card that was exiled instead or has left the graveyard, where the text reads last-known characteristics (CR 608.2h; Diviner of Fates' fold). Sure of the code.
@@ -1381,7 +1377,6 @@ Don't commit.
 - The AI's filtered must-be-blocked choice with menace (two blockers needed) is approximate: the greedy simulator doesn't narrow, and Easy and the exhaustive phase may skip the block (CR 509.1c). Fairly sure.
 - `ExileGraveyardCardsEffect.defendingPlayerOnly` (Graven Abomination): the flag is never read, so any opponent's graveyard can be targeted (multiplayer). Sure of the code.
 - Ulamog's Nullifier (`TwoOpponentOwnedExiledCardsToGraveyardChoiceInteractionHandler`): face-down picks are taken by id, not at random from their pile (2015-08-25 ruling). Fairly sure.
-- Zara's hand-to-battlefield put calls `handleCreatureEnteredBattlefield` directly rather than the entry batch. Unverified.
 - Descendants' Fury offers a choice among creatures that can't be sacrificed after the "may" (CR 608.2d). Sure, low.
 - Avatar's Wrath's airbend is scored by `SpellEvaluator` as single-target exile removal (AI). Unverified.
 - Rasaad, Radiant Monk: the specialize trigger's target spec is any exiled creature card, not one exiled with this creature. Sure of the code.
@@ -1391,7 +1386,7 @@ Don't commit.
 - Moxite Refinery's `CounterType.ANY` cost removes kinds in enum order; the player should choose (the kind prompt serves one counter only).
 - Feather, Radiant Arbiter's {2} per creature is paid only from the pool: no mana abilities (CR 605.3a). Fairly sure.
 - Jaya Ballard's emblem grants flashback (an alternative cost, CR 702.34a, 118.9a) where the text permits casting for the mana cost. Fairly sure.
-- Charmed Pendant offers a monocoloured hybrid symbol's generic half; Animation Module offers only poison and energy player counters; Thran Portal's added life cost applies to its non-mana abilities; Tevesh Szat's -10 puts commanders outside the entry batch.
+- Charmed Pendant offers a monocoloured hybrid symbol's generic half; Animation Module offers only poison and energy player counters; Thran Portal's added life cost applies to its non-mana abilities.
 - Whispersteel Dagger and Xanathar's "as though it were mana of any color" is applied as any type, so coloured mana pays {C} (CR 609.4b). Fairly sure.
 - The free casts ask for their cost-increase mana before their targets are chosen (the queue also before its modes; since FC-1 none asks for a spell with no legal mode or target): a mana ability activated in that window that removes the only target leaves the mana in the pool and the card uncast, where the target is chosen first and the spell cast (CR 601.2c, 601.2g). Sure of the code.
 - The per-target cost readers have no lost-abilities or face-down check (CR 613.1f, 708.2a). Sure.
@@ -1440,11 +1435,10 @@ Don't commit.
 - `GameViewProjectionFactory.collectFaceDownReveals` decides looks from printed effects while `mayLookAtExiledCard` holds granted looks, so one question is answered twice; `exilesHandsFaceDown` doesn't look inside `MayEffect`. Sure of the code.
 - `ClashSupport`'s log says "opponent reveals" without naming the player. Sure, low.
 
-#### Other (95)
+#### Other (93)
 
 - Casting checks left from runs 40 and 41: Scrycast (Biting Remark; `ScryInteractionHandler`, `ScryAiStrategy`, code: the scry answer casts it with no `canCastDuringResolution` check, and the AI strategies have no `CastingPermissionService`); the may-cast offers don't ask the shared check; an ability leaves the stack before it resolves, where CR 608.2n removes it last. Unverified. FC-2: Knowledge Pool's timing, the split exile cast and suspend's type restriction fixed.
-- Outside the entry batch: fixed in fold run 8; but a Painter's Servant it puts onto the battlefield got no as-enters colour prompt in a fold run 8 test (check whether `PutCardsOntoBattlefieldEffect` asks as-enters choices; unsure), fixed in fold run 21b (no observable test), fixed in fold run 10b, Karlach's specialize return (its "perpetually can't block" a static on a runtime copy; P02, low), Knickknack Ouphe's Auras attached after they enter (CR 303.4f, 303.4g; P02, fold: aura-host).
-- Lim-Dûl's returned bestow Aura and the triggering-card heads (but the former `ReturnTriggeringCardFromGraveyardToBattlefieldEffect`, since step 10 run R2 `PutCardsOntoBattlefieldEffect(triggeringCards())`, whose entry batch asks the host) enter without a host choice (CR 303.4f). Unverified.
+- The dying-creature return heads other than Lim-Dûl's (`ReturnDyingCreatureToBattlefieldEffect`, `ReturnDyingCreatureToOwnerBattlefieldEffect`, `ReturnDamagedCreaturesThatDiedUnderControlEffect`) put an Aura card that died animated onto the battlefield with no host choice (CR 303.4f, 303.4g); Lim-Dûl's head goes through the entry batch since rules-fixes EB-1. Unverified.
 - Bad Wolf Bay's chaos ability is Don't Blink's replacement: creature cards entering from exile are shuffled, others enter; `CardsCantEnterBattlefieldFromZonesEffect` enforces only graveyard and library. Sure.
 - Limitless Rekindling's pool is seven YECL printings; its text names a random instant or sorcery card of the whole expansion. Fairly sure.
 - Cards with no printing identity: the `Supplier`-built conjures and spellbook drafts, the hand paths not marking a card conjured (runs 29 to 31); Protean War Engine (P08); Darigaaz, Skywriter Djinn, Oracle of the Alpha built by hand, Juggernaut Peddler, Calim, Mephidross Slime by constructor or `Supplier`, Goblin Influx Array's Reckless Ringleader a blank `new Card()` (P16). Sure.
@@ -1472,7 +1466,6 @@ Don't commit.
 - Panglacial Wurm can't be cast during the later picks of a multi-pick search; cast-only cards are offered only on the first prompt ("while you're searching"). Sure of the code.
 - Valki (and any "becomes a copy" of a card with an exile/return pair): the copied return reads cards the copier exiled with its own abilities; it should read only cards its copied exile ability exiled (CR 607.1, 607.2a). Fairly sure.
 - Eumidian Wastewaker's discard branch counts a land that a replacement exiled instead of discarding into the graveyard (`lastDiscardedCardTypes`; ruling). Unverified.
-- Entry batch: when two members both have as-enters choices, the second one's choice is skipped while the first's prompt is open (CR 614.12). Sure of the code.
 - `EachOpponentChoosesCreatureToTapAndGoadEffectHandler`, `PutTargetCreatureCardFromControllerGraveyardUnderTargetPlayerEffectHandler`: goading a creature the same player already goaded adds another goad (CR 701.15d). Sure of the code, low impact.
 - `ManaSourceColorSupport` non-land branch: an `AwardAnyColorManaEffect` whose amount is 0 still counts every colour (CR 106.7). Sure of the code, low.
 - SILVER is treated as a wildcard like ANY in `PermanentCounterSupport.removableCounterKinds`, `DoubleCountersOnTargetPermanentEffectHandler`, `AdjustEachCounterKindOnTargetEffectHandler` and others, but silver counters are real (Karn). Unverified reachability.

@@ -949,6 +949,15 @@ public class GameData {
      */
     public final Map<UUID, Set<TriggeredAbility>> simultaneousCreatureEntryTriggers = new HashMap<>();
     public boolean collectingSimultaneousCreatureEntryTriggers;
+    /**
+     * The members of an entry batch, by permanent id in batch order, whose as-enters choices wait while an earlier
+     * member's are asked (CR 614.12); the batch's "one or more enter" event stays open until they are all made.
+     */
+    public final List<UUID> pendingEntryBatchAsEntersIds = new ArrayList<>();
+    /** Whether an entry batch's as-enters choices are still being asked, one member after the other. */
+    public boolean entryBatchAsEntersOpen;
+    /** Whether the "one or more enter" event was already being collected when that batch began. */
+    public boolean entryBatchAsEntersOuterCollecting;
     /** Permanents put onto the battlefield together whose enter abilities are still being processed. An
      *  as-enters choice of one of them (Rescuer Sphinx) can't pick another, as they weren't there yet. */
     public final Set<UUID> permanentsEnteringSimultaneously = ConcurrentHashMap.newKeySet();
@@ -9778,6 +9787,9 @@ public class GameData {
         copy.gameResult = this.gameResult;
         copy.winnerPlayerId = this.winnerPlayerId;
         copy.collectingSimultaneousCreatureEntryTriggers = this.collectingSimultaneousCreatureEntryTriggers;
+        copy.pendingEntryBatchAsEntersIds.addAll(this.pendingEntryBatchAsEntersIds);
+        copy.entryBatchAsEntersOpen = this.entryBatchAsEntersOpen;
+        copy.entryBatchAsEntersOuterCollecting = this.entryBatchAsEntersOuterCollecting;
         this.simultaneousCreatureEntryTriggers.forEach((id, abilities) ->
                 copy.simultaneousCreatureEntryTriggers.put(id, new HashSet<>(abilities)));
         copy.combatDamageExemptPredicate = this.combatDamageExemptPredicate;

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.z;
 
+import com.github.laxika.magicalvibes.cards.c.Clone;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ZaraRenegadeRecruiter.class, GrizzlyBears.class, Forest.class, JaceBeleren.class})
+@CardUsed({ZaraRenegadeRecruiter.class, GrizzlyBears.class, Forest.class, JaceBeleren.class, Clone.class})
 class ZaraRenegadeRecruiterTest extends BaseCardTest {
 
     @Test
@@ -208,6 +209,35 @@ class ZaraRenegadeRecruiterTest extends BaseCardTest {
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears.isAttacking()).isTrue();
         assertThat(bears.getAttackTarget()).isEqualTo(jace.getId());
+    }
+
+    @Test
+    @DisplayName("A recruited Clone makes its copy choice as it enters and still enters tapped and attacking")
+    void recruitedCloneCopiesAndEntersTappedAndAttacking() {
+        addZaraReady();
+        Permanent defendingBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card clone = new Clone();
+        clone.setOwnerId(player2.getId());
+        harness.setHand(player2, List.of(clone));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> harness.handlePermanentChosen(player1, defendingBears.getId()));
+
+        Permanent copy = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getOriginalCard() == clone)
+                .findFirst().orElseThrow();
+        assertThat(copy.getCard().getName()).isEqualTo("Grizzly Bears");
+        assertThat(copy.isTapped()).isTrue();
+        assertThat(copy.isAttacking()).isTrue();
+        assertThat(copy.getAttackTarget()).isEqualTo(player2.getId());
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
     }
 
     private void addZaraReady() {

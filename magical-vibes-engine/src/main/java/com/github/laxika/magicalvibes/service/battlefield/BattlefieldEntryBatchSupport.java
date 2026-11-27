@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.AttachmentTriggers;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -63,6 +64,9 @@ public class BattlefieldEntryBatchSupport {
     @Autowired
     @Lazy
     private SagaChapterService sagaChapterService;
+    @Autowired
+    @Lazy
+    private AttachmentTriggers attachmentTriggers;
 
     public void begin(GameData gameData, List<BattlefieldEntryCard> cards) {
         begin(gameData, cards, List.of());
@@ -355,33 +359,60 @@ public class BattlefieldEntryBatchSupport {
         } finally {
             graveyardService.endGraveyardLeaveBatch(gameData);
         }
+        for (Permanent permanent : entered) {
+            if (!permanent.getCard().isAura() && permanent.getAttachedTo() != null
+                    && gameQueryService.findPermanentController(gameData, permanent.getId()) != null) {
+                attachmentTriggers.equipmentBecameAttached(gameData, permanent, null);
+            }
+        }
+        // A window an answered choice left open closes first, so this batch's event is its own.
+        continueAsEntersChoices(gameData);
         // The batch is one event, so a "one or more … enter" ability triggers once for all of it.
         boolean alreadyCollectingEntries = gameData.collectingSimultaneousCreatureEntryTriggers;
         gameData.collectingSimultaneousCreatureEntryTriggers = true;
         if (!alreadyCollectingEntries) {
             gameData.simultaneousCreatureEntryTriggers.clear();
         }
-        try {
-            for (Permanent permanent : entered) {
-                UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
-                if (controllerId != null && permanent.isFaceDown()) {
-                    battlefieldEntryService.processFaceDownCreatureETBTriggers(gameData, controllerId, permanent.getCard());
-                } else if (controllerId != null && !gameData.interaction.isAwaitingInput()) {
-                    // Its as-enters choices ("choose a color", "pay any amount of life", "choose a number", ...) are
-                    // asked of the controller now, and its own enter abilities follow once they are answered
-                    // (CR 614.1c, 614.12).
-                    battlefieldEntryService.handleCreatureEnteredBattlefield(
-                            gameData, controllerId, permanent.getCard(), null, false);
-                } else if (controllerId != null) {
-                    battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, permanent.getCard(), null, false);
-                }
-            }
-        } finally {
-            gameData.collectingSimultaneousCreatureEntryTriggers = alreadyCollectingEntries;
-            if (!alreadyCollectingEntries) {
-                gameData.simultaneousCreatureEntryTriggers.clear();
+        for (Permanent permanent : entered) {
+            gameData.pendingEntryBatchAsEntersIds.add(permanent.getId());
+        }
+        if (!gameData.entryBatchAsEntersOpen) {
+            gameData.entryBatchAsEntersOpen = true;
+            gameData.entryBatchAsEntersOuterCollecting = alreadyCollectingEntries;
+        }
+        continueAsEntersChoices(gameData);
+    }
+
+    /**
+     * Asks the entry batch's members their as-enters choices ("choose a color", "pay any amount of life", "choose a
+     * number", ...), one member after the other, each member's own enter abilities following its answers (CR 614.1c,
+     * 614.12). While one member's choice is open the others wait in {@code GameData.pendingEntryBatchAsEntersIds}, and
+     * the input epilogue calls this again once it is answered; until every member is done, the batch's "one or more
+     * enter" event stays open, so such an ability still triggers once for the whole batch (CR 603.2c). Returns whether
+     * a choice is open.
+     */
+    public boolean continueAsEntersChoices(GameData gameData) {
+        if (!gameData.entryBatchAsEntersOpen) return false;
+        while (!gameData.interaction.isAwaitingInput() && !gameData.pendingEntryBatchAsEntersIds.isEmpty()) {
+            UUID permanentId = gameData.pendingEntryBatchAsEntersIds.removeFirst();
+            Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
+            UUID controllerId = gameQueryService.findPermanentController(gameData, permanentId);
+            if (permanent == null || controllerId == null) continue;
+            if (permanent.isFaceDown()) {
+                battlefieldEntryService.processFaceDownCreatureETBTriggers(gameData, controllerId, permanent.getCard());
+            } else {
+                battlefieldEntryService.handleCreatureEnteredBattlefield(
+                        gameData, controllerId, permanent.getCard(), null, false);
             }
         }
+        if (gameData.interaction.isAwaitingInput()) return true;
+        gameData.entryBatchAsEntersOpen = false;
+        // An outer event that was already collecting keeps its own window; it closes that one itself.
+        if (!gameData.entryBatchAsEntersOuterCollecting) {
+            gameData.collectingSimultaneousCreatureEntryTriggers = false;
+            gameData.simultaneousCreatureEntryTriggers.clear();
+        }
+        return false;
     }
 
     /** The counters and effects the instruction that puts it onto the battlefield gives it (CR 614.1c). */

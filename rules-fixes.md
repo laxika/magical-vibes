@@ -44,7 +44,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | CP Casting permissions and cost readers | CP-1 | open |
 | MP Multiplayer opponent choices | MP-1, MP-2 | MP-1 done 2026-11-27; MP-2 open |
 | CT Counters | CT-1, CT-2 | CT-1 done 2026-11-27; CT-2 open |
-| EB Entry and leave batches | EB-1, EB-2, EB-3 | open |
+| EB Entry and leave batches | EB-1, EB-2, EB-3 | EB-1 done 2026-11-27; EB-2, EB-3 open |
 | PY Payments | PY-1, PY-2, PY-3 | open |
 | TR Triggers, subjects and targeting | TR-1, TR-2, TR-3 | open |
 | LS Library searches and reveals | LS-1, LS-2 | open |
@@ -449,7 +449,22 @@ P4's Tevesh Szat part (the -10 puts commanders outside the entry batch).
 Likely touches: `BattlefieldPlacementService`, the entry batch, `PutCardsOntoBattlefieldEffect`'s handler.
 Avoid: TK-1, TK-2.
 
-Outcome:
+Outcome: 2026-11-27. Fixed: S4, S7, O35 (deleted from entry 18); O3 fixed for Lim-Dûl's head and edited down (the other
+dying-creature return heads, moved to EB-2). S4: Morphic Tide and Glimpse of Tomorrow are now `MorphicTideEffect(PlayerSubject)`
+(the shuffle in and the reveal of that many, recorded as REVEAL) then `PutCardsOntoBattlefieldEffect(revealedThisWay(...))` per batch
+and `PutCardsIntoLibraryEffect.onBottom[InRandomOrder](revealedThisWay())`, so the Auras enter in one batch with the other
+enchantments and enchant only what is already there (the Morphic Tide ruling, CR 303.4f); `MorphicTideAuraEffect`,
+`MorphicTideBottomCardsEffect` and their handlers deleted (ledger rows added, ratchet 2857 / 2241). S7: Unfinished Business returns
+the creature, then its attachments as one entry batch, two events (CR 608.2c, 603.2c; Tormod pins it); the entry batch now raises
+the Equipment-attached event for an Equipment entering attached. O35: an entry batch asks its members' as-enters choices one after
+the other (`BattlefieldEntryBatchSupport.continueAsEntersChoices`, `GameData.pendingEntryBatchAsEntersIds`, resumed by the input
+epilogue), the "one or more enter" event open until all are done (CR 614.12). O3: Lim-Dûl's returned Aura card goes through the
+entry batch (CR 303.4f, 303.4g); its bestow part is no defect (a bestow card is an Aura only when cast bestowed, CR 702.103b).
+Dropped: T19 (Zara's put already gets every entry replacement from `place()`, a recruited Clone pinned), O2 (Painter's Servant fixed
+in D19, pinned by Bringer of the Last Gift; Knickknack Ouphe fixed in fold run 7; Karlach's entry has no observable difference, its
+perpetual "can't block" moved to PP-1 as N15), P4's Tevesh Szat part (the -10 is `PutCardsOntoBattlefieldEffect` through the entry
+batch since fold run 4). New lines N14 (EB-2), N15 (PP-1). Tests: 683 XML files, 6,438 tests, 0 failures (546 card and application
+classes with the architecture tests, the AI module).
 
 #### EB-2. "As it would exist on the battlefield"
 
@@ -460,6 +475,14 @@ after the permanent enters), O4 (Bad Wolf Bay's chaos ability; `CardsCantEnterBa
 and library).
 
 Avoid: TK-1.
+
+Moved from EB-1: O3's rest (`ReturnDyingCreatureToBattlefieldEffect`, `ReturnDyingCreatureToOwnerBattlefieldEffect` and
+`ReturnDamagedCreaturesThatDiedUnderControlEffect` put an Aura card that died animated onto the battlefield with no host choice,
+CR 303.4f, 303.4g; route them through the entry batch like Lim-Dûl's `ReturnDyingOpponentCreatureUnderYourControlEffectHandler`).
+
+New line N14 (seen in EB-1): `GraveyardReturnSupport`'s mass returns (`handleCreatureEtbAndLegendRule` over `deferredEtbs`) ask each
+returned permanent's as-enters choices in a loop that doesn't wait for an earlier one's open prompt, the O35 shape outside the
+entry batch (CR 614.12); unverified.
 
 Outcome:
 
@@ -727,6 +750,10 @@ Partition and Hydroponics Architect write colour, mana cost and types into runti
 Notes: Run PO's perpetual P/T store on graveyard cards (`PerpetuallyBoostCardEffect`) is the model: one perpetual store, read by
 the layered pass, keyed so that a new object doesn't inherit it. Read its Findings section.
 Avoid: FD-1.
+
+New line N15 (seen in EB-1): Karlach's graveyard specialize return (`SpecializeKarlachEffectHandler.returnSpecializedCardFromGraveyard`)
+gives "perpetually can't block" as a static on a runtime copy of the card, so the card loses it when it changes zones (O2's
+Karlach part; its entry outside the entry batch has no observable effect).
 
 Outcome:
 

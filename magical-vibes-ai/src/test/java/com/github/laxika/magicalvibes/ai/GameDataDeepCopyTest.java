@@ -244,6 +244,22 @@ class GameDataDeepCopyTest {
     }
 
     @Test
+    @DisplayName("Deep copy keeps an entry batch's waiting as-enters choices in an independent list")
+    void deepCopyKeepsEntryBatchAsEntersQueue() {
+        java.util.UUID waiting = java.util.UUID.randomUUID();
+        gd.pendingEntryBatchAsEntersIds.add(waiting);
+        gd.entryBatchAsEntersOpen = true;
+        gd.entryBatchAsEntersOuterCollecting = true;
+
+        GameData copy = gd.simulationCopy();
+        copy.pendingEntryBatchAsEntersIds.clear();
+
+        assertThat(copy.entryBatchAsEntersOpen).isTrue();
+        assertThat(copy.entryBatchAsEntersOuterCollecting).isTrue();
+        assertThat(gd.pendingEntryBatchAsEntersIds).containsExactly(waiting);
+    }
+
+    @Test
     @DisplayName("Deep copy preserves primitive fields")
     void deepCopyPreservesPrimitives() {
         gd.turnNumber = 5;

@@ -121,6 +121,19 @@ class InputCompletionServiceTest {
     }
 
     @Test
+    @DisplayName("An entry batch member's as-enters choice is asked before may abilities, the parked resolution and priority")
+    void entryBatchAsEntersChoiceComesBeforeTheRestOfTheEpilogue() {
+        var batch = mock(com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport.class);
+        ReflectionTestUtils.setField(service, "battlefieldEntryBatchSupport", batch);
+        org.mockito.Mockito.when(batch.continueAsEntersChoices(gameData)).thenReturn(true);
+
+        mutate(() -> service.processMayAbilitiesThenAutoPass(gameData));
+
+        verify(batch).continueAsEntersChoices(gameData);
+        verifyNoInteractions(playerInputService, turnProgressionService, effectResolutionService);
+    }
+
+    @Test
     void resumesPendingDrawsBeforeTriggerChoicesAndPriority() {
         DrawService drawService = mock(DrawService.class);
         ReflectionTestUtils.setField(service, "drawService", drawService);

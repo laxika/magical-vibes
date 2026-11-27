@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -24,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class GlimpseOfTomorrowTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Cast from suspend, it shuffles in only your permanents and puts non-Auras onto the battlefield before Auras")
     void suspendShufflesOwnPermanentsAndReturnsNonAurasBeforeAuras() {
         GlimpseOfTomorrow glimpse = new GlimpseOfTomorrow();
         Card creatureCard = new GrizzlyBears();
@@ -63,6 +65,7 @@ class GlimpseOfTomorrowTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An Aura can't enchant another Aura revealed with it")
     void aurasCannotEnchantOtherAurasFromTheSameReveal() {
         Card firstAura = new Confiscate();
         Card secondAura = new Confiscate();
@@ -80,6 +83,7 @@ class GlimpseOfTomorrowTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An Aura with nothing to enchant and nonpermanent cards stay in the library")
     void unattachableAuraAndNonpermanentCardsRemainInLibrary() {
         Card aura = new Pacifism();
         Card instant = new Shock();
@@ -95,6 +99,7 @@ class GlimpseOfTomorrowTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Counts the permanents you own wherever they are and leaves the ones you only control")
     void countsOwnedPermanentsUnderOpponentControlButLeavesBorrowedPermanents() {
         Card ownedCreature = new GrizzlyBears();
         Card borrowedCreature = new GrizzlyBears();
@@ -113,6 +118,7 @@ class GlimpseOfTomorrowTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Reveals only as many cards as the library holds")
     void revealsOnlyAvailableCardsWhenTokensOutnumberLibrary() {
         Card creature = new GrizzlyBears();
         Card instant = new Shock();
@@ -130,6 +136,7 @@ class GlimpseOfTomorrowTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Reveals nothing when you own no permanents")
     void revealsNothingWhenNoPermanentsAreOwned() {
         Card creature = new GrizzlyBears();
         Card instant = new Shock();
@@ -145,6 +152,7 @@ class GlimpseOfTomorrowTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An Aura's enter trigger resolves after the rest are put on the bottom")
     void auraEnterTriggerResolvesAfterRemainingCardsAreBottomed() {
         Card aura = new UnquestionedAuthority();
         Card instant = new Shock();
@@ -162,6 +170,7 @@ class GlimpseOfTomorrowTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The Aura's host is chosen before the legend rule applies")
     void choosesAuraAttachmentBeforeApplyingLegendRule() {
         Card aura = new Pacifism();
         harness.addToBattlefield(player1, token("First token", CardType.CREATURE));
@@ -171,8 +180,35 @@ class GlimpseOfTomorrowTest extends BaseCardTest {
 
         resolveGlimpseFromSuspend();
 
-        assertThat(gd.interaction.pendingAuraCard()).isSameAs(aura);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(findPermanents(player1, aura.getName())).isEmpty();
         assertThat(findPermanents(player1, "Ragavan, Nimble Pilferer")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Every Aura's host is chosen before any of them enters; they enter together")
+    void aurasChooseTheirHostsBeforeAnyOfThemEnters() {
+        Card firstAura = new Pacifism();
+        Card secondAura = new Pacifism();
+        for (int i = 0; i < 4; i++) {
+            harness.addToBattlefield(player1, token("Token " + i, CardType.CREATURE));
+        }
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(firstAura, secondAura));
+
+        resolveGlimpseFromSuspend();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, first.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(findPermanents(player1, "Pacifism")).isEmpty();
+        harness.handlePermanentChosen(player1, second.getId());
+
+        assertThat(findPermanents(player1, "Pacifism"))
+                .extracting(Permanent::getAttachedTo)
+                .containsExactlyInAnyOrder(first.getId(), second.getId());
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
     private void resolveGlimpseFromSuspend() {

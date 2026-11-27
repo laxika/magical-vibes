@@ -1,22 +1,21 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.BattlefieldEntryCard;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureAndAurasOrEquipmentEffect;
-import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
-import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -24,13 +23,10 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ReturnTargetCreatureAndAurasOrEquipmentEffectHandler implements NormalEffectHandlerBean {
 
-    private final AuraAttachmentService auraAttachmentService;
-    private final BattlefieldEntryService battlefieldEntryService;
+    private final BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
     private final EquipSupport equipSupport;
-    private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final GraveyardReturnSupport graveyardReturnSupport;
-    private final PermanentRemovalService permanentRemovalService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -40,9 +36,21 @@ public class ReturnTargetCreatureAndAurasOrEquipmentEffectHandler implements Nor
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
-        Permanent creature = returnCreature(gameData, entry.targetsForGroup(0), controllerId);
+        // "Return target creature card ..., then return up to two target Aura and/or Equipment cards": two events, in
+        // that order (CR 608.2c), the attachments entering together.
+        List<Permanent> creature = new ArrayList<>(1);
+        gameData.rulesEvents.separately(() -> {
+            Permanent returned = returnCreature(gameData, entry.targetsForGroup(0), controllerId);
+            if (returned != null) creature.add(returned);
+        });
+        Permanent host = creature.isEmpty() ? null : creature.getFirst();
+        List<BattlefieldEntryCard> attachments = new ArrayList<>();
         for (UUID attachmentCardId : entry.targetsForGroup(1)) {
-            returnAttachment(gameData, attachmentCardId, controllerId, creature);
+            BattlefieldEntryCard attachment = attachment(gameData, attachmentCardId, controllerId, host);
+            if (attachment != null) attachments.add(attachment);
+        }
+        if (!attachments.isEmpty()) {
+            gameData.rulesEvents.separately(() -> battlefieldEntryBatchSupport.begin(gameData, attachments));
         }
     }
 
@@ -57,41 +65,27 @@ public class ReturnTargetCreatureAndAurasOrEquipmentEffectHandler implements Nor
         return graveyardReturnSupport.reanimateTargetedCard(gameData, controllerId, creatureCard);
     }
 
-    private void returnAttachment(GameData gameData, UUID cardId, UUID controllerId, Permanent creature) {
+    /**
+     * An Aura enters attached to that creature or, if it can't enchant it, stays in the graveyard (the card's reminder
+     * text, CR 303.4g); an Equipment that can't be attached to it enters unattached (the card's ruling).
+     */
+    private BattlefieldEntryCard attachment(GameData gameData, UUID cardId, UUID controllerId, Permanent creature) {
         Card card = findGraveyardCard(gameData, controllerId, cardId);
-        if (card == null || (!card.isAura() && !card.getSubtypes().contains(CardSubtype.EQUIPMENT))) {
-            return;
+        if (card == null) {
+            return null;
         }
-
-        boolean isEquipment = card.getSubtypes().contains(CardSubtype.EQUIPMENT);
-        Permanent attachment = new Permanent(card);
+        if (card.isAura()) {
+            return new BattlefieldEntryCard(controllerId, controllerId, card, Zone.GRAVEYARD, null)
+                    .withHosts(creature == null ? List.of() : List.of(creature.getId()));
+        }
+        if (!card.getSubtypes().contains(CardSubtype.EQUIPMENT)) {
+            return null;
+        }
         boolean attach = creature != null
-                && (isEquipment
-                ? equipSupport.canAttachEquipment(gameData, attachment, creature)
-                : auraAttachmentService.canEnchant(gameData, card, controllerId, creature));
-        if (!isEquipment && !attach) {
-            return;
-        }
-        if (attach) {
-            attachment.setAttachedTo(creature.getId());
-        }
-
-        permanentRemovalService.removeCardFromGraveyardById(gameData, cardId);
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, attachment);
-        if (isEquipment && attach && gameQueryService.findPermanentById(gameData, attachment.getId()) != null) {
-            equipSupport.notifyEquipmentAttached(gameData, attachment, null);
-        }
-        if (!isEquipment && attach) {
-            battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, card, creature.getId(), false);
-        }
-
-        GameLog.Builder log = GameLog.builder().card(card);
-        if (attach) {
-            log.text(" enters the battlefield attached to ").card(creature.getCard()).text(".");
-        } else {
-            log.text(" enters the battlefield unattached.");
-        }
-        gameLogService.append(gameData, log.build());
+                && gameQueryService.findPermanentById(gameData, creature.getId()) != null
+                && equipSupport.canAttachEquipment(gameData, new Permanent(card), creature);
+        return new BattlefieldEntryCard(controllerId, controllerId, card, Zone.GRAVEYARD,
+                attach ? creature.getId() : null);
     }
 
     private Card findGraveyardCard(GameData gameData, UUID controllerId, UUID cardId) {

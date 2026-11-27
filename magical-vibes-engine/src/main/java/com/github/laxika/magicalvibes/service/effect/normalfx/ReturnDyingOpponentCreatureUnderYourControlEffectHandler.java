@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.BattlefieldEntryCard;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -8,10 +9,13 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingOpponentCreatureUnderYourControlEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -22,13 +26,15 @@ import org.springframework.stereotype.Component;
  * Resolves {@link ReturnDyingOpponentCreatureUnderYourControlEffect}: takes the dying creature
  * card from the graveyard it is in (including the controller's own graveyard when the card is
  * their own) and puts it onto the battlefield under the ability controller's control, optionally
- * granting a subtype, and tracks it as a stolen creature. Does nothing if it left that graveyard stay (CR 400.7) or
+ * granting a subtype, and tracks it as a stolen creature; an Aura card goes through the entry batch, which asks what
+ * it enchants. Does nothing if it left that graveyard stay (CR 400.7) or
  * can't enter (CR 101.2, 400.4a).
  */
 @Component
 @RequiredArgsConstructor
 public class ReturnDyingOpponentCreatureUnderYourControlEffectHandler implements NormalEffectHandlerBean {
 
+    private final BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
@@ -52,6 +58,15 @@ public class ReturnDyingOpponentCreatureUnderYourControlEffectHandler implements
         if (card == null || !entry.isTriggeringCardIncarnation(gameData.graveyardEntryVersion(card.getId()))
                 || graveyardReturnSupport.isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
             gameLogService.append(gameData, GameLog.text(entry.getDescription() + " does nothing (the card can't return)."));
+            return;
+        }
+        if (card.isAura()) {
+            // An Aura card (one that died animated) enters attached to what its new controller chooses, or stays in
+            // the graveyard with nothing to enchant (CR 303.4f, 303.4g).
+            battlefieldEntryBatchSupport.begin(gameData, List.of(new BattlefieldEntryCard(controllerId,
+                    gameQueryService.findGraveyardOwnerById(gameData, card.getId()), card, Zone.GRAVEYARD,
+                    null, null, null, List.of(), false, PutCardsOntoBattlefieldEffect.EnteringAs.NOTHING_ELSE,
+                    null, null)));
             return;
         }
         entry.setTargetId(card.getId());

@@ -19,6 +19,11 @@ Multi-card puts collect every pick and every as-enters choice before any card le
 Owner: `BattlefieldEntryBatchSupport`; `GameData.pendingAnyNumberHandPutCardIds`, `PendingGraveyardReturnBatch.heldInGraveyard`.
 Why: each entrant's triggers see the others, and zone indices stay stable while choosing.
 
+### Batch members ask their as-enters choices in turn (CR 614.12)
+Once a batch is on the battlefield, each member's as-enters choices ("choose a color") are asked one member after another; the rest wait in `GameData.pendingEntryBatchAsEntersIds`, resumed by the input epilogue, and the batch's "one or more enter" event stays open until all are done.
+Owner: `BattlefieldEntryBatchSupport.continueAsEntersChoices`, `InputCompletionService`.
+Why: a member asked while another's prompt is open would enter without its choice.
+
 ### Each-player choices are simultaneous (CR 101.4)
 Every player chooses in APNAP order before any card moves; picks are only recorded (`deferredDiscardSelections`, `stagedHandExiles`, `heldHandBattlefieldPuts`) and applied as one batch.
 Owner: `CardChoiceHandlerService` (`discardDeferredSelections`), `PutCardsOntoBattlefieldTogetherEffectHandler`.

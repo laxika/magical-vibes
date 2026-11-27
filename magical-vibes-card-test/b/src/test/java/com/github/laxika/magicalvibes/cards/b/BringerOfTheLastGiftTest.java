@@ -2,8 +2,11 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GatherSpecimens;
+import com.github.laxika.magicalvibes.cards.p.PaintersServant;
 import com.github.laxika.magicalvibes.cards.s.SavannahLions;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -14,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({BringerOfTheLastGift.class, BeaconOfUnrest.class, BitterTriumph.class, GatherSpecimens.class,
-        GrizzlyBears.class, SavannahLions.class})
+        GrizzlyBears.class, SavannahLions.class, PaintersServant.class})
 class BringerOfTheLastGiftTest extends BaseCardTest {
 
     @Test
@@ -164,5 +167,28 @@ class BringerOfTheLastGiftTest extends BaseCardTest {
         assertThat(countPermanents(player1, "Bringer of the Last Gift")).isEqualTo(1);
         assertThat(countPermanents(player2, "Bringer of the Last Gift")).isEqualTo(2);
         harness.assertInGraveyard(player1, "Bringer of the Last Gift");
+    }
+
+    @Test
+    @DisplayName("Each returned creature with an as-enters choice is asked for it, one after the other (CR 614.12)")
+    void eachReturnedCreatureIsAskedItsAsEntersChoice() {
+        harness.setHand(player1, List.of(new BringerOfTheLastGift()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.setGraveyard(player1, List.of(new PaintersServant(), new PaintersServant()));
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, "WHITE");
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(findPermanents(player1, "Painter's Servant"))
+                .extracting(permanent -> permanent.getChosenColor())
+                .containsExactlyInAnyOrder(CardColor.WHITE, CardColor.BLUE);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }

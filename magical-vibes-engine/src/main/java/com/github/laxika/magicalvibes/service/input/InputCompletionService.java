@@ -54,6 +54,8 @@ public class InputCompletionService {
     @Autowired @Lazy
     private LibraryChoiceHandlerService libraryChoiceHandlerService;
     @Autowired @Lazy
+    private com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
+    @Autowired @Lazy
     private com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerMayPutCardFromHandToBattlefieldSupport
             eachPlayerMayPutSupport;
     @Autowired @Lazy
@@ -154,6 +156,10 @@ public class InputCompletionService {
         if (resumeSuspendedInteraction(gameData)) return;
         if (commanderZoneMoves != null && commanderZoneMoves.beginPending(gameData)) return;
         if (cloneService != null && cloneService.beginNextQueuedEntryCopyChoice(gameData)) return;
+        // The rest of an entry batch is asked its as-enters choices before the resolution goes on (CR 614.12).
+        if (battlefieldEntryBatchSupport != null && battlefieldEntryBatchSupport.continueAsEntersChoices(gameData)) {
+            return;
+        }
         if (libraryChoiceHandlerService != null && gameData.pendingEntryCopyChoices.isEmpty()
                 && libraryChoiceHandlerService.resumeLibraryRevealRemainder(gameData)) return;
         var queuedMergedOrder = gameData.pendingInteractions.stream()

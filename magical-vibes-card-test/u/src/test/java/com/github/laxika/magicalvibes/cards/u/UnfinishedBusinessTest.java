@@ -6,11 +6,13 @@ import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.g.GateSmasher;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.cards.s.SagesReverie;
+import com.github.laxika.magicalvibes.cards.t.TormodTheDesecrator;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -19,10 +21,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({UnfinishedBusiness.class, AbundantGrowth.class, GrizzlyBears.class,
-        GateSmasher.class, HolyStrength.class, LeoninScimitar.class, SagesReverie.class})
+        GateSmasher.class, HolyStrength.class, LeoninScimitar.class, SagesReverie.class,
+        TormodTheDesecrator.class})
 class UnfinishedBusinessTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Returns the creature when no attachments are chosen")
     void returnsCreatureWithoutSelectingAttachments() {
         GrizzlyBears creature = new GrizzlyBears();
         HolyStrength aura = new HolyStrength();
@@ -34,6 +38,7 @@ class UnfinishedBusinessTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A returned Aura's enter ability triggers")
     void returnedAuraTriggersItsEnterAbility() {
         GrizzlyBears creature = new GrizzlyBears();
         SagesReverie aura = new SagesReverie();
@@ -48,6 +53,7 @@ class UnfinishedBusinessTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Without the creature, the Equipment still returns unattached and the Aura stays in the graveyard")
     void missingCreatureTargetStillReturnsEquipmentButLeavesAuraInGraveyard() {
         GrizzlyBears creature = new GrizzlyBears();
         HolyStrength aura = new HolyStrength();
@@ -66,6 +72,7 @@ class UnfinishedBusinessTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Returns the creature with the chosen Aura and Equipment attached to it")
     void returnsCreatureAndAttachesSelectedAurasAndEquipment() {
         GrizzlyBears creature = new GrizzlyBears();
         HolyStrength aura = new HolyStrength();
@@ -80,6 +87,7 @@ class UnfinishedBusinessTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An Equipment that can't be attached enters unattached")
     void equipmentEntersUnattachedWhenItCannotAttach() {
         GrizzlyBears creature = new GrizzlyBears();
         GateSmasher equipment = new GateSmasher();
@@ -89,6 +97,7 @@ class UnfinishedBusinessTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An Aura that can't enchant the creature stays in the graveyard")
     void auraThatCannotEnchantReturnedCreatureStaysInGraveyard() {
         GrizzlyBears creature = new GrizzlyBears();
         AbundantGrowth aura = new AbundantGrowth();
@@ -100,6 +109,7 @@ class UnfinishedBusinessTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A card that is neither an Aura nor an Equipment can't be the second target")
     void rejectsNonAuraAndNonEquipmentAttachmentTarget() {
         GrizzlyBears creature = new GrizzlyBears();
         GrizzlyBears invalidAttachment = new GrizzlyBears();
@@ -110,6 +120,22 @@ class UnfinishedBusinessTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0,
                 List.of(creature.getId(), invalidAttachment.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The creature returns first, then its Aura and Equipment return together as one event")
+    void attachmentsLeaveTheGraveyardTogetherAfterTheCreature() {
+        harness.addToBattlefield(player1, new TormodTheDesecrator());
+        GrizzlyBears creature = new GrizzlyBears();
+        HolyStrength aura = new HolyStrength();
+        LeoninScimitar equipment = new LeoninScimitar();
+        cast(List.of(creature, aura, equipment), List.of(creature, aura, equipment));
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Zombie")).hasSize(2);
+        Permanent returnedCreature = findPermanent(player1, "Grizzly Bears");
+        assertThat(findPermanent(player1, "Holy Strength").getAttachedTo()).isEqualTo(returnedCreature.getId());
+        assertThat(findPermanent(player1, "Leonin Scimitar").getAttachedTo()).isEqualTo(returnedCreature.getId());
     }
 
     private void cast(List<Card> graveyard, List<Card> targets) {

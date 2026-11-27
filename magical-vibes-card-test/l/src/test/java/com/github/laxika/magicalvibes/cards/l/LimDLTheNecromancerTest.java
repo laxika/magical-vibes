@@ -3,6 +3,9 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CorpulentCorpse;
 import com.github.laxika.magicalvibes.cards.d.DrudgeReavers;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
+import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.s.StranglingSoot;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,7 +21,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LimDLTheNecromancer.class, CorpulentCorpse.class, DrudgeReavers.class, StranglingSoot.class})
+@CardUsed({LimDLTheNecromancer.class, CorpulentCorpse.class, DrudgeReavers.class, StranglingSoot.class,
+        GrizzlyBears.class, LiquimetalCoating.class, MarchOfTheMachines.class, Pacifism.class})
 class LimDLTheNecromancerTest extends BaseCardTest {
 
     @Test
@@ -141,5 +145,31 @@ class LimDLTheNecromancerTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Drudge Reavers");
         harness.assertNotInGraveyard(player1, "Drudge Reavers");
         assertThat(PermanentGrants.subtypesOf(gd, findPermanent(player1, "Drudge Reavers"))).contains(CardSubtype.ZOMBIE);
+    }
+
+    @Test
+    @DisplayName("A returned Aura card is attached to what its new controller chooses as it enters (CR 303.4f)")
+    void returnedAuraChoosesWhatItEnchants() {
+        harness.addToBattlefield(player1, new LimDLTheNecromancer());
+        harness.addToBattlefield(player1, new MarchOfTheMachines());
+        harness.addToBattlefieldAndReturn(player1, new LiquimetalCoating()).setSummoningSick(false);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent pacifism = harness.addToBattlefieldAndReturn(player2, new Pacifism());
+        pacifism.setAttachedTo(bears.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 2, null, pacifism.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Pacifism");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, bears.getId());
+
+        Permanent returned = findPermanent(player1, "Pacifism");
+        assertThat(returned.getAttachedTo()).isEqualTo(bears.getId());
+        harness.assertNotInGraveyard(player2, "Pacifism");
     }
 }

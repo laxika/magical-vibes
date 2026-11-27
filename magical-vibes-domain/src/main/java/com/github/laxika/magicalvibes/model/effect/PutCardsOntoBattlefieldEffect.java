@@ -47,7 +47,8 @@ public record PutCardsOntoBattlefieldEffect(CardSubject cards, boolean tapped, P
     public record EnteringAs(FaceDown faceDown, CounterType counter, DynamicAmount counters, List<CardEffect> grants,
                              AttachedTo host) {
 
-        static final EnteringAs NOTHING_ELSE = new EnteringAs(null, null, new Fixed(0), List.of(), null);
+        /** Nothing beyond its card: an entry batch member that stays under the control it was put under. */
+        public static final EnteringAs NOTHING_ELSE = new EnteringAs(null, null, new Fixed(0), List.of(), null);
 
         public EnteringAs {
             Objects.requireNonNull(counters, "counters");
