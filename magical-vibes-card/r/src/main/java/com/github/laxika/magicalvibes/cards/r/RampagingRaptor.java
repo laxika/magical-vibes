@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsOpponent;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -31,7 +33,7 @@ public class RampagingRaptor extends Card {
                                 new PermanentIsBattlePredicate(),
                                 new PermanentProtectedByDefendingPlayerPredicate())))),
                 "Target must be a planeswalker defending player controls or a battle defending player protects"))
-                .addTrigger(Triggers.dealsCombatDamageToPlayer(),
+                .addTrigger(Triggers.dealsCombatDamageToPlayer(), TriggerOptions.DEFAULT.withEventCondition(new AttackedTargetIsOpponent()),
                         DealDamageEffect.toTargetPermanent(new EventValue()));
         addActivatedAbility(new ActivatedAbility(false, "{2}{R}",
                 List.of(BoostEffect.self(2, 0)),

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsOpponent;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -26,7 +27,7 @@ public class ParapetThrasher extends Card {
     public ParapetThrasher() {
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
                         .withFilter(new PermanentHasSubtypePredicate(CardSubtype.DRAGON)),
-                TriggerOptions.ONE_OR_MORE,
+                TriggerOptions.ONE_OR_MORE.withEventCondition(new AttackedTargetIsOpponent()),
                 ChooseOneEffect.notYetChosenThisTurn(List.of(
                         new ChooseOneEffect.ChooseOneOption(
                                 "Destroy target artifact that opponent controls",

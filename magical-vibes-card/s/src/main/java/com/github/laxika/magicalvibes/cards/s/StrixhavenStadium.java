@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsOpponent;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -34,6 +36,7 @@ public class StrixhavenStadium extends Card {
                 RemoveCountersEffect.fromSelf(CounterType.POINT, 1));
 
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
+                TriggerOptions.DEFAULT.withEventCondition(new AttackedTargetIsOpponent()),
                 SequenceEffect.of(
                         PutCountersEffect.onSelf(CounterType.POINT),
                         new ConditionalEffect(

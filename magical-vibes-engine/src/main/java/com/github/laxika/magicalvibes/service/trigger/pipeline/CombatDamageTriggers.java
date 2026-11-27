@@ -765,9 +765,10 @@ public class CombatDamageTriggers {
             if (oneOrMore && !firedBatchedAllyAbilities.add(batchKey)) {
                 continue;
             }
-            // The ability's event condition (a Class level, a chosen mode; CR 603.2) as it triggers.
+            // The ability's event condition (a Class level, a chosen mode, "to an opponent"; CR 603.2) as it
+            // triggers, against the player dealt the damage, who a redirection may have made its controller.
             ConditionContext context = watcher.conditionContext();
-            if (!conditionEvaluationService.eventConditionMet(gameData, options, context)) {
+            if (!conditionEvaluationService.eventConditionMet(gameData, options, context.withTargetId(defenderId))) {
                 continue;
             }
             // "One or more creatures deal combat damage": the creatures of the batch that match the trigger,

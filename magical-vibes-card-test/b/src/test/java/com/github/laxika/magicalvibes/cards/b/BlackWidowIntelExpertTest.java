@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.ReflectDamage;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BlackWidowIntelExpert.class, GrizzlyBears.class})
+@CardUsed({BlackWidowIntelExpert.class, GrizzlyBears.class, ReflectDamage.class})
 class BlackWidowIntelExpertTest extends BaseCardTest {
 
     @Test
@@ -108,5 +109,29 @@ class BlackWidowIntelExpertTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(opponentFirstDraw, opponentSecondDraw);
+    }
+
+    @Test
+    @DisplayName("Combat damage redirected to Black Widow's controller makes no one draw")
+    void combatDamageRedirectedToControllerMakesNoOneDraw() {
+        Permanent widow = addCreatureReady(player1, new BlackWidowIntelExpert());
+        harness.castFromHand(player2, new ReflectDamage(), "{3}{R}{W}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, widow.getId());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        widow.setAttacking(true);
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
     }
 }

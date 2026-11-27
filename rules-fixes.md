@@ -46,7 +46,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | CT Counters | CT-1, CT-2 | CT-1, CT-2 done 2026-11-27 |
 | EB Entry and leave batches | EB-1, EB-2, EB-3 | EB-1, EB-2 done 2026-11-27; EB-3 open |
 | PY Payments | PY-1, PY-2, PY-3 | PY-1 done 2026-11-27; PY-2, PY-3 open |
-| TR Triggers, subjects and targeting | TR-1, TR-2, TR-3 | open |
+| TR Triggers, subjects and targeting | TR-1, TR-2, TR-3 | TR-1 done 2026-11-27; TR-2, TR-3 open |
 | LS Library searches and reveals | LS-1, LS-2 | open |
 | TK Tokens and copies | TK-1, TK-2 | open |
 | FD Face-down and hidden reads | FD-1, FD-2 | open |
@@ -638,7 +638,22 @@ Likely touches: `TriggerCollectionService`, `TriggeredAbilityQueueService`, `Gam
 New line N8 (seen in CT-1): `EnergyCountersEffectHandler` ("you get {E}") raises no "you put counters" event, so All Will Be
 One doesn't trigger on its controller getting energy (its ruling: any time you put counters on a player).
 
-Outcome:
+Outcome: 2026-11-27. Fixed: F9, O39, O51, O56, O95, N8 (deleted from entry 18). Dropped: S10, not a defect: a doubled
+trigger's extra instance is asked its own mode and target, because the stack door queues one prompt per instance
+(`GameData.queueInteraction`), and the `TriggerAwareStackList.add` copy only clones an entry that chose nothing (pinned in
+`PanharmoniconTest`: Flametongue Kavu with two targets, Tax Collector with two Arrest modes; CR 603.2d, 603.3c, 603.3d). F9: the
+simultaneous-death scan skips a face-down Hushbringer (CR 708.2a). O39: the ally combat-damage collector judges an event
+condition against the player dealt the damage, and the 14 implemented "deals combat damage to an opponent" cards that lacked
+it get `AttackedTargetIsOpponent` (Coastal Piracy, Strixhaven Stadium, Kediss, Parapet Thrasher, Hydra Omnivore, Amarant
+Coral, Mindscour Dragon, Rampaging Raptor, Super State, Questing Beast, Black Widow Intel Expert, Vincent's Chaos, Kosei's and
+Human Torch's granted ones), so combat damage redirected to their controller (Reflect Damage, CR 614.9) doesn't trigger them.
+O51: Voracious Brood is one "one or more from anywhere" trigger (CR 603.2c). O56: `EtbTriggerService` names the entering
+permanent as the triggering permanent of a "this or another [X] enters" ability on its own entry
+(`TriggeredAbility.alsoWatchesAnotherEntering`); no shipped card read it wrongly, since Scourge of Valkas and Hawkeye, Trick
+Shot fall back to the source. O95: the "target creature gets" order label needs a target subject. N8: "you get {E}" goes
+through `LifeSupport.givePlayerCounters`, so All Will Be One triggers. No effect class added or deleted, so no ledger or
+ratchet change.
+
 
 #### TR-2. Subjects and last-known information
 
@@ -727,6 +742,10 @@ Avoid: PP-1.
 
 New line N1 (seen in DM-1): `GameQueryService.hasAuraWithEffect` reads an attachment's printed statics with no lost-ability
 check, so the other Aura and Equipment prevention steps share F7's defect.
+
+New line N34 (seen in TR-1): `GameQueryService.countAdditionalCreatureDeathEffects` (Teysa Karlov's "triggers an additional
+time") skips a static source only on the lost-abilities flag, not a face-down one, on the battlefield and in the
+simultaneous-death scan (CR 708.2a); unverified.
 
 Outcome:
 
@@ -824,6 +843,7 @@ Heretic), M5 (Stand or Fall: "each defending player", and a floated `OnlyChosenC
 it against other requirements), O39 (Coastal Piracy and "deals combat damage to an opponent"), O36 (goading a creature the same
 player already goaded adds another goad), H8 (`CantAttackThisTurnEffectHandler`'s set branch logs a face-down source's name and
 binds no chosen values), S23 (`isCantAttackDueToGlobalRestriction`'s planechase branch; latent, fix only if cheap).
+O39 was fixed in TR-1 (the `AttackedTargetIsOpponent` event condition on every "deals combat damage to an opponent" card).
 
 Likely touches: `CombatBlockService`, `CombatAttackService`, `AttackLegalityService`, `ConditionEvaluationService`.
 Notes: Test with three players.

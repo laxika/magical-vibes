@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsOpponent;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -10,6 +12,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class BlackWidowIntelExpert extends Card {
 
     public BlackWidowIntelExpert() {
-        addTrigger(Triggers.dealsCombatDamageToPlayer(), new DrawCardEffect(2, Subjects.allOf(Subjects.you(), Subjects.triggeringPlayer())));
+        addTrigger(Triggers.dealsCombatDamageToPlayer(), TriggerOptions.DEFAULT.withEventCondition(new AttackedTargetIsOpponent()),
+                new DrawCardEffect(2, Subjects.allOf(Subjects.you(), Subjects.triggeringPlayer())));
     }
 }

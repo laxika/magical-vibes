@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.ReflectDamage;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CoastalPiracy.class, GrizzlyBears.class})
+@CardUsed({CoastalPiracy.class, GrizzlyBears.class, ReflectDamage.class})
 class CoastalPiracyTest extends BaseCardTest {
 
     private void addCoastalPiracy() {
@@ -179,6 +180,26 @@ class CoastalPiracyTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Combat damage redirected to Coastal Piracy's controller does not trigger it")
+    void combatDamageRedirectedToControllerDoesNotTrigger() {
+        addCoastalPiracy();
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        harness.castFromHand(player2, new ReflectDamage(), "{3}{R}{W}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, attacker.getId());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        attacker.setAttacking(true);
+        resolveCombat(player1);
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).isEmpty();
     }
 }

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsOpponent;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -15,6 +17,7 @@ public class CoastalPiracy extends Card {
     public CoastalPiracy() {
         // Whenever a creature you control deals combat damage to an opponent, you may draw a card.
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
+                TriggerOptions.DEFAULT.withEventCondition(new AttackedTargetIsOpponent()),
                 new MayEffect(new DrawCardEffect(1), "Draw a card?"));
     }
 }

@@ -881,6 +881,7 @@ public class TriggeredAbilityQueueService {
                 && entry.getEffectsToResolve().getFirst()
                 instanceof com.github.laxika.magicalvibes.model.effect.BoostEffect boost
                 && boost.amountsRead() == com.github.laxika.magicalvibes.model.effect.BoostEffect.AmountsRead.SOURCE
+                && boost.subject().declaresTarget()
                 && !boost.targetsPermanent()
                 && !boost.isMassBoost()
                 && boost.powerBoost() instanceof com.github.laxika.magicalvibes.model.amount.Fixed power

@@ -405,6 +405,16 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
     }
 
     /**
+     * Whether this is "whenever this or another [X] enters": a {@link #hasOwnEntry()} ability that also watches
+     * another permanent enter, whose "that creature" is the permanent that entered, this one on its own entry.
+     */
+    public boolean alsoWatchesAnotherEntering() {
+        return hasOwnEntry() && conditions.stream().anyMatch(condition ->
+                condition.trigger() instanceof ZoneChangeTrigger move
+                        && move.entersBattlefield() && move.relation() != ObjectRelation.THIS);
+    }
+
+    /**
      * This ability's registrations in the form the "when this enters" collector ({@code EtbTriggerService}) and the
      * code inspecting a card's enters abilities read them: the intervening "if" a {@link ConditionalEffect} of it
      * around each effect, so it is checked again as the ability resolves (CR 603.4). The collector judges the intervening "if" and the event condition as the

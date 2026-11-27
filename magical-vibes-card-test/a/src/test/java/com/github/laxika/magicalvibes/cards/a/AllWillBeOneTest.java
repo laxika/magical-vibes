@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.e.EvolvingAdaptive;
 import com.github.laxika.magicalvibes.cards.e.ExperimentalAugury;
 import com.github.laxika.magicalvibes.cards.j.JaceThePerfectedMind;
 import com.github.laxika.magicalvibes.cards.p.PrologueToPhyresis;
+import com.github.laxika.magicalvibes.cards.w.WhirlerVirtuoso;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -19,7 +21,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({AllWillBeOne.class, PrologueToPhyresis.class, EvolvingAdaptive.class,
-        ArchfiendOfTheDross.class, JaceThePerfectedMind.class, ExperimentalAugury.class})
+        ArchfiendOfTheDross.class, JaceThePerfectedMind.class, ExperimentalAugury.class,
+        WhirlerVirtuoso.class})
 class AllWillBeOneTest extends BaseCardTest {
 
     @Test
@@ -205,5 +208,26 @@ class AllWillBeOneTest extends BaseCardTest {
         harness.assertLife(player2, 18);
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Getting energy is putting counters on yourself, so it deals that much damage")
+    void dealsDamageWhenYouGetEnergy() {
+        harness.addToBattlefield(player1, new AllWillBeOne());
+        harness.setHand(player1, List.of(new WhirlerVirtuoso()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerEnergyCounters.getOrDefault(player1.getId(), 0)).isEqualTo(3);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 17);
     }
 }

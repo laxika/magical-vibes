@@ -6,10 +6,13 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -18,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -280,5 +284,36 @@ class EntersAndZoneChangeAbilityStackObjectTest extends BaseCardTest {
 
         assertThat(entriesOf("Phase Scholar")).singleElement()
                 .satisfies(entry -> assertThat(entry.getEffectsToResolve()).hasSize(2));
+    }
+
+    /** "Whenever this creature or another creature you control enters, put a +1/+1 counter on that creature." */
+    private static Card thisOrAnotherEntersCounter(String name) {
+        Card card = watcher(name);
+        card.addTriggeredAbility(new TriggeredAbility(List.of(
+                        new TriggerCondition(Triggers.enters(ObjectRelation.THIS)),
+                        new TriggerCondition(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL))),
+                TriggerOptions.DEFAULT,
+                List.of(new EffectRegistration(PutCountersEffect.onTriggeringPermanent(CounterType.PLUS_ONE_PLUS_ONE, 1)))));
+        return card;
+    }
+
+    @Test
+    @DisplayName("\"Whenever this creature or another creature enters\" names this creature as \"that creature\" when it enters itself")
+    void thisOrAnotherEntersNamesItselfOnItsOwnEntry() {
+        Permanent mentor = harness.enterBattlefieldAndReturn(player1, thisOrAnotherEntersCounter("Rallying Mentor"));
+        resolveAllTriggers();
+
+        assertThat(mentor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("\"Whenever this creature or another creature enters\" names the other creature when it enters")
+    void thisOrAnotherEntersNamesTheOtherCreature() {
+        Permanent mentor = harness.addToBattlefieldAndReturn(player1, thisOrAnotherEntersCounter("Rallying Mentor"));
+        Permanent bears = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        resolveAllTriggers();
+
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(mentor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }

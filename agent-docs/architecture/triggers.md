@@ -244,7 +244,8 @@ Fells declares its groups with `CONTROLLED_BY_FIRST_TARGET`).
   the abilities granted to the permanent, its perpetual grants, static grants
   (`GrantedTriggeredAbilitySupport.grantedOwnEntryAbilities`) and printed ones (`Card.getOwnEntryAbilities()`, none if
   it lost them as it entered), before the abilities that see it enter. `ownEntryRecord` holds the paid X and costs, the
-  permanent and what it is attached to, and an Aura's enchanted object. Event conditions are judged with the entry facts
+  permanent and what it is attached to, and an Aura's enchanted object; a "this or another [X] enters" ability
+  (`TriggeredAbility.alsoWatchesAnotherEntering`) also names the permanent as its triggering permanent. Event conditions are judged with the entry facts
   (`EtbEffectResolver.ownEntryConditionMet`, CR 603.2); an effect's "if" about such a fact (kicked, tribute, evoke's
   sacrifice, CR 702.74a) is judged as it triggers through `CardEffect.asItTriggersOnEntering(EntryFacts)` (CR 603.4).
   Several enter abilities besides the evoke sacrifice (`Card.hasSeveralOwnEntryAbilities`) are separate objects the

@@ -52,11 +52,11 @@ class ElectrosiphonTest extends BaseCardTest {
 
         List<String> events = gd.gameLog.stream().map(GameLogEntry::plainText)
                 .filter(text -> text.equals("Secure the Wastes is countered.")
-                        || text.contains("gets 1 energy counter(s)."))
+                        || text.contains("gets 1 energy counter (Electrosiphon)."))
                 .toList();
         assertThat(events).hasSize(2);
         assertThat(events.get(0)).isEqualTo("Secure the Wastes is countered.");
-        assertThat(events.get(1)).contains("gets 1 energy counter(s).");
+        assertThat(events.get(1)).contains("gets 1 energy counter (Electrosiphon).");
     }
 
     @Test

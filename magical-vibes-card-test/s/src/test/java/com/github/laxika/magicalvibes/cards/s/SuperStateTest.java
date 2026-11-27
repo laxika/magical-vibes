@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.ReflectDamage;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -21,7 +22,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SuperState.class, GrizzlyBears.class})
+@CardUsed({SuperState.class, GrizzlyBears.class, ReflectDamage.class})
 class SuperStateTest extends BaseCardTest {
 
     @Test
@@ -159,5 +160,24 @@ class SuperStateTest extends BaseCardTest {
         Permanent aura = harness.addToBattlefieldAndReturn(controller, new SuperState());
         aura.setAttachedTo(creature.getId());
         return aura;
+    }
+
+    @Test
+    @DisplayName("Combat damage redirected to the Aura's controller does not trigger it")
+    void combatDamageRedirectedToControllerDoesNotTrigger() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        attachSuperState(player1, creature);
+        harness.castFromHand(player2, new ReflectDamage(), "{3}{R}{W}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, creature.getId());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        creature.setAttacking(true);
+        resolveCombat();
+
+        harness.assertLife(player1, 11);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
     }
 }

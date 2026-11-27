@@ -382,12 +382,37 @@ public class EtbTriggerService {
             if (eventCondition != null && !etbEffectResolver.ownEntryConditionMet(entryFacts, eventCondition)) {
                 continue;
             }
+            TriggeredAbilityRequest.TriggerRecord abilityRecord = ability.alsoWatchesAnotherEntering()
+                    ? thisEnteredRecord(gameData, record, enteringPermanent, controllerId) : record;
             if (triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability, card,
-                    enteringPermanent, controllerId, card.getName() + "'s ETB ability", ifContext, record)
+                    enteringPermanent, controllerId, card.getName() + "'s ETB ability", ifContext, abilityRecord)
                     .withCause(event))) {
                 gameLogService.append(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability triggers."));
             }
         }
+    }
+
+    /**
+     * {@code record} of a "whenever this or another [X] enters" ability triggered by its own entry: the permanent that
+     * entered, this one, is the triggering permanent its "that creature" reads, as another's entry would make it
+     * (CR 603.6a).
+     */
+    private TriggeredAbilityRequest.TriggerRecord thisEnteredRecord(GameData gameData,
+                                                                    TriggeredAbilityRequest.TriggerRecord record,
+                                                                    Permanent enteringPermanent, UUID controllerId) {
+        if (enteringPermanent == null) {
+            return record;
+        }
+        return entry -> {
+            record.stamp(entry);
+            entry.setTriggeringPermanentId(enteringPermanent.getId());
+            entry.setTriggeringCardId(enteringPermanent.getCard().getId());
+            entry.setTriggeringPermanentControllerId(controllerId);
+            entry.setTriggeringPermanentPowerAtTrigger(gameQueryService.getEffectivePower(gameData, enteringPermanent));
+            entry.setTriggeringPermanentToughnessAtTrigger(
+                    gameQueryService.getEffectiveToughness(gameData, enteringPermanent));
+            entry.rememberLastKnownPermanentCard(enteringPermanent.getId(), enteringPermanent.getCard());
+        };
     }
 
     /**

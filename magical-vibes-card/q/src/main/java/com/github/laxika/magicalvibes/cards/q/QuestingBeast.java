@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.q;
 
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsOpponent;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
@@ -35,7 +37,7 @@ public class QuestingBeast extends Card {
                         new PermanentIsPlaneswalkerPredicate(),
                         new PermanentControlledByDefendingPlayerPredicate())),
                 "Target must be a planeswalker defending player controls"))
-                .addTrigger(Triggers.dealsCombatDamageToPlayer(),
+                .addTrigger(Triggers.dealsCombatDamageToPlayer(), TriggerOptions.DEFAULT.withEventCondition(new AttackedTargetIsOpponent()),
                         DealDamageEffect.toTargetCreatureOrPlaneswalker(new EventValue()));
     }
 }

@@ -10826,7 +10826,8 @@ public class GameQueryService {
     /**
      * Returns {@code true} if the given creature's death is prevented from causing triggered
      * abilities by a static effect such as Hushbringer. Last-known permanents in a simultaneous
-     * death batch are included because one of them may be the source of the suppression.
+     * death batch are included because one of them may be the source of the suppression, as they last existed: one
+     * face down had no abilities (CR 708.2a), nor one that had lost them.
      */
     public boolean areCreatureDeathTriggersSuppressed(GameData gameData, Permanent dyingPermanent) {
         if (gameData == null || dyingPermanent == null) {
@@ -10843,7 +10844,7 @@ public class GameQueryService {
             return true;
         }
         return gameData.simultaneousDyingCreatures.values().stream()
-                .filter(permanent -> !gameData.losesAllAbilitiesByEffect(permanent))
+                .filter(permanent -> !permanent.isFaceDown() && !gameData.losesAllAbilitiesByEffect(permanent))
                 .anyMatch(permanent -> permanent.getCard().getStaticEffects().stream().anyMatch(dying));
     }
 

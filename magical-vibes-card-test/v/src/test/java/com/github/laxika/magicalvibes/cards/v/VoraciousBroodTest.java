@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.p.Pyroclasm;
 import com.github.laxika.magicalvibes.cards.t.Traumatize;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({VoraciousBrood.class, GrizzlyBears.class, Island.class, Traumatize.class})
+@CardUsed({VoraciousBrood.class, GrizzlyBears.class, Island.class, Traumatize.class, Pyroclasm.class})
 class VoraciousBroodTest extends BaseCardTest {
 
     @Test
@@ -101,5 +102,27 @@ class VoraciousBroodTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(brood.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Two creatures dying together trigger it once, for that many counters")
+    void creaturesDyingTogetherTriggerOnce() {
+        Permanent brood = harness.addToBattlefieldAndReturn(player1, new VoraciousBrood());
+        brood.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Pyroclasm()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(brood.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
     }
 }

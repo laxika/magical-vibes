@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsOpponent;
 import com.github.laxika.magicalvibes.model.effect.UnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
@@ -30,7 +31,7 @@ public class HumanTorch extends Card {
                 new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.DOUBLE_STRIKE, Keyword.HASTE), Subjects.source()));
 
         addTrigger(Triggers.attacks(), UnlessPaysEffect.youMayPay("{R}{G}{W}{U}", new GrantEffectToTargetUntilEndOfTurnEffect(
-                        new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
+                        new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(), TriggerOptions.DEFAULT.withEventCondition(new AttackedTargetIsOpponent()),
                         DealDamageEffect.to(Subjects.except(Subjects.eachOpponent(), Subjects.triggeringPlayer()),
                                 new EventValue())), Subjects.source())).withPrompt("Pay {R}{G}{W}{U} to deal that much damage to each other opponent?"));
     }

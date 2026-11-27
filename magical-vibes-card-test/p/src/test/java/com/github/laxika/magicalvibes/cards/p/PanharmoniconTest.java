@@ -3,16 +3,21 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.a.AuthorityOfTheConsuls;
 import com.github.laxika.magicalvibes.cards.d.DukharaPeafowl;
 import com.github.laxika.magicalvibes.cards.e.ElvishVisionary;
+import com.github.laxika.magicalvibes.cards.f.FlametongueKavu;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.i.IchorWellspring;
 import com.github.laxika.magicalvibes.cards.i.InallaArchmageRitualist;
 import com.github.laxika.magicalvibes.cards.n.NikoAris;
 import com.github.laxika.magicalvibes.cards.r.RecklessFireweaver;
 import com.github.laxika.magicalvibes.cards.t.TatyovaBenthicDruid;
+import com.github.laxika.magicalvibes.cards.t.TaxCollector;
 import com.github.laxika.magicalvibes.cards.w.WoodlandChampion;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -25,7 +30,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({Panharmonicon.class, AuthorityOfTheConsuls.class, ElvishVisionary.class,
         Forest.class, FugitiveWizard.class, IchorWellspring.class, TatyovaBenthicDruid.class,
         PropheticPrism.class, DukharaPeafowl.class, NikoAris.class, WoodlandChampion.class,
-        RecklessFireweaver.class, InallaArchmageRitualist.class})
+        RecklessFireweaver.class, InallaArchmageRitualist.class, FlametongueKavu.class, GiantSpider.class,
+        TaxCollector.class})
 class PanharmoniconTest extends BaseCardTest {
 
     @Test
@@ -179,5 +185,50 @@ class PanharmoniconTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Each time a targeted enters ability triggers, that instance chooses its own target")
+    void eachAdditionalInstanceChoosesItsOwnTarget() {
+        harness.addToBattlefield(player1, new Panharmonicon());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+        harness.setHand(player1, List.of(new FlametongueKavu()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, first.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, second.getId());
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(first, second);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Each time a modal enters ability triggers, that instance announces its own mode and target")
+    void eachAdditionalInstanceChoosesItsOwnModeAndTarget() {
+        harness.addToBattlefield(player1, new Panharmonicon());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
+        harness.setHand(player1, List.of(new TaxCollector()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.handleListChoice(player1, "Arrest — Detain target creature an opponent controls");
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.handleListChoice(player1, "Arrest — Detain target creature an opponent controls");
+        harness.handlePermanentChosen(player1, second.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.isLockedFromAttacking(gd, first.getId())).isTrue();
+        assertThat(gqs.isLockedFromAttacking(gd, second.getId())).isTrue();
     }
 }

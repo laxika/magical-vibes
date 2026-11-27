@@ -1292,7 +1292,7 @@ that turns out not to be a defect is removed with the reason in the report. Run 
 Don't commit.
 ```
 
-#### Face-down and lost-ability reads (CR 613.1f, 708.2a) (11)
+#### Face-down and lost-ability reads (CR 613.1f, 708.2a) (10)
 
 - Kappa Cannoneer, Lockjaw, Slicer, Full Steam Ahead, Vines of Vastwood: "can't be blocked / sacrificed / the target" are granted abilities "loses all abilities" removes, but are rules of the game (CR 611.2c). Unverified.
 - `cardsThisWay(kind, filter)`, the copy, cast and name / mana-value readers, the entry batch's "can't enter" filter read a face-down exiled card's hidden face (CR 406.3a). Unverified.
@@ -1301,7 +1301,6 @@ Don't commit.
 - Stoic Star-Captain and Zilortha model their source's rule as a granted ability, which "loses all abilities" on the creature removes (CR 613.1f). Fairly sure.
 - `CastingPermissionService` spell-limit, Ethersworn Canonist, most-recent-spell and global land-restriction readers skip lost abilities but not face-down sources (CR 708.2a). Sure of the code.
 - `GameQueryService.getEffectiveCardColors`' off-battlefield scan (Celestial Dawn) asks only the floating flag (CR 613.1f). Sure of the code, low.
-- `areCreatureDeathTriggersSuppressed`' simultaneous-death scan asks only the floating flag and skips no face-down source (CR 708.2a). Fairly sure, low.
 - `DrawService` Alms Collector, Words-return and Quantum Riddler readers skip no face-down source (CR 708.2a). Sure of the code.
 - The static-set filter reads in `GameQueryService.layeredQueryReads` (`matchesLeaf`) use printed keywords and types ("creatures with flying" in static locks other than the tap lock; Katabatic Winds' attack/block half unverified). Fairly sure.
 - Painter's Servant doesn't colour cards that aren't on the battlefield, or spells (Oracle text). Sure.
@@ -1324,14 +1323,13 @@ Don't commit.
 - Wake to Slaughter's opponent choice (`opponentChoosesOneForHand`, its own `wakeToSlaughterChosenCardId` state) is unchecked for multiplayer. Fairly sure from the code.
 - Vislor Turlough with 3+ players: whether the goad step resolves after the opponent prompt, with the new controller. Unverified.
 
-#### Simultaneity and APNAP (CR 101.4, 603.10a, 608.2e) (15)
+#### Simultaneity and APNAP (CR 101.4, 603.10a, 608.2e) (14)
 
 - Disorienting Choice exiles, Eumidian Wastewaker sacrifices or discards at each player's answer. Sure.
 - Ezuri's Predation pairs by battlefield order and fights one at a time (rulings: you choose the pairs, fights are simultaneous). Sure.
 - Ol Rin's Searing Light, Gilded Ambusher exile each opponent's choice before the next chooses; Dispersal returns and discards one opponent at a time; The Second Doctor, Kwain draw before the next player chooses (CR 121.2c). Unverified.
 - Kairi, Leadership Vacuum, Resounding Wave's cycling return one permanent at a time. Likely the same, untested.
 - Mythweaver Poq's simultaneous duplicates are one conjure event each (unsettled). Unverified.
-- An additional time a triggered ability triggers (CR 603.2d) is made by `GameData.TriggerAwareStackList.add` copying the first entry (`copyForNewStackObject`) once it reaches the stack, so the copies keep the first instance's targets and any mode announced before it got there; each instance should choose its own (CR 603.3c, 603.3d). Unsure.
 - `ParleyEffect`'s token form (Cutthroat Negotiator, Innocuous Researcher) creates the tokens inside its own handler, so a token-creation prompt pauses it after the draws' order is set and a rerun would reveal and draw again; Storm Fleet Negotiator and Phabine now use the step form. Unsure (by reading).
 - Tribute's "paid" check is `placed >= N`, so a halved tribute (an opponent's Halving Season) reads as unpaid (CR 702.104b: "as specified").
 - `TokenKindReplacements` and `JinnieFayTokenReplacements` read `event.controllerId()`'s battlefield, not the tokens' creator after Crafty Cutpurse; the count replacements resolve with Gather Specimens for creature tokens, though Chatterfang's ruling applies entering-control changes after (CR 616.1). Fairly sure.
@@ -1420,7 +1418,7 @@ Don't commit.
 - `GameViewProjectionFactory.collectFaceDownReveals` decides looks from printed effects while `mayLookAtExiledCard` holds granted looks, so one question is answered twice; `exilesHandsFaceDown` doesn't look inside `MayEffect`. Sure of the code.
 - `ClashSupport`'s log says "opponent reveals" without naming the player. Sure, low.
 
-#### Other (72)
+#### Other (68)
 
 - Casting checks left from runs 40 and 41: Scrycast (Biting Remark; `ScryInteractionHandler`, `ScryAiStrategy`, code: the scry answer casts it with no `canCastDuringResolution` check, and the AI strategies have no `CastingPermissionService`); the may-cast offers don't ask the shared check; an ability leaves the stack before it resolves, where CR 608.2n removes it last. Unverified. FC-2: Knowledge Pool's timing, the split exile cast and suspend's type restriction fixed.
 - Krovikan Vampire's `ReturnDamagedCreaturesThatDiedUnderControlEffect` (a mass return with control and sacrifice links) puts an Aura card that died animated onto the battlefield with no host choice (CR 303.4f, 303.4g); Lim-Dûl's head since rules-fixes EB-1 and `ReturnDyingCreatureToBattlefieldEffect`, `ReturnDyingCreatureToOwnerBattlefieldEffect` since EB-2 go through the entry batch. Unverified.
@@ -1449,7 +1447,6 @@ Don't commit.
 - Eumidian Wastewaker's discard branch counts a land that a replacement exiled instead of discarding into the graveyard (`lastDiscardedCardTypes`; ruling). Unverified.
 - `EachOpponentChoosesCreatureToTapAndGoadEffectHandler`, `PutTargetCreatureCardFromControllerGraveyardUnderTargetPlayerEffectHandler`: goading a creature the same player already goaded adds another goad (CR 701.15d). Sure of the code, low impact.
 - `ManaSourceColorSupport` non-land branch: an `AwardAnyColorManaEffect` whose amount is 0 still counts every colour (CR 106.7). Sure of the code, low.
-- Coastal Piracy (and other "a creature you control deals combat damage to an opponent" cards): the to-player trigger has no `AttackedTargetIsOpponent` condition, so damage redirected to its controller triggers. Fairly sure.
 - Terminal Velocity: its `PutCardToBattlefieldThenEffect` then-steps grant haste and triggers over `Subjects.source()` / `toSourcePermanent`, which may name the spell rather than the put permanent (CR 608.2h). Unverified.
 - `PerpetuallyGrantKeywordToSourceEffect` (6 cards): on the battlefield the keyword goes onto a copy of the permanent's card, so it is lost when the permanent changes zones (not perpetual); off the battlefield it is granted by card id in any zone (CR 400.7).
 - `PerpetuallyGrantStaticEffectToSourceEffect` (Craving of Yeenoghu, Gale): the same card swap, not perpetual. Fairly sure.
@@ -1460,8 +1457,6 @@ Don't commit.
 - A card with both a perpetual evoke and a plain perpetual alternative cost offers only the first granted one (`GameQueryService.findGrantedAlternateCast`) (CR 601.2b).
 - Myr Welder, Territory Forge, Idris, Locus of Enlightenment: their printed exiles record no link, so a card exiled by a borrowed linkless exile ability counts as "exiled with it" (CR 607.2a). Sure of the code.
 - A borrowed "X is the mana value of the exiled card" ability (Prototype Portal) is dropped from exile borrowers instead of granted as one that does nothing. Unsure.
-- Voracious Brood: "whenever one or more creature cards are put into your graveyard from anywhere, put that many +1/+1 counters" is one trigger per card outside the library path, not one per event (CR 603.2c). Fairly sure, minor.
-- A "this creature or another [X] enters" ability that its own source triggers (Scourge of Valkas, Hawkeye) records no triggering permanent on its entry, so a `Subjects.triggering()` or `TriggeringPermanentPower` read in such an ability finds nothing; the damage carrier now falls back to the source (step 10 run Damage), other readers weren't checked. Fairly sure of the entry, unsure which cards read it.
 - Combat damage's protection is applied by `CombatDamageService.protectionPreventsCombatDamage` before the recipient's pool, which orders it only beside Phantom Centaur's counter prevention, so protection and another prevention of combat damage aren't ordered (CR 702.16e, 616.1). Sure of the code.
 - "May pay" mana paid from the pool without the tax-paid event (Tax Taker): Reflect (`ReflectMayEffectHandler`) still pays with `payResolutionCost`; its only card, Mirrored Lotus, reflects for {0}, so no mana and no event. The others were fixed in PY-1 (`TaxTakerTest.EffectPromptTaxes`). Latent.
 - The morph face-up life cost (`SpellCastingService.validateMorphLifeCost`) and the attack / block life taxes (`CombatAttackService`, `CombatBlockService`) check `canPlayerLifeChange`, not `canPlayerLoseLife` (CR 119.8: a player who can't lose life can't pay life). Sure of the code.
@@ -1484,7 +1479,6 @@ Don't commit.
 - Exile and library-top casts still refuse tap-, blight- and graveyard-exile-or-mana spells (Disruption Protocol, Wild Unraveling, Soaring Stoneglider) as "not supported from this zone"; library top takes only an "[A] or [B]" cost of sacrifice, mana, life and discard alternatives. Sure.
 - Battle cry is built on "creatures you control" (B2 keeps it), but CR 702.91a gives +1/+0 to "each other attacking creature", a teammate's attackers too (Two-Headed Giant).
 - Text-changing effects (CR 612.2) reach a source-reading boost's amounts and target filter only: not a self or named-permanent boost's amounts ("+1/+1 for each black creature"), not `targetPermanent`'s filter (Buccaneer's Bravado's "target Pirate"), not the mass boosts' set filters.
-- `TriggeredAbilityQueueService.triggerOrderLabel` names a source-reading boost with no target "target creature gets +N/+M" (Sigardian Zealot, Mirkwood Trapper's second trigger, Zenos yae Galvus); a label only.
 - `BoostEffectHandler`'s refresh of the boosted permanent's waiting abilities' snapshots changes nothing observable: a departing permanent refreshes every waiting entry's snapshot itself (`PermanentRemovalService`), and a live source is read live. Sure.
 - "Attacking creatures get" / "other attacking creatures get" written as `BoostEffect.creaturesYouControl(…, attacking)` (Iroh, Firebending Instructor, Kangee's Lieutenant, Motivated Pony, Targ Nar, Honored Crop-Captain and others) leaves out a teammate's attackers (Two-Headed Giant), as battle cry does (Q7); `allCreatures(…, attacking)` would say it.
 - `CloneService.exileCopiedCardAbility` (Superior Spider-Man, Activated Sleeper, The Mimeoplasm and the other "enter as a copy of a creature card in a graveyard; when you do, exile that card" cards) names the copied card by `setTriggeringCardId` with no graveyard stay, so a card that left the graveyard and came back before the reflexive ability resolves is still exiled; it is a new object (CR 400.7). Sure of the code, not tested.

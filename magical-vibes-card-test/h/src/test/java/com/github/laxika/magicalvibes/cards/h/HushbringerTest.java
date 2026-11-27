@@ -12,16 +12,19 @@ import com.github.laxika.magicalvibes.cards.l.Lumberknot;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.SoulWarden;
 import com.github.laxika.magicalvibes.cards.s.SyrKonradTheGrim;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import com.github.laxika.magicalvibes.cards.d.DiabolicEdict;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -157,6 +160,25 @@ class HushbringerTest extends BaseCardTest {
         Permanent lumberknot = harness.addToBattlefieldAndReturn(player2, new Lumberknot());
 
         hushbringer.setMarkedDamage(1);
+        bears.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Hushbringer");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(lumberknot.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A face-down Hushbringer dying with another creature suppresses neither death")
+    void faceDownHushbringerDyingTogetherSuppressesNothing() {
+        Permanent hushbringer = harness.addToBattlefieldAndReturn(player1, new Hushbringer());
+        hushbringer.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent lumberknot = harness.addToBattlefieldAndReturn(player2, new Lumberknot());
+
+        hushbringer.setMarkedDamage(2);
         bears.setMarkedDamage(2);
         harness.runStateBasedActions();
         harness.passBothPriorities();

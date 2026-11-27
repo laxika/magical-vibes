@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsOpponent;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -30,7 +32,7 @@ public class KoseiPenitentWarlord extends Card {
                         new Equipped(),
                         new SourceCounterThreshold(1, CounterType.ANY))),
                 new GrantTriggeredAbilityEffect(
-                        new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
+                        new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(), TriggerOptions.DEFAULT.withEventCondition(new AttackedTargetIsOpponent()),
                         SequenceEffect.of(
                                 new DrawCardEffect(new EventValue()),
                                 DealDamageEffect.to(Subjects.except(Subjects.eachOpponent(), Subjects.triggeringPlayer()),
