@@ -566,5 +566,29 @@ class CombatBlockServiceTest extends BaseCardTest {
             assertThat(service().obeysRestrictionsAndRequirements(gd,
                     List.of(new BlockerAssignment(defenderIndex(bears), attackerIndex(protector))))).isTrue();
         }
+
+        @Test
+        @CardUsed({com.github.laxika.magicalvibes.cards.g.GaeasProtector.class, GrizzlyBears.class})
+        @DisplayName("CR 509.1c: a refused empty declaration is repaired to one blocking the must-be-blocked attacker")
+        void refusedDeclarationIsRepairedToAnAcceptedOne() {
+            Permanent protector = attacking(player1, new com.github.laxika.magicalvibes.cards.g.GaeasProtector());
+            Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+            enterDeclareBlockers();
+
+            assertThat(service().requirementObeyingDeclaration(gd, List.of()))
+                    .containsExactly(new BlockerAssignment(defenderIndex(bears), attackerIndex(protector)));
+            assertThat(bears.isBlocking()).isFalse();
+        }
+
+        @Test
+        @CardUsed({GrizzlyBears.class, HillGiant.class})
+        @DisplayName("An accepted declaration is returned unchanged")
+        void acceptedDeclarationIsKept() {
+            attacking(player1, new GrizzlyBears());
+            addCreatureReady(player2, new HillGiant());
+            enterDeclareBlockers();
+
+            assertThat(service().requirementObeyingDeclaration(gd, List.of())).isEmpty();
+        }
     }
 }

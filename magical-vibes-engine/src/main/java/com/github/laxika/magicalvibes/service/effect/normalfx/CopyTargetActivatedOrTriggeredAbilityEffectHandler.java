@@ -39,7 +39,7 @@ public class CopyTargetActivatedOrTriggeredAbilityEffectHandler implements Norma
             return;
         }
         StackEntry target = gameData.stack.stream()
-                .filter(onStack -> targetId.equals(onStack.getTargetableId())
+                .filter(onStack -> onStack.isIdentifiedBy(targetId)
                         && StackEntryType.ABILITIES.contains(onStack.getEntryType()))
                 .findFirst().orElse(null);
         if (target == null) {

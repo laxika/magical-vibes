@@ -1561,7 +1561,7 @@ public class SpellCastingService {
             throw new IllegalStateException("This spell cannot target players");
         }
         boolean targetsSpell = gameData.stack.stream()
-                .anyMatch(entry -> entry.getTargetableId().equals(targetId));
+                .anyMatch(entry -> entry.isIdentifiedBy(targetId));
         if (targetsSpell
                 && !allowed.contains(TargetType.SPELL_ON_STACK)
                 && !(card.getCastTimeTargetFilter() instanceof StackEntryPredicateTargetFilter)) {
@@ -2034,7 +2034,7 @@ public class SpellCastingService {
 
     private static void stampOpponentChosenTargetPlayer(GameData gameData, Card card, UUID chosenOpponentId) {
         gameData.stack.stream()
-                .filter(entry -> entry.getTargetableId().equals(card.getId()))
+                .filter(entry -> entry.isIdentifiedBy(card.getId()))
                 .findFirst()
                 .ifPresent(entry -> entry.setOpponentChosenTargetPlayerId(chosenOpponentId));
     }
@@ -6355,7 +6355,7 @@ public class SpellCastingService {
             entry.setGiftPromised(giftPromised);
             gameData.stack.add(entry);
             gameData.stack.stream()
-                    .filter(stackEntry -> stackEntry.getTargetableId().equals(card.getId()))
+                    .filter(stackEntry -> stackEntry.isIdentifiedBy(card.getId()))
                     .findFirst()
                     .ifPresent(stackEntry -> stackEntry.setGiftPromised(giftPromised));
             finishSpellCast(gameData, playerId, player, hand, card);
@@ -7764,7 +7764,7 @@ public class SpellCastingService {
                 }
             }
             gameData.stack.stream()
-                    .filter(stackEntry -> stackEntry.getTargetableId().equals(card.getId()))
+                    .filter(stackEntry -> stackEntry.isIdentifiedBy(card.getId()))
                     .findFirst()
                     .ifPresent(stackEntry -> stackEntry.setGiftPromised(giftPromised));
             finishSpellCast(gameData, playerId, player, hand, card, true, castModalBackFace);
@@ -17441,14 +17441,16 @@ public class SpellCastingService {
                     return null;
                 });
                 manaSpent = before - pool.getTotalAllMana();
-            } else if (tapCost.isEmpty() && !escalateMana.isEmpty()) {
-                ManaCost escalateOnly = new ManaCost(escalateMana);
+            } else if (tapCost.isEmpty() && (additionalCost > 0 || !escalateMana.isEmpty())) {
+                // A flashback cost with no mana part (Dread Return's sacrifice) still pays the cost increases and an
+                // escalate's mana (CR 601.2f).
+                ManaCost manaPart = new ManaCost(escalateMana);
                 ManaPool pool = gameData.playerManaPools.get(playerId);
                 int before = pool.getTotalAllMana();
-                if (!escalateOnly.canPayFlashbackFromGraveyard(pool, 0)) {
+                if (!manaPart.canPayFlashbackFromGraveyard(pool, additionalCost)) {
                     throw new IllegalStateException("Not enough mana to pay flashback cost");
                 }
-                escalateOnly.payFlashbackFromGraveyard(pool, 0);
+                manaPart.payFlashbackFromGraveyard(pool, additionalCost);
                 manaSpent = before - pool.getTotalAllMana();
             }
 

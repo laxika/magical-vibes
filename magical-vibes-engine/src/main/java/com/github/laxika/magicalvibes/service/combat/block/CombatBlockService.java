@@ -439,6 +439,43 @@ public class CombatBlockService {
         }
     }
 
+    /**
+     * {@code blockerAssignments} when {@link #obeysRestrictionsAndRequirements} accepts them, else a declaration it
+     * accepts found by the requirement search {@link #declareBlockers} judges with: each pass finds one obeying more
+     * requirements (CR 509.1c) until none obeys more. Blockers with a cost aren't added. For a caller whose declaration
+     * was refused (the AI's fallback); {@code blockerAssignments} unchanged when the search's budget runs out first.
+     */
+    public List<BlockerAssignment> requirementObeyingDeclaration(GameData gameData,
+                                                                 List<BlockerAssignment> blockerAssignments) {
+        UUID activeId = gameData.activePlayerId;
+        UUID defenderId = gameQueryService.getOpponentId(gameData, activeId);
+        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
+        List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(activeId);
+        if (defenderBattlefield == null || attackerBattlefield == null) {
+            return blockerAssignments;
+        }
+        List<Integer> blockable = getBlockableCreatureIndices(gameData, defenderId);
+        BlockLegalityContext blockContext = blockLegalityService.createBlockLegalityContext(gameData, defenderBattlefield);
+        List<BlockerAssignment> current = blockerAssignments;
+        while (!obeysRestrictionsAndRequirements(gameData, current)) {
+            int toBeat;
+            try {
+                validateBlockRestrictions(gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable,
+                        current);
+                toBeat = obeyedBlockRequirements(gameData, attackerBattlefield, defenderBattlefield, current);
+            } catch (IllegalStateException | IndexOutOfBoundsException disobeyed) {
+                toBeat = -1;
+            }
+            BlockRequirementSearch search = new BlockRequirementSearch(gameData, blockContext, attackerBattlefield,
+                    defenderBattlefield, blockable, toBeat);
+            if (!search.findsMore()) {
+                return blockerAssignments;
+            }
+            current = search.declaration;
+        }
+        return current;
+    }
+
     private CombatResult processBlockerDeclaration(GameData gameData, UUID activeId, UUID defenderId,
                                                     String playerName,
                                                     List<BlockerAssignment> blockerAssignments) {
@@ -1262,6 +1299,7 @@ public class CombatBlockService {
         private final List<BlockerAssignment> assignments = new ArrayList<>();
         private int distinctBlockers;
         private boolean found;
+        private List<BlockerAssignment> declaration = List.of();
         private int visited;
 
         private BlockRequirementSearch(GameData gameData, BlockLegalityContext blockContext,
@@ -1356,6 +1394,7 @@ public class CombatBlockService {
             if (position == blockers.size()) {
                 if (obeyed > toBeat && allowed()) {
                     found = true;
+                    declaration = List.copyOf(assignments);
                 }
                 return;
             }

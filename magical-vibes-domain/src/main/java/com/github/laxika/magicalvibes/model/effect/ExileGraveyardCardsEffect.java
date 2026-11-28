@@ -41,6 +41,9 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * @param cards            the cards the {@link GraveyardExileScope#CARDS} scope exiles ("exile it from your graveyard"
  *                         after a discard step, {@code Subjects.cardsThisWay(StepKind.DISCARD)}); {@code null} for every
  *                         other scope
+ * @param abilityLink      the link recorded on each card exiled with the source permanent, so only the abilities of that
+ *                         link read it ({@code CardSubject.ExiledWithSource}); {@code null} for none. A borrowed imprint
+ *                         exile records the borrower's gained link (CR 607.5)
  */
 public record ExileGraveyardCardsEffect(
         int count, GraveyardExileScope scope, CardPredicate filter,
@@ -48,7 +51,20 @@ public record ExileGraveyardCardsEffect(
         CardPredicate eventValueFilter, boolean grantPlayPermissionUntilEndOfTurn,
         boolean allowZeroTargets, boolean putKickCounters,
         boolean returnExiledCardsToGraveyardOnSourceLeave,
-        boolean defendingPlayerOnly, boolean imprint, CardSubject cards) implements GraveyardCardChoosingEffect {
+        boolean defendingPlayerOnly, boolean imprint, CardSubject cards, String abilityLink)
+        implements GraveyardCardChoosingEffect {
+
+    public ExileGraveyardCardsEffect(int count, GraveyardExileScope scope, CardPredicate filter,
+                                     boolean exactTargetCount,
+                                     boolean trackWithSource, boolean fromBattlefieldThisTurn,
+                                     CardPredicate eventValueFilter, boolean grantPlayPermissionUntilEndOfTurn,
+                                     boolean allowZeroTargets, boolean putKickCounters,
+                                     boolean returnExiledCardsToGraveyardOnSourceLeave,
+                                     boolean defendingPlayerOnly, boolean imprint, CardSubject cards) {
+        this(count, scope, filter, exactTargetCount, trackWithSource, fromBattlefieldThisTurn, eventValueFilter,
+                grantPlayPermissionUntilEndOfTurn, allowZeroTargets, putKickCounters,
+                returnExiledCardsToGraveyardOnSourceLeave, defendingPlayerOnly, imprint, cards, null);
+    }
 
     public ExileGraveyardCardsEffect {
         if ((cards != null) != (scope == GraveyardExileScope.CARDS)) {
@@ -296,7 +312,7 @@ public record ExileGraveyardCardsEffect(
     public ExileGraveyardCardsEffect imprintingOnSource() {
         return new ExileGraveyardCardsEffect(count, scope, filter, exactTargetCount, true, fromBattlefieldThisTurn,
                 eventValueFilter, grantPlayPermissionUntilEndOfTurn, allowZeroTargets, putKickCounters,
-                returnExiledCardsToGraveyardOnSourceLeave, defendingPlayerOnly, true, cards);
+                returnExiledCardsToGraveyardOnSourceLeave, defendingPlayerOnly, true, cards, abilityLink);
     }
 
     /**
@@ -306,7 +322,18 @@ public record ExileGraveyardCardsEffect(
     public ExileGraveyardCardsEffect notImprinting() {
         return new ExileGraveyardCardsEffect(count, scope, filter, exactTargetCount, trackWithSource,
                 fromBattlefieldThisTurn, eventValueFilter, grantPlayPermissionUntilEndOfTurn, allowZeroTargets,
-                putKickCounters, returnExiledCardsToGraveyardOnSourceLeave, defendingPlayerOnly, false, cards);
+                putKickCounters, returnExiledCardsToGraveyardOnSourceLeave, defendingPlayerOnly, false, cards,
+                abilityLink);
+    }
+
+    /**
+     * This exile recording {@code link} on the cards it exiles with the source: the abilities gained together with it
+     * read only those (CR 607.5).
+     */
+    public ExileGraveyardCardsEffect withAbilityLink(String link) {
+        return new ExileGraveyardCardsEffect(count, scope, filter, exactTargetCount, trackWithSource,
+                fromBattlefieldThisTurn, eventValueFilter, grantPlayPermissionUntilEndOfTurn, allowZeroTargets,
+                putKickCounters, returnExiledCardsToGraveyardOnSourceLeave, defendingPlayerOnly, imprint, cards, link);
     }
 
     public static ExileGraveyardCardsEffect upToOneTargetFromOpponentGraveyard() {

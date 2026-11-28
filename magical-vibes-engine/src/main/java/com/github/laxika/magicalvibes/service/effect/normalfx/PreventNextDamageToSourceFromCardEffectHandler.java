@@ -36,7 +36,7 @@ public class PreventNextDamageToSourceFromCardEffectHandler implements NormalEff
         gameData.addShield(FaceDownVisibility.sourceName(gameData, entry), null, entry.getControllerId(), null,
                 new TargetSourceDamagePreventionShield(targetId, sourceCardId, 1), Duration.UNTIL_END_OF_TURN);
         Card sourceCard = gameData.stack.stream()
-                .filter(stackEntry -> stackEntry.getTargetableId().equals(sourceCardId))
+                .filter(stackEntry -> stackEntry.isIdentifiedBy(sourceCardId))
                 .map(StackEntry::getCard)
                 .findFirst().orElse(entry.getCard());
         gameLogService.append(gameData, GameLog.builder()

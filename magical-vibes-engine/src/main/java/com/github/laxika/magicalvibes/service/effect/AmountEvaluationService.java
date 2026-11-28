@@ -1893,9 +1893,9 @@ public class AmountEvaluationService {
         UUID triggeringCardId = ctx.stackEntry() == null ? null : ctx.stackEntry().getTriggeringCardId();
         for (StackEntry se : gameData.stack) {
             boolean isTargetedSpell = ctx.targetPermanentId() != null
-                    && se.getTargetableId().equals(ctx.targetPermanentId());
+                    && se.isIdentifiedBy(ctx.targetPermanentId());
             boolean isTriggeringSpell = triggeringCardId != null
-                    && se.getTargetableId().equals(triggeringCardId);
+                    && se.isIdentifiedBy(triggeringCardId);
             if (isTargetedSpell || isTriggeringSpell) {
                 return spellManaValue(se);
             }
@@ -1914,7 +1914,7 @@ public class AmountEvaluationService {
             return 0;
         }
         for (StackEntry se : gameData.stack) {
-            if (se.getTargetableId().equals(ctx.targetPermanentId())) {
+            if (se.isIdentifiedBy(ctx.targetPermanentId())) {
                 return Math.max(0, se.manaSpentToCastThisSpell());
             }
         }
@@ -1939,7 +1939,7 @@ public class AmountEvaluationService {
     private int targetSpellPower(GameData gameData, AmountContext ctx) {
         if (ctx.targetPermanentId() == null) return 0;
         for (StackEntry se : gameData.stack) {
-            if (se.getTargetableId().equals(ctx.targetPermanentId())) {
+            if (se.isIdentifiedBy(ctx.targetPermanentId())) {
                 return characteristicPowerForController(gameData, se.getCard(), se.getControllerId());
             }
         }
@@ -2856,7 +2856,7 @@ public class AmountEvaluationService {
             return null;
         }
         return gameData.stack.stream()
-                .filter(se -> se.getTargetableId().equals(spellCardId))
+                .filter(se -> se.isIdentifiedBy(spellCardId))
                 .findFirst()
                 .orElse(triggeringSpellSnapshot);
     }
@@ -3017,7 +3017,7 @@ public class AmountEvaluationService {
         StackEntry spell = spellCardId == null ? snapshot : gameData.stack.stream()
                 .filter(se -> se.getEntryType() != StackEntryType.TRIGGERED_ABILITY
                         && se.getEntryType() != StackEntryType.ACTIVATED_ABILITY
-                        && se.getTargetableId().equals(spellCardId))
+                        && se.isIdentifiedBy(spellCardId))
                 .findFirst()
                 .orElse(snapshot);
         return spell == null ? null : spellManaValue(spell);
@@ -3259,7 +3259,7 @@ public class AmountEvaluationService {
         }
         return gameData.stack.stream()
                 .filter(entry -> entry.getCard() != null)
-                .filter(entry -> entry.getTargetableId().equals(ctx.sourceCard().getId()))
+                .filter(entry -> entry.isIdentifiedBy(ctx.sourceCard().getId()))
                 .findFirst()
                 .map(entry -> entry.getCounterCount(amount.counterType()))
                 .orElse(0);
@@ -3371,7 +3371,7 @@ public class AmountEvaluationService {
         return gameData.stack.stream()
                 .filter(stackEntry -> stackEntry.getEntryType() != StackEntryType.TRIGGERED_ABILITY
                         && stackEntry.getEntryType() != StackEntryType.ACTIVATED_ABILITY)
-                .filter(stackEntry -> triggeringCardId.equals(stackEntry.getTargetableId()))
+                .filter(stackEntry -> stackEntry.isIdentifiedBy(triggeringCardId))
                 .findFirst()
                 .orElse(entry.getTriggeringSpellSnapshot());
     }

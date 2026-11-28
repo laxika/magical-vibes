@@ -39,7 +39,7 @@ public class TargetSpellBecomesCopyOfCardEffectHandler implements NormalEffectHa
         }
 
         StackEntry targetSpell = gameData.stack.stream()
-                .filter(stackEntry -> stackEntry.getTargetableId().equals(targetId))
+                .filter(stackEntry -> stackEntry.isIdentifiedBy(targetId))
                 .findFirst()
                 .orElse(null);
         if (targetSpell == null) {

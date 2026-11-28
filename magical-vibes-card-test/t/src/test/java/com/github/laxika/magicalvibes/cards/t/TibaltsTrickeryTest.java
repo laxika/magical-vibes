@@ -192,7 +192,7 @@ class TibaltsTrickeryTest extends BaseCardTest {
 
         harness.castCreatureWithMorph(player1, 0);
         harness.passPriority(player1);
-        harness.castAndResolveInstant(player2, 0, target.getId());
+        harness.castAndResolveInstant(player2, 0, harness.stackIdOf(target));
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(target);
         harness.handleMayAbilityChosen(player1, true);

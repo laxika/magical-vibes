@@ -264,78 +264,54 @@ public class SearchZonesForCardNamedToBattlefieldEffectHandler implements Normal
         com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
     }
 
+    /**
+     * "Search your graveyard, hand and/or library for a card named X and/or a card named Y and put them onto the
+     * battlefield. If you search your library this way, shuffle" (Agency Outfitter): the player first chooses whether
+     * the library is searched (CR 701.23a), then picks up to one card of each name from the zones searched, any of them
+     * left unfound (a "you may" search; CR 701.23b). A searched library is recorded and shuffled whatever is found.
+     */
     private void resolveMultipleNames(GameData gameData, StackEntry entry,
                                       SearchZonesForCardNamedToBattlefieldEffect effect) {
         UUID controllerId = entry.getControllerId();
-        java.util.List<String> names = new java.util.ArrayList<>();
+        List<String> names = new java.util.ArrayList<>();
         names.add(effect.cardName());
         names.addAll(effect.additionalCardNames());
-        List<Card> found = new java.util.ArrayList<>();
-        List<String> libraryNames = new java.util.ArrayList<>();
-        for (String name : names) {
-            List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
-            Card card = graveyard.stream().filter(candidate -> name.equals(candidate.getName())).findFirst().orElse(null);
-            if (card != null) {
-                graveyard.remove(card);
-                graveyardService.notifyCardsLeftGraveyard(gameData, controllerId, card);
-            } else if (effect.includeHand()) {
-                List<Card> hand = gameData.playerHands.get(controllerId);
-                card = hand.stream().filter(candidate -> name.equals(candidate.getName())).findFirst().orElse(null);
-                if (card != null) hand.remove(card);
-            }
-            if (card != null) found.add(card);
-            else libraryNames.add(name);
-        }
-        if (libraryNames.isEmpty() || librarySearchSupport.isSearchPrevented(
-                gameData, controllerId, controllerId, false, entry.getControllerId())) {
-            placeFoundCardsTogether(gameData, entry, found);
-            return;
-        }
+        java.util.function.Predicate<Card> named = card -> names.contains(card.getName());
+        boolean librarySearchAllowed = !librarySearchSupport.isSearchPrevented(gameData, controllerId, false);
+        List<Card> graveyardMatches = gameData.playerGraveyards.getOrDefault(controllerId, List.of()).stream()
+                .filter(named)
+                .filter(card -> !gameQueryService.isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD))
+                .toList();
+        List<Card> handMatches = effect.includeHand()
+                ? gameData.playerHands.getOrDefault(controllerId, List.of()).stream().filter(named).toList()
+                : List.of();
+        List<Card> libraryMatches = List.of();
         List<Card> deck = gameData.playerDecks.get(controllerId);
-        int searchLimit = librarySearchSupport.opponentSearchTopCardsLimit(gameData, controllerId);
-        List<Card> searched = new java.util.ArrayList<>(deck.subList(0, Math.min(deck.size(), searchLimit)));
-        deck.removeAll(searched);
-        LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, controllerId);
-        if (searched.stream().noneMatch(card -> libraryNames.contains(card.getName()))) {
-            deck.addAll(searched);
-            com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
-            placeFoundCardsTogether(gameData, entry, found);
+        if (librarySearchAllowed && deck != null) {
+            int topLimit = librarySearchSupport.opponentSearchTopCardsLimit(gameData, controllerId);
+            libraryMatches = deck.stream().limit(Math.min(topLimit, deck.size())).filter(named).toList();
+        }
+        List<Card> pool = new java.util.ArrayList<>(libraryMatches);
+        pool.addAll(graveyardMatches);
+        pool.addAll(handMatches);
+        String label = String.join(" or ", names);
+        PendingInteraction.SearchLibraryAndOrGraveyardChoice choice =
+                new PendingInteraction.SearchLibraryAndOrGraveyardChoice(
+                        controllerId, pool, new java.util.HashSet<>(libraryMatches.stream().map(Card::getId).toList()),
+                        new java.util.HashSet<>(handMatches.stream().map(Card::getId).toList()), Set.of(),
+                        librarySearchAllowed, label, LibrarySearchDestination.BATTLEFIELD, null, null, 0,
+                        names.size(), false, true,
+                        librarySearchAllowed ? librarySearchSupport.oppositionAgentControllerId(gameData, controllerId)
+                                : null,
+                        Set.of(), true, true);
+        if (librarySearchAllowed) {
+            Set<Zone> otherZones = effect.includeHand() ? Set.of(Zone.GRAVEYARD, Zone.HAND) : Set.of(Zone.GRAVEYARD);
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.AndOrSearchZonesChoice(choice,
+                    otherZones));
             return;
         }
-        var laterPicks = libraryNames.subList(1, libraryNames.size()).stream()
-                .map(name -> new LibrarySearchFollowUp.SecondBoundedPick.PredicatePick(
-                        new com.github.laxika.magicalvibes.model.filter.CardNamedPredicate(name),
-                        "You may find a card named " + name + ".")).toList();
-        LibrarySearchFollowUp followUp = laterPicks.isEmpty()
-                ? LibrarySearchFollowUp.forBoundedPick(LibrarySearchFollowUp.SecondBoundedPick.terminal(
-                        true, LibrarySearchDestination.BATTLEFIELD))
-                : LibrarySearchFollowUp.forBoundedPick(LibrarySearchFollowUp.SecondBoundedPick.predicate(
-                        laterPicks.getFirst().predicate(), laterPicks.getFirst().prompt(), true,
-                        LibrarySearchDestination.BATTLEFIELD, laterPicks.subList(1, laterPicks.size())));
-        String prompt = "You may find a card named " + libraryNames.getFirst() + ".";
-        var params = com.github.laxika.magicalvibes.model.LibrarySearchParams.builder(controllerId,
-                        searched.stream().filter(candidate -> libraryNames.getFirst().equals(candidate.getName())).toList())
-                .canFailToFind(true).reveals(true).sourceCards(searched).accumulatedCards(found)
-                .reorderRemainingToBottom(true).shuffleAfterSelection(false)
-                .placeBattlefieldCardsSimultaneously(true).destination(LibrarySearchDestination.BATTLEFIELD)
-                .followUp(followUp).prompt(prompt).build();
-        interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.LibrarySearch(
-                librarySearchSupport.applyOppositionAgentControl(gameData, params), prompt, true));
-    }
-
-    private void placeFoundCardsTogether(GameData gameData, StackEntry entry, List<Card> found) {
-        List<Permanent> entered = new java.util.ArrayList<>();
-        var enterTapped = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
-        for (Card card : found) {
-            Permanent permanent = new Permanent(card);
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), permanent,
-                    enterTapped, List.copyOf(entered));
-            entered.add(permanent);
-        }
-        for (Permanent permanent : entered) {
-            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, entry.getControllerId(),
-                    permanent.getCard(), null, false);
+        if (!pool.isEmpty()) {
+            interactionHandlerRegistry.begin(gameData, choice);
         }
     }
-
 }

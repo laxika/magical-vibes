@@ -78,9 +78,9 @@ Why: no spell sits on the stack with an unpaid cost.
 ## Stack objects
 
 ### Stack object identity
-A spell is its card id; each ability has its own `getTargetableId()`. Duplicate a real trigger with `copyForNewStackObject()`.
+A spell is its card id, a face-down spell and each ability an id of their own (`getTargetableId()`): players see and target only that id; an engine record holding a face-down spell's card id finds it with `isIdentifiedBy`. Duplicate a real trigger with `copyForNewStackObject()`.
 Owner: `StackEntry`.
-Why: two abilities of one source are separately targetable.
+Why: two abilities of one source are separately targetable; a card id seen before names the face-down spell (CR 708.5).
 
 ### A face-down card's identity never leaves for other players (CR 708.2, 708.5)
 `getCard()` of a spell or permanent stays the real card: text for a player never uses its `getName()` but asks `FaceDownVisibility` (`publicName` for a permanent, `sourceName` for an ability's source, `nameShownTo`, `descriptionShownTo`), and a copy is made by `CopySupport.createCopyCard(StackEntry)`. A face-down permanent's view and cues carry the permanent's id, never its card's (`PermanentViewFactory`, `VisualCueService.Source.of(Permanent)`).

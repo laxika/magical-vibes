@@ -55,7 +55,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | CB Combat | CB-1 | CB-1 done 2026-11-27 (M11's block half left: it needs multi-defender combat damage) |
 | PP Perpetual changes | PP-1 | PP-1 done 2026-11-27 (L8, O47 left; O41's hand half left) |
 | PL Each player chooses, then all act | PL-1 | PL-1 done 2026-11-27 (Gilded Ambusher's damage reading for the owner) |
-| MC Single cards | MC-1, MC-2 | MC-1 done 2026-11-27 (O13's direct counter removals left; O81 for the owner); MC-2a, MC-2b, MC-2c, MC-2d done 2026-11-28 (MC-2b: N62's stack half is N92; MC-2c: N50 dropped; MC-2d: N25 dropped, N80 left); MC-2e done 2026-11-28 (S8 for the owner, N97 added); MC-2f done 2026-11-28 (N75 dropped; N82 left; N81's activation half and N83's library half dropped) |
+| MC Single cards | MC-1, MC-2 | MC-1 done 2026-11-27 (O13's direct counter removals left; O81 for the owner); MC-2a, MC-2b, MC-2c, MC-2d done 2026-11-28 (MC-2b: N62's stack half is N92; MC-2c: N50 dropped; MC-2d: N25 dropped, N80 left); MC-2e done 2026-11-28 (S8 for the owner, N97 added); MC-2f done 2026-11-28 (N75 dropped; N81's activation half and N83's library half dropped); MC-2g done 2026-11-28 (N82, N91 to N97 fixed; N93's amount for the owner; N98, N99 left for later; N100 fixed by the orchestrator). MC-2 done; left: N80, N98, N99 |
 | AI Hard / easy AI | AI-1, AI-2 | AI-1, AI-2 done 2026-11-27 |
 | UI Frontend | UI-1 | UI-1 done 2026-11-27 |
 | LG, CL Logs and non-rules cleanup | LG-1, CL-1 | CL-1, LG-1 done 2026-11-27 |
@@ -1786,6 +1786,48 @@ Vat's abilities). The fix needs a borrowed triggered ability linked like the act
 borrowed ability rewritten to `exiledWithSourceBy(link)`, and `CreateTokenCopyOfImprintedCardEffect` reading that link so the
 borrowed pair stays linked (CR 607.5). Tests: 538 XML files, 6,713 tests, 1 failure (the N82 probe, removed); after it the architecture tests, the AI module and the touched classes: 138 files, 1,842 tests, 0 failures.
 Ratchet 2849 / 2236 to 2847 / 2234, two ledger rows; no `CONVERSION_VERSION` change.
+
+MC-2g: done 2026-11-28. Fixed, each with a test that failed first: N82, N91, N92, N93, N94, N95, N96, N97. N91: a blocker
+declaration the engine refuses, an empty one too, falls back to one the engine's requirement search accepts
+(`CombatBlockService.requirementObeyingDeclaration`, through `GameService`/`AiGameActions.requirementObeyingBlockers`; CR
+509.1c): the AI no longer leaves a Canopy Stalker attack unanswered. N92: a face-down spell's `getTargetableId()` is an id of its
+own, so its view, its cast cue and every target and choice name it by that id, and its card id is refused as a target (CR 708.5);
+engine records that hold the card id find it with the new `StackEntry.isIdentifiedBy` (a mechanical sweep of 110
+`getTargetableId().equals` readers). Three records keyed by the target id are now keyed by the card (Vexing Shusher's uncounterable
+set, a spell's colour override, Ertai's Meddling's delay counters), and Reject Imperfection reads a face-down spell's countered
+mana value by its stack id. The client already targets a stack entry by `StackEntryView.cardId`: no client change. About 20 tests
+that targeted a face-down spell by its card id use `harness.stackIdOf(card)`. N93: a masked creature that would deal noncombat
+damage (a bite, a fight, its own ability) is turned face up first, unless that is prevented (Karlov Watchdog)
+(`DamageSupport.turnMaskedSourceFaceUp`; Illusionary Mask's Oracle text); the amount stays the power read as the effect began
+(owner question, entry 17). N94: an Alms Collector's two draws stay the modified event when the first waits for a draw choice
+(`PendingCardDraw.endOfModifiedEvent` keeps `drawEventDepth` until the waiting draws are done; CR 614.6). N95: the Notion Thieves
+already applied to a draw are remembered past the new drawer's optional replacement (`GameData.pendingDrawExtraRedirectsApplied`,
+CR 614.5). N96: a printed flashback cost with no mana and no tap part pays the cost increases (Dread Return under Thalia, Guardian
+of Thraben; CR 601.2f). N97: Agency Outfitter asks whether the library is searched (`AndOrSearchZonesChoice`, CR 701.23a), then
+offers one optional pick of up to one card of each name from graveyard, hand and the library if searched
+(`SearchLibraryAndOrGraveyardChoice.differentNames`, which now also takes hand cards in a multi-card pick; CR 701.23b); a library
+left unsearched isn't shuffled. N82: a borrowed triggered ability is linked like the activated ones: `linkGainedEffect` goes
+through `MayEffect`, `SequenceEffect` and `ConditionalEffect`, a borrowed imprint exile records the gained link
+(`ExileGraveyardCardsEffect.withAbilityLink`), "each other card exiled with it" reads that link, and the borrowed token-copy
+ability reads the card that link exiled (`CreateTokenCopyOfImprintedCardEffect.ofCardExiledBy`), so Idris with Mimic Vat keeps
+its exiled Vat and copies what the borrowed trigger exiled (CR 607.5). Tests: 1,819 XML files, 17,888 tests, 1 failure: Kefka,
+Dancing Mad's back-face test, which fails on HEAD too (N100). No effect class added or deleted, so no ledger or ratchet change; no
+`CONVERSION_VERSION` change.
+
+Left for later (MC-2g; no later run takes these):
+
+New line N98 (seen in MC-2g, N92): a face-down spell's target id is now its own stack id, not its card's; three handlers that
+keyed a `GameData` record by the target id were found and fixed, but no full sweep was made of handlers that use
+`entry.getTargetId()` of a spell target as a card id (a map key, `findCardById`, an exile lookup). Of the code.
+
+New line N99 (seen in MC-2g, N94): a draw that another replacement made instead (a Notion Thief's redirect, Thought Reflection's
+second draw) and that pauses for a draw choice resumes outside its modified event (`drawEventDepth` 1), so its card counts as
+unreplaced (CR 614.6); no implemented "that card" reader can observe it. Of the code.
+
+New line N100 (seen in MC-2g): `KefkaDancingMadTest`'s "A modal double-faced card cast as its back face makes its owner lose
+the back face's mana value" fails on HEAD (fac4e16f191): Valki cast as Tibalt makes its owner lose 2 life, not 7
+(`ExileFreeCastQueueSupport.applyPendingFreeCastLifeLosses` finds no stack entry by the physical card). A regression after MC-2d.
+Fixed by the orchestrator after MC-2g: not a regression, the test failed at MC-2d's own commit (c9a5e836876). The exile modal cast put the raw back face on the stack with no physical card, so the entry wasn't the exiled card; `castPreparedSpell` now keeps the physical card for a modal back-face cast, as a hand cast does (CR 712.8c), on both the targeted and untargeted paths. Kefka and the 346 modal-face card-test classes pass.
 
 ### AI. Hard / easy AI (`magical-vibes-ai`)
 

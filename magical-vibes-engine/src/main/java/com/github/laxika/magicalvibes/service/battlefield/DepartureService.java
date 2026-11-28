@@ -233,10 +233,10 @@ public class DepartureService {
         }
         UUID ownerId = pending.ownerStackEntryId();
         StackEntry parked = gameData.pendingEffectResolutionEntry;
-        if (parked != null && ownerId.equals(parked.getTargetableId())) {
+        if (parked != null && parked.isIdentifiedBy(ownerId)) {
             return;
         }
-        if (gameData.stack.stream().anyMatch(entry -> ownerId.equals(entry.getTargetableId()))) {
+        if (gameData.stack.stream().anyMatch(entry -> entry.isIdentifiedBy(ownerId))) {
             return;
         }
         gameData.pendingDepartureBatch = null;
@@ -403,7 +403,7 @@ public class DepartureService {
     public static boolean awaitsStepDeparture(GameData gameData, StackEntry entry) {
         DepartureBatch pending = gameData.pendingDepartureBatch;
         return pending != null && pending.isOwnedByResolutionStep()
-                && pending.ownerStackEntryId().equals(entry.getTargetableId());
+                && entry.isIdentifiedBy(pending.ownerStackEntryId());
     }
 
     /**

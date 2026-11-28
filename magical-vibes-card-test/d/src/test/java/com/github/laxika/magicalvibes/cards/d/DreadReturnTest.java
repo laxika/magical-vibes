@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.cards.t.ThaliaGuardianOfThraben;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DreadReturn.class, AshcoatBear.class, Cancel.class, Mountain.class})
+@CardUsed({DreadReturn.class, AshcoatBear.class, Cancel.class, Mountain.class, ThaliaGuardianOfThraben.class})
 class DreadReturnTest extends BaseCardTest {
 
     @Test
@@ -82,6 +83,29 @@ class DreadReturnTest extends BaseCardTest {
                 .extracting(Card::getId)
                 .containsExactlyInAnyOrder(first.getCard().getId(), second.getCard().getId(), third.getCard().getId());
         assertThat(gd.findExiledCard(spell.getId())).isNotNull();
+    }
+
+    @Test
+    @DisplayName("A cost increase is paid on top of the sacrifice-only flashback cost")
+    void flashbackPaysCostIncrease() {
+        harness.addToBattlefield(player2, new ThaliaGuardianOfThraben());
+        Permanent first = addCreatureReady(player1, new AshcoatBear());
+        Permanent second = addCreatureReady(player1, new AshcoatBear());
+        Permanent third = addCreatureReady(player1, new AshcoatBear());
+        Card creature = new AshcoatBear();
+        DreadReturn spell = new DreadReturn();
+        harness.setGraveyard(player1, List.of(spell, creature));
+        List<java.util.UUID> sacrifices = List.of(first.getId(), second.getId(), third.getId());
+
+        assertThatThrownBy(() -> harness.castFromGraveyardWithSacrifices(player1, 0, creature.getId(), sacrifices))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(first, second, third);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castFromGraveyardWithSacrifices(player1, 0, creature.getId(), sacrifices);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        assertThat(gd.stack).extracting(entry -> entry.getCard().getId()).containsExactly(spell.getId());
     }
 
     @Test

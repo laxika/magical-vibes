@@ -1879,7 +1879,7 @@ public class DamagePreventionService {
                     : sourceCard != null
                             ? gameQueryService.getEffectiveCardColors(gameData, sourceCard).contains(CardColor.BLACK)
                             : gameData.stack.stream()
-                            .filter(entry -> entry.getTargetableId().equals(shield.sourceId()))
+                            .filter(entry -> entry.isIdentifiedBy(shield.sourceId()))
                             .anyMatch(entry -> gameQueryService.getEffectiveCardColors(
                                     gameData, entry.getCard()).contains(CardColor.BLACK));
             if (!black) {
@@ -1974,7 +1974,7 @@ public class DamagePreventionService {
                             ? sourceEntry
                             : gameData.stack.stream()
                             .filter(stackEntry -> stackEntry.getCard() != null
-                                    && sourcePermanentId.equals(stackEntry.getTargetableId()))
+                                    && stackEntry.isIdentifiedBy(sourcePermanentId))
                             .findFirst()
                             .orElse(null);
                     if (matchingEntry != null) {

@@ -43,8 +43,18 @@ Why: "if it was dealt damage this way" reads the real result.
 
 ### A replaced draw's cards are drawn, but none is "that card" (CR 614.6)
 The cards a draw's modified event draws count as drawn by the instruction (its DRAW step, `CardsDrawnThisResolution`); a "that card" reader also requires the card in `GameData.unreplacedDrawnCardIds`, which only a draw no replacement changed writes.
-Owner: `DrawService` (`drawEventDepth`, the plain-draw fallthrough), `DrawCardEffectHandler`.
+Owner: `DrawService` (`drawEventDepth`, kept past a draw choice by `PendingCardDraw.endOfModifiedEvent`; the plain-draw fallthrough), `DrawCardEffectHandler`.
 Why: The Royal Scions' and Ancient Excavation's rulings count replaced draws; Pact Weapon's ruling has no "that card".
+
+### A draw replacement applied once stays applied past a draw choice (CR 614.5)
+A Notion Thief already applied to a draw is remembered for the player it made draw (`GameData.pendingDrawExtraRedirectsApplied`) while an optional replacement of that draw is answered, and forgotten as that player's next draw begins.
+Owner: `DrawService` (`drawAsRedirectedExtraDraw`, `resolveDrawCardInternal`).
+Why: a paused chain resumes without the call stack that held what was applied.
+
+### A masked creature is turned face up before it deals or is dealt damage
+Illusionary Mask's replacement turns a creature cast face down with it face up before it deals damage, combat or noncombat, or is dealt damage; one that can't be turned face up (Karlov Watchdog) deals or takes it face down.
+Owner: `CombatDamageService` (combatants), `DamageSupport` (`turnMaskedSourceFaceUp`, the recipient in `finishPermanentDamage`).
+Why: the replacement applies to every damage event the creature is part of.
 
 ### Combat damage is one event per recipient (CR 510.2)
 Each recipient's damage is one `DamageEvent` with a `DamagePortion` per source, run in APNAP order of choosers; a prompt parks the step. Prevention, lifelink and "deals combat damage to a player" abilities use each source's recorded player (`CombatDamageState.combatDamagePlayerRecipients`), not the defending player.

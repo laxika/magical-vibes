@@ -111,7 +111,7 @@ public class DestroyOtherCreaturesSharingColorWithEnteringCreatureEffectHandler
             return exiledCard;
         }
         for (StackEntry stackEntry : gameData.stack) {
-            if (cardId.equals(stackEntry.getTargetableId())) {
+            if (stackEntry.isIdentifiedBy(cardId)) {
                 return stackEntry.getCard();
             }
         }

@@ -48,7 +48,7 @@ public class GrantAdditionalCountersToCastSpellEffectHandler implements NormalEf
 
         boolean spellStillOnStack = gameData.stack.stream()
                 .anyMatch(stackEntry -> stackEntry.getCard() != null
-                        && spellCardId.equals(stackEntry.getTargetableId()));
+                        && stackEntry.isIdentifiedBy(spellCardId));
         if (!spellStillOnStack) {
             return;
         }

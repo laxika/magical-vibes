@@ -692,6 +692,9 @@ public class ExileFreeCastQueueSupport {
         boolean castWithAdventure = !asCopy && cardToCast != physicalCard
                 && physicalCard.getBackFaceCard() != null
                 && physicalCard.getCastingOption(AdventureCast.class).isPresent();
+        // A modal double-faced card cast as its back face is that face on the stack and the whole card in exile, as
+        // a hand cast's is (CR 712.8c): the entry keeps the card it came from.
+        boolean castAsModalBackFace = !asCopy && cardToCast != physicalCard && physicalCard.isModalDoubleFaced();
         ExiledCardEntry exiledEntry = gameData.findExiledCard(physicalCard.getId());
         UUID ownerId = exiledEntry == null ? physicalCard.getOwnerId() : exiledEntry.ownerId();
 
@@ -731,7 +734,7 @@ public class ExileFreeCastQueueSupport {
                 // carried by the target-choice context from here on.
                 gameData.removeFromExile(physicalCard.getId());
             }
-            gameData.interaction.setPermanentChoiceContext(castWithAdventure
+            gameData.interaction.setPermanentChoiceContext(castWithAdventure || castAsModalBackFace
                     ? new PermanentChoiceContext.ExileCastSpellTarget(
                             cardToCast, playerId, spellEffects, spellType, false, List.of(), 0, false, 0,
                             false, false, null, null, 0, physicalCard)
@@ -753,6 +756,8 @@ public class ExileFreeCastQueueSupport {
         if (castWithAdventure) {
             entry.setPhysicalCard(physicalCard);
             entry.setCastWithAdventure(true);
+        } else if (castAsModalBackFace) {
+            entry.setPhysicalCard(physicalCard);
         }
         if (!asCopy) {
             entry.setSourceZone(Zone.EXILE);

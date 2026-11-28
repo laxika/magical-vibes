@@ -120,6 +120,11 @@ public class CombatService {
         return combatBlockService.declareBlockers(gameData, player, blockerAssignments);
     }
 
+    public List<BlockerAssignment> requirementObeyingDeclaration(GameData gameData,
+                                                                 List<BlockerAssignment> blockerAssignments) {
+        return combatBlockService.requirementObeyingDeclaration(gameData, blockerAssignments);
+    }
+
 
     public CombatResult resolveCombatDamage(GameData gameData) {
         return combatDamageService.resolveCombatDamage(gameData);

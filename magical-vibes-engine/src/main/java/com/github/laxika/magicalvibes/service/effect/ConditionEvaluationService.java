@@ -1803,7 +1803,7 @@ public class ConditionEvaluationService {
             case TargetSpellCanBeCountered ignored -> {
                 com.github.laxika.magicalvibes.model.StackEntry targetSpell = ctx.targetId() == null ? null
                         : gameData.stack.stream()
-                                .filter(se -> se.getTargetableId().equals(ctx.targetId()))
+                                .filter(se -> se.isIdentifiedBy(ctx.targetId()))
                                 .findFirst().orElse(null);
                 yield targetSpell != null
                         && !gameQueryService.isUncounterable(gameData, targetSpell.getCard())
@@ -1816,7 +1816,7 @@ public class ConditionEvaluationService {
                     yield false;
                 }
                 com.github.laxika.magicalvibes.model.StackEntry targetSpell = gameData.stack.stream()
-                        .filter(se -> se.getTargetableId().equals(ctx.targetId()))
+                        .filter(se -> se.isIdentifiedBy(ctx.targetId()))
                         .findFirst().orElse(null);
                 if (targetSpell != null) {
                     yield targetSpell.getManaSpentToCast() < targetSpell.getSpellManaValue();
@@ -1831,17 +1831,19 @@ public class ConditionEvaluationService {
             case TargetSpellMatches c -> {
                 com.github.laxika.magicalvibes.model.StackEntry targetSpell = ctx.targetId() == null ? null
                         : gameData.stack.stream()
-                                .filter(se -> se.getTargetableId().equals(ctx.targetId()))
+                                .filter(se -> se.isIdentifiedBy(ctx.targetId()))
                                 .findFirst().orElse(null);
                 if (targetSpell == null) {
                     // A spell countered earlier in this resolution is judged by the card it left behind, as
                     // "counter target spell. If it was ..." reads it after the counter has removed it.
                     Card lastKnown = ctx.targetId() == null ? null
                             : gameQueryService.findCardById(gameData, ctx.targetId());
-                    if (lastKnown != null
+                    GameData.CounteredSpellManaCost countered = ctx.targetId() == null ? null
+                            : gameData.counteredSpellManaCosts.get(ctx.targetId());
+                    if ((lastKnown != null || countered != null)
                             && c.filter() instanceof com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredicate maxValue) {
-                        // Its mana value as it last was on the stack: X as chosen, 0 for a face-down one (CR 608.2h).
-                        GameData.CounteredSpellManaCost countered = gameData.counteredSpellManaCosts.get(ctx.targetId());
+                        // Its mana value as it last was on the stack: X as chosen, 0 for a face-down one, which is
+                        // known by its stack id alone (CR 608.2h).
                         int manaValue = countered != null ? countered.manaValue() : lastKnown.getManaValue();
                         yield manaValue <= maxValue.maxManaValue();
                     }
@@ -2675,7 +2677,7 @@ public class ConditionEvaluationService {
             GameData gameData, ConditionContext ctx) {
         if (ctx.controllerId() == null || ctx.targetId() == null) return false;
         com.github.laxika.magicalvibes.model.StackEntry targetSpell = gameData.stack.stream()
-                .filter(entry -> entry.getTargetableId().equals(ctx.targetId()))
+                .filter(entry -> entry.isIdentifiedBy(ctx.targetId()))
                 .findFirst()
                 .orElse(null);
         if (targetSpell == null) return false;
@@ -2687,7 +2689,7 @@ public class ConditionEvaluationService {
             GameData gameData, ConditionContext ctx) {
         if (ctx.controllerId() == null || ctx.targetId() == null) return false;
         StackEntry targetSpell = gameData.stack.stream()
-                .filter(entry -> entry.getTargetableId().equals(ctx.targetId()))
+                .filter(entry -> entry.isIdentifiedBy(ctx.targetId()))
                 .findFirst()
                 .orElse(null);
         if (targetSpell == null) return false;
@@ -2725,7 +2727,7 @@ public class ConditionEvaluationService {
     private boolean targetSpellSharesColorWithControlledCreature(GameData gameData, ConditionContext ctx) {
         if (ctx.controllerId() == null || ctx.targetId() == null) return false;
         com.github.laxika.magicalvibes.model.StackEntry targetSpell = gameData.stack.stream()
-                .filter(entry -> entry.getTargetableId().equals(ctx.targetId()))
+                .filter(entry -> entry.isIdentifiedBy(ctx.targetId()))
                 .findFirst()
                 .orElse(null);
         if (targetSpell == null) return false;
@@ -2744,7 +2746,7 @@ public class ConditionEvaluationService {
     private boolean targetSpellWouldDestroyLandYouControl(GameData gameData, ConditionContext ctx) {
         if (ctx.controllerId() == null || ctx.targetId() == null) return false;
         StackEntry targetSpell = gameData.stack.stream()
-                .filter(entry -> entry.getTargetableId().equals(ctx.targetId()))
+                .filter(entry -> entry.isIdentifiedBy(ctx.targetId()))
                 .findFirst()
                 .orElse(null);
         if (targetSpell == null) return false;

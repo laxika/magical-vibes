@@ -1824,7 +1824,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * face-up exile, for their destination. A pool card in none of the id sets is in the graveyard. With
      * {@code librarySearchAllowed} the library is searched: the search is recorded and, with {@code shuffleAfterSearch},
      * shuffled whatever is found. With {@code optional} ("you may", or a hidden zone the player may search alone) no
-     * card has to be chosen.
+     * card has to be chosen. With {@code differentNames} no two chosen cards share a name ("a card named X and/or a
+     * card named Y", over a pool of those names).
      */
     record SearchLibraryAndOrGraveyardChoice(UUID playerId, java.util.List<Card> pool,
                                              java.util.Set<UUID> libraryCardIds,
@@ -1841,7 +1842,31 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                              boolean shuffleAfterSearch,
                                              UUID oppositionAgentControllerId,
                                              java.util.Set<UUID> exileCardIds,
-                                             boolean optional) implements PendingInteraction {
+                                             boolean optional,
+                                             boolean differentNames) implements PendingInteraction {
+
+        /** Constructor for a search whose chosen cards may share a name. */
+        public SearchLibraryAndOrGraveyardChoice(UUID playerId, java.util.List<Card> pool,
+                                                 java.util.Set<UUID> libraryCardIds,
+                                                 java.util.Set<UUID> handCardIds,
+                                                 java.util.Set<UUID> outsideGameCardIds,
+                                                 boolean librarySearchAllowed,
+                                                 String cardLabel,
+                                                 LibrarySearchDestination destination,
+                                                 UUID attachToPermanentId,
+                                                 CounterType enterWithCounterType,
+                                                 int enterWithCounterCount,
+                                                 int maxCount,
+                                                 boolean attachAuraOrEquipment,
+                                                 boolean shuffleAfterSearch,
+                                                 UUID oppositionAgentControllerId,
+                                                 java.util.Set<UUID> exileCardIds,
+                                                 boolean optional) {
+            this(playerId, pool, libraryCardIds, handCardIds, outsideGameCardIds, librarySearchAllowed, cardLabel,
+                    destination, attachToPermanentId, enterWithCounterType, enterWithCounterCount, maxCount,
+                    attachAuraOrEquipment, shuffleAfterSearch, oppositionAgentControllerId, exileCardIds, optional,
+                    false);
+        }
 
         /** Constructor for a search of no face-up exile, a card outside the library and hand having to be taken. */
         public SearchLibraryAndOrGraveyardChoice(UUID playerId, java.util.List<Card> pool,
@@ -2008,7 +2033,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             return new SearchLibraryAndOrGraveyardChoice(playerId, pool, libraryCardIds, handCardIds, outsideGameCardIds,
                     true, cardLabel, destination, attachToPermanentId, enterWithCounterType, enterWithCounterCount,
                     maxCount, attachAuraOrEquipment, shuffleAfterSearch, oppositionAgentControllerId, exileCardIds,
-                    true);
+                    true, differentNames);
         }
 
         /** This search without the library: its cards leave the pool, and no Opposition Agent controls the search. */
@@ -2017,7 +2042,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                     pool.stream().filter(card -> !libraryCardIds.contains(card.getId())).toList(), Set.of(),
                     handCardIds, outsideGameCardIds, false, cardLabel, destination, attachToPermanentId,
                     enterWithCounterType, enterWithCounterCount, maxCount, attachAuraOrEquipment, shuffleAfterSearch,
-                    null, exileCardIds, optional);
+                    null, exileCardIds, optional, differentNames);
         }
 
         @Override

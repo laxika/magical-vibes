@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -13,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfImprintedCar
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
+import java.util.UUID;
 import java.util.Map;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
@@ -45,7 +47,9 @@ public class CreateTokenCopyOfImprintedCardEffectHandler implements NormalEffect
         // is preserved via entry.getCard() (a snapshot captured when the ability went on the stack).
         Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
 
-        Card imprintedCard = sourcePermanent != null
+        Card imprintedCard = e.exiledLink() != null
+                ? lastExiledByLink(gameData, entry.getSourcePermanentId(), e.exiledLink())
+                : sourcePermanent != null
                 ? gameData.getImprintedCard(sourcePermanent.getCard())
                 : gameData.getImprintedCard(entry.getCard());
         // The source re-entering the battlefield (blink) drops its imprint, but an activated ability
@@ -74,6 +78,22 @@ public class CreateTokenCopyOfImprintedCardEffectHandler implements NormalEffect
 
         tokenCopySupport.createTokenCopies(gameData, entry, List.of(imprintedCard), null,
                 entry.getControllerId(), toTokenCopyEffect(e));
+    }
+
+    /** The card last exiled with {@code sourcePermanentId} under {@code link}, still in exile; {@code null} for none. */
+    private static Card lastExiledByLink(GameData gameData, UUID sourcePermanentId, String link) {
+        if (sourcePermanentId == null) {
+            return null;
+        }
+        synchronized (gameData.exiledCards) {
+            Card last = null;
+            for (ExiledCardEntry exiled : gameData.exiledCards) {
+                if (sourcePermanentId.equals(exiled.sourcePermanentId()) && link.equals(exiled.abilityLink())) {
+                    last = exiled.card();
+                }
+            }
+            return last;
+        }
     }
 
     /**

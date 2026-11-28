@@ -1180,7 +1180,7 @@ The effect cleanup's plan and queues were deleted when it closed (2026-11-26). T
 `agent-docs/architecture/effect-building-blocks.md`; `scripts/effect-audit-ledger.csv` keeps every class's verdict and
 `python3 -I scripts/effect-inventory.py` the inventory.
 
-60 items: every open question of the owner's and every orchestrator decision logged for the owner to review (the date is
+61 items: every open question of the owner's and every orchestrator decision logged for the owner to review (the date is
 the run's). An answer that changes play becomes a defect run (entry 18); one that confirms a decision just removes its line.
 
 The full text of each item is in the cleanup plan's last version, `git show 3b0d60d42d4:effect-cleanup-refactor.md`: the open
@@ -1218,6 +1218,11 @@ questions under "The owner's open questions", the decisions under "The owner's d
   is that one conjure event for all the duplicates (a "whenever you conjure one or more other cards" reader such as Thayan
   Evokers triggers once) or one per duplicate (as now)? Conjure is digital-only: the CR has no conjure rule and the card has no
   rulings.
+- 2026-11-28, MC-2g (rules-fixes.md N93): a masked creature (Illusionary Mask) that bites or fights is turned face up before it
+  deals the damage (its Oracle text: "instead it's turned face up and ... deals damage"), but the amount is the power read as the
+  effect began, the face-down 2/2's (a fight reads both powers before either deals damage). Should "damage equal to its power"
+  be its face-up power instead? Neither the card's rulings nor CR 614 says whether the replacement changes an amount already
+  fixed.
 
 #### Orchestrator decisions for the owner to review
 

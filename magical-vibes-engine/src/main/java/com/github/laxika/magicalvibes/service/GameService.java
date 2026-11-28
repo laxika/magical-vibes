@@ -2789,6 +2789,17 @@ public class GameService {
         }
     }
 
+    /**
+     * {@code blockerAssignments}, or when the block restrictions and requirements refuse them a declaration they
+     * accept (CombatBlockService#requirementObeyingDeclaration). Declares nothing; for a computer player's fallback.
+     */
+    public List<BlockerAssignment> requirementObeyingBlockerDeclaration(GameData gameData,
+                                                                        List<BlockerAssignment> blockerAssignments) {
+        synchronized (gameData) {
+            return combatService.requirementObeyingDeclaration(gameData, blockerAssignments);
+        }
+    }
+
     public void handleCombatDamageAssigned(GameData gameData, Player player, int attackerIndex, Map<UUID, Integer> assignments) {
         Player actionPlayer = player;
         if (runAsCombatActionIfNeeded(gameData,

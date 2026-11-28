@@ -94,7 +94,7 @@ public class RevealTopCardsOfTargetSpellControllerUntilInstantOrSorceryAndCastEf
             return null;
         }
         for (StackEntry stackEntry : gameData.stack) {
-            if (stackEntry.getTargetableId().equals(targetCardId)) {
+            if (stackEntry.isIdentifiedBy(targetCardId)) {
                 return stackEntry;
             }
         }

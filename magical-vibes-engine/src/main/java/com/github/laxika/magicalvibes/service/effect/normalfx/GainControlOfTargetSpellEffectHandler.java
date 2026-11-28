@@ -30,7 +30,7 @@ public class GainControlOfTargetSpellEffectHandler implements NormalEffectHandle
         }
 
         StackEntry targetSpell = gameData.stack.stream()
-                .filter(stackEntry -> targetSpellId.equals(stackEntry.getTargetableId()))
+                .filter(stackEntry -> stackEntry.isIdentifiedBy(targetSpellId))
                 .findFirst()
                 .orElse(null);
         if (targetSpell == null) {

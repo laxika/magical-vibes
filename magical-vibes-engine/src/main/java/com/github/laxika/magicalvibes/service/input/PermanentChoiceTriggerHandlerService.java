@@ -213,7 +213,7 @@ public class PermanentChoiceTriggerHandlerService {
         boolean graveyardCard = target == null && !exiledCard && !player
                 && gameQueryService.findCardInGraveyardById(gameData, chosenId) != null;
         boolean spell = target == null && !exiledCard && !player && !graveyardCard
-                && gameData.stack.stream().anyMatch(stacked -> chosenId.equals(stacked.getTargetableId()));
+                && gameData.stack.stream().anyMatch(stacked -> stacked.isIdentifiedBy(chosenId));
         boolean declined = player && chosenId.equals(att.controllerId())
                 && triggeredAbilityQueueService.isOptionalSingleTarget(att.sourceCard(), att.effects());
         if (declined) {
@@ -487,7 +487,7 @@ public class PermanentChoiceTriggerHandlerService {
         Zone targetZone = targetPermanent == null ? Zone.STACK : null;
         if (targetPermanent == null) {
             for (StackEntry se : gameData.stack) {
-                if (se.getTargetableId().equals(cardId)) {
+                if (se.isIdentifiedBy(cardId)) {
                     targetName = FaceDownVisibility.nameShownTo(gameData, se, null);
                     break;
                 }
@@ -756,7 +756,7 @@ public class PermanentChoiceTriggerHandlerService {
         if (playerName != null) return playerName;
 
         for (StackEntry se : gameData.stack) {
-            if (se.getTargetableId().equals(targetId)) return FaceDownVisibility.descriptionShownTo(gameData, se, null);
+            if (se.isIdentifiedBy(targetId)) return FaceDownVisibility.descriptionShownTo(gameData, se, null);
         }
 
         for (UUID pid : gameData.orderedPlayerIds) {

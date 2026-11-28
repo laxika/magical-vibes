@@ -18,6 +18,10 @@ package com.github.laxika.magicalvibes.model.effect;
  * Afterlife); Arachnus Spinner searches only graveyard and library. {@code attachToTarget} makes
  * the found card enter attached to the resolving entry's target creature (an Aura tutor); the
  * whole effect does nothing — no search happens — when that target is no longer a legal creature.
+ *
+ * <p>With {@code additionalCardNames} ("a card named X and/or a card named Y", Agency Outfitter) the player chooses
+ * whether the library is searched first, then picks up to one card of each name from the zones searched, any of them
+ * left unfound; a searched library is shuffled whatever is found.
  */
 public record SearchZonesForCardNamedToBattlefieldEffect(
         String cardName,

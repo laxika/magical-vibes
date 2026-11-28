@@ -646,7 +646,7 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
     private static StackEntry triggeringSpell(GameData gameData, StackEntry entry) {
         UUID triggeringCardId = entry.getTriggeringCardId();
         return gameData.stack.stream()
-                .filter(stackEntry -> triggeringCardId != null && triggeringCardId.equals(stackEntry.getTargetableId()))
+                .filter(stackEntry -> triggeringCardId != null && stackEntry.isIdentifiedBy(triggeringCardId))
                 .findFirst()
                 .orElse(entry.getTriggeringSpellSnapshot());
     }
@@ -1189,7 +1189,7 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
             return null;
         }
         return gameData.stack.stream()
-                .filter(entry -> targetableId.equals(entry.getTargetableId()))
+                .filter(entry -> entry.isIdentifiedBy(targetableId))
                 .findFirst()
                 .orElse(null);
     }

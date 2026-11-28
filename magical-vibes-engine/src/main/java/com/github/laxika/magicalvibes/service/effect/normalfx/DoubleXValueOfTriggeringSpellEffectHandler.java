@@ -22,7 +22,7 @@ public class DoubleXValueOfTriggeringSpellEffectHandler implements NormalEffectH
         if (triggeringCardId == null) return;
 
         for (StackEntry stackEntry : gameData.stack) {
-            if (triggeringCardId.equals(stackEntry.getTargetableId())
+            if (stackEntry.isIdentifiedBy(triggeringCardId)
                     && stackEntry.getCard() != null
                     && stackEntry.getCard().getParsedManaCost() != null
                     && stackEntry.getCard().getParsedManaCost().hasX()) {

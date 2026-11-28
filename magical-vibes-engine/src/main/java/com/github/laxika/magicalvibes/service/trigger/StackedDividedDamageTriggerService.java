@@ -284,7 +284,7 @@ public class StackedDividedDamageTriggerService {
 
     private static StackEntry findEntry(GameData gameData, UUID stackEntryId) {
         return gameData.stack.stream()
-                .filter(entry -> entry.getTargetableId().equals(stackEntryId))
+                .filter(entry -> entry.isIdentifiedBy(stackEntryId))
                 .findFirst()
                 .orElse(null);
     }

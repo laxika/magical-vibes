@@ -369,7 +369,9 @@ public class DrawService {
                 && gameData.status != GameStatus.FINISHED) {
             PendingCardDraw next = gameData.pendingCardDraws.removeFirst();
             UUID playerId = next.playerId();
-            if (next.isInstruction()) {
+            if (next.endsModifiedEvent()) {
+                gameData.drawEventDepth--;
+            } else if (next.isInstruction()) {
                 resolveDrawCards(gameData, playerId, next.instructionAmount(), pendingCyclingCard(gameData, playerId),
                         next.skipsOpponentDrawTwoOrMoreReplacement());
             } else {
@@ -400,6 +402,7 @@ public class DrawService {
     private void resolveDrawCardInternal(GameData gameData, UUID playerId, Card cycledCard) {
         gameData.declinedDrawReplacementSources.remove(playerId);
         gameData.pendingDrawFirstDrawStepFlags.remove(playerId);
+        gameData.pendingDrawExtraRedirectsApplied.remove(playerId);
         Integer fromAppliedDoubling = gameData.drawsFromAppliedDoubling.get(playerId);
         if (fromAppliedDoubling != null && fromAppliedDoubling > 0) {
             if (fromAppliedDoubling == 1) {
@@ -819,7 +822,9 @@ public class DrawService {
 
         // Notion Thief, Hullbreacher: an opponent of the source's controller who would draw a card except the first
         // one in each of their draw steps doesn't; the controller draws a card or creates a Treasure instead.
-        Set<UUID> appliedExtraDrawRedirects = Set.copyOf(gameData.extraDrawRedirectsAppliedToCurrentDraw);
+        Set<UUID> appliedExtraDrawRedirects = new java.util.HashSet<>(gameData.extraDrawRedirectsAppliedToCurrentDraw);
+        appliedExtraDrawRedirects.addAll(gameData.pendingDrawExtraRedirectsApplied.getOrDefault(playerId, Set.of()));
+        appliedExtraDrawRedirects = Set.copyOf(appliedExtraDrawRedirects);
         if (!firstDrawStepDraw && !extraDrawRedirects(gameData, playerId, appliedExtraDrawRedirects).isEmpty()) {
             continueExtraDrawRedirects(gameData, playerId, playerId, appliedExtraDrawRedirects);
             return;
@@ -1723,6 +1728,8 @@ public class DrawService {
     private void drawAsRedirectedExtraDraw(GameData gameData, UUID drawerId, Set<UUID> appliedCardIds) {
         boolean outermost = gameData.extraDrawRedirectsAppliedToCurrentDraw.isEmpty();
         gameData.extraDrawRedirectsAppliedToCurrentDraw.addAll(appliedCardIds);
+        // Remembered past a pause of this draw for an optional replacement, which resumes it without this call.
+        gameData.pendingDrawExtraRedirectsApplied.put(drawerId, Set.copyOf(appliedCardIds));
         // A new draw of theirs, not one a doubling of their own made, so their doublers apply to it.
         gameData.currentDrawDoublingApplied.remove(drawerId);
         try {
@@ -1780,15 +1787,22 @@ public class DrawService {
 
         UUID firstPlayerId = sourceControllerId.equals(gameData.activePlayerId) ? sourceControllerId : playerId;
         UUID secondPlayerId = firstPlayerId.equals(playerId) ? sourceControllerId : playerId;
-        // The two draws are the modified event, so neither is a draw the instruction asked for (CR 614.6).
+        // The two draws are the modified event, so neither is a draw the instruction asked for (CR 614.6). When a draw
+        // choice makes them wait, the event lasts until the waiting draws are performed.
         gameData.drawEventDepth++;
+        boolean waiting = false;
         try {
             resolveDrawCards(gameData, firstPlayerId, 1, null, true);
             if (gameData.status != GameStatus.FINISHED) {
                 resolveDrawCards(gameData, secondPlayerId, 1, null, true);
             }
+            waiting = gameData.status != GameStatus.FINISHED && drawChoicePending(gameData);
         } finally {
-            gameData.drawEventDepth--;
+            if (waiting) {
+                gameData.pendingCardDraws.addLast(PendingCardDraw.endOfModifiedEvent());
+            } else {
+                gameData.drawEventDepth--;
+            }
         }
     }
 

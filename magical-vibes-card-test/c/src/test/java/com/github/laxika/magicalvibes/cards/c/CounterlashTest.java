@@ -449,7 +449,7 @@ class CounterlashTest extends BaseCardTest {
 
         harness.castCreatureWithMorph(player1, 0);
         harness.passPriority(player1);
-        harness.castAndResolveInstant(player2, 0, field.getId());
+        harness.castAndResolveInstant(player2, 0, harness.stackIdOf(field));
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(field);
         PendingInteraction.MayAbilityChoice offer =

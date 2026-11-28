@@ -97,7 +97,7 @@ class FaceDownSpellTargetingTest extends BaseCardTest {
     void faceDownSpellHasNoSubtype() {
         Card snoop = castFaceDown(new FaerieSnoop());
 
-        assertThat(offeredTargets(new FaerieTrickery())).containsExactly(snoop.getId());
+        assertThat(offeredTargets(new FaerieTrickery())).containsExactly(harness.stackIdOf(snoop));
         respond(new FaerieTrickery(), snoop);
         harness.passBothPriorities();
 
@@ -109,7 +109,7 @@ class FaceDownSpellTargetingTest extends BaseCardTest {
     void faceDownSpellIsTwoTwo() {
         Card akroma = castFaceDown(new AkromaAngelOfFury());
 
-        assertThat(offeredTargets(new SternScolding())).containsExactly(akroma.getId());
+        assertThat(offeredTargets(new SternScolding())).containsExactly(harness.stackIdOf(akroma));
         respond(new SternScolding(), akroma);
         harness.passBothPriorities();
 
@@ -138,7 +138,7 @@ class FaceDownSpellTargetingTest extends BaseCardTest {
         harness.passPriority(player1);
         harness.setHand(player2, List.of(new Pyroblast()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, 0, willbender.getId());
+        harness.castInstant(player2, 0, 0, harness.stackIdOf(willbender));
 
         harness.passBothPriorities();
 
@@ -168,7 +168,7 @@ class FaceDownSpellTargetingTest extends BaseCardTest {
         harness.setHand(player2, List.of(new MysticalDispute()));
         harness.addMana(player2, ManaColor.BLUE, 1);
 
-        assertThatThrownBy(() -> harness.castInstant(player2, 0, willbender.getId()))
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, harness.stackIdOf(willbender)))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -223,14 +223,15 @@ class FaceDownSpellTargetingTest extends BaseCardTest {
     }
 
     private void respond(Card response, Card target) {
+        UUID targetId = harness.stackIdOf(target);
         harness.passPriority(player1);
         harness.setHand(player2, List.of(response));
         harness.addMana(player2, ManaColor.BLUE, 5);
-        harness.castInstant(player2, 0, target.getId());
+        harness.castInstant(player2, 0, targetId);
     }
 
     private void assertNoTarget(Card response, Card target) {
-        assertThat(offeredTargets(response)).doesNotContain(target.getId());
+        assertThat(offeredTargets(response)).doesNotContain(harness.stackIdOf(target));
         assertThatThrownBy(() -> respond(response, target)).isInstanceOf(IllegalStateException.class);
     }
 }

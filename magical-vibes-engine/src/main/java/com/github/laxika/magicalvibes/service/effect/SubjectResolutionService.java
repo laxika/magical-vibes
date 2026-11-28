@@ -155,7 +155,7 @@ public class SubjectResolutionService {
         if (spell instanceof PermanentSubject.TriggeringSpell) {
             UUID spellCardId = entry.getTriggeringCardId();
             return spellCardId == null ? null : gameData.stack.stream()
-                    .filter(candidate -> candidate != entry && spellCardId.equals(candidate.getTargetableId()))
+                    .filter(candidate -> candidate != entry && candidate.isIdentifiedBy(spellCardId))
                     .findFirst()
                     .orElse(null);
         }
@@ -174,7 +174,7 @@ public class SubjectResolutionService {
         candidates.addAll(entry.getTargetIds());
         for (UUID candidate : candidates) {
             for (StackEntry onStack : gameData.stack) {
-                if (onStack != entry && candidate.equals(onStack.getTargetableId())) {
+                if (onStack != entry && onStack.isIdentifiedBy(candidate)) {
                     return onStack;
                 }
             }
@@ -192,7 +192,7 @@ public class SubjectResolutionService {
         if (subject instanceof PermanentSubject.TargetSpell) {
             UUID spellCardId = entry.getTargetId();
             return spellCardId != null && gameData.stack.stream()
-                    .anyMatch(onStack -> spellCardId.equals(onStack.getTargetableId()))
+                    .anyMatch(onStack -> onStack.isIdentifiedBy(spellCardId))
                     ? List.of(spellCardId) : List.of();
         }
         return permanentIds(gameData, entry, effect, subject);
@@ -508,12 +508,12 @@ public class SubjectResolutionService {
         if (subject instanceof PermanentSubject.TargetSpell) {
             UUID spellId = entry.getTargetId();
             if (gameData.stack.stream().anyMatch(onStack -> onStack.isCastFaceDown()
-                    && onStack.getTargetableId().equals(spellId))) {
+                    && onStack.isIdentifiedBy(spellId))) {
                 // A face-down spell still on the stack has no name (CR 708.2).
                 return names;
             }
             Card spell = gameData.stack.stream()
-                    .filter(onStack -> spellId != null && spellId.equals(onStack.getTargetableId()))
+                    .filter(onStack -> spellId != null && onStack.isIdentifiedBy(spellId))
                     .map(StackEntry::getCard)
                     .findFirst()
                     .orElseGet(() -> entry.lastKnownPermanentCard(spellId));
@@ -642,7 +642,7 @@ public class SubjectResolutionService {
         if (subject instanceof PermanentSubject.TargetSpell) {
             UUID spellId = entry.getTargetId();
             StackEntry spell = gameData.stack.stream()
-                    .filter(onStack -> spellId != null && spellId.equals(onStack.getTargetableId()))
+                    .filter(onStack -> spellId != null && onStack.isIdentifiedBy(spellId))
                     .findFirst()
                     .orElse(null);
             if (spell != null) {
@@ -2007,7 +2007,7 @@ public class SubjectResolutionService {
         UUID sourceId = entry.getCounteredAbilitySourceId();
         if (targetId != null) {
             for (StackEntry onStack : ctx.gameData().stack) {
-                if (targetId.equals(onStack.getTargetableId())) {
+                if (onStack.isIdentifiedBy(targetId)) {
                     sourceId = StackEntryType.ABILITIES.contains(onStack.getEntryType())
                             ? onStack.getSourcePermanentId() : null;
                     break;
@@ -2725,7 +2725,7 @@ public class SubjectResolutionService {
         UUID spellCardId = entry.getTargetId();
         if (spellCardId != null) {
             for (StackEntry onStack : ctx.gameData().stack) {
-                if (spellCardId.equals(onStack.getTargetableId())) {
+                if (onStack.isIdentifiedBy(spellCardId)) {
                     return onStack.getControllerId();
                 }
             }

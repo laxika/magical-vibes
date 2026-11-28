@@ -56,7 +56,7 @@ public class ExileTargetSpellWithDelayCountersEffectHandler implements NormalEff
         if (counters <= 0) return;
 
         StackEntry target = gameData.stack.stream()
-                .filter(se -> se.getTargetableId().equals(targetCardId))
+                .filter(se -> se.isIdentifiedBy(targetCardId))
                 .findFirst()
                 .orElse(null);
         if (target == null) {
@@ -74,18 +74,19 @@ public class ExileTargetSpellWithDelayCountersEffectHandler implements NormalEff
             return;
         }
 
+        UUID exiledCardId = target.getPhysicalCard().getId();
         exileService.exileCard(gameData, target.getOwnerId(), target.getPhysicalCard());
-        gameData.setExiledCardCounters(targetCardId, CounterType.DELAY, counters);
+        gameData.setExiledCardCounters(exiledCardId, CounterType.DELAY, counters);
         // "At the beginning of each of that player's upkeeps, if that card is exiled, ...": a delayed triggered ability
         // of this spell, controlled by its controller (CR 603.7a, 603.7d), with an intervening "if" (CR 603.4). It has
         // no stated end, but it can do nothing once that card has left exile (CR 400.7), so it ends then.
         CardsStillInZone stillExiled = new CardsStillInZone(Zone.EXILE,
-                gameData.exileEntryVersionsOf(List.of(targetCardId)));
+                gameData.exileEntryVersionsOf(List.of(exiledCardId)));
         gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atEveryStep(
                 entry.getControllerId(), entry.getCard(),
                 new TriggeredAbility(Triggers.upkeep(ActivePlayer.CHOSEN_PLAYER),
                         TriggerOptions.DEFAULT.withInterveningIf(stillExiled),
-                        new RemoveDelayCounterFromExiledSpellEffect(targetCardId, snapshot)),
+                        new RemoveDelayCounterFromExiledSpellEffect(exiledCardId, snapshot)),
                 null, null, DelayedReferents.NONE, stillExiled).withWatchedPlayer(target.getControllerId()));
 
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(),

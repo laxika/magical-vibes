@@ -1022,7 +1022,7 @@ public class InteractionPromptProjectionRegistry {
             }
             case COUNTER_TARGET_SPELL -> {
                 StackEntry target = gameData.stack.stream()
-                        .filter(entry -> entry.getTargetableId().equals(interaction.prizeTargetId()))
+                        .filter(entry -> entry.isIdentifiedBy(interaction.prizeTargetId()))
                         .findFirst()
                         .orElse(null);
                 yield "to counter " + (target != null

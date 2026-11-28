@@ -33,8 +33,10 @@ class SearchLibraryAndOrGraveyardChoiceAiStrategy
             return;
         }
 
+        java.util.Set<String> names = new java.util.HashSet<>();
         List<Card> chosen = pool.stream()
                 .sorted(Comparator.comparingInt(this::score).reversed())
+                .filter(card -> !interaction.differentNames() || names.add(card.getName()))
                 .limit(interaction.maxCount())
                 .toList();
         log.info("AI: Choosing {} card(s) from library or graveyard in game {}", chosen.size(), ctx.gameId());

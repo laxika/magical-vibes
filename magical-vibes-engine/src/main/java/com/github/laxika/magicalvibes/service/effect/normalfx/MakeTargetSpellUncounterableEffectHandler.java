@@ -31,7 +31,7 @@ public class MakeTargetSpellUncounterableEffectHandler implements NormalEffectHa
         StackEntry targetSpell = gameQueryService.findStackEntryByCardId(gameData, targetCardId);
         if (targetSpell == null) return;
 
-        gameData.spellsMadeUncounterable.add(targetCardId);
+        gameData.spellsMadeUncounterable.add(targetSpell.getCard().getId());
         gameLogService.append(gameData, GameLog.cardThen(targetSpell.getCard(), " can't be countered."));
     }
 }

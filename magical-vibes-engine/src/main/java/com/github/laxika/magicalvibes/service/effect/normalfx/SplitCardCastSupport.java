@@ -583,7 +583,7 @@ public class SplitCardCastSupport {
         } else if (targets.size() == 1 && !hasTargetSlots(card)) {
             UUID targetId = targets.getFirst();
             Zone targetZone = gameQueryService.findCardInGraveyardById(gameData, targetId) != null ? Zone.GRAVEYARD
-                    : gameData.stack.stream().anyMatch(stacked -> targetId.equals(stacked.getTargetableId()))
+                    : gameData.stack.stream().anyMatch(stacked -> stacked.isIdentifiedBy(targetId))
                     ? Zone.STACK : null;
             entry = new StackEntry(targeting.spellType(), card, controllerId, card.getName(), effects,
                     targeting.xValue(), targetId, null, null, targetZone, null, null);

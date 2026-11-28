@@ -145,6 +145,20 @@ class GameDataDeepCopyTest {
     }
 
     @Test
+    @DisplayName("Deep copy keeps the Notion Thieves applied to a draw paused for an optional replacement, independently")
+    void deepCopyKeepsPausedDrawAppliedExtraDrawRedirects() {
+        UUID thiefCardId = UUID.randomUUID();
+        gd.pendingDrawExtraRedirectsApplied.put(player1.getId(), java.util.Set.of(thiefCardId));
+
+        GameData copy = gd.simulationCopy();
+        copy.pendingDrawExtraRedirectsApplied.clear();
+
+        assertThat(gd.pendingDrawExtraRedirectsApplied).containsEntry(player1.getId(), java.util.Set.of(thiefCardId));
+        assertThat(gd.simulationCopy().pendingDrawExtraRedirectsApplied)
+                .containsEntry(player1.getId(), java.util.Set.of(thiefCardId));
+    }
+
+    @Test
     @DisplayName("Deep copy keeps the graveyard permissions sharing an exile play quota, independently")
     void deepCopyKeepsSharedGraveyardPermissionsIndependent() {
         UUID groupId = UUID.randomUUID();

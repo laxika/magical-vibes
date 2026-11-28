@@ -1257,12 +1257,12 @@ public class GameQueryService {
     public StackEntry findStackEntryByCardId(GameData gameData, UUID cardId) {
         if (cardId == null) return null;
         for (StackEntry se : gameData.stack) {
-            if (se.getTargetableId().equals(cardId)) {
+            if (se.isIdentifiedBy(cardId)) {
                 return se;
             }
         }
         StackEntry resolving = gameData.pendingEffectResolutionEntry;
-        return resolving != null && resolving.getTargetableId().equals(cardId) ? resolving : null;
+        return resolving != null && resolving.isIdentifiedBy(cardId) ? resolving : null;
     }
 
     private <T> T findInExile(GameData gameData, UUID id, BiFunction<UUID, Card, T> mapper) {
@@ -1371,7 +1371,7 @@ public class GameQueryService {
 
     private boolean isPermanentSpellOnStackControlledBy(GameData gameData, Card card, UUID playerId) {
         return gameData.stack.stream()
-                .filter(entry -> card.getId().equals(entry.getTargetableId()))
+                .filter(entry -> entry.isIdentifiedBy(card.getId()))
                 .filter(entry -> playerId.equals(entry.getControllerId()))
                 .anyMatch(entry -> switch (entry.getEntryType()) {
                     case CREATURE_SPELL, ENCHANTMENT_SPELL, ARTIFACT_SPELL,
@@ -10733,7 +10733,7 @@ public class GameQueryService {
             return true;
         }
         StackEntry stackEntry = gameData.stack.stream()
-                .filter(entry -> entry.getTargetableId().equals(card.getId())
+                .filter(entry -> entry.isIdentifiedBy(card.getId())
                         && isSpellStackEntry(entry.getEntryType()))
                 .findFirst()
                 .orElse(null);

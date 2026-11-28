@@ -207,7 +207,7 @@ class AbsorbEnergyTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
         harness.passPriority(player1);
-        harness.castAndResolveInstant(player2, 0, hidden.getId());
+        harness.castAndResolveInstant(player2, 0, faceDown.getTargetableId());
 
         assertThat(gd.perpetualGenericCastCostIncreases.get(creatureCard.getId())).isEqualTo(-1);
         assertThat(gd.perpetualGenericCastCostIncreases).doesNotContainKey(landCard.getId());

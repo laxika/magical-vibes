@@ -90,7 +90,7 @@ public class ReturnTargetSpellOrNonlandPermanentToHandAndPerpetuallyIncreaseCast
 
     private StackEntry findSpell(GameData gameData, UUID targetId) {
         return gameData.stack.stream()
-                .filter(stackEntry -> stackEntry.getTargetableId().equals(targetId))
+                .filter(stackEntry -> stackEntry.isIdentifiedBy(targetId))
                 .filter(this::isSpell)
                 .findFirst()
                 .orElse(null);

@@ -294,7 +294,7 @@ public class SpellEvents {
 
     private static UUID targetedSpellCardId(GameData gameData, StackEntry spell, UUID targetId) {
         for (StackEntry entry : gameData.stack) {
-            if (entry != spell && entry.getCard() != null && entry.getTargetableId().equals(targetId)
+            if (entry != spell && entry.getCard() != null && entry.isIdentifiedBy(targetId)
                     && entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
                     && entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY) {
                 return entry.getCard().getId();

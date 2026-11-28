@@ -1265,7 +1265,7 @@ public class AbilityActivationService {
                                      Integer abilityIndex, Integer discardHandCardIndex) {
         StackEntry sourceEntry = gameData.stack.stream()
                 .filter(entry -> entry.getCard() != null)
-                .filter(entry -> entry.getTargetableId().equals(stackCardId))
+                .filter(entry -> entry.isIdentifiedBy(stackCardId))
                 .filter(entry -> entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
                         && entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY)
                 .findFirst()
@@ -4829,7 +4829,7 @@ public class AbilityActivationService {
                     && targetZone == Zone.STACK && targetId != null) {
                 UUID spellTargetId = targetId;
                 for (StackEntry targetSpell : gameData.stack) {
-                    if (spellTargetId.equals(targetSpell.getTargetableId())) {
+                    if (targetSpell.isIdentifiedBy(spellTargetId)) {
                         int spellManaValue = targetSpell.getSpellManaValue();
                         validDiscardIndices.removeIf(i -> hand.get(i).getManaValue() != spellManaValue);
                         break;

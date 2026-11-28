@@ -74,6 +74,11 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
             throw new IllegalStateException("Choose at most " + interaction.maxCount() + " valid cards");
         }
 
+        if (interaction.differentNames() && interaction.pool().stream()
+                .filter(card -> selectedIds.contains(card.getId())).map(Card::getName).distinct().count()
+                < selectedIds.size()) {
+            throw new IllegalStateException("Choose cards with different names");
+        }
         if (selectedIds.isEmpty() && interaction.mustFind()) {
             throw new IllegalStateException("Must find a card in the graveyard");
         }
@@ -269,7 +274,8 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
         try {
             for (Card card : cards) {
                 removeFromSearchZone(gameData, playerId, card, interaction);
-                Zone origin = interaction.libraryCardIds().contains(card.getId()) ? Zone.LIBRARY : Zone.GRAVEYARD;
+                Zone origin = interaction.libraryCardIds().contains(card.getId()) ? Zone.LIBRARY
+                        : interaction.handCardIds().contains(card.getId()) ? Zone.HAND : Zone.GRAVEYARD;
                 Permanent permanent = new Permanent(card, origin);
                 if (origin == Zone.GRAVEYARD) {
                     permanent.setEnteredFromGraveyardOwnerId(playerId);
@@ -300,19 +306,22 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
 
     private void removeFromSearchZone(GameData gameData, UUID playerId, Card card,
                                       PendingInteraction.SearchLibraryAndOrGraveyardChoice interaction) {
+        boolean fromHand = interaction.handCardIds().contains(card.getId());
         List<Card> zone = interaction.libraryCardIds().contains(card.getId())
                 ? gameData.playerDecks.getOrDefault(playerId, List.of())
+                : fromHand ? gameData.playerHands.getOrDefault(playerId, List.of())
                 : gameData.playerGraveyards.getOrDefault(playerId, List.of());
         if (!zone.removeIf(candidate -> candidate.getId().equals(card.getId()))) {
             throw new IllegalStateException("Chosen card is no longer in its search zone");
         }
-        if (!interaction.libraryCardIds().contains(card.getId())) {
+        if (!interaction.libraryCardIds().contains(card.getId()) && !fromHand) {
             graveyardService.notifyCardsLeftGraveyard(gameData, playerId, card);
         }
     }
 
     private String zoneName(Card card, PendingInteraction.SearchLibraryAndOrGraveyardChoice interaction) {
-        return interaction.libraryCardIds().contains(card.getId()) ? "library" : "graveyard";
+        return interaction.libraryCardIds().contains(card.getId()) ? "library"
+                : interaction.handCardIds().contains(card.getId()) ? "hand" : "graveyard";
     }
 
     /**

@@ -102,7 +102,7 @@ public class RippleEffectHandler implements NormalEffectHandlerBean {
             }
         }
         for (StackEntry stackEntry : gameData.stack) {
-            if (cardId.equals(stackEntry.getTargetableId())) {
+            if (stackEntry.isIdentifiedBy(cardId)) {
                 return stackEntry.getCard();
             }
         }

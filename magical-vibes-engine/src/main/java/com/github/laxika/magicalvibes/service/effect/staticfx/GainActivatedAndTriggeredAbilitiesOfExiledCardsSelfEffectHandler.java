@@ -34,16 +34,18 @@ public class GainActivatedAndTriggeredAbilitiesOfExiledCardsSelfEffectHandler
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         for (Card card : exiledByImprint(context)) {
             String link = "gained:" + card.getId();
+            // Gained together, a triggered imprint exile and an activated ability reading "the exiled card" stay a
+            // linked pair (CR 607.5): the activated ability reads what the gained exile exiled.
+            boolean linkedExileGained = card.getTriggeredAbilities().stream()
+                    .anyMatch(GainAbilitiesOfLastChosenExiledCardSelfEffectHandler::hasImprintExile);
             for (ActivatedAbility ability : ManaAbilities.withIntrinsic(card)) {
-                accumulator.addActivatedAbility(
-                        GainActivatedAbilitiesOfExiledCardsSelfEffectHandler.borrowedAbility(ability, link));
+                accumulator.addActivatedAbility(GainActivatedAbilitiesOfExiledCardsSelfEffectHandler.borrowedAbility(
+                        ability, link, linkedExileGained));
             }
-
-
             for (TriggeredAbility ability : card.getTriggeredAbilities()) {
-
-                accumulator.addGrantedEffect(new GrantTriggeredAbilityEffect(ability, Subjects.source()));
-
+                accumulator.addGrantedEffect(new GrantTriggeredAbilityEffect(
+                        GainAbilitiesOfLastChosenExiledCardSelfEffectHandler.linkGainedTrigger(ability, link),
+                        Subjects.source()));
             }
         }
     }

@@ -1516,7 +1516,7 @@ public class SpellTriggers {
 
     private StackEntry findStackEntryForCard(com.github.laxika.magicalvibes.model.GameData gameData, UUID cardId) {
         for (StackEntry se : gameData.stack) {
-            if (se.getTargetableId().equals(cardId)) {
+            if (se.isIdentifiedBy(cardId)) {
                 return se;
             }
         }

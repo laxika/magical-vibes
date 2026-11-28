@@ -68,7 +68,7 @@ public class CounterSpellEffectHandler implements NormalEffectHandlerBean {
 
         UUID counterTargetId = targetCardId;
         StackEntry targetOnStack = gameData.stack.stream()
-                .filter(stackEntry -> stackEntry != entry && stackEntry.getTargetableId().equals(counterTargetId))
+                .filter(stackEntry -> stackEntry != entry && stackEntry.isIdentifiedBy(counterTargetId))
                 .findFirst()
                 .orElse(null);
         if (targetOnStack != null) {

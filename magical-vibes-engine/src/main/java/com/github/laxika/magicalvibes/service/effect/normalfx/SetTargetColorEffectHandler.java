@@ -76,7 +76,7 @@ public class SetTargetColorEffectHandler implements NormalEffectHandlerBean {
         // (CR 400.7a). For instants/sorceries it is a no-op. An empty set records "becomes colorless".
         StackEntry targetSpell = gameQueryService.findStackEntryByCardId(gameData, targetId);
         if (targetSpell != null) {
-            gameData.spellColorOverrides.put(targetId,
+            gameData.spellColorOverrides.put(targetSpell.getCard().getId(),
                     color == null ? Set.of() : Set.of(color));
             
             gameLogService.append(gameData, GameLog.builder().card(targetSpell.getCard()).text(" becomes " + colorName + ".").build());

@@ -84,7 +84,7 @@ public class GainControlOfTargetSpellAndCopyWithRandomTargetsEffectHandler
             return null;
         }
         return gameData.stack.stream()
-                .filter(stackEntry -> targetId.equals(stackEntry.getTargetableId()))
+                .filter(stackEntry -> stackEntry.isIdentifiedBy(targetId))
                 .filter(stackEntry -> SPELL_TYPES.contains(stackEntry.getEntryType()))
                 .filter(stackEntry -> targetLegalityService.matchesStackEntryPredicate(
                         gameData, stackEntry, predicate, controllerId))

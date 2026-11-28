@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.ActivateAbilityRequest;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.networking.message.BottomCardsRequest;
 import com.github.laxika.magicalvibes.networking.message.CombatDamageAssignedRequest;
 import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
@@ -222,6 +223,15 @@ public class AiGameActions {
      * recoverable game event, so the caller both falls back to a legal declaration and surfaces
      * the reason.
      */
+    /**
+     * {@code assignments}, or a declaration the engine's block restrictions and requirements accept when they refuse
+     * them (CR 509.1c); nothing is declared.
+     */
+    public List<BlockerAssignment> requirementObeyingBlockers(List<BlockerAssignment> assignments) {
+        GameData gameData = game();
+        return gameData == null ? assignments : gameService.requirementObeyingBlockerDeclaration(gameData, assignments);
+    }
+
     public String handleDeclareBlockers(DeclareBlockersRequest request) {
         GameData gameData = game();
         if (gameData == null) return null;

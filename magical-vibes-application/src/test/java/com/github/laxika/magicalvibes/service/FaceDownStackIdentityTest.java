@@ -51,6 +51,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * What the server sends and logs about a face-down spell, and about an ability of a face-down permanent: only the
@@ -80,6 +81,25 @@ class FaceDownStackIdentityTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A face-down spell is sent and targeted by a stack id of its own, never by its card's id")
+    void faceDownSpellHasItsOwnStackId() {
+        Card angel = castFaceDown(new ExaltedAngel());
+        UUID spellId = gd.stack.getLast().getTargetableId();
+
+        assertThat(spellId).isNotEqualTo(angel.getId());
+        assertThat(latestStackTop(player2).get("cardId").asString()).isEqualTo(spellId.toString());
+        assertThat(latestStackTop(player2).get("card").get("id").asString()).isEqualTo(spellId.toString());
+        assertThat(harness.getConn2().getSentMessages()).noneMatch(message -> message.contains(angel.getId().toString()));
+
+        assertThatThrownBy(() -> respond(new Cancel(), angel.getId(), ManaColor.BLUE))
+                .isInstanceOf(IllegalStateException.class);
+        harness.castInstant(player2, 0, spellId);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(angel);
+    }
+
+    @Test
     @DisplayName("An opponent is sent nothing that identifies a card cast with megamorph")
     void megamorphIsHiddenFromOpponent() {
         Card survivalist = castFaceDown(new AinokSurvivalist());
@@ -100,10 +120,10 @@ class FaceDownStackIdentityTest extends BaseCardTest {
     @DisplayName("Two different morph spells look the same to an opponent, apart from their ids")
     void differentMorphsLookTheSame() {
         Card angel = castFaceDown(new ExaltedAngel());
-        String first = latestStackTop(player2).toString().replace(angel.getId().toString(), "id");
+        String first = latestStackTop(player2).toString().replace(harness.stackIdOf(angel).toString(), "id");
         harness.passBothPriorities();
         Card survivalist = castFaceDown(new AinokSurvivalist());
-        String second = latestStackTop(player2).toString().replace(survivalist.getId().toString(), "id");
+        String second = latestStackTop(player2).toString().replace(harness.stackIdOf(survivalist).toString(), "id");
 
         assertThat(second).isEqualTo(first);
     }
@@ -212,7 +232,7 @@ class FaceDownStackIdentityTest extends BaseCardTest {
     void counteredSpellIsRevealedOnlyInGraveyard() {
         Card angel = castFaceDown(new ExaltedAngel());
         harness.clearMessages();
-        respond(new Cancel(), angel.getId(), ManaColor.BLUE);
+        respond(new Cancel(), harness.stackIdOf(angel), ManaColor.BLUE);
 
         assertHiddenFrom(player2, angel);
         harness.passBothPriorities();
@@ -228,7 +248,7 @@ class FaceDownStackIdentityTest extends BaseCardTest {
         Card angel = castFaceDown(new ExaltedAngel());
         harness.passPriority(player1);
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.activateAbility(player2, 0, null, angel.getId());
+        harness.activateAbility(player2, 0, null, harness.stackIdOf(angel));
         harness.clearMessages();
 
         harness.passBothPriorities();
@@ -248,7 +268,7 @@ class FaceDownStackIdentityTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.clearMessages();
 
-        harness.handlePermanentChosen(player2, angel.getId());
+        harness.handlePermanentChosen(player2, harness.stackIdOf(angel));
 
         assertThat(gd.stack).hasSize(2);
         assertHiddenFrom(player2, angel);
@@ -258,7 +278,7 @@ class FaceDownStackIdentityTest extends BaseCardTest {
     @DisplayName("A life bid to counter a face-down spell doesn't name it to the opposing bidder")
     void lifeBidDoesNotNameSpell() {
         Card angel = castFaceDown(new ExaltedAngel());
-        respond(new MagesContest(), angel.getId(), ManaColor.RED);
+        respond(new MagesContest(), harness.stackIdOf(angel), ManaColor.RED);
         harness.passBothPriorities();
         harness.clearMessages();
 
@@ -291,7 +311,7 @@ class FaceDownStackIdentityTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.clearMessages();
 
-        harness.handlePermanentChosen(player2, angel.getId());
+        harness.handlePermanentChosen(player2, harness.stackIdOf(angel));
 
         assertHiddenFrom(player2, angel);
     }
@@ -300,7 +320,7 @@ class FaceDownStackIdentityTest extends BaseCardTest {
     @DisplayName("Declining new targets for a face-down spell doesn't name it in the log")
     void decliningNewTargetsDoesNotNameSpell() {
         Card angel = castFaceDown(new ExaltedAngel());
-        respond(new Redirect(), angel.getId(), ManaColor.BLUE);
+        respond(new Redirect(), harness.stackIdOf(angel), ManaColor.BLUE);
         harness.passBothPriorities();
         harness.clearMessages();
 
@@ -314,7 +334,7 @@ class FaceDownStackIdentityTest extends BaseCardTest {
     @DisplayName("Gaining control of a face-down spell moves the sight of it without naming it in the log")
     void gainingControlMovesSightOfSpell() {
         Card angel = castFaceDown(new ExaltedAngel());
-        respond(new Aethersnatch(), angel.getId(), ManaColor.BLUE);
+        respond(new Aethersnatch(), harness.stackIdOf(angel), ManaColor.BLUE);
         harness.passBothPriorities();
 
         assertThat(logText()).noneMatch(line -> line.contains("Exalted Angel"));
@@ -329,7 +349,7 @@ class FaceDownStackIdentityTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DoubleMajor()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castInstant(player1, 0, angel.getId());
+        harness.castInstant(player1, 0, harness.stackIdOf(angel));
         harness.passBothPriorities();
 
         StackEntry copy = gd.stack.getLast();
@@ -406,7 +426,7 @@ class FaceDownStackIdentityTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DoubleMajor()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castInstant(player1, 0, walker.getId());
+        harness.castInstant(player1, 0, harness.stackIdOf(walker));
         harness.passBothPriorities();
         harness.passBothPriorities();
         Permanent token = gd.playerBattlefields.get(player1.getId()).getFirst();
@@ -439,7 +459,7 @@ class FaceDownStackIdentityTest extends BaseCardTest {
     @DisplayName("A face-down spell returned to a hand is revealed in the log")
     void spellReturnedToHandIsRevealed() {
         Card angel = castFaceDown(new ExaltedAngel());
-        respond(new Remand(), angel.getId(), ManaColor.BLUE);
+        respond(new Remand(), harness.stackIdOf(angel), ManaColor.BLUE);
 
         harness.passBothPriorities();
 
@@ -478,7 +498,7 @@ class FaceDownStackIdentityTest extends BaseCardTest {
         Card otherAngel = new ExaltedAngel();
         harness.setLibrary(player1, List.of(otherAngel));
         gd.spellsMadeUncounterable.add(angel.getId());
-        respond(new Counterbore(), angel.getId(), ManaColor.BLUE);
+        respond(new Counterbore(), harness.stackIdOf(angel), ManaColor.BLUE);
         harness.clearMessages();
 
         harness.passBothPriorities();

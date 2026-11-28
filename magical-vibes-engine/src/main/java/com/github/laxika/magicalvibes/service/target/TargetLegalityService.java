@@ -250,7 +250,7 @@ public class TargetLegalityService {
             // A filtered stack target that is on the stack but isn't an eligible spell gets the
             // filter's own message; a target that isn't on the stack at all gets the generic one.
             if (!includeAbilities && targetFilter instanceof StackEntryPredicateTargetFilter predicateFilter
-                    && gameData.stack.stream().anyMatch(e -> targetId.equals(e.getTargetableId())
+                    && gameData.stack.stream().anyMatch(e -> e.isIdentifiedBy(targetId)
                     || e.getCard() != null && targetId.equals(e.getCard().getId()))) {
                 return Optional.of(predicateFilter.errorMessage());
             }
@@ -3839,7 +3839,7 @@ public class TargetLegalityService {
         if (entry.getTargetId() == null && entry.getTargetZone() == Zone.STACK
                 && !entry.getTargetIds().isEmpty()) {
             boolean anyStillOnStack = entry.getTargetIds().stream()
-                    .anyMatch(id -> gameData.stack.stream().anyMatch(se -> se.getTargetableId().equals(id)));
+                    .anyMatch(id -> gameData.stack.stream().anyMatch(se -> se.isIdentifiedBy(id)));
             return !anyStillOnStack;
         }
 
@@ -3848,7 +3848,7 @@ public class TargetLegalityService {
         if (entry.getTargetId() != null && entry.getTargetZone() == Zone.STACK
                 && !entry.getTargetIds().isEmpty()) {
             boolean spellTargetLegal = gameData.stack.stream()
-                    .anyMatch(se -> se.getTargetableId().equals(entry.getTargetId()));
+                    .anyMatch(se -> se.isIdentifiedBy(entry.getTargetId()));
             boolean anyPermanentTargetLegal = entry.getTargetIds().stream()
                     .anyMatch(id -> gameQueryService.findPermanentById(gameData, id) != null
                             || gameData.playerIds.contains(id));
@@ -5388,8 +5388,10 @@ public class TargetLegalityService {
                 && entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY ? entry : null;
     }
 
+    /** The stack object a player's target names: matched by its stack id alone, so a face-down spell's card id names none (CR 708.5). */
     StackEntry findAnyEntryOnStack(GameData gameData, UUID targetId) {
-        return gameQueryService.findStackEntryByCardId(gameData, targetId);
+        StackEntry entry = gameQueryService.findStackEntryByCardId(gameData, targetId);
+        return entry != null && entry.getTargetableId().equals(targetId) ? entry : null;
     }
 
     /**

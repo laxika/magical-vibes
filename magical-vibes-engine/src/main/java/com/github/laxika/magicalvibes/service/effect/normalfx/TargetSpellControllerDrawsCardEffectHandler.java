@@ -35,7 +35,7 @@ public class TargetSpellControllerDrawsCardEffectHandler implements NormalEffect
     private UUID findTargetSpellControllerId(GameData gameData, UUID targetCardId) {
         if (targetCardId == null) return null;
         for (StackEntry se : gameData.stack) {
-            if (se.getTargetableId().equals(targetCardId)) {
+            if (se.isIdentifiedBy(targetCardId)) {
                 return se.getControllerId();
             }
         }

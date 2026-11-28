@@ -97,7 +97,7 @@ public class CopyTargetSpellOrAbilityEffectHandler implements NormalEffectHandle
             return null;
         }
         for (StackEntry stackEntry : gameData.stack) {
-            if (stackEntry.getTargetableId().equals(targetCardId)
+            if (stackEntry.isIdentifiedBy(targetCardId)
                     && COPYABLE_STACK_TYPES.contains(stackEntry.getEntryType())
                     && matchesTargetPredicate(stackEntry, predicate)) {
                 return stackEntry;

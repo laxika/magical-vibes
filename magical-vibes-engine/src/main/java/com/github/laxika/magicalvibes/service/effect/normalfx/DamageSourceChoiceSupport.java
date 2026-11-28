@@ -125,7 +125,7 @@ public class DamageSourceChoiceSupport {
         }
         for (StackEntry stackEntry : gameData.stack) {
             if (isSpell(stackEntry.getEntryType())) {
-                if (sourceId.equals(stackEntry.getTargetableId())) {
+                if (stackEntry.isIdentifiedBy(sourceId)) {
                     return stackEntry.getControllerId();
                 }
             } else if (isCardSourcedAbility(stackEntry) ? sourceId.equals(stackEntry.getCard().getId())
@@ -168,7 +168,7 @@ public class DamageSourceChoiceSupport {
         }
         return gameData.stack.stream()
                 .filter(entry -> isSpell(entry.getEntryType()))
-                .filter(entry -> entry.getTargetableId().equals(sourceId))
+                .filter(entry -> entry.isIdentifiedBy(sourceId))
                 .map(StackEntry::getCard)
                 .findFirst()
                 .orElseGet(() -> findCardReferencedByStackEntryOrWaitingShield(gameData, sourceId));

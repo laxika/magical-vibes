@@ -47,7 +47,7 @@ public class ExileTargetSpellEffectHandler implements NormalEffectHandlerBean {
         UUID sourceId = exile.trackWithSource() ? sourcePermanentId(gameData, entry) : null;
         for (UUID targetId : targetIds) {
             StackEntry spell = gameData.stack.stream()
-                    .filter(stacked -> stacked.getTargetableId().equals(targetId))
+                    .filter(stacked -> stacked.isIdentifiedBy(targetId))
                     .findFirst()
                     .orElse(null);
             if (spell == null) {

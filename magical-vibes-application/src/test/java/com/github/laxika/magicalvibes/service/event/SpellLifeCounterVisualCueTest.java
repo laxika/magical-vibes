@@ -122,7 +122,7 @@ class SpellLifeCounterVisualCueTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A face-down spell's cast cue keeps its card id but carries no name or colors")
+    @DisplayName("A face-down spell's cast cue carries its stack id, not its card's, and no name or colors")
     void faceDownCastCueIsAnonymous() {
         AtarkaEfreet efreet = new AtarkaEfreet();
         harness.setHand(player1, List.of(efreet));
@@ -132,7 +132,7 @@ class SpellLifeCounterVisualCueTest extends BaseCardTest {
 
         assertThat(cues()).singleElement().satisfies(cue -> {
             assertThat(cue.cueType()).isEqualTo(VisualCueType.SPELL_CAST);
-            assertThat(cue.sourceCardId()).isEqualTo(efreet.getId());
+            assertThat(cue.sourceCardId()).isEqualTo(harness.stackIdOf(efreet)).isNotEqualTo(efreet.getId());
             assertThat(cue.sourceName()).isNull();
             assertThat(cue.sourceColors()).isEmpty();
         });

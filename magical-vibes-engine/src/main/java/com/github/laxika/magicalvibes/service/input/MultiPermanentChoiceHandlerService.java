@@ -1299,7 +1299,7 @@ public class MultiPermanentChoiceHandlerService {
     private void handleTargetsAfterOpponentModeChoice(GameData gameData, UUID playerId, List<UUID> permanentIds,
                                                       MultiPermanentChoiceContext.TargetsAfterOpponentModeChoice ctx) {
         StackEntry spell = gameData.stack.stream()
-                .filter(entry -> entry.getTargetableId().equals(ctx.stackEntryId()))
+                .filter(entry -> entry.isIdentifiedBy(ctx.stackEntryId()))
                 .findFirst()
                 .orElse(null);
         if (spell != null) {

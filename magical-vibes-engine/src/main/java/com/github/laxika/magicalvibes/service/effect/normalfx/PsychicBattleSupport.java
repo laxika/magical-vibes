@@ -36,7 +36,7 @@ public class PsychicBattleSupport {
     public StackEntry findTargetEntry(GameData gameData, UUID cardId) {
         for (int i = gameData.stack.size() - 1; i >= 0; i--) {
             StackEntry entry = gameData.stack.get(i);
-            if (entry.getTargetableId().equals(cardId)) {
+            if (entry.isIdentifiedBy(cardId)) {
                 return entry;
             }
         }
@@ -218,12 +218,12 @@ public class PsychicBattleSupport {
         Set<UUID> candidates = new LinkedHashSet<>();
         if (entry.getTargetZone() == Zone.STACK) {
             for (StackEntry stackEntry : gameData.stack) {
-                if (!stackEntry.getTargetableId().equals(entry.getTargetableId())) {
+                if (!entry.isIdentifiedBy(stackEntry.getTargetableId())) {
                     candidates.add(stackEntry.getTargetableId());
                 }
             }
             StackEntry resolving = gameData.pendingEffectResolutionEntry;
-            if (resolving != null && !resolving.getTargetableId().equals(entry.getTargetableId())) {
+            if (resolving != null && !entry.isIdentifiedBy(resolving.getTargetableId())) {
                 candidates.add(resolving.getTargetableId());
             }
         } else if (entry.getTargetZone() == Zone.GRAVEYARD) {

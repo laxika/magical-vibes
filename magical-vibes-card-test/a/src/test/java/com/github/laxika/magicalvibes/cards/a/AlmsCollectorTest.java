@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 
 
-@CardUsed({AlmsCollector.class, Forest.class, DressDown.class})
+@CardUsed({AlmsCollector.class, Forest.class, DressDown.class, Abundance.class})
 class AlmsCollectorTest extends BaseCardTest {
 
     @Test
@@ -232,6 +232,27 @@ class AlmsCollectorTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player3.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player4.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Both draws of the replacement are the modified event, also when the first waits for a draw choice")
+    void drawsAfterAPausedDrawStayPartOfTheModifiedEvent() {
+        harness.forceActivePlayer(player1);
+        harness.addToBattlefield(player1, new AlmsCollector());
+        harness.addToBattlefield(player1, new Abundance());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCards(gd, player2.getId(), 2));
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.unreplacedDrawnCardIds).isEmpty();
+        assertThat(gd.drawEventDepth).isZero();
     }
 
     @Test

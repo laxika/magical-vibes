@@ -979,6 +979,18 @@ public class GameTestHarness {
         }
     }
 
+    /**
+     * The id players target {@code card}'s spell on the stack by: an id of its own for a spell cast face down
+     * (CR 708.5), else the card's id.
+     */
+    public UUID stackIdOf(Card card) {
+        return gameData.stack.stream()
+                .filter(entry -> entry.getCard() != null && entry.getCard().getId().equals(card.getId()))
+                .map(StackEntry::getTargetableId)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException(card.getName() + " is not on the stack"));
+    }
+
     public void castCreatureWithMorph(Player player, int cardIndex) {
         ensurePriority(player);
         gameService.playCardWithMorph(gameData, player, cardIndex, 0, null, null, List.of());

@@ -35,7 +35,7 @@ public class PerpetuallyBoostTargetCreatureSpellEffectHandler implements NormalE
         }
 
         StackEntry targetSpell = gameData.stack.stream()
-                .filter(stackEntry -> stackEntry.getTargetableId().equals(targetId))
+                .filter(stackEntry -> stackEntry.isIdentifiedBy(targetId))
                 .findFirst()
                 .orElse(null);
         StackEntry seen = CastingPermissionService.spellAsEffectsSeeIt(targetSpell);

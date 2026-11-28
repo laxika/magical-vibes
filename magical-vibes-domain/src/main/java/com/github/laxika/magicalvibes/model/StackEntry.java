@@ -38,22 +38,36 @@ public class StackEntry {
 
     /**
      * Independent stack identity for abilities, including abilities with no card source: a spell is identified by
-     * its card's id, each activated or triggered ability by an id of its own. The copy constructor keeps the
+     * its card's id, each activated or triggered ability by an id of its own. A spell cast face down has an id of its
+     * own too, so the id players see and target by doesn't name its card (CR 708.5). The copy constructor keeps the
      * identity, for snapshots and simulations; {@link #copyForNewStackObject()} gives a duplicate its own.
      */
     public UUID getTargetableId() {
-        return getCard() == null || sourcePlanarObject != null
+        return getCard() == null || sourcePlanarObject != null || castFaceDown
                 || entryType == StackEntryType.ACTIVATED_ABILITY
                 || entryType == StackEntryType.TRIGGERED_ABILITY
                 ? planarAbilityId : getCard().getId();
     }
 
-    /** Resolves a legacy source-card reference only when it names one unambiguous stack object. */
+    /**
+     * Whether {@code id} names this stack object: its {@link #getTargetableId()}, or for a spell cast face down also
+     * its card's id, which the engine's own records (a cast trigger's triggering card) hold. For readers inside the
+     * engine; a player's choice of a target is matched by {@link #getTargetableId()} alone.
+     */
+    public boolean isIdentifiedBy(UUID id) {
+        return id != null && (id.equals(getTargetableId()) || castFaceDown && card != null && id.equals(card.getId()));
+    }
+
+    /**
+     * Resolves a legacy source-card reference only when it names one unambiguous stack object; a face-down spell is
+     * named only by its own stack id (CR 708.5).
+     */
     public static UUID resolveTargetableId(List<StackEntry> stack, UUID targetId) {
         if (targetId == null || stack.stream().anyMatch(entry -> entry.getTargetableId().equals(targetId))) {
             return targetId;
         }
         List<StackEntry> matching = stack.stream()
+                .filter(entry -> !entry.isCastFaceDown())
                 .filter(entry -> entry.getCard() != null && entry.getCard().getId().equals(targetId))
                 .toList();
         if (matching.size() > 1) {

@@ -1930,7 +1930,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
      */
     private double evaluateCounterspellValue(GameData gameData, int counterManaValue, UUID spellTargetId) {
         for (StackEntry entry : gameData.stack) {
-            if (entry.getCard().getId().equals(spellTargetId)) {
+            if (entry.isIdentifiedBy(spellTargetId)) {
                 Card targetCard = entry.getCard();
                 int aiLife = gameData.playerLifeTotals.getOrDefault(aiPlayer.getId(), 20);
 

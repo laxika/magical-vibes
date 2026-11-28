@@ -141,7 +141,7 @@ public class BounceSupport {
     public void returnSpellToOwnerHand(GameData gameData, StackEntry source, UUID targetCardId) {
         StackEntry target = null;
         for (StackEntry se : gameData.stack) {
-            if (se.getTargetableId().equals(targetCardId)) {
+            if (se.isIdentifiedBy(targetCardId)) {
                 target = se;
                 break;
             }

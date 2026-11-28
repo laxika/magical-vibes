@@ -138,7 +138,7 @@ class AkromaAngelOfFuryTest extends BaseCardTest {
 
         harness.castCreatureWithMorph(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, akroma.getId());
+        harness.castInstant(player2, 0, harness.stackIdOf(akroma));
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Akroma, Angel of Fury");

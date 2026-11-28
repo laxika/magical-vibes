@@ -65,7 +65,7 @@ public class RedirectNextDamageFromChosenSourceToSelfEffectHandler implements No
                         e.recipients())));
         for (UUID sourceId : subjectResolutionService.damageSourceIds(gameData, entry, effect, e.source())) {
             boolean spell = gameQueryService.findPermanentById(gameData, sourceId) == null
-                    && gameData.stack.stream().anyMatch(onStack -> sourceId.equals(onStack.getTargetableId()));
+                    && gameData.stack.stream().anyMatch(onStack -> onStack.isIdentifiedBy(sourceId));
             gameData.addShield(new SourceKeyedRedirectShield(sourceId,
                     spell ? gameData.graveyardEntryVersion(sourceId) : -1, protectedPlayers, destinationId,
                     e.wholeTurn(), e.combatOnly()));

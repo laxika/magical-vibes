@@ -181,6 +181,21 @@ public class DamageSupport {
     }
 
     /**
+     * Illusionary Mask: a masked face-down creature that would deal noncombat damage (a fight, a bite, an ability of
+     * its own) is turned face up instead and then deals it, as {@code CombatDamageService} turns up a masked combatant;
+     * one that can't be turned face up deals it face down.
+     */
+    private void turnMaskedSourceFaceUp(GameData gameData, DamageEvent event) {
+        UUID sourceId = event.explicitSource() != null ? event.explicitSource().getId()
+                : event.entry().getSourcePermanentId();
+        Permanent source = sourceId == null ? null : gameQueryService.findPermanentById(gameData, sourceId);
+        if (source != null && source.isFaceDown() && source.isTurnsFaceUpOnDamageOrTap()
+                && !gameQueryService.isTurnFaceUpPrevented(gameData, source)) {
+            source.turnFaceUpAsDealtDamage();
+        }
+    }
+
+    /**
      * Deals {@code event}'s damage to its permanent once every replacement and prevention effect
      * has been applied: loyalty or defense removal, marked damage or counters, the damage records
      * and the triggers damage causes (CR 120.3). Returns the damage dealt.
@@ -1640,6 +1655,9 @@ public class DamageSupport {
         if (event.combat()) {
             combatDamageService.getObject().recordCombatDamageEvent(gameData, event);
             return 0;
+        }
+        if (event.amount() > 0) {
+            turnMaskedSourceFaceUp(gameData, event);
         }
         if (event.toPermanent()) {
             int dealt = finishPermanentDamage(gameData, event);

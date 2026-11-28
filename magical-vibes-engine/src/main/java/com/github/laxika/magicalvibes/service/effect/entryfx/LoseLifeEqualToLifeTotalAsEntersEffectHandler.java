@@ -136,7 +136,7 @@ public class LoseLifeEqualToLifeTotalAsEntersEffectHandler implements EntryRepla
         gameData.spellAwaitingEntryLifeLossDepartureId = null;
         StackEntry top = gameData.stack.isEmpty() ? null : gameQueryService.stackUsesFirstInFirstOut(gameData)
                 ? gameData.stack.getFirst() : gameData.stack.getLast();
-        if (top != null && entryId.equals(top.getTargetableId())) {
+        if (top != null && top.isIdentifiedBy(entryId)) {
             stackResolutionService.getObject().resolveTopOfStack(gameData);
         }
         return false;

@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.k.KarlovWatchdog;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianCrusader;
+import com.github.laxika.magicalvibes.cards.b.BiteDown;
 import com.github.laxika.magicalvibes.cards.p.PressurePoint;
+import com.github.laxika.magicalvibes.cards.r.RabidBite;
 import com.github.laxika.magicalvibes.cards.p.PunctureBlast;
 import com.github.laxika.magicalvibes.cards.s.SphereOfResistance;
 import com.github.laxika.magicalvibes.cards.u.UnableToScream;
@@ -33,7 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({IllusionaryMask.class, GrizzlyBears.class, CrawWurm.class,
         LightningBolt.class, SphereOfResistance.class, UnableToScream.class, KarlovWatchdog.class,
         PunctureBlast.class, PhyrexianCrusader.class, BodyOfKnowledge.class,
-        CompassionateHealer.class, PressurePoint.class})
+        CompassionateHealer.class, PressurePoint.class, RabidBite.class, BiteDown.class})
 class IllusionaryMaskTest extends BaseCardTest {
 
     @Test
@@ -261,6 +263,41 @@ class IllusionaryMaskTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("A masked creature that would deal noncombat damage is turned face up first")
+    void noncombatDamageTurnsMaskedSourceFaceUp() {
+        Permanent masked = addMaskedCreature(player1, new CrawWurm());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new RabidBite()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castSorcery(player1, 0, List.of(masked.getId(), bears.getId()));
+        harness.passBothPriorities();
+
+        assertThat(masked.isFaceDown()).isFalse();
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(bears.getCard());
+    }
+
+    @Test
+    @DisplayName("A masked creature that can't be turned face up deals noncombat damage face down")
+    void maskedSourceThatCantTurnFaceUpStaysFaceDown() {
+        Permanent masked = addMaskedCreature(player1, new CrawWurm());
+        harness.addToBattlefield(player2, new KarlovWatchdog());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new BiteDown()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, List.of(masked.getId(), bears.getId()));
+        harness.passBothPriorities();
+
+        assertThat(masked.isFaceDown()).isTrue();
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(bears.getCard());
     }
 
     private Permanent addMaskedCreature(Player player, Card card) {

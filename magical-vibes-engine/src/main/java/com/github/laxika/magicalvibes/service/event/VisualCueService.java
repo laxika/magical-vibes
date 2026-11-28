@@ -258,13 +258,13 @@ public class VisualCueService {
                     : of(permanent.getCard());
         }
 
-        /** A spell or ability on the stack; a face-down spell hides its name and colors. */
+        /** A spell or ability on the stack; a face-down spell hides its name and colors, and is sent by its stack id. */
         public static Source of(StackEntry entry) {
             if (entry.getCard() == null) {
                 return NONE;
             }
             return entry.isCastFaceDown()
-                    ? hidden(entry.getCard())
+                    ? new Source(entry.getTargetableId(), null, List.of())
                     : of(entry.getCard());
         }
 
@@ -286,10 +286,6 @@ public class VisualCueService {
             }
             Permanent snapshot = entry.getSourcePermanentSnapshot();
             return snapshot != null ? of(snapshot) : of(entry);
-        }
-
-        private static Source hidden(Card card) {
-            return new Source(card.getId(), null, List.of());
         }
     }
 }

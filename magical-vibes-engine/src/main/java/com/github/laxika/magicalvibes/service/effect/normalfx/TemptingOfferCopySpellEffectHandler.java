@@ -116,7 +116,7 @@ public class TemptingOfferCopySpellEffectHandler implements NormalEffectHandlerB
             return null;
         }
         return gameData.stack.stream()
-                .filter(stackEntry -> targetId.equals(stackEntry.getTargetableId()))
+                .filter(stackEntry -> stackEntry.isIdentifiedBy(targetId))
                 .findFirst()
                 .orElse(null);
     }

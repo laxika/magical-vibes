@@ -67,7 +67,7 @@ public class CopySupport {
         }
         return gameData.stack.stream()
                 .filter(candidate -> candidate != entry)
-                .filter(candidate -> spellCardId.equals(candidate.getTargetableId()))
+                .filter(candidate -> candidate.isIdentifiedBy(spellCardId))
                 .findFirst()
                 .orElse(snapshot);
     }
@@ -209,7 +209,7 @@ public class CopySupport {
     public static StackEntry findStagedCopy(GameData gameData, UUID copyId) {
         synchronized (gameData.stagedSpellCopies) {
             for (StackEntry staged : gameData.stagedSpellCopies) {
-                if (staged.getTargetableId().equals(copyId)) {
+                if (staged.isIdentifiedBy(copyId)) {
                     return staged;
                 }
             }
@@ -225,7 +225,7 @@ public class CopySupport {
         }
         synchronized (gameData.stack) {
             for (StackEntry entry : gameData.stack) {
-                if (entry.getTargetableId().equals(id)) {
+                if (entry.isIdentifiedBy(id)) {
                     return entry;
                 }
             }

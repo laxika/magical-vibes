@@ -107,7 +107,7 @@ public class CounterSupport {
             if (excludeSource && se == counterSource) {
                 continue;
             }
-            if (se.getTargetableId().equals(targetCardId)) {
+            if (se.isIdentifiedBy(targetCardId)) {
                 targetEntry = se;
                 break;
             }

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.cards.a.Abundance;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -25,7 +26,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({NotionThief.class, Forest.class, GrizzlyBears.class, Island.class, Peek.class, TurnBurn.class,
-        ThoughtReflection.class})
+        ThoughtReflection.class, Abundance.class})
 class NotionThiefTest extends BaseCardTest {
 
     @Test
@@ -134,6 +135,29 @@ class NotionThiefTest extends BaseCardTest {
         harness.assertInHand(player2, "Forest");
         harness.assertNotInHand(player1, "Island");
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A Notion Thief already applied to a draw doesn't apply again after the new drawer's draw choice")
+    void appliedThiefIsRememberedAcrossTheNewDrawersChoice() {
+        harness.addToBattlefield(player1, new NotionThief());
+        harness.addToBattlefield(player1, new Abundance());
+        harness.addToBattlefield(player2, new NotionThief());
+        harness.setLibrary(player1, List.of(new Island(), new Island()));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new Peek()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passBothPriorities();
+        for (int i = 0; i < 3 && gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null; i++) {
+            harness.handleMayAbilityChosen(player1, false);
+        }
+
+        harness.assertInHand(player2, "Forest");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
     }
 
     @Test

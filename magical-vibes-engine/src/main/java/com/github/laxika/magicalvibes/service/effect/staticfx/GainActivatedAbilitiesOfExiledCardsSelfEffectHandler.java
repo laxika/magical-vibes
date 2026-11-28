@@ -75,15 +75,21 @@ public class GainActivatedAbilitiesOfExiledCardsSelfEffectHandler implements Sta
      * with it" don't count what it exiles (CR 607.2a). "The exiled card" of the lender's imprint, without an exile
      * cost in the same ability to link it to, refers to no card on the borrower (CR 607.1): with "X is the mana value
      * of that card" X is undefined, so the ability can't be activated (Prototype Portal's ruling); otherwise that part
-     * does nothing (Mimic Vat, Isochron Scepter).
+     * does nothing (Mimic Vat, Isochron Scepter), unless {@code linkedExileGained}: the lender's imprint exile was gained
+     * with it, so "the exiled card" is the card that gained exile exiled (CR 607.5; Mimic Vat's token copy).
      */
     static ActivatedAbility borrowedAbility(ActivatedAbility ability, String link) {
+        return borrowedAbility(ability, link, false);
+    }
+
+    static ActivatedAbility borrowedAbility(ActivatedAbility ability, String link, boolean linkedExileGained) {
         boolean linkedToOwnExileCost = ability.getEffects().stream().anyMatch(effect ->
                 effect instanceof ExileCardFromGraveyardCost cost && cost.imprintOnSource());
         boolean undefinedX = false;
         List<CardEffect> gainedEffects = new ArrayList<>();
         for (CardEffect effect : ability.getEffects()) {
-            if (!linkedToOwnExileCost && effect instanceof ImprintedCardXCostEffect imprinted) {
+            if (!linkedToOwnExileCost && effect instanceof ImprintedCardXCostEffect imprinted
+                    && !(linkedExileGained && !imprinted.requiresImprintedXCost())) {
                 undefinedX |= imprinted.requiresImprintedXCost();
                 continue;
             }

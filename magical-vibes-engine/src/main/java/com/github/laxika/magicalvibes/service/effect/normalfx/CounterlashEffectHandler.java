@@ -38,7 +38,7 @@ public class CounterlashEffectHandler implements NormalEffectHandlerBean {
 
         StackEntry targetEntry = null;
         for (StackEntry se : gameData.stack) {
-            if (se.getTargetableId().equals(targetCardId)) {
+            if (se.isIdentifiedBy(targetCardId)) {
                 targetEntry = se;
                 break;
             }

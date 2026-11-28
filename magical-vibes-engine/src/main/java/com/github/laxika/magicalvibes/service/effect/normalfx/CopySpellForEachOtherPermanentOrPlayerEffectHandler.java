@@ -46,11 +46,11 @@ public class CopySpellForEachOtherPermanentOrPlayerEffectHandler implements Norm
         // A cast trigger's entry is aimed at its triggering spell without targeting it: the spell while it is still
         // on the stack, else as it last existed there (CR 608.2h), and its controller controls the copies.
         boolean triggeringSpellCopy = entry.getTriggeringSpellSnapshot() != null
-                && targetCardId.equals(entry.getTriggeringSpellSnapshot().getTargetableId());
+                && entry.getTriggeringSpellSnapshot().isIdentifiedBy(targetCardId);
         StackEntry targetEntry = triggeringSpellCopy
                 ? CopySupport.triggeringSpell(gameData, entry)
                 : gameData.stack.stream()
-                        .filter(stackEntry -> stackEntry.getTargetableId().equals(targetCardId))
+                        .filter(stackEntry -> stackEntry.isIdentifiedBy(targetCardId))
                         .findFirst()
                         .orElse(null);
         if (targetEntry == null) return;

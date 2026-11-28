@@ -48,7 +48,7 @@ public class ExileTriggeringSpellUntilNonlandDealManaValueDifferenceAndMayCastEf
 
         StackEntry triggeringSpell = gameData.stack.stream()
                 .filter(candidate -> candidate != entry)
-                .filter(candidate -> triggeringCardId.equals(candidate.getTargetableId()))
+                .filter(candidate -> candidate.isIdentifiedBy(triggeringCardId))
                 .findFirst()
                 .orElse(null);
         // A countered spell can't be exiled, but the rest of the ability still happens: it uses the

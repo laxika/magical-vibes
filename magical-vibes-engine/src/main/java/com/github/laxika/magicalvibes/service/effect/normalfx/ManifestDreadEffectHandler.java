@@ -42,7 +42,7 @@ public class ManifestDreadEffectHandler implements NormalEffectHandlerBean {
         UUID libraryOwnerId;
         if (manifestDreadEffect.useTargetSpellControllerLibrary()) {
             StackEntry targetSpell = gameData.stack.stream()
-                    .filter(stackEntry -> stackEntry.getTargetableId().equals(entry.getTargetId()))
+                    .filter(stackEntry -> stackEntry.isIdentifiedBy(entry.getTargetId()))
                     .findFirst()
                     .orElse(null);
             libraryOwnerId = targetSpell != null

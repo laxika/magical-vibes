@@ -137,7 +137,7 @@ public class GainControlOfAllPermanentsMatchingEffectHandler implements NormalEf
         StackEntry spell = entry.getTriggeringSpellSnapshot() != null ? entry.getTriggeringSpellSnapshot()
                 : gameData.stack.stream()
                         .filter(candidate -> candidate != entry
-                                && entry.getTriggeringCardId().equals(candidate.getTargetableId()))
+                                && candidate.isIdentifiedBy(entry.getTriggeringCardId()))
                         .findFirst()
                         .orElse(null);
         if (spell == null) {

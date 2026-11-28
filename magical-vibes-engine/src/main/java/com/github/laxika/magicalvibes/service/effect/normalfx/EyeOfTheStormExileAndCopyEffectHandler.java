@@ -38,7 +38,7 @@ public class EyeOfTheStormExileAndCopyEffectHandler implements NormalEffectHandl
         UUID sourcePermanentId = entry.getSourcePermanentId();
         UUID castingPlayerId = entry.getTargetId();
         StackEntry originalSpell = gameData.stack.stream()
-                .filter(stackEntry -> stackEntry.getTargetableId().equals(entry.getTriggeringCardId()))
+                .filter(stackEntry -> stackEntry.isIdentifiedBy(entry.getTriggeringCardId()))
                 .findFirst()
                 .orElse(null);
 

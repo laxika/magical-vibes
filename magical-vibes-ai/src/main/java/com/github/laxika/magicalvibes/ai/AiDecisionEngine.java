@@ -1813,8 +1813,9 @@ public abstract class AiDecisionEngine {
         }
 
         // The engine validates the whole declaration and rejects it as a unit, so a rejection
-        // leaves the game still awaiting blockers — fall back to a repaired declaration.
-        if (rejection != null && !affordable.blockerAssignments().isEmpty()) {
+        // leaves the game still awaiting blockers — fall back to a repaired declaration, also
+        // for a refused empty one (a requirement enforceBlockRequirements doesn't model).
+        if (rejection != null) {
             log.warn("AI: Blocker declaration rejected in game {}: {}; falling back to a legal declaration.",
                     gameId, rejection);
             sendBlockerFallback();
@@ -1833,6 +1834,7 @@ public abstract class AiDecisionEngine {
             fallbackAssignments = prepareBlockersForTax(gameData, fallbackAssignments);
             fallbackAssignments = fitBlockersToTapCosts(gameData, fallbackAssignments);
             fallbackAssignments = normalizeBlockerAssignments(gameData, fallbackAssignments);
+            fallbackAssignments = gameActions.requirementObeyingBlockers(fallbackAssignments);
         }
         try {
             String rejection = gameActions.handleDeclareBlockers(new DeclareBlockersRequest(fallbackAssignments));

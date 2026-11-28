@@ -1114,7 +1114,7 @@ public class PermanentChoiceSpellHandlerService {
         if (playerName != null) return playerName;
 
         for (StackEntry se : gameData.stack) {
-            if (se.getTargetableId().equals(targetId)) return FaceDownVisibility.descriptionShownTo(gameData, se, null);
+            if (se.isIdentifiedBy(targetId)) return FaceDownVisibility.descriptionShownTo(gameData, se, null);
         }
 
         for (UUID pid : gameData.orderedPlayerIds) {

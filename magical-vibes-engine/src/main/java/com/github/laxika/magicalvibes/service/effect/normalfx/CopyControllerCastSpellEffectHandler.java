@@ -49,7 +49,7 @@ public class CopyControllerCastSpellEffectHandler implements NormalEffectHandler
 
         StackEntry spellSnapshot = gameData.stack.stream()
                 .filter(candidate -> candidate != entry)
-                .filter(candidate -> candidate.getTargetableId().equals(e.spellSnapshot().getTargetableId()))
+                .filter(candidate -> e.spellSnapshot().isIdentifiedBy(candidate.getTargetableId()))
                 .findFirst().orElse(e.spellSnapshot());
         UUID castingPlayerId = e.castingPlayerId();
         Card spellCard = spellSnapshot.getCard();
@@ -63,7 +63,7 @@ public class CopyControllerCastSpellEffectHandler implements NormalEffectHandler
         if (!e.grantedKeywords().isEmpty()) {
             spellSnapshot.getGrantedKeywordsOnEntry().addAll(e.grantedKeywords());
             for (StackEntry stackEntry : gameData.stack) {
-                if (spellCard.getId().equals(stackEntry.getTargetableId())) {
+                if (stackEntry.isIdentifiedBy(spellCard.getId())) {
                     stackEntry.getGrantedKeywordsOnEntry().addAll(e.grantedKeywords());
                     break;
                 }

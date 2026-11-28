@@ -33,7 +33,7 @@ public class CounterSpellAndPerpetuallyIncreaseSameNameCastCostEffectHandler
         }
 
         StackEntry targetEntry = gameData.stack.stream()
-                .filter(stackEntry -> stackEntry.getTargetableId().equals(targetCardId))
+                .filter(stackEntry -> stackEntry.isIdentifiedBy(targetCardId))
                 .findFirst()
                 .orElse(null);
         if (targetEntry == null || targetEntry.getCard() == null) {

@@ -120,7 +120,7 @@ class SpellBurstTest extends BaseCardTest {
 
         harness.castCreatureWithMorph(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, 0, seer.getId());
+        harness.castInstant(player2, 0, 0, harness.stackIdOf(seer));
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(seer);

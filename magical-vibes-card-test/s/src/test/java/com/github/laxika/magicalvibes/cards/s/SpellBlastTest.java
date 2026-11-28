@@ -33,7 +33,7 @@ class SpellBlastTest extends BaseCardTest {
 
         harness.castCreatureWithMorph(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, 0, willbender.getId());
+        harness.castInstant(player2, 0, 0, harness.stackIdOf(willbender));
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Willbender");

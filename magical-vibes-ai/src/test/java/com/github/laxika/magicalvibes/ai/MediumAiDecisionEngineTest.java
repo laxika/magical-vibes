@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.cards.d.DreamHalls;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.e.EkunduCyclops;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
+import com.github.laxika.magicalvibes.cards.c.CanopyStalker;
 import com.github.laxika.magicalvibes.cards.e.Errantry;
 import com.github.laxika.magicalvibes.cards.e.Evangelize;
 import com.github.laxika.magicalvibes.cards.f.FinalShowdown;
@@ -1120,6 +1121,26 @@ class MediumAiDecisionEngineTest {
         }
 
         assertThat(blocker.getBlockingTargetIds()).containsExactly(lureAttacker.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("An empty declaration the engine refuses falls back to one obeying a must-be-blocked requirement")
+    void refusedEmptyDeclarationFallsBackToRequirementObeyingOne() {
+        Permanent stalker = harness.addToBattlefieldAndReturn(human, new CanopyStalker());
+        stalker.setSummoningSick(false);
+        stalker.setAttacking(true);
+        Permanent blocker = harness.addToBattlefieldAndReturn(aiPlayer, new GrizzlyBears());
+        blocker.setSummoningSick(false);
+
+        harness.forceActivePlayer(human);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+
+        ai.sendBlockerDeclaration(new DeclareBlockersRequest(List.of()));
+
+        assertThat(blocker.getBlockingTargetIds()).containsExactly(stalker.getId());
         assertThat(gd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class)).isNull();
     }
 

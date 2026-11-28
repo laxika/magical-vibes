@@ -1459,7 +1459,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             StackEntry chosenSpell = gameData.stack.stream()
                     .filter(candidate -> candidate.getEntryType() != StackEntryType.ACTIVATED_ABILITY
                             && candidate.getEntryType() != StackEntryType.TRIGGERED_ABILITY)
-                    .filter(candidate -> permanentId.equals(candidate.getTargetableId()))
+                    .filter(candidate -> candidate.isIdentifiedBy(permanentId))
                     .findFirst().orElse(null);
             gameData.addShield(new TargetSpellDamagePreventionShield(
                     chosenSpell != null ? chosenSpell.getCard().getId() : null, null,
@@ -1665,7 +1665,7 @@ public class PermanentChoiceBattlefieldHandlerService {
                         && sourceId.equals(entry.getSourcePermanentSnapshot().getId())
                         || entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
                         && entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY
-                        && sourceId.equals(entry.getTargetableId()))
+                        && entry.isIdentifiedBy(sourceId))
                 .map(entry -> entry.getDamageSourceControllerId() != null
                         ? entry.getDamageSourceControllerId() : entry.getControllerId())
                 .findFirst()

@@ -136,7 +136,7 @@ class TeferisContingencyTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.BLUE, 2);
         harness.passPriority(player1);
-        harness.castAndResolveInstant(player2, 0, castCopy.getId());
+        harness.castAndResolveInstant(player2, 0, harness.stackIdOf(castCopy));
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(castCopy);
         assertThat(PerpetualCardCastCostSupport.changeFor(gd, castCopy)).isZero();

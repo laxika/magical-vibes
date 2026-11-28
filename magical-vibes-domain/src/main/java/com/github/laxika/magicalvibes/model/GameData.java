@@ -1018,6 +1018,11 @@ public class GameData {
     public final Map<UUID, Set<UUID>> declinedDrawReplacementSources = new ConcurrentHashMap<>();
     /** Preserves the turn-based draw exemption while an optional replacement is answered. */
     public final Map<UUID, Boolean> pendingDrawFirstDrawStepFlags = new ConcurrentHashMap<>();
+    /**
+     * The opponent extra-draw replacements (Notion Thief) already applied to the draw currently being resolved by each
+     * player they made draw, kept while an optional replacement of that draw is answered (CR 614.5).
+     */
+    public final Map<UUID, Set<UUID>> pendingDrawExtraRedirectsApplied = new ConcurrentHashMap<>();
 
     public PendingInteraction.DiscardChoice pendingDiscardToLibraryChoice;
     public int pendingDiscardToLibraryCardIndex = -1;
@@ -10836,6 +10841,7 @@ public class GameData {
         this.declinedDrawReplacementSources.forEach((playerId, sources) ->
                 copy.declinedDrawReplacementSources.put(playerId, new java.util.HashSet<>(sources)));
         copy.pendingDrawFirstDrawStepFlags.putAll(this.pendingDrawFirstDrawStepFlags);
+        copy.pendingDrawExtraRedirectsApplied.putAll(this.pendingDrawExtraRedirectsApplied);
         copy.pendingDiscardToLibraryChoice = this.pendingDiscardToLibraryChoice == null
                 ? null : this.pendingDiscardToLibraryChoice.deepCopy();
         copy.pendingDiscardToLibraryCardIndex = this.pendingDiscardToLibraryCardIndex;

@@ -2,7 +2,11 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.c.ConjurersBauble;
 import com.github.laxika.magicalvibes.cards.g.GrindingStation;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MimicVat;
 import com.github.laxika.magicalvibes.cards.m.MyrWelder;
+import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
 import com.github.laxika.magicalvibes.cards.r.RiverSong;
 import com.github.laxika.magicalvibes.cards.s.SolRing;
@@ -22,7 +26,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({IdrisSoulOfTheTARDIS.class, ConjurersBauble.class, GrindingStation.class,
-        RiverSong.class, SolRing.class, MyrWelder.class, RodOfRuin.class})
+        RiverSong.class, SolRing.class, MyrWelder.class, RodOfRuin.class, MimicVat.class, GrizzlyBears.class,
+        Shock.class})
 class IdrisSoulOfTheTARDISTest extends BaseCardTest {
 
     @Test
@@ -187,6 +192,61 @@ class IdrisSoulOfTheTARDISTest extends BaseCardTest {
                 .containsExactly("{T}: Exile target artifact card from a graveyard.");
         assertThat(gqs.getEffectivePower(gd, idris)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, idris)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Mimic Vat's borrowed imprint returns only what it exiled, never Idris's exiled Vat")
+    void borrowedMimicVatTriggerKeepsIdrisImprint() {
+        Permanent vat = harness.addToBattlefieldAndReturn(player1, new MimicVat());
+        castIdris(vat.getId());
+        Permanent idris = findPermanent(player1, "Idris, Soul of the TARDIS");
+        assertThat(gqs.getEffectivePower(gd, idris)).isEqualTo(6);
+        Card firstBears = killOpposingBears();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.getCardsExiledByPermanent(idris.getId())).contains(vat.getCard(), firstBears);
+        Card secondBears = killOpposingBears();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.getCardsExiledByPermanent(idris.getId())).contains(vat.getCard(), secondBears)
+                .doesNotContain(firstBears);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(firstBears);
+        assertThat(gqs.getEffectivePower(gd, idris)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, idris)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Mimic Vat's borrowed abilities stay linked: the token copies the card the borrowed imprint exiled")
+    void borrowedMimicVatAbilitiesStayLinked() {
+        Permanent vat = harness.addToBattlefieldAndReturn(player1, new MimicVat());
+        castIdris(vat.getId());
+        Permanent idris = findPermanent(player1, "Idris, Soul of the TARDIS");
+        killOpposingBears();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+        idris.setSummoningSick(false);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(idris), null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().isToken()
+                        && permanent.getCard().getName().equals("Grizzly Bears"));
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getName().equals("Mimic Vat"));
+    }
+
+    private Card killOpposingBears() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        return bears.getCard();
     }
 
     private void castIdris(java.util.UUID artifactId) {
