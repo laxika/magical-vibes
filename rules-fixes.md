@@ -161,7 +161,7 @@ line that needs the owner's answer is left and collected for the end.
 | 7 | FD-2, LY-1, DR-1, CB-1 | |
 | 8 | LY-2, LY-3, PP-1, CP-1 | |
 | 9 | LY-4, LY-5, PL-1, MC-1 | |
-| 10 | FT-1, FT-2, FC-4, LS-3, then MC-2a to MC-2f (one at a time) | |
+| 10 | FT-1, FT-2, FC-4, LS-3, then MC-2a to MC-2g (one at a time) | |
 | 11 | Z | |
 
 ## Runs
@@ -1331,7 +1331,7 @@ any creature hitting one of your opponents triggers, its controller pays and dra
 
 #### MC-2
 
-Split (orchestrator, 2026-11-27): MC-2 is run as six sequential parts, after FC-4 and LS-3. Each part takes only its own IDs
+Split (orchestrator, 2026-11-27): MC-2 is run as seven sequential parts, after FC-4 and LS-3. Each part takes only its own IDs
 below and writes its own "MC-2x:" paragraph under Outcome. N41 and N42 belong to LS-3; a part skips any line an earlier run's
 Outcome already settled.
 
@@ -1342,6 +1342,7 @@ Outcome already settled.
 - MC-2e, zone moves and single cards: S3 and S21 (Ezuri's Predation), O5, O7, S8, O79's Behemoth part, N28, N36, N40, N54,
   N70, N84, N86, N89, N90.
 - MC-2f, layers, perpetual changes and links: N64, N71, N73, N74, N75, N76, N81, N82, N83.
+- MC-2g, lines the earlier parts added: N91, N92, N93, N94, N95, and any later N line no part lists.
 
 Lines: O5 (Limitless Rekindling's pool), O7 (`ConjureCardToBattlefieldEffectHandler`: a conjured land gets no land-enter handling;
 check that the handler still exists after run J), S8 (Mythweaver Poq's simultaneous duplicates: rulings first, else an owner
