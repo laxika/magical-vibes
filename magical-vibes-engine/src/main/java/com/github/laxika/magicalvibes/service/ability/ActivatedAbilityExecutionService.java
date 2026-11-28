@@ -1575,7 +1575,7 @@ public class ActivatedAbilityExecutionService {
             } else if (effect instanceof AwardAnyColorManaEffect anyColor) {
                 int picks = amountEvaluationService.evaluate(gameData, anyColor.amount(),
                         AmountContext.forManaAbility(permanent, playerId, xValue)) * manaMultiplier;
-                boolean prompted = AnyColorManaChoiceSupport.beginColorChoice(interactionHandlerRegistry, gameData,
+                boolean prompted = AnyColorManaChoiceSupport.beginColorChoice(interactionHandlerRegistry, gameQueryService, gameData,
                         playerId, anyColor, picks, isCreatureSource, permanent.getChosenSubtype(), permanent.getCard(),
                         permanent.getId(), null, snowSource,
                         caveSource, gameQueryService.getEffectiveColors(gameData, permanent),

@@ -297,6 +297,8 @@ public class GameData {
     private final Map<UUID, List<Card>> spellsCastThisTurn = new ConcurrentHashMap<>();
     /** Mana value each spell cast this turn had on the stack, including its chosen X, keyed by card id. */
     private final Map<UUID, Integer> spellManaValuesWhenCastThisTurn = new ConcurrentHashMap<>();
+    /** Colors each spell cast this turn had as it became cast, keyed by card id (Mana Maze). */
+    private final Map<UUID, Set<CardColor>> spellColorsWhenCastThisTurn = new ConcurrentHashMap<>();
     /** Players who cast a spell targeting a creature permanent this turn. */
     private final Map<UUID, Set<UUID>> spellsCastTargetingCreatureThisTurn = new ConcurrentHashMap<>();
     /** Card ids of spells cast with Treasure-produced mana this turn. */
@@ -7856,6 +7858,16 @@ public class GameData {
         spellManaValuesWhenCastThisTurn.put(cardId, manaValue);
     }
 
+    /** Records the colors a spell had as it became cast, before any effect could change the spell's color. */
+    public void recordSpellColorsWhenCast(UUID cardId, Set<CardColor> colors) {
+        spellColorsWhenCastThisTurn.put(cardId, Set.copyOf(colors));
+    }
+
+    /** The colors the spell {@code cardId} had as it was cast this turn, if its cast was recorded. */
+    public Optional<Set<CardColor>> getSpellColorsWhenCast(UUID cardId) {
+        return Optional.ofNullable(spellColorsWhenCastThisTurn.get(cardId));
+    }
+
     /** The mana value {@code spell} had when cast this turn, or its printed mana value when none was recorded. */
     public int getSpellManaValueWhenCast(Card spell) {
         return spellManaValuesWhenCastThisTurn.getOrDefault(spell.getId(), spell.getManaValue());
@@ -7955,6 +7967,7 @@ public class GameData {
         spellsCastThisTurn.forEach((id, spells) -> spellsCastLastTurnCards.put(id, new ArrayList<>(spells)));
         spellsCastThisTurn.clear();
         spellManaValuesWhenCastThisTurn.clear();
+        spellColorsWhenCastThisTurn.clear();
         spellsCastTargetingCreatureThisTurn.clear();
         spellsCastUsingTreasureManaThisTurn.clear();
         spellsCastWithConvokeGrantThisTurn.clear();
@@ -10320,6 +10333,7 @@ public class GameData {
         this.spellsCastThisTurn.forEach((k, v) ->
                 copy.spellsCastThisTurn.put(k, new ArrayList<>(v)));
         copy.spellManaValuesWhenCastThisTurn.putAll(this.spellManaValuesWhenCastThisTurn);
+        copy.spellColorsWhenCastThisTurn.putAll(this.spellColorsWhenCastThisTurn);
         this.spellsCastTargetingCreatureThisTurn.forEach((k, v) ->
                 copy.spellsCastTargetingCreatureThisTurn.put(k, ConcurrentHashMap.newKeySet()));
         this.spellsCastTargetingCreatureThisTurn.forEach((k, v) ->

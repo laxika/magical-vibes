@@ -5,8 +5,10 @@ import com.github.laxika.magicalvibes.cards.b.Bonesplitter;
 import com.github.laxika.magicalvibes.cards.f.FangrenHunter;
 import com.github.laxika.magicalvibes.cards.g.Ghostfire;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.p.PaintersServant;
 import com.github.laxika.magicalvibes.cards.s.Shatter;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,7 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({ChromeMox.class, FangrenHunter.class, Bonesplitter.class, Mountain.class,
-        AzoriusCharm.class, Ghostfire.class, Shatter.class})
+        AzoriusCharm.class, Ghostfire.class, Shatter.class, PaintersServant.class})
 class ChromeMoxTest extends BaseCardTest {
 
     @Test
@@ -198,6 +200,20 @@ class ChromeMoxTest extends BaseCardTest {
         assertThat(mox.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A color Painter's Servant gives the exiled card can be produced")
+    void imprintedCardColorsIncludeColorChangeEffects() {
+        harness.addToBattlefieldAndReturn(player2, new PaintersServant()).setChosenColor(CardColor.BLUE);
+        addMoxWithImprint(new FangrenHunter());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        PendingInteraction.ColorChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.options()).containsExactlyInAnyOrder("GREEN", "BLUE");
     }
 
     private Permanent addMoxWithImprint(Card imprintedCard) {

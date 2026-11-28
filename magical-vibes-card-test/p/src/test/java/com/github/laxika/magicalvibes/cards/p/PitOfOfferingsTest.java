@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.c.CavernStomper;
 import com.github.laxika.magicalvibes.cards.w.WaterwindScout;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PitOfOfferings.class, CavernStomper.class, WaterwindScout.class})
+@CardUsed({PitOfOfferings.class, CavernStomper.class, WaterwindScout.class, PaintersServant.class})
 class PitOfOfferingsTest extends BaseCardTest {
 
     @Test
@@ -73,6 +74,19 @@ class PitOfOfferingsTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Adds mana of a color Painter's Servant gives a card it exiled")
+    void addsManaOfAColorGivenToAnExiledCard() {
+        Card colorless = new PitOfOfferings();
+        Permanent pit = playPitAndChoose(colorless);
+        harness.addToBattlefieldAndReturn(player2, new PaintersServant()).setChosenColor(CardColor.RED);
+        pit.untap();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
     }
 
     @Test

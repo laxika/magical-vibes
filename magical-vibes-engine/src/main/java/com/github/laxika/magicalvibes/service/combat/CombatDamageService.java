@@ -2157,6 +2157,9 @@ public class CombatDamageService {
         }
         boolean isCreature = gameQueryService.isCreature(gameData, targetPerm);
         boolean infect = isCreature && portion.counterDamage();
+        if (infect && effectiveDamage > 0) {
+            targetPerm.turnFaceUpAsDealtDamage();
+        }
         if (infect && !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, targetPerm)) {
             int counters = gameQueryService.reduceMinusOneMinusOneCounters(gameData, targetPerm, effectiveDamage);
             targetPerm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE,
@@ -2737,6 +2740,9 @@ public class CombatDamageService {
                                            DamagePortion portion, Permanent target) {
         int amount = portion.amount();
         damagePreventionService.applyDamageHealingReplacement(gameData, target, amount);
+        if (amount > 0) {
+            target.turnFaceUpAsDealtDamage();
+        }
         if (!gameQueryService.cantHaveCounters(gameData, target)
                 && !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, target)) {
             // Vizier of Remedies reduces the -1/-1 counters; the deathtouch marking below still

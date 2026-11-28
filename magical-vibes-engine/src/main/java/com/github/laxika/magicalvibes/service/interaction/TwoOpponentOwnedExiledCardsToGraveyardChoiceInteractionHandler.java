@@ -98,9 +98,10 @@ public class TwoOpponentOwnedExiledCardsToGraveyardChoiceInteractionHandler
 
     /**
      * A face-down pick names only its pile (what exiled the cards and when): the card that moves is chosen
-     * at random from that pile, two picks of one pile taking two different cards (2015-08-25 ruling).
+     * at random from that pile, two picks of one pile taking two different cards (2015-08-25 ruling). Shared by
+     * Ulamog's Despoiler's as-enters choice.
      */
-    private static List<ExiledCardEntry> withFaceDownPicksAtRandom(GameData gameData, List<ExiledCardEntry> picks) {
+    public static List<ExiledCardEntry> withFaceDownPicksAtRandom(GameData gameData, List<ExiledCardEntry> picks) {
         List<ExiledCardEntry> result = new ArrayList<>();
         for (ExiledCardEntry pick : picks) {
             if (!pick.faceDown()) {

@@ -93,7 +93,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.SplitCardCastSuppo
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectConditionResolver;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -705,20 +704,13 @@ public class CastingPermissionService {
     }
 
     /**
-     * The colors the most recently cast spell had when it was cast: a color-changing effect that
-     * applied to it afterwards (Blind Seer) doesn't change which spells Mana Maze restricts.
+     * The colors the most recently cast spell had when it was cast, as the cast event recorded them (a color
+     * Painter's Servant gave it included): a color-changing effect that applied to it afterwards (Blind Seer)
+     * doesn't change which spells Mana Maze restricts (its 2004-10-04 ruling).
      */
     private Set<CardColor> colorsWhenCast(GameData gameData, Card spell) {
-        if (gameData.spellColorUntilEndOfTurn(spell.getId()).isPresent()
-                || gameData.spellColorOverrides.containsKey(spell.getId())) {
-            Set<CardColor> printed = EnumSet.noneOf(CardColor.class);
-            printed.addAll(spell.getColors());
-            if (spell.getColor() != null) {
-                printed.add(spell.getColor());
-            }
-            return printed;
-        }
-        return gameQueryService.getEffectiveCardColors(gameData, spell);
+        return gameData.getSpellColorsWhenCast(spell.getId())
+                .orElseGet(() -> gameQueryService.getEffectiveCardColors(gameData, spell));
     }
 
     public boolean isSpellCastingRestrictedByTopLibraryCard(GameData gameData, Card card) {

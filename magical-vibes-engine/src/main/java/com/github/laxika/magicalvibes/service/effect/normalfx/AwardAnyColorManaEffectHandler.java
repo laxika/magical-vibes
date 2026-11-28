@@ -53,7 +53,7 @@ public class AwardAnyColorManaEffectHandler implements NormalEffectHandlerBean {
         }
         UUID colorChoicePlayerId = e.manaColorChosenByRecipient() && e.manaRecipientIsTargetPlayer()
                 && entry.getTargetId() != null ? entry.getTargetId() : entry.getControllerId();
-        boolean prompted = AnyColorManaChoiceSupport.beginColorChoice(interactionHandlerRegistry, gameData,
+        boolean prompted = AnyColorManaChoiceSupport.beginColorChoice(interactionHandlerRegistry, gameQueryService, gameData,
                 colorChoicePlayerId, e, amount, false, source == null ? null : source.getChosenSubtype(),
                 source == null ? null : source.getCard(), source == null ? null : source.getId(),
                 e.manaRecipientIsTargetPlayer() ? entry.getTargetId() : null,

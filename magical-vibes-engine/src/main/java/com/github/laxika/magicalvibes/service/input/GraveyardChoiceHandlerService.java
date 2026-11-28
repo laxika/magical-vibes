@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.service.interaction.TwoOpponentOwnedExiledCardsToGraveyardChoiceInteractionHandler;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -849,6 +850,8 @@ public class GraveyardChoiceHandlerService {
                     }
                     selected.add(exiled);
                 }
+                selected = TwoOpponentOwnedExiledCardsToGraveyardChoiceInteractionHandler
+                        .withFaceDownPicksAtRandom(gameData, selected);
             }
 
             gameData.graveyardTargetOperation.asEntersOpponentExileToGraveyard = null;

@@ -908,13 +908,22 @@ public class Permanent {
         if (amount <= 0) {
             return;
         }
-        if (faceDown && turnsFaceUpOnDamageOrTap) {
-            turnFaceUp();
-            pendingAutomaticTurnFaceUp = true;
-        }
+        turnFaceUpAsDealtDamage();
         this.markedDamage = SaturatingMath.add(this.markedDamage, amount);
         if (sourceId != null) {
             this.markedDamageBySource.merge(sourceId, amount, SaturatingMath::add);
+        }
+    }
+
+    /**
+     * Illusionary Mask: a masked creature about to be dealt damage is turned face up first, whether the damage is
+     * marked or dealt as -1/-1 counters (wither, infect: CR 120.3d). The engine settles the turn-up (or puts it back
+     * when it can't be turned face up) through {@link #isPendingAutomaticTurnFaceUp()}.
+     */
+    public void turnFaceUpAsDealtDamage() {
+        if (faceDown && turnsFaceUpOnDamageOrTap) {
+            turnFaceUp();
+            pendingAutomaticTurnFaceUp = true;
         }
     }
 

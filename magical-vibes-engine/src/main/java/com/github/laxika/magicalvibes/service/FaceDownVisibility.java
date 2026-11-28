@@ -178,7 +178,7 @@ public final class FaceDownVisibility {
     }
 
     /** {@code effect} and the steps it wraps: a "you may" choice's effect, a sequence's steps. */
-    private static Stream<CardEffect> unwrapped(CardEffect effect) {
+    public static Stream<CardEffect> unwrapped(CardEffect effect) {
         return switch (effect) {
             case MayEffect may -> Stream.concat(Stream.of(effect), unwrapped(may.wrapped()));
             case SequenceEffect sequence -> Stream.concat(Stream.of(effect),

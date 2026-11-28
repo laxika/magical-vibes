@@ -53,10 +53,11 @@ public class StackEntryViewFactory {
     /**
      * An ability whose source is face down, as a player who may not look at that card sees it.
      *
-     * @param source the face-down permanent, or null for a card that shows no characteristics at all (CR 406.3)
+     * @param source the face-down permanent, shown by its permanent's id as its battlefield view is; or null for a
+     *               card that shows no characteristics at all (CR 406.3)
      */
     public StackEntryView createFaceDownAbility(StackEntry entry, Permanent source, String description) {
-        CardView cardView = source == null ? null : cardViewFactory.createFaceDown(source.getCard().getId(),
+        CardView cardView = source == null ? null : cardViewFactory.createFaceDown(source.getId(),
                 source.getFaceDownCardTypes(), List.of(), source.getFaceDownPower(), source.getFaceDownToughness(),
                 source.isFaceDownWard() || source.isCloaked() ? Set.of(Keyword.WARD) : Set.of());
         return createView(entry, cardView, description);

@@ -270,9 +270,14 @@ public class CreatureControlService {
                         java.util.stream.Stream.concat(permanent.getCard().getCastingCostsAndSpellEffects().stream(),
                                 permanent.getCard().getStaticEffects().stream()),
                         permanent.getCard().getTriggeredEffects().stream())
+                .flatMap(com.github.laxika.magicalvibes.service.FaceDownVisibility::unwrapped)
                 .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect
                         .ExileTopCardsToSourceEffect exile && exile.faceDown()
-                        && exile.mayLookAtFaceDownCards() && !exile.toGraveyardOnControlLoss());
+                        && exile.mayLookAtFaceDownCards() && !exile.toGraveyardOnControlLoss()
+                        || effect instanceof com.github.laxika.magicalvibes.model.effect
+                        .ImprintFromTopCardsEffect imprint && imprint.hideaway()
+                        || effect instanceof com.github.laxika.magicalvibes.model.effect
+                        .ExileOneFromTopCardsFaceDownWithSourceEffect exile && exile.hideaway());
         if (!permanent.isFaceDown() && !gameQueryService.hasLostAllAbilities(gameData, permanent)
                 && retainsFaceDownExileAccess) {
             for (var exiled : gameData.getExiledWithPermanentEntries(permanent.getId(), permanent.getCard().getId())) {

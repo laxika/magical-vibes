@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -106,6 +107,24 @@ class UlamogsDespoilerTest extends BaseCardTest {
         castUlamogsDespoiler();
 
         assertThat(gd.interaction.activeInteraction()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("A pile of face-down cards is offered as two picks, which move two different cards of it (2015-08-25 ruling)")
+    void faceDownPileIsOfferedAsTwoPicks() {
+        List<CliffsideLookout> pile = List.of(new CliffsideLookout(), new CliffsideLookout(), new CliffsideLookout());
+        harness.inMutationScope(() -> pile.forEach(card -> gd.addToExile(player2.getId(), card, null, true)));
+        castUlamogsDespoiler();
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).hasSize(2);
+        harness.handleMultipleCardsChosen(player1, choice.validCardIds());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2).doesNotHaveDuplicates();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(1);
+        assertThat(findPermanent(player1, "Ulamog's Despoiler")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
     }
 
     private void castUlamogsDespoiler() {

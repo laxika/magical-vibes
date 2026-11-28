@@ -83,7 +83,7 @@ Owner: `StackEntry`.
 Why: two abilities of one source are separately targetable.
 
 ### A face-down card's identity never leaves for other players (CR 708.2, 708.5)
-`getCard()` of a spell or permanent stays the real card: text for a player never uses its `getName()` but asks `FaceDownVisibility` (`publicName` for a permanent, `sourceName` for an ability's source, `nameShownTo`, `descriptionShownTo`), and a copy is made by `CopySupport.createCopyCard(StackEntry)`.
+`getCard()` of a spell or permanent stays the real card: text for a player never uses its `getName()` but asks `FaceDownVisibility` (`publicName` for a permanent, `sourceName` for an ability's source, `nameShownTo`, `descriptionShownTo`), and a copy is made by `CopySupport.createCopyCard(StackEntry)`. A face-down permanent's view and cues carry the permanent's id, never its card's (`PermanentViewFactory`, `VisualCueService.Source.of(Permanent)`).
 Owner: `FaceDownVisibility`; applied by `GameViewProjectionFactory` (stack views) and `GameLogService.append` (card segments; `appendRevealing` for a reveal).
 Why: the card's name, or its printing alone, tells an opponent what was cast face down.
 

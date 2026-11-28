@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.DelayedReferents;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -550,6 +551,10 @@ public class RulesEventPipeline {
         if (durationClock != null) {
             durationClock.advance(gameData, batch);
         }
+        if (batch.events().stream().anyMatch(event -> event instanceof TapEvent.BecameTapped
+                || event instanceof DamageDealtEvent)) {
+            keepPreventedAutomaticTurnFaceUpsFaceDown(gameData);
+        }
         List<ZoneChangeEvent> events = new ArrayList<>();
         List<PermanentChangeEvent> permanentChanges = new ArrayList<>();
         for (RulesEvent event : batch.events()) {
@@ -712,6 +717,26 @@ public class RulesEventPipeline {
     private static PermanentPredicate narrowedFrom(PermanentPredicate filter) {
         return filter instanceof PermanentAllOfPredicate allOf && !allOf.predicates().isEmpty()
                 ? allOf.predicates().getFirst() : filter;
+    }
+
+    /**
+     * A masked creature (Illusionary Mask) the domain turned face up as it became tapped or was dealt damage is put
+     * back face down here when it can't be turned face up (Karlov Watchdog), before the tap or damage is matched, so
+     * its face-up card's abilities never see that event (CR 101.2). One that can be turned face up stays up, and the
+     * state-based actions turn it face up properly.
+     */
+    private void keepPreventedAutomaticTurnFaceUpsFaceDown(GameData gameData) {
+        gameData.forEachPermanent((controllerId, permanent) -> {
+            if (!permanent.isPendingAutomaticTurnFaceUp() || permanent.isFaceDown()) {
+                return;
+            }
+            permanent.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+            if (gameQueryService.isTurnFaceUpPrevented(gameData, permanent)) {
+                permanent.setPendingAutomaticTurnFaceUp(false);
+            } else {
+                permanent.turnFaceUp();
+            }
+        });
     }
 
     /**

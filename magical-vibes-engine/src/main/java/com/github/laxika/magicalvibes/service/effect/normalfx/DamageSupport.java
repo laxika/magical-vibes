@@ -360,6 +360,9 @@ public class DamageSupport {
         boolean dealsCounterDamage = gameQueryService.sourceDealsCounterDamageToCreatures(gameData, entry, damageSource);
 
         if (dealsCounterDamage) {
+            if (damage > 0) {
+                target.turnFaceUpAsDealtDamage();
+            }
             placeDamageMinusOneCounters(gameData, entry, target, damage, damageSourceControllerId, sourceCard);
             if (damage > 0) {
                 entry.recordPermanentDealtDamage(target.getId());

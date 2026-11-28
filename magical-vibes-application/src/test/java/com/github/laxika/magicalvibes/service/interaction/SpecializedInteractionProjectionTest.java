@@ -295,17 +295,21 @@ class SpecializedInteractionProjectionTest {
     }
 
     @Test
-    @DisplayName("An index pick over a card pool sends no card and no card name")
-    void pooledIndexPickSendsNoCard() {
+    @DisplayName("An index pick over a card pool sends a face-down placeholder for a card exiled face down (CR 406.3)")
+    void pooledIndexPickSendsAPlaceholderForAHiddenCard() {
         Card hidden = card("Hidden");
+        Card shown = card("Shown");
         gameData.addToExile(opponentId, hidden, UUID.randomUUID(), true);
+        gameData.addToExile(opponentId, shown, UUID.randomUUID(), false);
 
         InteractionPromptMessage message = prompt(PendingInteraction.GraveyardChoice
-                .builder(controllerId, List.of(0), GraveyardChoiceDestination.BATTLEFIELD, "Choose a card.")
-                .cardPool(List.of(hidden))
+                .builder(controllerId, List.of(0, 1), GraveyardChoiceDestination.BATTLEFIELD, "Choose a card.")
+                .cardPool(List.of(hidden, shown))
                 .build());
 
-        assertThat(message.cards()).isNullOrEmpty();
+        assertThat(message.cards()).hasSize(2);
+        assertThat(message.cards().getFirst().name()).isEqualTo("Face-down card");
+        assertThat(message.cards().getFirst().id()).isEqualTo(hidden.getId());
         assertThat(message.prompt()).doesNotContain("Hidden");
     }
 

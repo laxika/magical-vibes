@@ -658,27 +658,12 @@ export class GameChoiceService {
     const pool = this.graveyardChoicePoolCards;
 
     if (this.graveyardChoiceAllGraveyards && pool) {
+      // The server sends every pool card; one exiled face down comes as a face-down placeholder.
       for (const idx of this.graveyardChoiceIndices) {
         const card = pool[idx];
         if (!card) continue;
         const ownerIdx = g.graveyards.findIndex(gy => gy.some(c => c.id === card.id));
-        result.push({ card, index: idx, owner: g.playerNames[ownerIdx] ?? 'Unknown' });
-      }
-    } else if (this.graveyardChoiceAllGraveyards) {
-      // No pool sent (it holds cards the server keeps hidden): fall back to the creature/artifact
-      // cards of every graveyard, in graveyard order.
-      const validIndices = new Set(this.graveyardChoiceIndices);
-      let poolIndex = 0;
-      for (let playerIdx = 0; playerIdx < g.graveyards.length; playerIdx++) {
-        const ownerName = g.playerNames[playerIdx] ?? 'Unknown';
-        for (const card of g.graveyards[playerIdx]) {
-          if (card.type === 'CREATURE' || card.type === 'ARTIFACT') {
-            if (validIndices.has(poolIndex)) {
-              result.push({ card, index: poolIndex, owner: ownerName });
-            }
-            poolIndex++;
-          }
-        }
+        result.push({ card, index: idx, owner: ownerIdx >= 0 ? g.playerNames[ownerIdx] ?? 'Unknown' : 'Exile' });
       }
     } else {
       const myId = this.websocketService.currentUser?.userId ?? '';

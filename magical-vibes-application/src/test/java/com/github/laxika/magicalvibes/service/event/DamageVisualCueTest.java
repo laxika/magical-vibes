@@ -140,7 +140,7 @@ class DamageVisualCueTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A face-down attacker's damage cue keeps its card id but hides its name and colors")
+    @DisplayName("A face-down attacker's damage cue is sent by its permanent's id and hides its name and colors")
     void faceDownAttackerIsAnonymous() {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setFaceDown(2, 2, Set.of(CardType.CREATURE));
@@ -149,7 +149,7 @@ class DamageVisualCueTest extends BaseCardTest {
         resolveCombat(player1);
 
         assertThat(damageCues()).singleElement().satisfies(cue -> {
-            assertThat(cue.sourceCardId()).isEqualTo(attacker.getCard().getId());
+            assertThat(cue.sourceCardId()).isEqualTo(attacker.getId());
             assertThat(cue.sourceName()).isNull();
             assertThat(cue.sourceColors()).isEmpty();
         });

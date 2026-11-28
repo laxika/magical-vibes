@@ -62,6 +62,17 @@ class PermanentViewFactoryTest {
     }
 
     @Test
+    @DisplayName("A face-down permanent's view carries the permanent's id, not its card's")
+    void faceDownViewHidesTheCardId() {
+        Permanent p = new Permanent(card("Hidden Bear", CardType.CREATURE));
+        p.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+        PermanentView view = create(p);
+
+        assertThat(view.card().id()).isEqualTo(p.getId()).isNotEqualTo(p.getCard().getId());
+    }
+
+    @Test
     @DisplayName("Face-up exiled-with cards are mapped to card views; the face-down count passes through")
     void exiledWithCardsAreMappedToViews() {
         Permanent vat = new Permanent(card("Mimic Vat", CardType.ARTIFACT));

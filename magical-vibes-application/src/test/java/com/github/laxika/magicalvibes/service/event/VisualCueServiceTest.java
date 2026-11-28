@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import com.github.laxika.magicalvibes.testutil.TestGameEventSubscriber;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -94,6 +95,7 @@ class VisualCueServiceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A face-down source is sent by its permanent's id, with no name or colors")
     void faceDownSourceCarriesNoNameOrColors() {
         bears.setFaceDown(2, 2, Set.of(CardType.CREATURE));
         List<GameEventBatch> batches = new ArrayList<>();
@@ -106,7 +108,7 @@ class VisualCueServiceTest extends BaseCardTest {
         }
 
         assertThat(cueFacts(batches)).singleElement().satisfies(cue -> {
-            assertThat(cue.sourceCardId()).isEqualTo(bears.getCard().getId());
+            assertThat(cue.sourceCardId()).isEqualTo(bears.getId());
             assertThat(cue.sourceName()).isNull();
             assertThat(cue.sourceColors()).isEmpty();
         });

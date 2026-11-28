@@ -55,7 +55,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | CB Combat | CB-1 | CB-1 done 2026-11-27 (M11's block half left: it needs multi-defender combat damage) |
 | PP Perpetual changes | PP-1 | PP-1 done 2026-11-27 (L8, O47 left; O41's hand half left) |
 | PL Each player chooses, then all act | PL-1 | PL-1 done 2026-11-27 (Gilded Ambusher's damage reading for the owner) |
-| MC Single cards | MC-1, MC-2 | MC-1 done 2026-11-27 (O13's direct counter removals left; O81 for the owner); MC-2a done 2026-11-28 |
+| MC Single cards | MC-1, MC-2 | MC-1 done 2026-11-27 (O13's direct counter removals left; O81 for the owner); MC-2a, MC-2b done 2026-11-28 (MC-2b: N62's stack half is N92) |
 | AI Hard / easy AI | AI-1, AI-2 | AI-1, AI-2 done 2026-11-27 |
 | UI Frontend | UI-1 | UI-1 done 2026-11-27 |
 | LG, CL Logs and non-rules cleanup | LG-1, CL-1 | CL-1, LG-1 done 2026-11-27 |
@@ -1592,6 +1592,16 @@ New line N91 (seen in MC-2a): `AiDecisionEngine.sendBlockerDeclaration` falls ba
 refused, so an empty one the engine refuses (a block requirement `enforceBlockRequirements` doesn't model) leaves the AI's
 blocker declaration unanswered; sure of the code, unverified by a test.
 
+New line N92 (seen in MC-2b): a face-down spell on the stack is still shown and targeted by its card's id
+(`StackEntryViewFactory.createFaceDownSpell` takes `entry.getTargetableId()`, which is the card id for a spell, and its cast
+cue's `Source.of(StackEntry)` too), so an opponent who saw that id in a reveal or a public zone knows what was cast face down
+(CR 708.5); MC-2b gave face-down permanents their permanent's id, the spell needs an opaque targetable id that targeting and
+the client both use. Sure of the code.
+
+New line N93 (seen in MC-2b): a masked creature (Illusionary Mask) that deals noncombat damage (a fight, a bite) isn't turned
+face up first and deals it as the face-down 2/2: only `CombatDamageService`'s combatant pass flips a masked creature that would
+deal damage, `DamageSupport` flips only the one dealt damage. Of the code, unverified by a test.
+
 Outcome:
 
 MC-2a: done 2026-11-28. Fixed: N19, N20, N21, N22, N23. N19: the AI's single target of a triggered ability
@@ -1606,6 +1616,28 @@ or for the auto-resolved step, the greedy blocks if legal, else the exhaustive s
 draw less one per opponent (0 in two-player games). N22: a damage sweep's set filter (Tremor's "without flying") picks the
 scored creatures on both sides, and the survival bonus counts what survives outside the set. N23: the distribute-counters
 rule reads every power/toughness counter kind. No effect class added or deleted, so no ledger or ratchet change.
+
+MC-2b: done 2026-11-28. Fixed: N33, N55, N56, N60, N61, N62 (the permanent half), N63, N85; dropped: N57. N55: Chrome Mox's
+and Pit of Offerings' colour choice reads the exiled card through `getEffectiveCardColors` (Painter's Servant, CR 613.1e);
+`AnyColorManaChoiceSupport`'s nine overloads are now the three that are called, each taking the query service. N56: the cast
+event (`SpellEvents.cast`) records the colours a spell had as it was cast (`GameData.recordSpellColorsWhenCast`, colourless
+when cast face down) and Mana Maze reads those (its 2004-10-04 ruling: the colour when announcement started), so a colour
+Painter's Servant gave the spell survives Blind Seer's change. N57 dropped: the simultaneous-death snapshot's card is built by
+`snapshotEffectivePermanentCard`, which already holds the effective colours (pinned: Teysa, Orzhov Scion counts a white creature
+Painter's Servant made black when both die to Wrath of God). N60: wither and infect damage turns a masked creature face up
+before its -1/-1 counters (`Permanent.turnFaceUpAsDealtDamage`, CR 120.3d) in `DamageSupport` and both combat branches. N61: a
+masked creature that can't be turned face up (Karlov Watchdog) is put back face down before the batch's tap or damage events
+are matched (`RulesEventPipeline.keepPreventedAutomaticTurnFaceUpsFaceDown`), so its face-up card's own triggers don't fire
+(CR 101.2). N62: a face-down permanent's view, its abilities' source view and its cues carry the permanent's id, not the card's
+(CR 708.5); the face-down spell's stack id is left as N92. N63: on a control change the new and old controllers may look at a
+hideaway card (CR 702.75a, Howltooth Hollow's 2022-04-29 ruling; `ImprintFromTopCardsEffect.hideaway()`,
+`ExileOneFromTopCardsFaceDownWithSourceEffect.hideaway()`, both the random-order form; Clone Shell's and Kayla's Music Box's
+rulings keep the look with the exiler). N85: Ulamog's Despoiler offers a face-down pile as up to two picks that move random
+cards of it, as Ulamog's Nullifier does (2015-08-25 ruling; `PutTwoOpponentOwnedExiledCardsIntoGraveyardEffectHandler.
+twoCardOffer`, `withFaceDownPicksAtRandom` shared); its prompt already redacted the names. N33: a `GraveyardChoice` pool is
+always sent, a card exiled face down as the "Face-down card" placeholder, and the client's guess from the graveyards is gone
+(`game-choice.service.ts`, a pool card outside the graveyards is labelled Exile; spec added). New lines N92, N93. No effect class
+added or deleted, so no ledger or ratchet change; no `CONVERSION_VERSION` change.
 
 ### AI. Hard / easy AI (`magical-vibes-ai`)
 

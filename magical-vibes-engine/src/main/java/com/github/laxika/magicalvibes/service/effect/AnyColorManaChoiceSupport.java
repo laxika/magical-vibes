@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.List;
 import java.util.Set;
@@ -30,27 +31,11 @@ public final class AnyColorManaChoiceSupport {
     }
 
     /**
-     * Prompts {@code playerId} for the colour(s) of {@code amount} mana.
-     *
-     * @param amount        the already-evaluated, multiplier-applied mana count
-     * @param fromCreature  whether the producing source is a creature (creature-mana tracking)
-     * @param chosenSubtype the creature type chosen as the source permanent entered, for the
-     *                      {@code CHOSEN_SUBTYPE_*} restrictions; {@code null} elsewhere
-     * @return {@code false} when nothing was prompted — no mana to add, or a chosen-subtype form
-     *         whose source never got a type
+     * Prompts {@code playerId} for the colour(s) of {@code amount} mana a card's ability makes outside the
+     * battlefield ({@code sourceCard}); see the full overload.
      */
     public static boolean beginColorChoice(InteractionHandlerRegistry interactionHandlerRegistry,
-                                           GameData gameData,
-                                           UUID playerId,
-                                           AwardAnyColorManaEffect effect,
-                                           int amount,
-                                           boolean fromCreature,
-                                           CardSubtype chosenSubtype) {
-        return beginColorChoice(interactionHandlerRegistry, gameData, playerId, effect, amount,
-                fromCreature, chosenSubtype, null, null);
-    }
-
-    public static boolean beginColorChoice(InteractionHandlerRegistry interactionHandlerRegistry,
+                                           GameQueryService gameQueryService,
                                            GameData gameData,
                                            UUID playerId,
                                            AwardAnyColorManaEffect effect,
@@ -58,38 +43,13 @@ public final class AnyColorManaChoiceSupport {
                                            boolean fromCreature,
                                            CardSubtype chosenSubtype,
                                            Card sourceCard) {
-        return beginColorChoice(interactionHandlerRegistry, gameData, playerId, effect, amount,
-                fromCreature, chosenSubtype, sourceCard, null);
+        return beginColorChoice(interactionHandlerRegistry, gameQueryService, gameData, playerId, effect, amount,
+                fromCreature, chosenSubtype, sourceCard, null, null, false, false, null, false, false);
     }
 
+    /** Prompts for the colour(s) of mana a triggered ability adds for {@code recipientPlayerId}; see the full overload. */
     public static boolean beginColorChoice(InteractionHandlerRegistry interactionHandlerRegistry,
-                                           GameData gameData,
-                                           UUID playerId,
-                                           AwardAnyColorManaEffect effect,
-                                           int amount,
-                                           boolean fromCreature,
-                                           CardSubtype chosenSubtype,
-                                           Card sourceCard,
-                                           UUID sourcePermanentId) {
-        return beginColorChoice(interactionHandlerRegistry, gameData, playerId, effect, amount,
-                fromCreature, chosenSubtype, sourceCard, sourcePermanentId, null);
-    }
-
-    public static boolean beginColorChoice(InteractionHandlerRegistry interactionHandlerRegistry,
-                                           GameData gameData,
-                                           UUID playerId,
-                                           AwardAnyColorManaEffect effect,
-                                           int amount,
-                                           boolean fromCreature,
-                                           CardSubtype chosenSubtype,
-                                           Card sourceCard,
-                                           UUID sourcePermanentId,
-                                           UUID recipientPlayerId) {
-        return beginColorChoice(interactionHandlerRegistry, gameData, playerId, effect, amount,
-                fromCreature, chosenSubtype, sourceCard, sourcePermanentId, recipientPlayerId, false);
-    }
-
-    public static boolean beginColorChoice(InteractionHandlerRegistry interactionHandlerRegistry,
+                                           GameQueryService gameQueryService,
                                            GameData gameData,
                                            UUID playerId,
                                            AwardAnyColorManaEffect effect,
@@ -100,63 +60,25 @@ public final class AnyColorManaChoiceSupport {
                                            UUID sourcePermanentId,
                                            UUID recipientPlayerId,
                                            boolean fromSnowSource) {
-        return beginColorChoice(interactionHandlerRegistry, gameData, playerId, effect, amount,
+        return beginColorChoice(interactionHandlerRegistry, gameQueryService, gameData, playerId, effect, amount,
                 fromCreature, chosenSubtype, sourceCard, sourcePermanentId, recipientPlayerId,
-                fromSnowSource, false, null);
+                fromSnowSource, false, null, false, false);
     }
 
+    /**
+     * Prompts {@code playerId} for the colour(s) of {@code amount} mana. The colours of a card exiled or imprinted
+     * with the source are read through {@code gameQueryService}, so a colour an effect gives cards outside the
+     * battlefield counts (Painter's Servant, CR 613.1e).
+     *
+     * @param amount        the already-evaluated, multiplier-applied mana count
+     * @param fromCreature  whether the producing source is a creature (creature-mana tracking)
+     * @param chosenSubtype the creature type chosen as the source permanent entered, for the
+     *                      {@code CHOSEN_SUBTYPE_*} restrictions; {@code null} elsewhere
+     * @return {@code false} when nothing was prompted — no mana to add, or a chosen-subtype form
+     *         whose source never got a type
+     */
     public static boolean beginColorChoice(InteractionHandlerRegistry interactionHandlerRegistry,
-                                           GameData gameData,
-                                           UUID playerId,
-                                           AwardAnyColorManaEffect effect,
-                                           int amount,
-                                           boolean fromCreature,
-                                           CardSubtype chosenSubtype,
-                                           Card sourceCard,
-                                           UUID sourcePermanentId,
-                                            UUID recipientPlayerId,
-                                            boolean fromSnowSource,
-                                            Set<CardColor> sourceColors) {
-        return beginColorChoice(interactionHandlerRegistry, gameData, playerId, effect, amount,
-                fromCreature, chosenSubtype, sourceCard, sourcePermanentId, recipientPlayerId,
-                fromSnowSource, false, sourceColors);
-    }
-
-    public static boolean beginColorChoice(InteractionHandlerRegistry interactionHandlerRegistry,
-                                           GameData gameData, UUID playerId,
-                                           AwardAnyColorManaEffect effect, int amount,
-                                           boolean fromCreature, CardSubtype chosenSubtype,
-                                           Card sourceCard, UUID sourcePermanentId,
-                                           UUID recipientPlayerId, boolean fromSnowSource,
-                                           boolean fromCaveSource) {
-        return beginColorChoice(interactionHandlerRegistry, gameData, playerId, effect, amount,
-                fromCreature, chosenSubtype, sourceCard, sourcePermanentId, recipientPlayerId,
-                fromSnowSource, fromCaveSource, null);
-    }
-
-    public static boolean beginColorChoice(InteractionHandlerRegistry interactionHandlerRegistry,
-                                           GameData gameData, UUID playerId,
-                                           AwardAnyColorManaEffect effect, int amount,
-                                           boolean fromCreature, CardSubtype chosenSubtype,
-                                           Card sourceCard, UUID sourcePermanentId,
-                                           UUID recipientPlayerId, boolean fromSnowSource,
-                                           boolean fromCaveSource, Set<CardColor> sourceColors) {
-        return beginColorChoice(interactionHandlerRegistry, gameData, playerId, effect, amount, fromCreature, chosenSubtype, sourceCard, sourcePermanentId, recipientPlayerId, fromSnowSource, fromCaveSource, sourceColors, false);
-    }
-
-    public static boolean beginColorChoice(InteractionHandlerRegistry interactionHandlerRegistry,
-                                           GameData gameData, UUID playerId,
-                                           AwardAnyColorManaEffect effect, int amount,
-                                           boolean fromCreature, CardSubtype chosenSubtype,
-                                           Card sourceCard, UUID sourcePermanentId,
-                                           UUID recipientPlayerId, boolean fromSnowSource,
-                                           boolean fromCaveSource, Set<CardColor> sourceColors, boolean fromTreasureSource) {
-        return beginColorChoice(interactionHandlerRegistry, gameData, playerId, effect, amount,
-                fromCreature, chosenSubtype, sourceCard, sourcePermanentId, recipientPlayerId,
-                fromSnowSource, fromCaveSource, sourceColors, fromTreasureSource, false);
-    }
-
-    public static boolean beginColorChoice(InteractionHandlerRegistry interactionHandlerRegistry,
+                                           GameQueryService gameQueryService,
                                            GameData gameData, UUID playerId,
                                            AwardAnyColorManaEffect effect, int amount,
                                            boolean fromCreature, CardSubtype chosenSubtype,
@@ -168,7 +90,7 @@ public final class AnyColorManaChoiceSupport {
             return false;
         }
         ChoiceContext choiceContext =
-                choiceContext(gameData, playerId, effect, amount, fromCreature, chosenSubtype,
+                choiceContext(gameQueryService, gameData, playerId, effect, amount, fromCreature, chosenSubtype,
                         sourceCard, sourcePermanentId, sourceColors);
         if (choiceContext == null) {
             return false;
@@ -248,8 +170,8 @@ public final class AnyColorManaChoiceSupport {
             choiceContext = manaColorChoice.withSourceTracking();
         }
         List<ManaColor> allowedColors = switch (effect.restriction()) {
-            case IMPRINTED_CARD_COLORS -> imprintedCardColors(gameData, sourceCard);
-            case EXILED_CARD_COLORS -> exiledCardColors(gameData, sourcePermanentId);
+            case IMPRINTED_CARD_COLORS -> imprintedCardColors(gameQueryService, gameData, sourceCard);
+            case EXILED_CARD_COLORS -> exiledCardColors(gameQueryService, gameData, sourcePermanentId);
             case SOURCE_PERMANENT_COLORS, CREATURE_COLORS_ABILITIES -> sourcePermanentColors(sourceColors);
             case CHOSEN_COLORS -> chosenPermanentColors(gameData, sourcePermanentId);
             case COMMANDER_COLOR_IDENTITY, COMMANDER_COLOR_IDENTITY_WITH_ENTRY_COUNTERS ->
@@ -341,7 +263,8 @@ public final class AnyColorManaChoiceSupport {
         }
     }
 
-    private static ChoiceContext choiceContext(GameData gameData,
+    private static ChoiceContext choiceContext(GameQueryService gameQueryService,
+                                               GameData gameData,
                                                UUID playerId,
                                                AwardAnyColorManaEffect effect,
                                                int amount,
@@ -431,14 +354,14 @@ public final class AnyColorManaChoiceSupport {
                     new ChoiceContext.MulticoloredSpellManaColorChoice(playerId, fromCreature, amount, false);
             case ABILITIES -> ChoiceContext.ManaColorChoice.abilityOnly(playerId, amount);
             case IMPRINTED_CARD_COLORS -> {
-                List<ManaColor> colors = imprintedCardColors(gameData, sourceCard);
+                List<ManaColor> colors = imprintedCardColors(gameQueryService, gameData, sourceCard);
                 yield colors.isEmpty()
                         ? null
                         : ChoiceContext.ManaColorChoice.fixedColorCombination(
                                 playerId, fromCreature, amount, colors);
             }
             case EXILED_CARD_COLORS -> {
-                List<ManaColor> colors = exiledCardColors(gameData, sourcePermanentId);
+                List<ManaColor> colors = exiledCardColors(gameQueryService, gameData, sourcePermanentId);
                 yield colors.isEmpty()
                         ? null
                         : ChoiceContext.ManaColorChoice.fixedColorCombination(
@@ -533,28 +456,31 @@ public final class AnyColorManaChoiceSupport {
                 ? manaChoice.withAdditionalPlusOneCounter() : choice;
     }
 
-    private static List<ManaColor> imprintedCardColors(GameData gameData, Card sourceCard) {
+    private static List<ManaColor> imprintedCardColors(GameQueryService gameQueryService, GameData gameData,
+                                                       Card sourceCard) {
         if (sourceCard == null) {
             return List.of();
         }
         Card imprintedCard = gameData.getImprintedCard(sourceCard);
-        if (imprintedCard == null || gameData.findExiledCard(imprintedCard.getId()) == null
-                || imprintedCard.getColors() == null) {
+        if (imprintedCard == null || gameData.findExiledCard(imprintedCard.getId()) == null) {
             return List.of();
         }
-        return imprintedCard.getColors().stream()
-                .map(CardColor::name)
-                .map(ManaColor::valueOf)
+        Set<CardColor> colors = gameQueryService.getEffectiveCardColors(gameData, imprintedCard);
+        return ManaColor.COLORS.stream()
+                .filter(color -> colors.contains(CardColor.valueOf(color.name())))
                 .toList();
     }
 
-    private static List<ManaColor> exiledCardColors(GameData gameData, UUID sourcePermanentId) {
+    private static List<ManaColor> exiledCardColors(GameQueryService gameQueryService, GameData gameData,
+                                                    UUID sourcePermanentId) {
         if (sourcePermanentId == null) {
             return List.of();
         }
+        List<Set<CardColor>> exiledColors = gameData.getCardsExiledByPermanent(sourcePermanentId).stream()
+                .map(card -> gameQueryService.getEffectiveCardColors(gameData, card))
+                .toList();
         return ManaColor.COLORS.stream()
-                .filter(color -> gameData.getCardsExiledByPermanent(sourcePermanentId).stream()
-                        .anyMatch(card -> card.getColors().contains(CardColor.valueOf(color.name()))))
+                .filter(color -> exiledColors.stream().anyMatch(colors -> colors.contains(CardColor.valueOf(color.name()))))
                 .toList();
     }
 

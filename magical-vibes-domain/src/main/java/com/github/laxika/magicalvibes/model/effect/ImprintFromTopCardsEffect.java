@@ -11,4 +11,13 @@ public record ImprintFromTopCardsEffect(int count, boolean randomizeRest) implem
     public ImprintFromTopCardsEffect(int count) {
         this(count, false);
     }
+
+    /**
+     * Whether this is hideaway (CR 702.75a), the form that puts the rest on the bottom in a random order: the exiled
+     * card may be looked at by whoever controls the permanent, so each later controller may look too (Howltooth
+     * Hollow's 2022-04-29 ruling), unlike an imprint such as Clone Shell's.
+     */
+    public boolean hideaway() {
+        return randomizeRest;
+    }
 }

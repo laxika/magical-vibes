@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.cards.c.ChromaticSphere;
 import com.github.laxika.magicalvibes.cards.g.GalinasKnight;
 import com.github.laxika.magicalvibes.cards.g.GoblinSpy;
 import com.github.laxika.magicalvibes.cards.o.Opt;
+import com.github.laxika.magicalvibes.cards.p.PaintersServant;
 import com.github.laxika.magicalvibes.cards.s.ScorchingLava;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -23,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ManaMaze.class, GoblinSpy.class, GalinasKnight.class, ChromaticSphere.class,
-        MycosynthLattice.class, BlindSeer.class, Opt.class, ScorchingLava.class})
+        MycosynthLattice.class, BlindSeer.class, Opt.class, ScorchingLava.class, PaintersServant.class})
 class ManaMazeTest extends BaseCardTest {
 
     private void addManaMaze() {
@@ -195,6 +197,17 @@ class ManaMazeTest extends BaseCardTest {
         harness.castFromHand(player1, new Opt(), "{U}");
 
         assertThat(gd.stack).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("A color Painter's Servant gave the previous spell as it was cast still restricts after a color change")
+    void retainsColorGivenAtCastAfterSpellColorChange() {
+        harness.addToBattlefieldAndReturn(player2, new PaintersServant()).setChosenColor(CardColor.GREEN);
+        castRedSpellAndChangeItToBlue();
+
+        assertThatThrownBy(() -> harness.castFromHand(player1, new Opt(), "{U}"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
     }
 
     private void castRedSpellAndChangeItToBlue() {

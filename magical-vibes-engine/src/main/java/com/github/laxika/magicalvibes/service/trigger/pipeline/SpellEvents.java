@@ -28,6 +28,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -126,6 +127,8 @@ public class SpellEvents {
             }
         }
         gameData.recordSpellCastFromZone(castingPlayerId, castZone, spellCard);
+        gameData.recordSpellColorsWhenCast(spellCard.getId(), castFaceDown ? Set.of()
+                : gameQueryService.getEffectiveCardColors(gameData, spellCard));
         if (castZone == Zone.EXILE && !spellCard.isToken()) {
             gameData.recordCardPlayedFromExile(castingPlayerId);
         }

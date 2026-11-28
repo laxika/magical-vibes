@@ -2,11 +2,11 @@ package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GraveyardTargetOperationState;
 import com.github.laxika.magicalvibes.model.condition.SourceWasCastWithEscape;
 import com.github.laxika.magicalvibes.model.effect.AsEntersGraveyardExileEffect;
 import com.github.laxika.magicalvibes.model.effect.AsEntersOpponentExileToGraveyardEffect;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PutTwoOpponentOwnedExiledCardsIntoGraveyardEffectHandler;
 import com.github.laxika.magicalvibes.model.effect.ChoosePermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileXCreatureCardsFromGraveyardOnEnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileUpToXCreatureCardsFromGraveyardOnEnterWithCountersEffect;
@@ -748,15 +748,10 @@ public class AsEntersInteractionService {
                         .map(AsEntersOpponentExileToGraveyardEffect.class::cast)
                         .findFirst().orElse(null);
         if (opponentExileToGraveyard != null) {
-            List<Card> eligibleCards;
-            UUID entryControllerId = controllerId;
-            synchronized (gameData.exiledCards) {
-                eligibleCards = gameData.exiledCards.stream()
-                        .filter(exiled -> gameData.playerIds.contains(exiled.ownerId())
-                                && !entryControllerId.equals(exiled.ownerId()))
-                        .map(ExiledCardEntry::card)
-                        .toList();
-            }
+            List<Card> eligibleCards = PutTwoOpponentOwnedExiledCardsIntoGraveyardEffectHandler
+                    .twoCardOffer(gameData, controllerId).stream()
+                    .map(cardId -> gameData.findExiledCard(cardId).card())
+                    .toList();
             if (eligibleCards.size() >= 2) {
                 Permanent justEntered = enteringPermanent;
                 gameData.graveyardTargetOperation.asEntersOpponentExileToGraveyard =

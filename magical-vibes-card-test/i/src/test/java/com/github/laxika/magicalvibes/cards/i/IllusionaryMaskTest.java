@@ -1,13 +1,19 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.cards.b.BodyOfKnowledge;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CompassionateHealer;
 import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.k.KarlovWatchdog;
+import com.github.laxika.magicalvibes.cards.p.PhyrexianCrusader;
+import com.github.laxika.magicalvibes.cards.p.PressurePoint;
+import com.github.laxika.magicalvibes.cards.p.PunctureBlast;
 import com.github.laxika.magicalvibes.cards.s.SphereOfResistance;
 import com.github.laxika.magicalvibes.cards.u.UnableToScream;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -25,7 +31,9 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({IllusionaryMask.class, GrizzlyBears.class, CrawWurm.class,
-        LightningBolt.class, SphereOfResistance.class, UnableToScream.class, KarlovWatchdog.class})
+        LightningBolt.class, SphereOfResistance.class, UnableToScream.class, KarlovWatchdog.class,
+        PunctureBlast.class, PhyrexianCrusader.class, BodyOfKnowledge.class,
+        CompassionateHealer.class, PressurePoint.class})
 class IllusionaryMaskTest extends BaseCardTest {
 
     @Test
@@ -184,6 +192,75 @@ class IllusionaryMaskTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(masked.getCard());
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker);
         assertThat(attacker.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A masked creature dealt wither damage is turned face up and gets the -1/-1 counters")
+    void witherDamageTurnsMaskedCreatureFaceUp() {
+        Permanent masked = addMaskedCreature(player1, new CrawWurm());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new PunctureBlast()));
+        harness.addMana(player2, ManaColor.RED, 3);
+
+        harness.castAndResolveInstant(player2, 0, masked.getId());
+
+        assertThat(masked.isFaceDown()).isFalse();
+        assertThat(masked.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(masked);
+    }
+
+    @Test
+    @DisplayName("A masked blocker dealt first-strike infect damage is turned face up before it deals its own")
+    void infectCombatDamageTurnsMaskedBlockerFaceUp() {
+        Permanent masked = addMaskedCreature(player1, new CrawWurm());
+        Permanent attacker = addCreatureReady(player2, new PhyrexianCrusader());
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat(player2);
+
+        assertThat(masked.isFaceDown()).isFalse();
+        assertThat(masked.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(masked);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(attacker.getCard());
+    }
+
+    @Test
+    @DisplayName("A masked creature that can't be turned face up doesn't trigger its face-up card's damage ability")
+    void maskedCreatureThatCantTurnFaceUpDoesNotTriggerItsHiddenAbilities() {
+        Permanent masked = addMaskedCreature(player1, new BodyOfKnowledge());
+        harness.setHand(player1, List.of());
+        harness.addToBattlefield(player2, new KarlovWatchdog());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, masked.getId());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(masked.getCard());
+    }
+
+    @Test
+    @DisplayName("A masked creature that can't be turned face up doesn't trigger its face-up card's tap ability")
+    void tappedMaskedCreatureThatCantTurnFaceUpDoesNotTriggerItsHiddenAbilities() {
+        Permanent masked = addMaskedCreature(player1, new CompassionateHealer());
+        harness.addToBattlefield(player2, new KarlovWatchdog());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new PressurePoint()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+
+        harness.castAndResolveInstant(player2, 0, masked.getId());
+
+        assertThat(masked.isTapped()).isTrue();
+        assertThat(masked.isFaceDown()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
     }
 
     private Permanent addMaskedCreature(Player player, Card card) {

@@ -16,8 +16,8 @@ catalogue. The roll-out plan is `look-n-feel-redesign.md` at the repository root
   card class, so every card gets cues for free. Never call
   `GameMutationCoordinator.emit` with a `VisualCue` directly.
 - **Hidden information.** Build the source with `VisualCueService.Source.of(Permanent)` or
-  `Source.of(StackEntry)`: a face-down permanent or spell keeps its card id but carries no name
-  and no colors. `Source.of(Card)` is only for a face-up card in a public zone; `Source.none()`
+  `Source.of(StackEntry)`: a face-down permanent is sent by its permanent's id (the id its view
+  carries), a face-down spell by its card id, and neither carries a name or colors. `Source.of(Card)` is only for a face-up card in a public zone; `Source.none()`
   is for a cue without a source (a state-based death). The default audience is every player; a
   cue about a card in a hidden zone must pass an explicit audience naming only the players who
   may see it. When unsure, leave the identifying fields out.

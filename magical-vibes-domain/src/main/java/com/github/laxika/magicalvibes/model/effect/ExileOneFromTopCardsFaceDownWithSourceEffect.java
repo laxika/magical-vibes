@@ -19,4 +19,13 @@ public record ExileOneFromTopCardsFaceDownWithSourceEffect(int count, boolean ra
     public ExileOneFromTopCardsFaceDownWithSourceEffect(int count, boolean randomOrder) {
         this(count, randomOrder, null);
     }
+
+    /**
+     * Whether this is hideaway (CR 702.75a), the form that puts the rest on the bottom in a random order: each later
+     * controller of the source may look at the exiled card too (Howltooth Hollow's 2022-04-29 ruling), unlike a
+     * face-down exile such as Kayla's Music Box's.
+     */
+    public boolean hideaway() {
+        return randomOrder;
+    }
 }

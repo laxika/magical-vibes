@@ -2018,7 +2018,7 @@ public class AbilityActivationService {
                 }
             } else if (effect instanceof AwardAnyColorManaEffect anyColor) {
                 int amount = amountEvaluationService.evaluate(gameData, anyColor.amount(), context);
-                AnyColorManaChoiceSupport.beginColorChoice(interactionHandlerRegistry, gameData, playerId,
+                AnyColorManaChoiceSupport.beginColorChoice(interactionHandlerRegistry, gameQueryService, gameData, playerId,
                         anyColor, amount, false, null, card);
             }
         }

@@ -5,7 +5,10 @@ import com.github.laxika.magicalvibes.cards.g.GhostWarden;
 import com.github.laxika.magicalvibes.cards.m.MourningThrull;
 import com.github.laxika.magicalvibes.cards.m.Mortify;
 import com.github.laxika.magicalvibes.cards.o.OrzhovSignet;
+import com.github.laxika.magicalvibes.cards.p.PaintersServant;
 import com.github.laxika.magicalvibes.cards.p.PlaguedRusalka;
+import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -24,7 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({TeysaOrzhovScion.class, GhostWarden.class, PlaguedRusalka.class,
-        OrzhovSignet.class, Mortify.class, MourningThrull.class, CullingSun.class})
+        OrzhovSignet.class, Mortify.class, MourningThrull.class, CullingSun.class, PaintersServant.class, WrathOfGod.class})
 class TeysaOrzhovScionTest extends BaseCardTest {
 
     @Test
@@ -88,6 +91,20 @@ class TeysaOrzhovScionTest extends BaseCardTest {
         assertThat(spirit.getCard().getPower()).isEqualTo(1);
         assertThat(spirit.getCard().getToughness()).isEqualTo(1);
         assertThat(spirit.getCard().getKeywords()).contains(Keyword.FLYING);
+    }
+
+    @Test
+    @DisplayName("A creature that dies together with Painter's Servant counts with the color it gave")
+    void creatureDyingWithPaintersServantKeepsGivenColor() {
+        harness.addToBattlefield(player1, new TeysaOrzhovScion());
+        harness.addToBattlefield(player1, new GhostWarden());
+        harness.addToBattlefieldAndReturn(player2, new PaintersServant()).setChosenColor(CardColor.BLACK);
+
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Spirit")).hasSize(1);
     }
 
     @Test

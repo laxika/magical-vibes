@@ -248,10 +248,13 @@ public class VisualCueService {
             return new Source(card.getId(), card.getName(), card.getColors());
         }
 
-        /** A permanent; a face-down one keeps its card id but hides its name and colors. */
+        /**
+         * A permanent; a face-down one is sent by its permanent's id, the id its battlefield view carries, with no
+         * name or colors (CR 708.5).
+         */
         public static Source of(Permanent permanent) {
             return permanent.isFaceDown()
-                    ? hidden(permanent.getCard())
+                    ? new Source(permanent.getId(), null, List.of())
                     : of(permanent.getCard());
         }
 

@@ -30,6 +30,22 @@ public class PutTwoOpponentOwnedExiledCardsIntoGraveyardEffectHandler
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
         entry.setEventValue(0);
+        List<UUID> validCardIds = twoCardOffer(gameData, controllerId);
+
+        if (validCardIds.size() >= 2) {
+            interactionHandlerRegistry.begin(gameData,
+                    new PendingInteraction.TwoOpponentOwnedExiledCardsToGraveyardChoice(
+                            controllerId, validCardIds));
+        }
+    }
+
+    /**
+     * The picks offered for "put two cards your opponents own from exile into their owners' graveyards": each face-up
+     * card an opponent owns, and each face-down pile (what exiled the cards and when) as up to two indistinguishable
+     * picks, whose cards are chosen at random from the pile when the answer comes (2015-08-25 ruling). Shared by
+     * Ulamog's Nullifier and Ulamog's Despoiler.
+     */
+    public static List<UUID> twoCardOffer(GameData gameData, UUID controllerId) {
         List<UUID> validCardIds = new ArrayList<>();
         synchronized (gameData.exiledCards) {
             List<ExiledCardEntry> faceDownOffered = new ArrayList<>();
@@ -43,18 +59,11 @@ public class PutTwoOpponentOwnedExiledCardsIntoGraveyardEffectHandler
                         .filter(offered -> PutOpponentOwnedExiledCardIntoGraveyardAndGainLifeEffectHandler
                                 .sameFaceDownPile(offered, exiled))
                         .count() < 2) {
-                    // A face-down pile is offered as up to two indistinguishable picks; the cards that move
-                    // are chosen at random from the pile when the answer comes.
                     faceDownOffered.add(exiled);
                     validCardIds.add(exiled.card().getId());
                 }
             }
         }
-
-        if (validCardIds.size() >= 2) {
-            interactionHandlerRegistry.begin(gameData,
-                    new PendingInteraction.TwoOpponentOwnedExiledCardsToGraveyardChoice(
-                            controllerId, validCardIds));
-        }
+        return validCardIds;
     }
 }

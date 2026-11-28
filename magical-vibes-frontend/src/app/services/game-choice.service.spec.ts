@@ -77,4 +77,20 @@ describe('GameChoiceService graveyard index pick over a card pool', () => {
     service.chooseGraveyardCard(0);
     expect(sent[0].index).toBe(0);
   });
+
+  it('shows a pool card that is not in a graveyard as exiled', () => {
+    const bear = card('bear');
+    const hidden = { id: 'hidden', name: 'Face-down card' } as unknown as Card;
+    const game = {
+      playerIds: [ME, 'opp'], playerNames: ['Me', 'Opp'], graveyards: [[], [bear]],
+    } as unknown as Game;
+    const { service } = setup(game);
+    service.handleInteractionPrompt(prompt({
+      shape: 'GRAVEYARD_INDEX_PICK', cardIndices: [0, 1], cards: [bear, hidden], allGraveyards: true,
+    }));
+
+    const shown = service.graveyardChoiceCards;
+    expect(shown.map(e => e.card.name)).toEqual(['bear', 'Face-down card']);
+    expect(shown.map(e => e.owner)).toEqual(['Opp', 'Exile']);
+  });
 });

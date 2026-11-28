@@ -147,6 +147,18 @@ class GameDataDeepCopyTest {
     }
 
     @Test
+    @DisplayName("Deep copy keeps the colors this turn's spells had as they were cast")
+    void deepCopyKeepsSpellColorsWhenCast() {
+        UUID spellId = UUID.randomUUID();
+        gd.recordSpellColorsWhenCast(spellId, java.util.Set.of(com.github.laxika.magicalvibes.model.CardColor.RED));
+
+        GameData copy = gd.simulationCopy();
+
+        assertThat(copy.getSpellColorsWhenCast(spellId))
+                .contains(java.util.Set.of(com.github.laxika.magicalvibes.model.CardColor.RED));
+    }
+
+    @Test
     @DisplayName("Deep copy keeps the zones card copies waiting to be cast were created in, independently")
     void deepCopyKeepsCastCopyCreationZonesIndependent() {
         UUID copyId = UUID.randomUUID();

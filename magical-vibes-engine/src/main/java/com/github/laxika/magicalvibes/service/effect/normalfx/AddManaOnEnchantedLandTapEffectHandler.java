@@ -65,7 +65,7 @@ public class AddManaOnEnchantedLandTapEffectHandler implements NormalEffectHandl
             int amount = amountEvaluationService.evaluate(gameData, anyColor.amount(), amountContext);
             boolean snowSource = source != null
                     && gameQueryService.hasEffectiveSupertype(gameData, source, CardSupertype.SNOW);
-            if (AnyColorManaChoiceSupport.beginColorChoice(interactionHandlerRegistry, gameData,
+            if (AnyColorManaChoiceSupport.beginColorChoice(interactionHandlerRegistry, gameQueryService, gameData,
                     recipientId, anyColor, amount, false, null, null, null, null, snowSource)) {
                 gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                         " triggers — " + playerName + " chooses a color of mana to add."));

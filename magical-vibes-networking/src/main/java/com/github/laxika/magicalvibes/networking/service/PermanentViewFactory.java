@@ -180,8 +180,12 @@ public class PermanentViewFactory {
         );
     }
 
+    /**
+     * A face-down permanent as a player who may not look at it sees it: identified by the permanent's id, never its
+     * card's, which a reveal or a public zone may have shown before (CR 708.5).
+     */
     private CardView createFaceDownCardView(Permanent permanent) {
-        return cardViewFactory.createFaceDown(permanent.getCard().getId(), permanent.getFaceDownCardTypes(),
+        return cardViewFactory.createFaceDown(permanent.getId(), permanent.getFaceDownCardTypes(),
                 List.of(), permanent.getFaceDownPower(), permanent.getFaceDownToughness(), Set.of());
     }
 

@@ -1403,18 +1403,22 @@ public class InteractionPromptProjectionRegistry {
             return InteractionPromptMessage.graveyardIndexPick(
                     interaction.validIndices(), interaction.prompt(), false);
         }
-        if (pool.stream().allMatch(card -> inSomeGraveyard(gameData, card))) {
-            return InteractionPromptMessage.graveyardPoolIndexPick(
-                    interaction.validIndices(), cardViews(pool), interaction.prompt());
-        }
-        return InteractionPromptMessage.graveyardIndexPick(
-                interaction.validIndices(), interaction.prompt(), true);
+        return InteractionPromptMessage.graveyardPoolIndexPick(interaction.validIndices(),
+                pool.stream().map(card -> poolCardView(gameData, interaction.decidingPlayerId(), card)).toList(),
+                interaction.prompt());
     }
 
-    /** Whether {@code card} is face up in a graveyard, i.e. public: a pool may also hold hidden cards. */
-    private static boolean inSomeGraveyard(GameData gameData, Card card) {
-        return gameData.playerGraveyards.values().stream()
+    /**
+     * A pool card as {@code viewerId} may see it: a graveyard card, or an exiled one face up or that the viewer may
+     * look at, is shown; any other (a card exiled face down) is the face-down placeholder (CR 406.3).
+     */
+    private CardView poolCardView(GameData gameData, UUID viewerId, Card card) {
+        boolean inSomeGraveyard = gameData.playerGraveyards.values().stream()
                 .anyMatch(graveyard -> graveyard.stream().anyMatch(c -> c.getId().equals(card.getId())));
+        boolean exiledInView = gameData.findExiledCard(card.getId()) != null && maySee(gameData, viewerId, card);
+        return inSomeGraveyard || exiledInView
+                ? cardViewFactory.create(card)
+                : CardView.builder().id(card.getId()).name(FACE_DOWN_CARD).build();
     }
 
     private InteractionPromptMessage projectGraveyardExileCostChoice(
