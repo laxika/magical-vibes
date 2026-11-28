@@ -105,7 +105,8 @@ class ObstinateBalothTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, player2.getId());
 
-        // Player2 discards Obstinate Baloth first
+        // Player2 picks Obstinate Baloth, then Grizzly Bears; both are discarded together
+        harness.handleCardChosen(player2, 0);
         harness.handleCardChosen(player2, 0);
 
         // Obstinate Baloth should be on player2's battlefield

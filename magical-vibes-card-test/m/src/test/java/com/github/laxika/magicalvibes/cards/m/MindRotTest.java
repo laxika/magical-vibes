@@ -271,7 +271,7 @@ class MindRotTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(secondDiscard);
-        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(firstDiscard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
 
         harness.handleCardChosen(player2, 0);
 

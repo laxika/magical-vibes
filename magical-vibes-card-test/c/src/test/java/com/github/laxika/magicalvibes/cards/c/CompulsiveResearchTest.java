@@ -124,7 +124,7 @@ class CompulsiveResearchTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(4);
-        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
 
         harness.handleCardChosen(player2, 0);
 

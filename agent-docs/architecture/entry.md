@@ -29,6 +29,11 @@ Every player chooses in APNAP order before any card moves; picks are only record
 Owner: `CardChoiceHandlerService` (`discardDeferredSelections`), `PutCardsOntoBattlefieldTogetherEffectHandler`.
 Why: an early mover would leak information and split one event's triggers.
 
+### A chosen "discard N cards" discards its picks together (CR 404.3, 603.2c)
+Each pick of one discard choice (Mind Rot) leaves the hand, hidden, into `GameData.stagedDiscards`; after the last pick (or a decline) the picks are discarded in one rules event batch.
+Owner: `CardChoiceHandlerService` (`handleDiscardCardChosen`, `discardChosenCards`).
+Why: a card discarded per pick is its own batch, so the owner couldn't arrange the cards and "one or more" abilities would trigger per card.
+
 ### An instant or sorcery card enters only face down (CR 400.4a, 708.3)
 A put or return that isn't face down asks `GameQueryService.cantEnterFaceUp` before the card leaves its zone (the entry batch and `GraveyardReturnSupport` do): it stays there.
 Owner: `GameQueryService`, `BattlefieldEntryBatchSupport`, `GraveyardReturnSupport`.

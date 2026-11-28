@@ -1240,6 +1240,13 @@ public class GameData {
     /** Discard picks recorded for {@link #deferredDiscardChooserId}, in the order they were chosen. */
     public final List<EachPlayerRummageState.SelectedDiscard> deferredDiscardSelections = new ArrayList<>();
     /**
+     * The cards a player has picked so far for one "discard N cards" choice, in the order picked. They leave the hand
+     * when picked so later picks index the remaining cards, but stay hidden and are discarded together after the last
+     * pick, as one rules event batch: one instruction discards them at the same time, so their owner may arrange them
+     * in the graveyard (CR 404.3) and "one or more" abilities see one event (CR 603.2c).
+     */
+    public final List<StagedDiscard> stagedDiscards = new ArrayList<>();
+    /**
      * Cards chosen so far in an each-player exile from hand (Mind Swords). They leave the hand when
      * chosen so later picks index the remaining cards, but stay hidden and are exiled together once
      * the last player has chosen (CR 101.4).
@@ -10081,6 +10088,7 @@ public class GameData {
         copy.eachPlayerMayExileGraveyardCards.remaining.addAll(this.eachPlayerMayExileGraveyardCards.remaining);
         copy.deferredDiscardChooserId = this.deferredDiscardChooserId;
         copy.deferredDiscardSelections.addAll(this.deferredDiscardSelections);
+        copy.stagedDiscards.addAll(this.stagedDiscards);
         copy.stagedHandExiles.addAll(this.stagedHandExiles);
         copy.eachPlayerMayDiscardOneThenApplyEffects.active =
                 this.eachPlayerMayDiscardOneThenApplyEffects.active;

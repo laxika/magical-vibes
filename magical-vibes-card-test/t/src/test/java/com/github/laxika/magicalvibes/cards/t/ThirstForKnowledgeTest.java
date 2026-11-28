@@ -38,7 +38,7 @@ class ThirstForKnowledgeTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
 
         harness.handleCardChosen(player1, 1);
-        assertThat(gd.playerGraveyards.get(player1.getId())).contains(artifact);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(artifact);
         harness.handleCardChosen(player1, -1);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
@@ -145,7 +145,7 @@ class ThirstForKnowledgeTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(4).contains(artifact);
-        assertThat(gd.playerGraveyards.get(player1.getId())).contains(nonArtifact).doesNotContain(artifact);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(nonArtifact, artifact);
 
         harness.handleCardChosen(player1, 0);
 

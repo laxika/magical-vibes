@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.FearOfChange;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.m.MindRot;
 import com.github.laxika.magicalvibes.cards.n.Necratog;
 import com.github.laxika.magicalvibes.cards.s.SoldeviDigger;
 import com.github.laxika.magicalvibes.cards.t.TomeScour;
@@ -24,7 +25,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({WrathOfGod.class, TomeScour.class, GrizzlyBears.class, HillGiant.class, Forest.class, Necratog.class,
-        SoldeviDigger.class, FearOfChange.class})
+        SoldeviDigger.class, FearOfChange.class, MindRot.class})
 @DisplayName("Arranging cards put into a graveyard at the same time (CR 404.3)")
 class GraveyardArrangementTest extends BaseCardTest {
 
@@ -76,6 +77,27 @@ class GraveyardArrangementTest extends BaseCardTest {
             assertThat(arrangementPrompt()).isNull();
             assertThat(gd.playerGraveyards.get(player1.getId()))
                     .filteredOn(card -> card.getName().equals("Grizzly Bears")).hasSize(2);
+        }
+
+        @Test
+        @DisplayName("The owner arranges the cards they chose to discard together")
+        void ownerArrangesChosenDiscards() {
+            Card bears = new GrizzlyBears();
+            Card giant = new HillGiant();
+            harness.setHand(player2, List.of(bears, giant));
+            harness.setLibrary(player2, new ArrayList<>(List.of(new Necratog())));
+            harness.setHand(player1, List.of(new MindRot()));
+            harness.addMana(player1, ManaColor.BLACK, 3);
+            harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+            harness.handleCardChosen(player2, 0);
+            assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(bears);
+            harness.handleCardChosen(player2, 0);
+
+            PendingInteraction.ColorChoice prompt = arrangementPrompt();
+            assertThat(prompt).isNotNull();
+            assertThat(prompt.playerId()).isEqualTo(player2.getId());
+            assertThat(prompt.options()).hasSize(2);
         }
 
         @Test

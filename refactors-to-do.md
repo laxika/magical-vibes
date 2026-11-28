@@ -1264,7 +1264,7 @@ run's Outcome and the lines they found (N1 to N100) are in `rules-fixes.md`; its
 run commits are `git log --oneline 0e1a0e686aa..75990c830da`. What the effect cleanup and the runs built for card and engine
 authors is in `agent-docs/architecture/effect-building-blocks.md`; `scripts/effect-audit-ledger.csv` keeps every class's verdict.
 
-**Problem.** 16 lines are left: what the runs didn't fix or drop. Each starts with its ID: a
+**Problem.** 15 lines are left: what the runs didn't fix or drop. Each starts with its ID: a
 letter and number refers to entry 18 at commit `0e1a0e686aa` (print them with the awk command under "Line IDs" in
 `git show 75990c830da:rules-fixes.md`), an N number to that file's `N<n>` line. The run named after the ID is the one whose Outcome
 left it. The owner answered every entry 17 question that held a line here (2026-11-28); the answers that change play are
@@ -1290,11 +1290,6 @@ rulings with the Scryfall MCP and every CR number with get_rule. A line that tur
 Don't commit.
 ```
 
-
-
-#### Simultaneity and APNAP (CR 101.4, 603.10a, 608.2e) (1)
-
-- G1 (graveyard arrangement, 2026-11-28): a chosen "discard N cards" (Mind Rot: `DiscardEffect` through `CardChoiceHandlerService.handleDiscardCardChosen`) discards each card as it is picked, each its own rules event batch, though the cards are discarded together. So a "whenever you discard one or more cards" ability sees one event per card, and `GraveyardArrangementService` can't offer to arrange them. Each pick should be recorded and the cards discarded together once the last is picked, as the each-opponent rummage already does (`targetOpponentsDiscardThenDraw`). A mill, a wrath and every other one-effect move are one batch already. Sure of the code.
 
 
 #### Wrong targets and choices (1)

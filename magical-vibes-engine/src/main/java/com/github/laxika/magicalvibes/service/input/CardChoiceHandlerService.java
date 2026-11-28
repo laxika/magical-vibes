@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.PlaguecrafterState;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.StagedDiscard;
 import com.github.laxika.magicalvibes.model.StagedHandExile;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.StepOutcome;
@@ -794,6 +795,7 @@ public class CardChoiceHandlerService {
                         gameData, followUp.enteringControllerId(), followUp.enteringPermanent(), false);
                 resumeRemainingEffectsAfterDiscard(gameData);
             } else {
+                discardChosenCards(gameData, player);
                 finishDiscardChoice(gameData, player, player.getId(), followUp, null);
             }
             return;
@@ -844,59 +846,11 @@ public class CardChoiceHandlerService {
             finishDiscardChoice(gameData, player, playerId, discardChoice.followUp(), card);
             return;
         }
+        // The card leaves the hand, hidden, until the last pick; the picks are then discarded together.
         hand.remove(cardIndex);
-        DiscardFollowUp followUp = discardChoice.followUp();
-
-        boolean replacedByBattlefield = false;
-        boolean putOnLibraryHidden = false;
-        if (hasEnterBattlefieldOnDiscardEffect(card) && gameData.discardCausedByOpponent) {
-            // Replacement effect: put onto battlefield instead of graveyard (e.g. Obstinate Baloth)
-            Permanent permanent = new Permanent(card);
-            battlefieldEntryService.putPermanentOntoBattlefieldFromOpponentDiscard(gameData, playerId, permanent);
-            gameLogService.append(gameData, GameLog.textCardText(
-                    player.getUsername() + " discards ", card, " — it enters the battlefield instead."));
-            log.info("Game {} - {} discards {} — replacement effect puts it onto the battlefield", gameData.id, player.getUsername(), card.getName());
-            replacedByBattlefield = true;
-        } else {
-            boolean enteredGraveyard = graveyardService.discardCard(gameData, playerId, card,
-                    discardToLibraryDecision == null || discardToLibraryDecision);
-            List<Card> library = gameData.playerDecks.get(playerId);
-            boolean putOnLibrary = !enteredGraveyard && library != null && !library.isEmpty()
-                    && library.getFirst() == card;
-            putOnLibraryHidden = putOnLibrary;
-            // A card put on top of the library instead of into the graveyard stays hidden.
-            gameLogService.append(gameData, putOnLibrary
-                    ? GameLog.text(player.getUsername() + " discards a card.")
-                    : GameLog.playerDiscards(player.getUsername(), card));
-            log.info("Game {} - {} discards {}", gameData.id, player.getUsername(), card.getName());
-        }
-
-        followUp = followUp.withDiscardedCard(card.getId());
-
-        gameData.discarded(playerId, card);
-        if (putOnLibraryHidden) {
-            // CR 701.9c: a card put into a hidden zone without being revealed has undefined mana value.
-            gameData.lastDiscardedCardManaValue = 0;
-        }
-
-        if (replacedByBattlefield && card.hasType(CardType.CREATURE)) {
-            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, playerId, card, null, false);
-        }
-
-        // Check if a spell should return to hand based on the discarded card type (e.g. Psychic Miasma)
-        checkPendingReturnToHandOnDiscard(gameData, card);
-        checkPendingGainLifeOnDiscardType(gameData, card);
-
-        checkPendingConniveOnDiscard(gameData, card);
-
-        if (followUp.enteringPermanent() != null) {
-            gameData.interaction.clearAwaitingInput();
-            battlefieldEntryService.completeDiscardCardToEnter(
-                    gameData, followUp.enteringControllerId(), followUp.enteringPermanent(), true);
-            if (gameData.interaction.isAwaitingInput()) {
-                return;
-            }
-        }
+        gameData.stagedDiscards.add(new StagedDiscard(
+                playerId, card, discardToLibraryDecision == null || discardToLibraryDecision));
+        DiscardFollowUp followUp = discardChoice.followUp().withDiscardedCard(card.getId());
 
         int remainingDiscards = Math.max(discardChoice.remainingCount() - 1, 0);
         boolean matchesStopCondition = discardChoice.stopAfterDiscardingPredicate() != null
@@ -922,9 +876,85 @@ public class CardChoiceHandlerService {
                         discardChoice.prompt(), remainingDiscards, followUp,
                         discardChoice.stopAfterDiscardingType(), mayDecline);
             }
-        } else {
-            finishDiscardChoice(gameData, player, playerId, followUp, card);
+            return;
         }
+
+        discardChosenCards(gameData, player);
+        if (followUp.enteringPermanent() != null) {
+            gameData.interaction.clearAwaitingInput();
+            battlefieldEntryService.completeDiscardCardToEnter(
+                    gameData, followUp.enteringControllerId(), followUp.enteringPermanent(), true);
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
+        }
+        finishDiscardChoice(gameData, player, playerId, followUp, card);
+    }
+
+    /**
+     * Discards the cards {@code player} picked for one "discard N cards" choice
+     * ({@link GameData#stagedDiscards}) together, as one rules event batch: one instruction discards them
+     * at the same time, so their owner may arrange them in the graveyard (CR 404.3) and a "one or more" ability
+     * triggers once (CR 603.2c). A card a replacement puts on top of its owner's library stays hidden, so the log
+     * doesn't name it and its mana value is undefined (CR 701.9c).
+     */
+    private void discardChosenCards(GameData gameData, Player player) {
+        List<StagedDiscard> staged = List.copyOf(gameData.stagedDiscards);
+        gameData.stagedDiscards.clear();
+        if (staged.isEmpty()) {
+            return;
+        }
+        gameData.rulesEvents.beginBatch();
+        try {
+            for (StagedDiscard pick : staged) {
+                discardChosenCard(gameData, player, pick);
+            }
+        } finally {
+            gameData.rulesEvents.endBatch();
+        }
+    }
+
+    private void discardChosenCard(GameData gameData, Player player, StagedDiscard pick) {
+        UUID playerId = pick.playerId();
+        Card card = pick.card();
+
+        boolean replacedByBattlefield = false;
+        boolean putOnLibraryHidden = false;
+        if (hasEnterBattlefieldOnDiscardEffect(card) && gameData.discardCausedByOpponent) {
+            // Replacement effect: put onto battlefield instead of graveyard (e.g. Obstinate Baloth)
+            Permanent permanent = new Permanent(card);
+            battlefieldEntryService.putPermanentOntoBattlefieldFromOpponentDiscard(gameData, playerId, permanent);
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " discards ", card, " — it enters the battlefield instead."));
+            log.info("Game {} - {} discards {} — replacement effect puts it onto the battlefield", gameData.id, player.getUsername(), card.getName());
+            replacedByBattlefield = true;
+        } else {
+            boolean enteredGraveyard = graveyardService.discardCard(gameData, playerId, card,
+                    pick.applyDiscardToLibraryReplacement());
+            List<Card> library = gameData.playerDecks.get(playerId);
+            boolean putOnLibrary = !enteredGraveyard && library != null && !library.isEmpty()
+                    && library.getFirst() == card;
+            putOnLibraryHidden = putOnLibrary;
+            gameLogService.append(gameData, putOnLibrary
+                    ? GameLog.text(player.getUsername() + " discards a card.")
+                    : GameLog.playerDiscards(player.getUsername(), card));
+            log.info("Game {} - {} discards {}", gameData.id, player.getUsername(), card.getName());
+        }
+
+        gameData.discarded(playerId, card);
+        if (putOnLibraryHidden) {
+            gameData.lastDiscardedCardManaValue = 0;
+        }
+
+        if (replacedByBattlefield && card.hasType(CardType.CREATURE)) {
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, playerId, card, null, false);
+        }
+
+        // Check if a spell should return to hand based on the discarded card type (e.g. Psychic Miasma)
+        checkPendingReturnToHandOnDiscard(gameData, card);
+        checkPendingGainLifeOnDiscardType(gameData, card);
+
+        checkPendingConniveOnDiscard(gameData, card);
     }
 
     /** Answers the choice to put one of a set of hand cards into its owner's graveyard. */
