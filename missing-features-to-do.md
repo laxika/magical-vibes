@@ -518,6 +518,42 @@ Drake, Treasure Hunter). Show me any protocol change first. Run only the touched
 
 ---
 
+## 86. Ability borrowers in a dependency loop aren't applied in timestamp order
+
+**Status:** open · **Found:** 2026-11-27, rules-fixes run LY-5 (refactors-to-do.md entry 18, line L11); moved here 2026-11-28 by
+the owner
+
+**Failing tests:**
+- None yet. Add: an Experiment Kraj under each player, each with a +1/+1 counter, so each has the other's activated abilities;
+  neither has a second copy of its own "{T}: Put a +1/+1 counter on target creature." ability. Then a loop of three borrowers
+  (Experiment Kraj with Marvin, Murderous Mimic or Robaran Mercenaries), where none misses a lender's borrowed abilities.
+
+**What the rules require.** Experiment Kraj "has all activated abilities of each other creature with a +1/+1 counter on it", so
+two of them each borrow from the other: each borrowing effect depends on the other, a dependency loop. CR 613.8b: the effects
+in a dependency loop are applied in timestamp order, the dependency rule ignored. The engine
+(`GainActivatedAbilitiesOfOwnCreaturesEffect`, every player's creatures for Kraj) approximates it by the order it assembles the
+borrowers in: the borrower being assembled supplies only its card's own abilities, so an earlier lender in the loop comes out
+right, but a later one supplies its borrowed abilities too. By the code, of two Experiment Krajs the earlier gets a second copy
+of its own ability, and a three-borrower cycle can miss a lender's borrowed abilities. Rare: it needs Kraj (legendary, so one
+per player) or another borrower lending to and borrowing from each other.
+
+**Why it's large.** The layered pass needs every borrower's lender graph to find the loops, then applies each loop's borrowing
+in timestamp order (CR 613.8b) and the rest in dependency order. Borrowed abilities feed the linked-ability and exile links that
+LY-5 built (CR 607.2a), and the layered board fingerprint has to stay right for cached borrows.
+
+**Prompt to start it:**
+
+```
+Do missing-features-to-do.md entry 86: apply ability borrowers that form a dependency loop in timestamp order (CR 613.8b).
+Read AGENTS.md, agent-docs/ARCHITECTURE.md and the layer system topic file first, then GainActivatedAbilitiesOfOwnCreaturesEffect,
+how the layered pass assembles borrowed abilities, and the LY-5 Outcome in rules-fixes.md (git show 75990c830da:rules-fixes.md).
+Verify CR 613.8 and 613.8b with get_rule and Experiment Kraj's rulings with get_rulings. Start with failing tests (two Experiment
+Krajs, one per player; a three-borrower loop), then propose the lender graph and loop handling and show me before changing the
+layered pass. Run only the touched test classes by FQCN. Don't commit.
+```
+
+---
+
 <!--
 Template — copy everything between the lines, give it the next number, and append above.
 

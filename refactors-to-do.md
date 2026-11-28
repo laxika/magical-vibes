@@ -1264,7 +1264,7 @@ run's Outcome and the lines they found (N1 to N100) are in `rules-fixes.md`; its
 run commits are `git log --oneline 0e1a0e686aa..75990c830da`. What the effect cleanup and the runs built for card and engine
 authors is in `agent-docs/architecture/effect-building-blocks.md`; `scripts/effect-audit-ledger.csv` keeps every class's verdict.
 
-**Problem.** 18 lines are left: what the runs didn't fix or drop. Each starts with its ID: a
+**Problem.** 17 lines are left: what the runs didn't fix or drop. Each starts with its ID: a
 letter and number refers to entry 18 at commit `0e1a0e686aa` (print them with the awk command under "Line IDs" in
 `git show 75990c830da:rules-fixes.md`), an N number to that file's `N<n>` line. The run named after the ID is the one whose Outcome
 left it. The owner answered every entry 17 question that held a line here (2026-11-28); the answers that change play are
@@ -1274,7 +1274,7 @@ N5, O86, O90 and O91 to `missing-features-to-do.md` entry 83, N80 and O47 to its
 N7 to entries 20 to 23 here. The latent lines (the owner, 2026-11-28): F2, N99, O60 and O76 fixed, O71 dropped (no
 printed or implemented card has a mana ability that works from the graveyard, exile or the command zone), T5 moved to entry 24;
 H1 dropped (no card reveals a card in its library, reorders that library and then reads the card again, CR
-701.20d), and L11 is raised with the owner once every other line here is fixed.
+701.20d), and L11 moved to `missing-features-to-do.md` entry 86.
 
 **Why it matters.** Rules accuracy first (AGENTS.md); each line is behaviour the engine gets wrong or can't show.
 
@@ -1307,10 +1307,9 @@ Don't commit.
 - P12 (FC-1): the free casts ask for their cost-increase mana before their targets are chosen (the queue also asks before its modes). Since FC-1, a spell with no legal mode or target isn't asked. A mana ability activated in that window that removes the only target leaves the mana in the pool and the card uncast. With the target chosen first, the spell would be cast (CR 601.2c, 601.2g). A fix moves `FreeCastCostIncreaseSupport.payOrAsk` after the target prompts of every `PausedCast` flow. Sure of the code.
 - P25 (0): Madame Null, Power Broker asks "pay 0 life" for a creature with 0 power. That is HEAD's behaviour, pinned in U8 by `MadameNullPowerBrokerTest.zeroPowerAsksForZeroLife`. The owner decided (2026-11-28) that it doesn't ask, as orchestrator decision U3b Q4 said; no rule needs the 0-life prompt. The pinning test is rewritten. Sure of the code.
 
-#### Layers and copy values (2)
+#### Layers and copy values (1)
 
 - L2 (0): Esix's copies keep none of the replaced copy's instructions (Faerie Artisans), and Dance of Many waits for it. The owner decided (2026-11-28) that the substitute tokens of Esix, Mirrormind Crown and Moonlit Meditation keep all three kinds of the creating effect's instructions: tapped and attacking, enters-with, and exiled later (Splinter Twin, Nacatl War-Pride, Furnace-Blessed Conqueror, Mirage Phalanx). Today they aren't offered. Sure of the code.
-- L11 (LY-5), Owner: raise it with the owner once every other line of entry 18 is fixed (the owner, 2026-11-28). Ability borrowers in a dependency loop are approximated by assembly order (CR 613.8b). A borrower being assembled supplies only its card's abilities, so an earlier lender in the loop is right. A later one supplies its own borrowed abilities too: by the code, of two Experiment Krajs the earlier gets a second copy of its own ability (no test). A three-borrower cycle can miss a lender's borrowed abilities. A fix needs every borrower's lender graph to find the loop, then applies it in timestamp order. Sure of the code, rare.
 
 #### Logs and hidden information (1)
 
