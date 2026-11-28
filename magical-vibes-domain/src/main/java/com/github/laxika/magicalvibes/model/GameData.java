@@ -743,6 +743,13 @@ public class GameData {
      * attached (CR 704.5m): the only later stay "return this card" finds after the enchanted permanent left (CR 400.7f).
      */
     public final Map<UUID, Long> unattachedAuraGraveyardStays = new ConcurrentHashMap<>();
+    /**
+     * The cards each rules event batch put into one player's graveyard together, two or more at a time, that the
+     * owner hasn't been offered to arrange yet (CR 404.3). Recorded as the batch closes; the engine offers them,
+     * oldest first, before a player receives priority, and only where the order can matter.
+     */
+    public final List<SimultaneousGraveyardArrival> simultaneousGraveyardArrivals =
+            Collections.synchronizedList(new ArrayList<>());
     /** Number of times each card has entered a hand through {@link #addCardToHand}. A card that returns to hand is a new object (CR 400.7), so a delayed effect that refers to an earlier hand entry checks this version. */
     public final Map<UUID, Long> handEntryVersions = new ConcurrentHashMap<>();
     private long graveyardEntryVersion;
@@ -8210,10 +8217,30 @@ public class GameData {
     }
 
     private void rulesEventBatchClosed(RulesEventBatch batch) {
+        recordSimultaneousGraveyardArrivals(batch);
         BiConsumer<GameData, RulesEventBatch> listener = rulesEventListener;
         if (listener != null) {
             listener.accept(this, batch);
         }
+    }
+
+    /**
+     * Records the cards {@code batch} put into one player's graveyard together, when two or more went into the same
+     * graveyard (CR 404.3): those are the cards that player may arrange.
+     */
+    private void recordSimultaneousGraveyardArrivals(RulesEventBatch batch) {
+        Map<UUID, List<UUID>> byOwner = new LinkedHashMap<>();
+        for (com.github.laxika.magicalvibes.model.rules.RulesEvent event : batch.events()) {
+            if (event instanceof com.github.laxika.magicalvibes.model.rules.ZoneChangeEvent move
+                    && move.to() == Zone.GRAVEYARD && move.ownerId() != null && move.card() != null) {
+                byOwner.computeIfAbsent(move.ownerId(), owner -> new ArrayList<>()).add(move.card().getId());
+            }
+        }
+        byOwner.forEach((ownerId, cardIds) -> {
+            if (cardIds.size() >= 2) {
+                simultaneousGraveyardArrivals.add(new SimultaneousGraveyardArrival(ownerId, cardIds));
+            }
+        });
     }
 
     /**
@@ -10227,6 +10254,7 @@ public class GameData {
         copy.graveyardEntryVersions.putAll(this.graveyardEntryVersions);
         copy.exileEntryVersions.putAll(this.exileEntryVersions);
         copy.unattachedAuraGraveyardStays.putAll(this.unattachedAuraGraveyardStays);
+        copy.simultaneousGraveyardArrivals.addAll(this.simultaneousGraveyardArrivals);
         copy.handEntryVersions.putAll(this.handEntryVersions);
         copy.combatDamageFirstStrikeStepComplete = this.combatDamageFirstStrikeStepComplete;
         copy.combatDamageFirstestStrikeStepComplete = this.combatDamageFirstestStrikeStepComplete;

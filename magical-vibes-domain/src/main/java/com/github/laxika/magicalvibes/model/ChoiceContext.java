@@ -390,6 +390,17 @@ public sealed interface ChoiceContext {
         }
     }
 
+    /**
+     * Arranges cards put into {@code ownerId}'s graveyard at the same time (CR 404.3), from the bottom upward: each
+     * answer picks the next card to put in, which ends up below the cards picked after it.
+     */
+    record GraveyardArrangement(UUID ownerId, List<UUID> remainingIds, List<UUID> orderedIds) implements ChoiceContext {
+        public GraveyardArrangement {
+            remainingIds = List.copyOf(remainingIds);
+            orderedIds = List.copyOf(orderedIds);
+        }
+    }
+
     /** Chooses the result of conflicting tapped and untapped entry replacements. */
     record TappedEntryStateChoice(BattlefieldEntryRequest request) implements ChoiceContext {
         public TappedEntryStateChoice {

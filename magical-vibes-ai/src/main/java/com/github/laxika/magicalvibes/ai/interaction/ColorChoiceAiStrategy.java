@@ -73,6 +73,14 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
             return;
         }
 
+        if (context instanceof ChoiceContext.GraveyardArrangement) {
+            // The AI keeps the order the engine put the cards in.
+            String chosen = interaction.options().getFirst();
+            log.info("AI: Putting \"{}\" into its graveyard next in game {}", chosen, gameId);
+            answerWith(ctx, interaction, chosen);
+            return;
+        }
+
         if (context instanceof ChoiceContext.KeywordGrantChoice kgc) {
             String chosenKeyword = kgc.options().getFirst().name();
             log.info("AI: Choosing keyword {} in game {}", chosenKeyword, gameId);

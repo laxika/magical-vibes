@@ -5,5 +5,5 @@ package com.github.laxika.magicalvibes.model.effect;
  * sorcery, paying its mana cost. A spell cast this way is exiled instead of being put into a
  * graveyard. A floating effect on the controller that ends at the cleanup step. Used by Bösium Strip.
  */
-public record MayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurnEffect() implements CardEffect {
+public record MayCastTopInstantOrSorceryFromGraveyardUntilEndOfTurnEffect() implements CardEffect, GraveyardOrderReader {
 }

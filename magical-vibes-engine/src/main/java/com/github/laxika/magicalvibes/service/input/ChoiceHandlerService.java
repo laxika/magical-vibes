@@ -180,6 +180,8 @@ public class ChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.CardRevealService cardRevealService;
     private final PlayerInputService playerInputService;
     private final InputCompletionService inputCompletionService;
+    private final com.github.laxika.magicalvibes.service.graveyard.GraveyardArrangementService
+            graveyardArrangementService;
     private final TurnProgressionService turnProgressionService;
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
@@ -581,6 +583,14 @@ public class ChoiceHandlerService {
                 }
             }
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (colorChoice.context() instanceof ChoiceContext.GraveyardArrangement arrangement) {
+            if (graveyardArrangementService.answer(gameData, player.getId(), arrangement,
+                    colorChoice.options().indexOf(colorName))) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
             return;
         }
 

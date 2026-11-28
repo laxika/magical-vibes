@@ -1180,7 +1180,7 @@ The effect cleanup's plan and queues were deleted when it closed (2026-11-26). T
 `agent-docs/architecture/effect-building-blocks.md`; `scripts/effect-audit-ledger.csv` keeps every class's verdict and
 `python3 -I scripts/effect-inventory.py` the inventory.
 
-57 items: every open question of the owner's and every orchestrator decision logged for the owner to review (the date is
+56 items: every open question of the owner's and every orchestrator decision logged for the owner to review (the date is
 the run's). An answer that changes play becomes a defect run (entry 18); one that confirms a decision just removes its line.
 
 The full text of each item is in the cleanup plan's last version, `git show 3b0d60d42d4:effect-cleanup-refactor.md`: the open
@@ -1196,7 +1196,6 @@ questions under "The owner's open questions", the decisions under "The owner's d
 - 2026-11-26, U7 Q3: a client chooser for an "[A] or [B]" additional cast cost (`AnyOfCost` as `addCastingCost`; CR 601.2b) is a missing feature: Bone Shards, Demand Answers, Minion Missile and Souls of the Lost can't be cast with their discard from the UI.
 - 2026-11-25, U3b Q5: the special-action delayed payments (Quenchable Fire, the Asps, Sabertooth Cobra; CR 116.2c) raise no tax-paid event (matters only with Tax Taker).
 - 2026-11-27, CT-1 (entry 18, line O65): Perplex's "unless its controller discards their hand": the payer discards as a cost (CR 118.12a). Is that discard caused by a spell an opponent controls, so the payer's Obstinate Baloth or Wilt-Leaf Liege enters the battlefield? Their rulings speak of "a spell or ability an opponent controls causes you to discard" but not of a ransom. Today the payer is named as the cause, so they don't.
-- 2026-11-27, EB-3 (entry 18, line S19): CR 404.3 lets the owner arrange two or more cards put into their graveyard at once. The engine asks it only for the graveyard and library exchange; mill, discard, destroy-all and `PutExiledCardsIntoOwnersGraveyardEffect` (Covenant of Minds' three revealed cards) keep their own order unasked. Should every multi-card move into one graveyard ask (a prompt in many places, and the AI answers it), or is the unasked order accepted? Dakra Mystic puts at most one card into each graveyard, so it needs no prompt.
 - 2026-11-27, TK-1 (entry 18, lines S16 and L5): Asinine Antics and Twisted Sewer-Witch create one Role "attached to" each creature; when a replacement creates fewer Roles than creatures (the caster's Halving Season), which creatures get them? The engine spreads the Roles over the creatures in battlefield order (`AttachCreatedTokensToHostsEffectHandler`: Role i goes to creature i × creatures / Roles); neither CR 616.1 nor the Asinine Antics rulings say whether the creating player chooses.
 - 2026-11-27, DR-1 (entry 18, line E6): "draw N cards, then discard one of them" (Casting of Bones, Krovikan Sorcerer, Soldevi Sage: `DiscardEffect`'s `onlyCardsDrawnThisResolution`) and `MayCastAnySpellFromHandWithoutPayingManaCostEffect.drawnCardsOnly` now offer every card the instruction drew, a replacement's draws included (a doubled draw used to offer none). That follows the count rulings (The Royal Scions, Ancient Excavation) and CR 614.6; only the singular "that card" readers (Pact Weapon, Jace, Mirror Mage) leave a replaced draw out (Pact Weapon's ruling). Is "them" right that way?
 - 2026-11-27, PL-1 (entry 18, line S5): Gilded Ambusher "deals damage to them equal to the total mana value of the cards exiled
@@ -1305,7 +1304,7 @@ Don't commit.
 #### Simultaneity and APNAP (CR 101.4, 603.10a, 608.2e) (2)
 
 - S12 (0): Tribute's "paid" check is `placed >= N`, so a halved tribute (an opponent's Halving Season) reads as unpaid. The owner decided (2026-11-28) that it counts as paid: the chosen opponent chose to put the counters on it (CR 702.104a), and a replacement that changes how many are placed doesn't undo that choice. The "if tribute wasn't paid" check should read the opponent's choice, not the count placed. Sure of the code.
-- S19 (EB-3), Owner: `PutExiledCardsIntoOwnersGraveyardEffect` (Covenant of Minds) gives no order prompt for the cards it puts into one graveyard (CR 404.3). This is an engine-wide policy: entry 17's EB-3 question asks whether every multi-card move into one graveyard should ask. Dakra Mystic's part was no defect. Sure, low.
+- G1 (graveyard arrangement, 2026-11-28): a chosen "discard N cards" (Mind Rot: `DiscardEffect` through `CardChoiceHandlerService.handleDiscardCardChosen`) discards each card as it is picked, each its own rules event batch, though the cards are discarded together. So a "whenever you discard one or more cards" ability sees one event per card, and `GraveyardArrangementService` can't offer to arrange them. Each pick should be recorded and the cards discarded together once the last is picked, as the each-opponent rummage already does (`targetOpponentsDiscardThenDraw`). A mill, a wrath and every other one-effect move are one batch already. Sure of the code.
 
 #### Missing events or records (searches, coin flips, seeks, shuffles, counters, draws) (1)
 

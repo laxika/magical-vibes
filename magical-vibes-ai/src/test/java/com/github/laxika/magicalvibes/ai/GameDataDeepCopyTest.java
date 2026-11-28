@@ -132,6 +132,20 @@ class GameDataDeepCopyTest {
     }
 
     @Test
+    @DisplayName("Deep copy keeps the cards waiting to be arranged in a graveyard, independently")
+    void deepCopyKeepsSimultaneousGraveyardArrivals() {
+        var arrival = new com.github.laxika.magicalvibes.model.SimultaneousGraveyardArrival(
+                player1.getId(), List.of(UUID.randomUUID(), UUID.randomUUID()));
+        gd.simultaneousGraveyardArrivals.add(arrival);
+
+        GameData copy = gd.simulationCopy();
+        copy.simultaneousGraveyardArrivals.clear();
+
+        assertThat(gd.simultaneousGraveyardArrivals).containsExactly(arrival);
+        assertThat(gd.simulationCopy().simultaneousGraveyardArrivals).containsExactly(arrival);
+    }
+
+    @Test
     @DisplayName("Deep copy keeps the Notion Thieves already applied to the draw being resolved, independently")
     void deepCopyKeepsAppliedExtraDrawRedirects() {
         UUID thiefCardId = UUID.randomUUID();

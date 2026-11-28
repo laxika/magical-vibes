@@ -99,6 +99,8 @@ public class TriggeredAbilityQueueService {
     private final AmountEvaluationService amountEvaluationService;
     @Lazy private final ETBTokenTargetService etbTokenTargetService;
     @Lazy private final GraveyardTargetingService graveyardTargetingService;
+    @Lazy private final com.github.laxika.magicalvibes.service.graveyard.GraveyardArrangementService
+            graveyardArrangementService;
 
     private com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService
             triggeredAbilityStackService;
@@ -777,9 +779,10 @@ public class TriggeredAbilityQueueService {
      *
      * <p>First it drains the game's closed rules event batches ({@link GameData#drainRulesEvents}). The trigger
      * pipeline matched each of them as it closed; draining releases them and shows them to a test's shadow
-     * recorder.
+     * recorder. Then each player may arrange the cards put into their graveyard at the same time, where the order
+     * can matter (CR 404.3, {@code GraveyardArrangementService}), before any trigger is ordered.
      *
-     * @return true when an ordering prompt was opened
+     * @return true when an arrangement or ordering prompt was opened
      */
     public boolean beginTriggerOrder(GameData gameData) {
         if (gameData.interaction.isAwaitingInput() || !gameData.pendingInteractions.isEmpty()
@@ -787,6 +790,9 @@ public class TriggeredAbilityQueueService {
             return false;
         }
         gameData.drainRulesEvents();
+        if (graveyardArrangementService.beginNextArrangement(gameData)) {
+            return true;
+        }
         putNewTriggersInApnapOrder(gameData);
         for (UUID playerId : apnapOrder(gameData)) {
             List<StackEntry> batch = gameData.stack.stream()

@@ -6,7 +6,7 @@ import java.util.Objects;
 
 /** Conjures a random implemented creature card with the evaluated mana value onto the battlefield. */
 public record ConjureRandomCreatureWithManaValueEffect(DynamicAmount manaValue, boolean temporary)
-        implements CardEffect {
+        implements CardEffect, CatalogCardGenerator {
 
     /** Uses the temporary, hasty form that is exiled at the next end step. */
     public ConjureRandomCreatureWithManaValueEffect(DynamicAmount manaValue) {

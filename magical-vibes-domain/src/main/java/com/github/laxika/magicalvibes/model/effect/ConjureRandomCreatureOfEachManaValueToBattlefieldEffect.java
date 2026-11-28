@@ -7,5 +7,5 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
  * that exact mana value onto the battlefield.
  */
 public record ConjureRandomCreatureOfEachManaValueToBattlefieldEffect(DynamicAmount maxManaValue)
-        implements CardEffect {
+        implements CardEffect, CatalogCardGenerator {
 }

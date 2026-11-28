@@ -1039,6 +1039,7 @@ public class GameSimulator {
                     gameService.handleInteractionAnswer(gd, player, new InteractionAnswer.ListChoiceMade(
                             ReplacementOrderChoice.choose(order, ccCtx.options())));
                 } else if (ccCtx.context() instanceof ChoiceContext.ChooseModeChoice
+                        || ccCtx.context() instanceof ChoiceContext.GraveyardArrangement
                         || ccCtx.context() instanceof ChoiceContext.StackedModalTriggerModeChoice
                         || ccCtx.context() instanceof ChoiceContext.DeathExileReplacementChoice) {
                     gameService.handleInteractionAnswer(gd, player, new InteractionAnswer.ListChoiceMade(ccCtx.options().getFirst()));

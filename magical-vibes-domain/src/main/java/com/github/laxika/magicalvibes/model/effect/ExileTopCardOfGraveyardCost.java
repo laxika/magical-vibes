@@ -14,10 +14,16 @@ import com.github.laxika.magicalvibes.model.CardType;
  * <p>Used by Alms ({@code {1}}, Exile the top card of your graveyard) as an activation cost and by
  * Barrow Ghoul ({@code CREATURE}) as the payable side of a {@code UnlessPaysEffect}.</p>
  */
-public record ExileTopCardOfGraveyardCost(CardType requiredType) implements CostEffect {
+public record ExileTopCardOfGraveyardCost(CardType requiredType) implements CostEffect, GraveyardOrderReader {
 
     /** "Exile the top card of your graveyard" — no type restriction. */
     public ExileTopCardOfGraveyardCost() {
         this(null);
+    }
+
+    /** With a required type, only the order of that type's cards counts: the others are skipped. */
+    @Override
+    public CardType graveyardOrderType() {
+        return requiredType;
     }
 }

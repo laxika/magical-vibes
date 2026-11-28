@@ -422,7 +422,7 @@ public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubjec
      * @param owners whose graveyards
      * @param filter what that card has to be; {@code null} for any card
      */
-    record TopOfGraveyard(PlayerSubject owners, CardPredicate filter) implements CardSubject {
+    record TopOfGraveyard(PlayerSubject owners, CardPredicate filter) implements CardSubject, GraveyardOrderReader {
 
         public TopOfGraveyard {
             Objects.requireNonNull(owners, "owners");

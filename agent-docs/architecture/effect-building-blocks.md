@@ -141,6 +141,11 @@ triggered ability is a `TemporaryGlobalTriggeredAbility`. Never a `Permanent` or
 - The perpetual stores, not the card's printed fields, hold perpetual changes (`PerpetuallyGrantCardCharacteristicsEffectHandler.grant`,
   `perpetualCardBasePowerToughness`, `grantPerpetualKeywords`, `grantPerpetualAlternateCast`, keyed by the physical card id), and they
   stay off copiable values (CR 707.2).
+- A record that reads a graveyard's order ("the top card of your graveyard", "the top creature card", "the bottom card")
+  implements `GraveyardOrderReader` (`graveyardOrderType()` for a "top [type] card" reader), and one that makes a card picked from
+  every implemented card implements `CatalogCardGenerator`; a card a record makes from listed printings names them with
+  `SpellbookCard`. `GraveyardArrangementService` offers the arrangement of cards put into a graveyard together (CR 404.3) only in
+  a game where such a reader can appear, and finds them by these.
 
 ## Shared pieces (reuse before adding)
 

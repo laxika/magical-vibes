@@ -6,5 +6,5 @@ package com.github.laxika.magicalvibes.model.effect;
  * <p>The controller's top graveyard card is copied only while it is a creature card. The
  * Shapeshifter's own abilities are retained by the engine when it builds the runtime copy.</p>
  */
-public record HaveFullTextOfTopCreatureCardInGraveyardEffect() implements CardEffect {
+public record HaveFullTextOfTopCreatureCardInGraveyardEffect() implements CardEffect, GraveyardOrderReader {
 }
