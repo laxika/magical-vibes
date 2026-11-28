@@ -8,6 +8,8 @@ import java.util.Objects;
  * Glaring Spotlight and Nowhere to Run (creatures), Detection Tower (opponents, creatures, floated "until end of turn"
  * on its controller by {@link GrantStaticEffectToPlayerEffect}). Only hexproof is lifted, a "hexproof from [quality]"
  * too, as it is a hexproof ability (CR 702.11d); shroud and protection still apply.
+ * Nowhere to Run's text covers every player's spells and abilities, not only its controller's; that only differs with
+ * more than two players (required-by-multiplayer.md entry 7).
  *
  * <p>As a static ability it is its controller's; floated, it is the player's it is on. Read by
  * {@code GameQueryService.ignoresOpponentPlayerHexproof} / {@code ignoresOpponentPermanentHexproof} /

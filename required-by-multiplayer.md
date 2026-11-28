@@ -98,3 +98,18 @@ process for the cards". With one opponent, who sees every revealed card, the ord
 order chooses whether to pay life for it, then the caster picks the next. No player gets priority and no hidden information
 changes between the picks, so choosing the whole order up front would be equivalent. Test: in a three-player game, the caster's
 chosen order decides which card the second opponent can still afford to pay for.
+
+## 7. Nowhere to Run lifts hexproof only for its controller's spells and abilities
+
+**Found:** 2026-11-27, rules-fixes run 0 (refactors-to-do.md entry 18, line T13); the owner decided the reading 2026-11-28, and it
+moved here the same day
+
+**Problem.** Nowhere to Run: "Creatures your opponents control can be the targets of spells and abilities as though they didn't
+have hexproof." Unlike Glaring Spotlight it doesn't say "you control", and the owner decided (2026-11-28) that it covers every
+player's spells and abilities. The engine models it as `IgnoreOpponentHexproofEffect.opponentsCreatures()`, which
+`GameQueryService.hasHexproofIgnore` reads for the targeting player only. With two players the outcome is the same: hexproof
+only stops the creature controller's opponents (CR 702.11b), and the only one is Nowhere to Run's controller.
+
+**Needs.** A breadth on `IgnoreOpponentHexproofEffect` for "spells and abilities" of any player: the hexproof of a creature is
+lifted for every targeting player when a player of whom the creature's controller is an opponent has the effect. Test: in a
+three-player game, the third player can target a hexproof creature of Nowhere to Run's controller's opponent.

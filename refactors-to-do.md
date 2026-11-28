@@ -1264,12 +1264,12 @@ run's Outcome and the lines they found (N1 to N100) are in `rules-fixes.md`; its
 run commits are `git log --oneline 0e1a0e686aa..75990c830da`. What the effect cleanup and the runs built for card and engine
 authors is in `agent-docs/architecture/effect-building-blocks.md`; `scripts/effect-audit-ledger.csv` keeps every class's verdict.
 
-**Problem.** 15 lines are left: what the runs didn't fix or drop. Each starts with its ID: a
+**Problem.** 14 lines are left: what the runs didn't fix or drop. Each starts with its ID: a
 letter and number refers to entry 18 at commit `0e1a0e686aa` (print them with the awk command under "Line IDs" in
 `git show 75990c830da:rules-fixes.md`), an N number to that file's `N<n>` line. The run named after the ID is the one whose Outcome
 left it. The owner answered every entry 17 question that held a line here (2026-11-28); the answers that change play are
 written into their lines. Lines that need proper multiplayer move to `required-by-multiplayer.md` (the owner, 2026-11-28). The lines that were missing
-features or redesigns rather than fixes moved out on 2026-11-28: M11 and O81 to `required-by-multiplayer.md` entries 5 and 6;
+features or redesigns rather than fixes moved out on 2026-11-28: M11, O81 and T13 to `required-by-multiplayer.md` entries 5 to 7;
 N5, O86, O90 and O91 to `missing-features-to-do.md` entry 83, N80 and O47 to its entry 84, N77 to its entry 85; T1, L8, O33 and
 N7 to entries 20 to 23 here. The latent lines (the owner, 2026-11-28): F2, N99, O60 and O76 fixed, O71 dropped (no
 printed or implemented card has a mana ability that works from the graveyard, exile or the command zone), T5 moved to entry 24;
@@ -1291,10 +1291,6 @@ Don't commit.
 ```
 
 
-
-#### Wrong targets and choices (1)
-
-- T13 (0): Nowhere to Run's "hexproof doesn't apply" is modelled as its controller's spells and abilities only. The owner decided (2026-11-28) that it covers every player's spells and abilities, as its text says. Sure.
 
 #### Payments and costs (2)
 
