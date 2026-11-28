@@ -61,6 +61,26 @@ class EumidianLifeseedTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The drafted card carries the printing it was drafted from")
+    void draftedCardHasAPrinting() {
+        harness.setHand(player1, List.of(new EumidianLifeseed()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        com.github.laxika.magicalvibes.model.ChoiceContext.ChooseModeChoice context =
+                (com.github.laxika.magicalvibes.model.ChoiceContext.ChooseModeChoice) gd.interaction
+                        .activeInteraction(PendingInteraction.ColorChoice.class).context();
+        harness.handleListChoice(player1, context.effect().options().getFirst().label());
+
+        assertThat(gd.playerHands.get(player1.getId())).singleElement().satisfies(card -> {
+            assertThat(card.getSetCode()).isNotNull();
+            assertThat(card.getCollectorNumber()).isNotNull();
+        });
+    }
+
+    @Test
     @DisplayName("Mana ability adds any chosen color to the land-ability-only pool")
     void addsRestrictedAnyColorMana() {
         Permanent lifeseed = harness.addToBattlefieldAndReturn(player1, new EumidianLifeseed());

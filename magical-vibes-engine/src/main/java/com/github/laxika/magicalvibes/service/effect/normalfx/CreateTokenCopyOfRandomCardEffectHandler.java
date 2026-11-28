@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.cards.CardCatalog;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,6 +21,7 @@ public class CreateTokenCopyOfRandomCardEffectHandler implements NormalEffectHan
 
     private final GameQueryService gameQueryService;
     private final TokenCopySupport tokenCopySupport;
+    private final CardCatalog cardCatalog;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -29,9 +31,8 @@ public class CreateTokenCopyOfRandomCardEffectHandler implements NormalEffectHan
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var randomEffect = (CreateTokenCopyOfRandomCardEffect) effect;
-        Card sourceCard = randomEffect.cardFactories()
-                .get(ThreadLocalRandom.current().nextInt(randomEffect.cardFactories().size()))
-                .get();
+        Card sourceCard = cardCatalog.createCard(randomEffect.printings()
+                .get(ThreadLocalRandom.current().nextInt(randomEffect.printings().size())));
         Permanent sourcePermanent = entry.getSourcePermanentId() == null
                 ? entry.getSourcePermanentSnapshot()
                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());

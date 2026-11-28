@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.cards.CardCatalog;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Component;
 public class ConjureCardOntoBattlefieldEffectHandler implements NormalEffectHandlerBean {
 
     private final BattlefieldEntryService battlefieldEntryService;
+    private final CardCatalog cardCatalog;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -27,7 +29,7 @@ public class ConjureCardOntoBattlefieldEffectHandler implements NormalEffectHand
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         ConjureCardOntoBattlefieldEffect conjure = (ConjureCardOntoBattlefieldEffect) effect;
-        Card card = conjure.cardFactory().get();
+        Card card = cardCatalog.createCard(conjure.printing());
         card.setOwnerId(entry.getControllerId());
         if (conjure.conjure()) {
             card.setConjured(true);

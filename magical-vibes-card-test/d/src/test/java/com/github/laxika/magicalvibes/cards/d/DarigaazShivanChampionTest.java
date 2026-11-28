@@ -45,6 +45,25 @@ class DarigaazShivanChampionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The conjured card carries the printing it was conjured from")
+    void conjuredCardHasAPrinting() {
+        harness.forceActivePlayer(player1);
+        harness.addToBattlefield(player1, new DarigaazShivanChampion());
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(gd.exiledCards)
+                .filteredOn(entry -> SPELLBOOK.contains(entry.card().getName()))
+                .singleElement()
+                .satisfies(entry -> {
+                    assertThat(entry.card().getSetCode()).isNotNull();
+                    assertThat(entry.card().getCollectorNumber()).isNotNull();
+                });
+    }
+
+    @Test
     @DisplayName("The conjured card returns after three of its controller's upkeeps")
     void conjuredCardReturnsAfterThreeUpkeeps() {
         harness.forceActivePlayer(player1);

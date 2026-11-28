@@ -1,17 +1,16 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect.SpellbookCard;
 
 import java.util.Objects;
-import java.util.function.Supplier;
 
 /**
- * Puts a fresh card into its controller's hand because it was drafted from a spellbook; it was not
- * conjured, so "whenever you conjure" abilities don't trigger.
+ * Puts a fresh card of {@code printing} into its controller's hand because it was drafted from a spellbook; it was
+ * not conjured, so "whenever you conjure" abilities don't trigger.
  */
-public record DraftCardIntoHandEffect(Supplier<? extends Card> cardFactory) implements CardEffect {
+public record DraftCardIntoHandEffect(SpellbookCard printing) implements CardEffect {
 
     public DraftCardIntoHandEffect {
-        Objects.requireNonNull(cardFactory, "Card factory cannot be null");
+        Objects.requireNonNull(printing, "printing");
     }
 }

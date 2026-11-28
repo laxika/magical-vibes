@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -16,6 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MineSecurityTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Conjures Flametongue Kavu into the top eight cards of the library")
     void entersAndConjuresFlametongueKavuIntoTheTopEight() {
         harness.setLibrary(player1, List.of(
                 new MineSecurity(), new MineSecurity(), new MineSecurity(), new MineSecurity(),
@@ -30,6 +32,7 @@ class MineSecurityTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The conjured Flametongue Kavu can be cast for {0}")
     void conjuredFlametongueKavuPerpetuallyHasAZeroManaAlternateCost() {
         harness.setLibrary(player1, List.of());
         castMineSecurity();
@@ -40,7 +43,7 @@ class MineSecurityTest extends BaseCardTest {
                 .isInstanceOf(FlametongueKavu.class);
 
         Permanent target = harness.addToBattlefieldAndReturn(player2, new MineSecurity());
-        harness.castWithAlternateCost(player1, 0, target.getId());
+        harness.castCreature(player1, 0, target.getId());
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Flametongue Kavu");
@@ -48,6 +51,7 @@ class MineSecurityTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Conjures into a library of fewer than eight cards without losing any")
     void conjuresIntoALibraryWithFewerThanEightCardsWithoutLosingExistingCards() {
         Card first = new MineSecurity();
         Card second = new MineSecurity();
@@ -63,6 +67,7 @@ class MineSecurityTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Conjures even when Mine Security leaves before its trigger resolves")
     void conjuresEvenWhenMineSecurityLeavesBeforeItsTriggerResolves() {
         harness.setLibrary(player1, List.of());
         harness.castFromHand(player1, new MineSecurity(), "{1}{R}");
@@ -77,18 +82,19 @@ class MineSecurityTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The {0} cost survives returning the conjured creature to hand")
     void zeroManaAlternateCostSurvivesReturningTheConjuredCreatureToHand() {
         harness.setLibrary(player1, List.of());
         castMineSecurity();
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCards(gd, player1.getId(), 1));
         Permanent firstTarget = harness.addToBattlefieldAndReturn(player2, new MineSecurity());
-        harness.castWithAlternateCost(player1, 0, firstTarget.getId());
+        harness.castCreature(player1, 0, firstTarget.getId());
         resolveAllTriggers();
 
         Permanent kavu = findPermanent(player1, "Flametongue Kavu");
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, kavu));
         Permanent secondTarget = harness.addToBattlefieldAndReturn(player2, new MineSecurity());
-        harness.castWithAlternateCost(player1, 0, secondTarget.getId());
+        harness.castCreature(player1, 0, secondTarget.getId());
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Flametongue Kavu");
@@ -111,6 +117,7 @@ class MineSecurityTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Conjuring into the library triggers conjure abilities")
     void conjuringIntoTheLibraryTriggersConjureAbilities() {
         Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
         harness.setLibrary(player1, List.of(new MineSecurity(), new MineSecurity()));

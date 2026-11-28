@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.cards.CardCatalog;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -22,6 +23,7 @@ public class CreateRandomCardCopyAndMayCastEffectHandler implements NormalEffect
 
     private final CopySupport copySupport;
     private final GameLogService gameLogService;
+    private final CardCatalog cardCatalog;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -32,9 +34,8 @@ public class CreateRandomCardCopyAndMayCastEffectHandler implements NormalEffect
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         CreateRandomCardCopyAndMayCastEffect randomEffect =
                 (CreateRandomCardCopyAndMayCastEffect) effect;
-        Card selectedCard = randomEffect.cardFactories()
-                .get(ThreadLocalRandom.current().nextInt(randomEffect.cardFactories().size()))
-                .get();
+        Card selectedCard = cardCatalog.createCard(randomEffect.printings()
+                .get(ThreadLocalRandom.current().nextInt(randomEffect.printings().size())));
         // The copy is not put into exile here: it is exiled only once its controller accepts the free cast
         // (MayCastCopyWithoutPayingHandler), so a declined copy never appears in any zone.
         Card copy = copySupport.createCopyCard(selectedCard);

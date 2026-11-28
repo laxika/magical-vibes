@@ -1180,7 +1180,7 @@ The effect cleanup's plan and queues were deleted when it closed (2026-11-26). T
 `agent-docs/architecture/effect-building-blocks.md`; `scripts/effect-audit-ledger.csv` keeps every class's verdict and
 `python3 -I scripts/effect-inventory.py` the inventory.
 
-58 items: every open question of the owner's and every orchestrator decision logged for the owner to review (the date is
+57 items: every open question of the owner's and every orchestrator decision logged for the owner to review (the date is
 the run's). An answer that changes play becomes a defect run (entry 18); one that confirms a decision just removes its line.
 
 The full text of each item is in the cleanup plan's last version, `git show 3b0d60d42d4:effect-cleanup-refactor.md`: the open
@@ -1210,10 +1210,6 @@ questions under "The owner's open questions", the decisions under "The owner's d
   effect began, the face-down 2/2's (a fight reads both powers before either deals damage). Should "damage equal to its power"
   be its face-up power instead? Neither the card's rulings nor CR 614 says whether the replacement changes an amount already
   fixed.
-- 2026-11-28, rules-fixes Z (entry 18, line O6; asked in rules-fixes step 0): cards with no printing identity (the `Supplier`-built
-  conjures and spellbook drafts, hand-built cards such as Darigaaz and Oracle of the Alpha, Reckless Ringleader's blank `new Card()`)
-  have no set and collector number. Should every conjured, drafted and constructed card get a printing identity (an infrastructure
-  change to card construction and the card-data lookup), or are they accepted as they are?
 - 2026-11-28, rules-fixes Z (entry 18, lines O93 and O97; asked in rules-fixes step 0): battle cry ("each other attacking
   creature") and "attacking creatures get" are built over the creatures their controller controls, so a teammate's attackers
   (Two-Headed Giant) are left out. The engine has no team play: keep these two lines in entry 18, or drop them until team play
@@ -1276,7 +1272,7 @@ run's Outcome and the lines they found (N1 to N100) are in `rules-fixes.md`; its
 run commits are `git log --oneline 0e1a0e686aa..75990c830da`. What the effect cleanup and the runs built for card and engine
 authors is in `agent-docs/architecture/effect-building-blocks.md`; `scripts/effect-audit-ledger.csv` keeps every class's verdict.
 
-**Problem.** 45 lines are left: what the runs didn't fix or drop, and the lines that wait for the owner. Each starts with its ID: a
+**Problem.** 44 lines are left: what the runs didn't fix or drop, and the lines that wait for the owner. Each starts with its ID: a
 letter and number refers to entry 18 at commit `0e1a0e686aa` (print them with the awk command under "Line IDs" in
 `git show 75990c830da:rules-fixes.md`), an N number to that file's `N<n>` line. The run named after the ID is the one whose Outcome
 left it. "Owner" lines change only when the owner answers their entry 17 question. Lines that need proper multiplayer
@@ -1339,11 +1335,10 @@ Don't commit.
 - H1 (FD-2): `cardsThisWay(REVEAL)` still names a card after a later step reordered it within its library, though a reordered revealed card stops being revealed and becomes a new object (CR 701.20d). A fix needs a library-order stay across about 280 shuffle and reorder sites. No card reads it so. Latent.
 - N98 (MC-2g): since MC-2g, a face-down spell's target id is its own stack id, not its card's (CR 708.5). MC-2g found and fixed three handlers that keyed a `GameData` record by the target id, but there was no full sweep of handlers that use a spell target's `entry.getTargetId()` as a card id (a map key, `findCardById`, an exile lookup). Each such reader should go through `StackEntry.isIdentifiedBy` or the entry's card. Of the code.
 
-#### Other (28)
+#### Other (27)
 
 - O1 (FC-2): casting checks left from runs 40 and 41. Scrycast (Biting Remark): the scry answer (`ScryInteractionHandler`) casts it with no `canCastDuringResolution` check, and the AI strategies (`ScryAiStrategy`) have no `CastingPermissionService`. Biting Remark has no Oracle data in Scryfall or MTGJSON. The may-cast offers don't ask the shared check. An ability leaves the stack before it resolves, though CR 608.2n removes it last. FC-2 fixed Knowledge Pool's timing, the split exile cast and suspend's type restriction. Unverified.
 - O3 (EB-2): Krovikan Vampire's `ReturnDamagedCreaturesThatDiedUnderControlEffect` puts an Aura card that died animated onto the battlefield with no host choice (CR 303.4f, 303.4g). It is a mass return with control and sacrifice links, so the whole return must move onto the entry batch. Lim-Dûl's head (EB-1), `ReturnDyingCreatureToBattlefieldEffect` and `ReturnDyingCreatureToOwnerBattlefieldEffect` (EB-2) already go through it. Unverified.
-- O6 (0), Owner: cards with no printing identity. These are the `Supplier`-built conjures and spellbook drafts and the hand paths that don't mark a card conjured (runs 29 to 31); Protean War Engine (P08); Darigaaz, Skywriter Djinn and Oracle of the Alpha built by hand; Juggernaut Peddler, Calim and Mephidross Slime built by constructor or `Supplier`; and Goblin Influx Array's Reckless Ringleader, a blank `new Card()` (P16). This is an infrastructure decision: see entry 17 (Z, printing identity). Sure.
 - O9 (DM-1): DM-1 removed the effect handlers' `isPreventedFromDealingDamage` pre-checks. Two are left, and they skip the damage event (Selfless Squire misses them) and the CR 616.1 order. (1) Bomb Squad's `RemoveAllCountersThenDestroyReferencedPermanentAndDamageControllerEffectHandler` asks before the destruction. The owner decided (2026-11-28) that a "prevent all damage that creature would deal" effect (Soul Parry) still prevents the damage after the creature has left the battlefield, since the creature deals it as it last existed (CR 608.2h); the check moving into the player's damage pool must keep that. (2) The combat damage step has three `isPreventedFromDealingDamage(…, true)` checks in `CombatDamageService`, which should move into the damage pools. Sure of the code.
 - O11 (0): the set exchanges (Reins of Power, Twist Allegiance) and Perplexing Chimera don't check `cantBeControlledByOtherPlayers`. The owner decided (2026-11-28) that they check it; by CR 701.12a, if the entire exchange can't be completed, none of it happens. Unverified.
 - O13 (MC-1): Fear of Sleep Paralysis' lock (`GameQueryService.stunCountersLocked`) is read by the untap replacement and, since MC-1, by `PermanentCounterSupport`'s and `DestructionSupport`'s shared removals. The removals that set counts directly don't read it: the remove-counter costs in `ActivatedAbilityExecutionService` and `ResolutionCostPaymentService`, the counter-kind choice lists of `removableCounterKinds`, and handlers calling `setCounterCount`. Fairly sure, low.

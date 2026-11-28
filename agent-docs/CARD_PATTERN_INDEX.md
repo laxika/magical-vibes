@@ -594,8 +594,8 @@ When implementing a card, use these as the **best** test file to read for each c
 ### Subgames
 
 Shahrazad (ARN 10): `StartSubgameEffect` followed by the existing fractional life-loss effect with `SUBGAME_NON_WINNERS`. The creating spell stays suspended until its immediate child ends. Use `GameSession` for nesting; never copy the parent board into a child or restore an old library snapshot.
-| fixed list of cards, choose one at random, and create a token copy | `CreateTokenCopyOfRandomCardEffect(List<Supplier<? extends Card>>)` | Who's That Praetor? (MB2 270/506) |
-| fixed list of cards, choose one at random, create a copy, and offer it for a free cast | `CreateRandomCardCopyAndMayCastEffect(List<Supplier<? extends Card>>)` | Jund 'Em Out (MB2 357/596) |
+| fixed list of cards, choose one at random, and create a token copy | `CreateTokenCopyOfRandomCardEffect(List<SpellbookCard> printings)` | Who's That Praetor? (MB2 270/506) |
+| fixed list of cards, choose one at random, create a copy, and offer it for a free cast | `CreateRandomCardCopyAndMayCastEffect(List<SpellbookCard> printings)` | Jund 'Em Out (MB2 357/596) |
 | combat-damage trigger that randomly conjures one of several named cards into hand and reveals it | `p/PinchyMcStingbutt.java` + `ConjureRandomCardFromSpellbookToHandEffect` |
 | Perpetual ETB ability granted to a card in hand | `PullOfTheMistMoonTest.java` | Covers the hand-card choice and the stored ability triggering when a later copy enters |
 | Modal ETB that perpetually grants an activated ability to an Equipment card in hand or a target Equipment permanent | `k/KembasOutfitter.java` + `KembasOutfitterTest.java` | Covers both modes, perpetual identity tracking, and Equipment targeting |

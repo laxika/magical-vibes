@@ -1,24 +1,26 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Supplier;
 
 /**
  * Offers a random subset of a digital spellbook and lets a player draft one card.
  *
  * <p>With {@code conjure} set ("conjure a card of your choice from … spellbook") the chosen card counts
  * as conjured, so "whenever you conjure" abilities trigger; see {@link #conjureIntoHand} and
- * {@link #conjureOntoBattlefield}. Card factories put the chosen card onto the battlefield, unless the
- * mode is {@link DraftMode#CONJURE_TO_HAND} (see {@link #draftIntoHand}), which puts it into hand.
+ * {@link #conjureOntoBattlefield}.
+ *
+ * <p>The cards come from one of two lists of printings. {@code spellbook} offers its cards as cards to choose
+ * from, handled by {@code mode}. {@code namedOptions} offers them by name as options: the chosen card goes onto the
+ * battlefield, unless the mode is {@link DraftMode#CONJURE_TO_HAND} (see {@link #draftIntoHand}), which puts it into
+ * hand.
  */
 public record DraftFromSpellbookEffect(
         List<SpellbookCard> spellbook,
-        List<Supplier<? extends Card>> cardFactories,
+        List<SpellbookCard> namedOptions,
         int offeredCardCount,
         DraftMode mode,
         boolean conjure,
@@ -34,21 +36,21 @@ public record DraftFromSpellbookEffect(
 
     public DraftFromSpellbookEffect(
             List<SpellbookCard> spellbook,
-            List<Supplier<? extends Card>> cardFactories,
+            List<SpellbookCard> namedOptions,
             int offeredCardCount,
             DraftMode mode,
             boolean conjure) {
-        this(spellbook, cardFactories, offeredCardCount, mode, conjure, null, 0);
+        this(spellbook, namedOptions, offeredCardCount, mode, conjure, null, 0);
     }
 
     public DraftFromSpellbookEffect {
         spellbook = List.copyOf(Objects.requireNonNull(spellbook, "Spellbook cannot be null"));
-        cardFactories = List.copyOf(Objects.requireNonNull(cardFactories, "Card factories cannot be null"));
+        namedOptions = List.copyOf(Objects.requireNonNull(namedOptions, "Named options cannot be null"));
         Objects.requireNonNull(mode, "Draft mode cannot be null");
-        if (spellbook.isEmpty() == cardFactories.isEmpty()) {
+        if (spellbook.isEmpty() == namedOptions.isEmpty()) {
             throw new IllegalArgumentException("Exactly one spellbook source is required");
         }
-        int available = spellbook.isEmpty() ? cardFactories.size() : spellbook.size();
+        int available = spellbook.isEmpty() ? namedOptions.size() : spellbook.size();
         if (offeredCardCount < 1 || offeredCardCount > available) {
             throw new IllegalArgumentException("Invalid number of offered spellbook cards");
         }
@@ -58,24 +60,21 @@ public record DraftFromSpellbookEffect(
         this(spellbook, List.of(), Math.min(3, spellbook.size()), mode, false);
     }
 
-    public DraftFromSpellbookEffect(List<Supplier<? extends Card>> cardFactories, int offeredCardCount) {
-        this(List.of(), cardFactories, offeredCardCount, DraftMode.PERPETUALLY_BECOMES_ENCHANTMENT, false);
-    }
-
-    public DraftFromSpellbookEffect(List<Supplier<? extends Card>> cardFactories) {
-        this(cardFactories, 3);
+    /** "Draft a card from this spellbook and put it onto the battlefield": three of {@code namedOptions} offered. */
+    public static DraftFromSpellbookEffect draftOntoBattlefield(List<SpellbookCard> namedOptions) {
+        return new DraftFromSpellbookEffect(List.of(), namedOptions, Math.min(3, namedOptions.size()),
+                DraftMode.PERPETUALLY_BECOMES_ENCHANTMENT, false);
     }
 
     /** "Draft a card from this spellbook": the chosen card goes into the controller's hand, not conjured. */
-    public static DraftFromSpellbookEffect draftIntoHand(List<Supplier<? extends Card>> cardFactories) {
-        return new DraftFromSpellbookEffect(List.of(), cardFactories, Math.min(3, cardFactories.size()),
+    public static DraftFromSpellbookEffect draftIntoHand(List<SpellbookCard> namedOptions) {
+        return new DraftFromSpellbookEffect(List.of(), namedOptions, Math.min(3, namedOptions.size()),
                 DraftMode.CONJURE_TO_HAND, false);
     }
 
     /** "Conjure a card of your choice from … spellbook onto the battlefield." */
-    public static DraftFromSpellbookEffect conjureOntoBattlefield(
-            List<Supplier<? extends Card>> cardFactories) {
-        return new DraftFromSpellbookEffect(List.of(), cardFactories, cardFactories.size(),
+    public static DraftFromSpellbookEffect conjureOntoBattlefield(List<SpellbookCard> namedOptions) {
+        return new DraftFromSpellbookEffect(List.of(), namedOptions, namedOptions.size(),
                 DraftMode.PERPETUALLY_BECOMES_ENCHANTMENT, true);
     }
 
@@ -85,8 +84,8 @@ public record DraftFromSpellbookEffect(
      * to this entry only and are not part of the card if it is later played again.
      */
     public static DraftFromSpellbookEffect conjureOntoBattlefieldWithCounters(
-            List<Supplier<? extends Card>> cardFactories, CounterType counterType, int count) {
-        return new DraftFromSpellbookEffect(List.of(), cardFactories, cardFactories.size(),
+            List<SpellbookCard> namedOptions, CounterType counterType, int count) {
+        return new DraftFromSpellbookEffect(List.of(), namedOptions, namedOptions.size(),
                 DraftMode.PERPETUALLY_BECOMES_ENCHANTMENT, true, counterType, count);
     }
 

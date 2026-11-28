@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.cards.CardCatalog;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Component;
 public class DraftCardIntoHandEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final CardCatalog cardCatalog;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -24,7 +26,7 @@ public class DraftCardIntoHandEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Card card = ((DraftCardIntoHandEffect) effect).cardFactory().get();
+        Card card = cardCatalog.createCard(((DraftCardIntoHandEffect) effect).printing());
         card.setOwnerId(entry.getControllerId());
         card.freeze();
         gameData.addCardToHand(entry.getControllerId(), card);

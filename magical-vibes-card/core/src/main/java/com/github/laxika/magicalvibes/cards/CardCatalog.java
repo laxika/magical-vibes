@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.OracleData;
+import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 
 import java.util.List;
 import java.util.Optional;
@@ -43,6 +44,21 @@ public interface CardCatalog {
             return null;
         }
         return findByCollectorNumber(set, collectorNumber).createCard();
+    }
+
+    /**
+     * Creates the card of a printing an effect names (set code and collector number), so the card carries that
+     * printing's identity (its art, the set its tokens come from). The card is still mutable.
+     *
+     * @throws IllegalStateException if that printing is not implemented
+     */
+    default Card createCard(DraftFromSpellbookEffect.SpellbookCard printing) {
+        Card card = createCardIfImplemented(printing.setCode(), printing.collectorNumber());
+        if (card == null) {
+            throw new IllegalStateException("No implemented printing " + printing.setCode() + " "
+                    + printing.collectorNumber());
+        }
+        return card;
     }
 
     /**

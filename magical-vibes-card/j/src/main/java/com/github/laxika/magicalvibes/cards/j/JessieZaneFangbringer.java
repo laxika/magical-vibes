@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
-import com.github.laxika.magicalvibes.cards.a.AmbushViper;
+import java.util.List;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.ConjureCardIntoTopCardsOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.ConjureCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureDestination;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -14,15 +16,14 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class JessieZaneFangbringer extends Card {
 
     public JessieZaneFangbringer() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ConjureCardIntoTopCardsOfLibraryEffect(JessieZaneFangbringer::conjuredAmbushViper, 6));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), conjureAmbushViper());
         addTrigger(Triggers.youCastSpell().withFilter(new CardSubtypePredicate(CardSubtype.SNAKE)),
-                new ConjureCardIntoTopCardsOfLibraryEffect(JessieZaneFangbringer::conjuredAmbushViper, 6));
+                conjureAmbushViper());
     }
 
-    private static Card conjuredAmbushViper() {
-        Card card = new AmbushViper();
-        card.addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect());
-        return card;
+    /** Ambush Viper, which perpetually gains "When this creature enters, draw a card." */
+    private static ConjureCardsEffect conjureAmbushViper() {
+        return ConjureCardsEffect.named("ISD", "169", ConjureDestination.intoTopCardsOfLibraryAtRandom(6))
+                .withAbilities(List.of(new TriggeredAbility(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect())));
     }
 }

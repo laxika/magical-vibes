@@ -1,20 +1,18 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect.SpellbookCard;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Supplier;
 
-/** Creates a copy of one fixed card selected uniformly at random and offers it for free casting. */
-public record CreateRandomCardCopyAndMayCastEffect(List<Supplier<? extends Card>> cardFactories)
-        implements CardEffect {
+/** Creates a copy of a card of one of {@code printings}, picked uniformly at random, and offers it for free casting. */
+public record CreateRandomCardCopyAndMayCastEffect(List<SpellbookCard> printings) implements CardEffect {
 
     public CreateRandomCardCopyAndMayCastEffect {
-        Objects.requireNonNull(cardFactories, "Card factories cannot be null");
-        if (cardFactories.isEmpty() || cardFactories.stream().anyMatch(Objects::isNull)) {
-            throw new IllegalArgumentException("At least one non-null card factory is required");
+        Objects.requireNonNull(printings, "printings");
+        if (printings.isEmpty() || printings.stream().anyMatch(Objects::isNull)) {
+            throw new IllegalArgumentException("At least one non-null printing is required");
         }
-        cardFactories = List.copyOf(cardFactories);
+        printings = List.copyOf(printings);
     }
 }

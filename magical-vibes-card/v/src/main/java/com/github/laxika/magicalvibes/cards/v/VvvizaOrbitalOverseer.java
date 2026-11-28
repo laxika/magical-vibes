@@ -1,11 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
-import com.github.laxika.magicalvibes.cards.a.AdagiaWindsweptBastion;
-import com.github.laxika.magicalvibes.cards.e.EvendoWakingHaven;
-import com.github.laxika.magicalvibes.cards.k.KavaronMemorialWorld;
-import com.github.laxika.magicalvibes.cards.s.SusurSecundiVoidAltar;
-import com.github.laxika.magicalvibes.cards.u.UthrosTitanicGodcore;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -15,8 +10,9 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect.SpellbookCard;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -46,13 +42,16 @@ public class VvvizaOrbitalOverseer extends Card {
             new Fixed(2), new Fixed(1), List.of(), Set.of(Keyword.FLYING), null, Set.of(CardType.CREATURE),
             Subjects.createdThisResolution(), Duration.PERMANENT, null);
 
+    /** The Planets Spellbook: Adagia, Evendo, Kavaron, Susur Secundi and Uthros. */
+    private static final List<SpellbookCard> PLANETS = List.of(
+            new SpellbookCard("EOE", "250"),
+            new SpellbookCard("EOE", "253"),
+            new SpellbookCard("EOE", "255"),
+            new SpellbookCard("EOE", "259"),
+            new SpellbookCard("EOE", "260"));
+
     public VvvizaOrbitalOverseer() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), DraftFromSpellbookEffect.conjureOntoBattlefield(List.of(
-                AdagiaWindsweptBastion::new,
-                EvendoWakingHaven::new,
-                KavaronMemorialWorld::new,
-                SusurSecundiVoidAltar::new,
-                UthrosTitanicGodcore::new)));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), DraftFromSpellbookEffect.conjureOntoBattlefield(PLANETS));
         addTrigger(Triggers.youAttack(), LANDER, ANIMATE_LANDER);
     }
 }

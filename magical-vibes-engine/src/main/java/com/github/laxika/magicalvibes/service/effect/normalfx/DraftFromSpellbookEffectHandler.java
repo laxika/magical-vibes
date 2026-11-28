@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Supplier;
 
 @Component
 @RequiredArgsConstructor
@@ -38,18 +37,18 @@ public class DraftFromSpellbookEffectHandler implements NormalEffectHandlerBean 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         DraftFromSpellbookEffect draft = (DraftFromSpellbookEffect) effect;
-        if (!draft.cardFactories().isEmpty()) {
-            List<Supplier<? extends Card>> shuffled = new ArrayList<>(draft.cardFactories());
+        if (!draft.namedOptions().isEmpty()) {
+            List<DraftFromSpellbookEffect.SpellbookCard> shuffled = new ArrayList<>(draft.namedOptions());
             Collections.shuffle(shuffled);
             List<ChooseOneEffect.ChooseOneOption> options = shuffled.stream()
                     .limit(draft.offeredCardCount())
-                    .map(factory -> {
-                        Card preview = factory.get();
+                    .map(printing -> {
+                        Card preview = cardCatalog.createCard(printing);
                         return new ChooseOneEffect.ChooseOneOption(
                                 preview.getName(),
                                 draft.mode() == DraftFromSpellbookEffect.DraftMode.CONJURE_TO_HAND
-                                        ? new DraftCardIntoHandEffect(factory)
-                                        : new ConjureCardOntoBattlefieldEffect(factory, Set.of(CardType.LAND),
+                                        ? new DraftCardIntoHandEffect(printing)
+                                        : new ConjureCardOntoBattlefieldEffect(printing, Set.of(CardType.LAND),
                                         draft.conjure(), draft.entryCounterType(),
                                         draft.entryCounterCount()));
                     })

@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
-import com.github.laxika.magicalvibes.cards.e.EmrakulThePromisedEnd;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -13,6 +12,7 @@ import com.github.laxika.magicalvibes.model.OracleData;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateCardCopyAndCastWithoutPayingManaCostEffect;
+import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect.SpellbookCard;
 import com.github.laxika.magicalvibes.model.effect.ExileBottomCardOfTargetPlayerLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
@@ -77,8 +77,9 @@ public class TheHeronMoon extends Card {
                         new SourceCounterThreshold(13, CounterType.RELEASE),
                         SequenceEffect.of(
                                 new SacrificeSelfEffect(),
+                                // Emrakul, the Promised End.
                                 new CreateCardCopyAndCastWithoutPayingManaCostEffect(
-                                        EmrakulThePromisedEnd::new)
+                                        new SpellbookCard("EMN", "6"))
                         )
                 )
         ));

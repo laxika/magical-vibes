@@ -1,27 +1,21 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
-import com.github.laxika.magicalvibes.cards.a.AdagiaWindsweptBastion;
-import com.github.laxika.magicalvibes.cards.e.EvendoWakingHaven;
-import com.github.laxika.magicalvibes.cards.k.KavaronMemorialWorld;
-import com.github.laxika.magicalvibes.cards.s.SusurSecundiVoidAltar;
-import com.github.laxika.magicalvibes.cards.u.UthrosTitanicGodcore;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaAbilities;
-import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect.SpellbookCard;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentCounterCountAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -34,16 +28,20 @@ import java.util.List;
 @CardRegistration(set = "YEOE", collectorNumber = "18")
 public class BroodAstronomer extends Card {
 
+    /** The Planets Spellbook: Adagia, Evendo, Kavaron, Susur Secundi and Uthros. */
+    private static final List<SpellbookCard> PLANETS = List.of(
+            new SpellbookCard("EOE", "250"),
+            new SpellbookCard("EOE", "253"),
+            new SpellbookCard("EOE", "255"),
+            new SpellbookCard("EOE", "259"),
+            new SpellbookCard("EOE", "260"));
+
     public BroodAstronomer() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
                 SequenceEffect.of(
                         new SacrificePermanentsEffect(1, new PermanentIsLandPredicate(), Subjects.you()),
-                        new ConditionalEffect(HappenedThisWay.sacrificed(), new DraftFromSpellbookEffect(List.of(
-                                AdagiaWindsweptBastion::new,
-                                EvendoWakingHaven::new,
-                                KavaronMemorialWorld::new,
-                                SusurSecundiVoidAltar::new,
-                                UthrosTitanicGodcore::new)))),
+                        new ConditionalEffect(HappenedThisWay.sacrificed(),
+                                DraftFromSpellbookEffect.draftOntoBattlefield(PLANETS))),
                 "Sacrifice a land?"));
 
         addActivatedAbility(new ActivatedAbility(

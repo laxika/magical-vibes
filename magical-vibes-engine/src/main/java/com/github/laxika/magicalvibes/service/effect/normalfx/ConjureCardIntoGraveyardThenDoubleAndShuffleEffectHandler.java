@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.cards.CardCatalog;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -30,18 +31,21 @@ public class ConjureCardIntoGraveyardThenDoubleAndShuffleEffectHandler implement
     private final GraveyardService graveyardService;
     private final PermanentRemovalService permanentRemovalService;
     private final SubjectResolutionService subjectResolutionService;
+    private final CardCatalog cardCatalog;
 
     public ConjureCardIntoGraveyardThenDoubleAndShuffleEffectHandler(
             GameQueryService gameQueryService,
             GameLogService gameLogService,
             GraveyardService graveyardService,
             PermanentRemovalService permanentRemovalService,
-            SubjectResolutionService subjectResolutionService) {
+            SubjectResolutionService subjectResolutionService,
+            CardCatalog cardCatalog) {
         this.gameQueryService = gameQueryService;
         this.gameLogService = gameLogService;
         this.graveyardService = graveyardService;
         this.permanentRemovalService = permanentRemovalService;
         this.subjectResolutionService = subjectResolutionService;
+        this.cardCatalog = cardCatalog;
     }
 
     @Override
@@ -58,7 +62,7 @@ public class ConjureCardIntoGraveyardThenDoubleAndShuffleEffectHandler implement
         Card dyingCard = dying != null && dying.zone() == Zone.GRAVEYARD ? dying.card() : null;
 
         UUID controllerId = entry.getControllerId();
-        Card duplicate = conjure.cardFactory().get();
+        Card duplicate = cardCatalog.createCard(conjure.printing());
         duplicate.setOwnerId(controllerId);
         duplicate.freeze();
         boolean duplicateEnteredGraveyard = graveyardService.addCardToGraveyard(

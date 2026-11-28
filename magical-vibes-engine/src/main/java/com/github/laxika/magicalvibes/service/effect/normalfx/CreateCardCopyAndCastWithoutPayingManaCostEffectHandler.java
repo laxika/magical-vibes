@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.cards.CardCatalog;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -22,6 +23,7 @@ public class CreateCardCopyAndCastWithoutPayingManaCostEffectHandler implements 
     private final ExileService exileService;
     private final ExileFreeCastQueueSupport exileFreeCastQueueSupport;
     private final GameLogService gameLogService;
+    private final CardCatalog cardCatalog;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -32,7 +34,7 @@ public class CreateCardCopyAndCastWithoutPayingManaCostEffectHandler implements 
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         CreateCardCopyAndCastWithoutPayingManaCostEffect castEffect =
                 (CreateCardCopyAndCastWithoutPayingManaCostEffect) effect;
-        Card copy = copySupport.createCopyCard(castEffect.cardFactory().get());
+        Card copy = copySupport.createCopyCard(cardCatalog.createCard(castEffect.printing()));
         exileService.exileCard(gameData, entry.getControllerId(), copy);
         gameLogService.append(gameData, GameLog.cardTextCard(
                 entry.getCard(), " creates a copy of ", copy, " and casts it without paying its mana cost."));

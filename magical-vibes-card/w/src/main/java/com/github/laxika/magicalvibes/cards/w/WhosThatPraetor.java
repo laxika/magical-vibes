@@ -1,29 +1,27 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
-import com.github.laxika.magicalvibes.cards.e.EbonPraetor;
-import com.github.laxika.magicalvibes.cards.e.EleshNornMotherOfMachines;
-import com.github.laxika.magicalvibes.cards.j.JinGitaxiasProgressTyrant;
-import com.github.laxika.magicalvibes.cards.s.SheoldredTheApocalypse;
-import com.github.laxika.magicalvibes.cards.u.UrabraskHereticPraetor;
-import com.github.laxika.magicalvibes.cards.v.VorinclexMonstrousRaider;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfRandomCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect.SpellbookCard;
 
 import java.util.List;
-import java.util.function.Supplier;
 
 @CardRegistration(set = "MB2", collectorNumber = "270")
 @CardRegistration(set = "MB2", collectorNumber = "506")
 public class WhosThatPraetor extends Card {
 
-    private static final List<Supplier<? extends Card>> PRAETORS = List.of(
-            EleshNornMotherOfMachines::new,
-            JinGitaxiasProgressTyrant::new,
-            SheoldredTheApocalypse::new,
-            UrabraskHereticPraetor::new,
-            VorinclexMonstrousRaider::new,
-            EbonPraetor::new);
+    /**
+     * Elesh Norn, Mother of Machines; Jin-Gitaxias, Progress Tyrant; Sheoldred, the Apocalypse; Urabrask, Heretic
+     * Praetor; Vorinclex, Monstrous Raider; Ebon Praetor.
+     */
+    private static final List<SpellbookCard> PRAETORS = List.of(
+            new SpellbookCard("ONE", "10"),
+            new SpellbookCard("NEO", "59"),
+            new SpellbookCard("DMU", "107"),
+            new SpellbookCard("SNC", "129"),
+            new SpellbookCard("KHM", "199"),
+            new SpellbookCard("FEM", "37"));
 
     public WhosThatPraetor() {
         addSpellEffect(new CreateTokenCopyOfRandomCardEffect(PRAETORS));
