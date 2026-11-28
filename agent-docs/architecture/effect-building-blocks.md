@@ -72,7 +72,8 @@ triggered ability is a `TemporaryGlobalTriggeredAbility`. Never a `Permanent` or
   face down has only its face-down characteristics).
 - A card's or spell's colours, in any zone, are `GameQueryService.getEffectiveCardColors(gameData, card)`, never
   `card.getColors()`: Painter's Servant, Celestial Dawn and spell colour changes apply off the battlefield (CR 613.1e);
-  only copiable values (a copy, a token copy, CR 707.2) read the printed colours.
+  only copiable values (a copy, a token copy, CR 707.2) read the printed colours. A spell on the stack is
+  `GameQueryService.getEffectiveSpellColors(gameData, entry)`, which adds the colours it gained on the stack (Wickerwing Effigy).
 - A face-down permanent's mana value is 0 and it has none of its card's abilities or perpetual changes (CR 708.2a): read the
   permanent, not its card. The reads: `GameQueryService.getPermanentManaValue` (a sacrificed permanent's snapshot too),
   `getEffectiveName` (null while face down) / `permanentHasName`, `hasEffectiveCardType`, `activeStaticEffects` for a static ability;
@@ -323,7 +324,9 @@ triggered ability is a `TemporaryGlobalTriggeredAbility`. Never a `Permanent` or
   is a PUT_COUNTERS step; `HappenedThisWay.toAPlayer(kind, PlayerRelation)`; `AmountThisWay.milledManaValue()` (CR 701.17c),
   `chosenManaValue()`, `revealedCards(filter)`, `revealedManaValue()`.
 - `NoteAmountEffect` (NOTE, `AmountThisWay.noted()`); `QueueReflexiveAbilityEffect` for "when you do" (CR 603.12),
-  `.withEventValue(effect, amount)` fixes the reflexive ability's X; `RepeatEffect(n, effect)`; `SeparateIntoPilesEffect`;
+  `.withEventValue(effect, amount)` fixes the reflexive ability's X, `.aboutDeclaredTarget(effect, TargetSpec)` makes the carrying
+  ability declare the target and the reflexive one target nothing ("that permanent" is `Subjects.triggering()`: Behemoth of
+  Vault 0); `RepeatEffect(n, effect)`; `SeparateIntoPilesEffect`;
   `TemptingOfferEffect.of` / `.offeredOnlyTo` (all decide, then act; CR 608.2d); `EachPlayerMayEffect.of` ("each player may", CR 101.4); `IntuitionEffect`; `RollTwoDiceChooseOneEffect` and
   `DiceRollService.rollDice` (CR 706.6).
 - `EffectResolutionService.resolveNestedInCurrentResolution(gameData, nested)`: steps resolved inside whatever is resolving, without the
@@ -417,7 +420,9 @@ triggered ability is a `TemporaryGlobalTriggeredAbility`. Never a `Permanent` or
 
 - Player damage is `DealDamageEffect.to(PlayerSubject, …)` (run Damage P; Typhoon's "equal to the number of [X] that player controls" is
   `eachEvaluatedFor(PermanentCount(filter, CONTROLLER), eachOpponent())`); another permanent dealing damage is the rider
-  `DealDamageEffect.dealtBy(dealers)` (`bite`, `targetCreatureToItself`, `toEachOther`; run Damage R); fight is `SourceFightsTargetCreatureEffect` (`FightSupport.fight`).
+  `DealDamageEffect.dealtBy(dealers)` (`bite`, `targetCreatureToItself`, `toEachOther`; run Damage R); fight is `SourceFightsTargetCreatureEffect` (`FightSupport.fight`);
+  "each of them fights a different one of those" is `EachFightsADifferentOneEffect(fighters, opponents)` (the controller pairs
+  them, every fight at once through `FightSupport.fightTogether`: Ezuri's Predation).
 - `PreventDamageToRecipientsEffect` (static prevention: `to(...)`, `toYouAnd(...)`, `toEveryone()`, `fromSpells()`,
   `fromInstantAndSorcerySpells()`, `fromSourcesOfChosenColor()`, `dealtBy(filter)`, `preventing(amount)`); `PreventNextDamageByTargetCreatureEffect`,
   `PreventDamageAndAddPlusCountersEffect` (CR 615.12), `DamageCantBePreventedEffect` (`GameQueryService.isDamagePreventable`).

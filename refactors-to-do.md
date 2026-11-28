@@ -1180,7 +1180,7 @@ The effect cleanup's plan and queues were deleted when it closed (2026-11-26). T
 `agent-docs/architecture/effect-building-blocks.md`; `scripts/effect-audit-ledger.csv` keeps every class's verdict and
 `python3 -I scripts/effect-inventory.py` the inventory.
 
-61 items: every open question of the owner's and every orchestrator decision logged for the owner to review (the date is
+70 items: every open question of the owner's and every orchestrator decision logged for the owner to review (the date is
 the run's). An answer that changes play becomes a defect run (entry 18); one that confirms a decision just removes its line.
 
 The full text of each item is in the cleanup plan's last version, `git show 3b0d60d42d4:effect-cleanup-refactor.md`: the open
@@ -1223,6 +1223,14 @@ questions under "The owner's open questions", the decisions under "The owner's d
   effect began, the face-down 2/2's (a fight reads both powers before either deals damage). Should "damage equal to its power"
   be its face-up power instead? Neither the card's rulings nor CR 614 says whether the replacement changes an amount already
   fixed.
+- 2026-11-28, rules-fixes Z (entry 18, line O6; asked in rules-fixes step 0): cards with no printing identity (the `Supplier`-built
+  conjures and spellbook drafts, hand-built cards such as Darigaaz and Oracle of the Alpha, Reckless Ringleader's blank `new Card()`)
+  have no set and collector number. Should every conjured, drafted and constructed card get a printing identity (an infrastructure
+  change to card construction and the card-data lookup), or are they accepted as they are?
+- 2026-11-28, rules-fixes Z (entry 18, lines O93 and O97; asked in rules-fixes step 0): battle cry ("each other attacking
+  creature") and "attacking creatures get" are built over the creatures their controller controls, so a teammate's attackers
+  (Two-Headed Giant) are left out. The engine has no team play: keep these two lines in entry 18, or drop them until team play
+  exists?
 
 #### Orchestrator decisions for the owner to review
 
@@ -1276,102 +1284,110 @@ questions under "The owner's open questions", the decisions under "The owner's d
 
 ## 18. Rules defects seen during the effect cleanup
 
-**Status:** open · **Found:** 2026-11-23 to 2026-11-26, the effect cleanup's defect queue
+**Status:** open · **Found:** 2026-11-23 to 2026-11-26, the effect cleanup's defect queue; 2026-11-27 to 2026-11-28, the rules-fixes runs
 
-The effect cleanup's plan and queues were deleted when it closed (2026-11-26). Their last versions:
-`git show 3b0d60d42d4:effect-cleanup-refactor.md` (plan, Standing knowledge, the owner's decisions, step 10's Findings) and
-`git show 3b0d60d42d4:effect-cleanup-queues.md` (fold queue, defect queue). What the cleanup built for card and engine authors is in
-`agent-docs/architecture/effect-building-blocks.md`; `scripts/effect-audit-ledger.csv` keeps every class's verdict and
-`python3 -I scripts/effect-inventory.py` the inventory.
+The 252 defect lines this entry held were worked through by the rules-fixes runs (2026-11-27 to 2026-11-28). Their plan, every
+run's Outcome and the lines they found (N1 to N100) are in `rules-fixes.md`; its history is `git log -- rules-fixes.md`, and the
+run commits are `git log --oneline 0e1a0e686aa..75990c830da`. What the effect cleanup and the runs built for card and engine
+authors is in `agent-docs/architecture/effect-building-blocks.md`; `scripts/effect-audit-ledger.csv` keeps every class's verdict.
 
-**Problem.** 252 open defect lines of the cleanup's defect queue (every line not struck through), one line each: card or class,
-the rule, how sure ("of the code" = read in the code, "unverified" = not re-checked). The queue line has where it was seen and
-more detail.
+**Problem.** 50 lines are left: what the runs didn't fix or drop, and the lines that wait for the owner. Each starts with its ID: a
+letter and number refers to entry 18 at commit `0e1a0e686aa` (print them with the awk command under "Line IDs" in
+`git show 75990c830da:rules-fixes.md`), an N number to that file's `N<n>` line. The run named after the ID is the one whose Outcome
+left it. "Owner" lines change only when the owner answers their entry 17 question.
 
 **Why it matters.** Rules accuracy first (AGENTS.md); each line is behaviour the engine gets wrong or can't show.
 
-**Proposed direction.** One group per defect run, failing tests first, each fix with its Oracle text, ruling or CR rule.
+**Proposed direction.** One group per run, failing tests first, each fix with its Oracle text, ruling or CR rule. Skip owner lines
+until entry 17 has the answer.
 
 **Prompt to start it:**
 
 ```
-Do refactors-to-do.md entry 18, group "<group>": for each line, read its full queue line (git show
-3b0d60d42d4:effect-cleanup-queues.md), confirm the defect with a failing test, then fix it. Read AGENTS.md and
-agent-docs/ARCHITECTURE.md first; check Oracle text and rulings with the Scryfall MCP and every CR number with get_rule. A line
-that turns out not to be a defect is removed with the reason in the report. Run only the touched test classes by FQCN.
+Do refactors-to-do.md entry 18, group "<group>" (or line <ID>). For each line, read the Outcome of the run it names in
+rules-fixes.md (git show 75990c830da:rules-fixes.md; the old line text is under "Line IDs", an N line under its run), then
+confirm the defect with a failing test and fix it. Read AGENTS.md and agent-docs/ARCHITECTURE.md first; check Oracle text and
+rulings with the Scryfall MCP and every CR number with get_rule. Skip a line marked "Owner" unless entry 17 has its answer. A
+line that turns out not to be a defect is removed with the reason in the report. Run only the touched test classes by FQCN.
 Don't commit.
 ```
 
 #### Face-down and lost-ability reads (CR 613.1f, 708.2a) (1)
 
-- `CreateTokenCopyOfCardEffect` over `cardsThisWay(EXILE)` would copy a face-down exiled card's hidden face (CR 406.3a); no card exiles face down and then copies (FD-2 fixed the filtered subject; the cast, entry and name / mana-value readers were already right). Latent.
+- F2 (FD-2): `CreateTokenCopyOfCardEffect` over `cardsThisWay(EXILE)` would copy a face-down exiled card's hidden face, though a card exiled face down has no characteristics (CR 406.3a). FD-2 fixed the filtered subject, and the cast, entry and name / mana-value readers were already right. No card exiles face down and then copies, so a fix needs a synthetic test first. Latent.
 
 #### Two-player assumptions (`getOpponentId`, first seat) (3)
 
-- Triskaidekaphobia declares the first survivor the winner: the engine ends the game at the first loss (`ControllerLosesGameEffectHandler`, `GameOutcomeService.checkWinCondition`), with no multiplayer elimination (CR 104.2a, 800.4a); owner question in entry 17 (MP-2). Sure.
-- `TargetOpponentCreatesTokenEffect`'s gift branch gives the gift to `getOpponentId`; waits for the owner's gift-opponent answer (entry 17). Sure of the code.
-- `CombatBlockService.handleDeclareBlockersStep`, `declareBlockers` and `getBlockableAttackerIndices` take the defending player as `getOpponentId`: only the first opponent declares blockers, against every attacker; each attacked player should declare in APNAP order against only the creatures attacking them (CR 802.4, 802.4a, 802.4b). First `CombatDamageService` must read more than one defending battlefield (`buildBlockerMap` and its index-keyed damage state use `getOpponentId`'s), then the AI and the frontend; whether several defenders' blocks are one block event ("one or more creatures become blocked") is unsettled. CB-1 fixed the `DefendingPlayer…` conditions. Sure.
+- M3 (MP-2), Owner: Triskaidekaphobia declares the first survivor the winner. Every loss ends the game (`ControllerLosesGameEffectHandler`, `GameOutcomeService.checkWinCondition`), and there is no model of a player leaving while the others play on (CR 104.2a, 800.4a). Entry 17's MP-2 question asks whether this goes to `missing-features-to-do.md`. Sure.
+- M9 (MP-2), Owner: `TargetOpponentCreatesTokenEffect`'s gift branch gives the gift to `getOpponentId`. MP-2 fixed the rest of M9 (Ingenious Mastery, Rogue Skycaptain). This waits for entry 17's gift-opponent question. Sure of the code.
+- M11 (CB-1): `CombatBlockService.handleDeclareBlockersStep`, `declareBlockers` and `getBlockableAttackerIndices` take the defending player as `getOpponentId`. So only the first opponent declares blockers, and it blocks every attacker. Each attacked player should declare in APNAP order, against only the creatures attacking them (CR 802.4, 802.4a, 802.4b). A fix first needs `CombatDamageService` to read more than one defending battlefield (`buildBlockerMap` and its index-keyed damage state use `getOpponentId`'s), then the AI and the frontend. Whether several defenders' blocks are one block event ("one or more creatures become blocked") is unsettled. CB-1 fixed the `DefendingPlayer…` conditions. Sure.
 
 #### Simultaneity and APNAP (CR 101.4, 603.10a, 608.2e) (3)
 
-- Mythweaver Poq's simultaneous duplicates are one conjure event each (unsettled). Unverified.
-- Tribute's "paid" check is `placed >= N`, so a halved tribute (an opponent's Halving Season) reads as unpaid (CR 702.104b: "as specified").
-- `PutExiledCardsIntoOwnersGraveyardEffect` (Covenant of Minds) gives no CR 404.3 order prompt for the cards it puts into one graveyard; an engine-wide policy, see entry 17 (EB-3). Sure, low.
+- S8 (MC-2e), Owner: Mythweaver Poq's duplicates are one conjure event each. Conjure is digital-only and has no rulings, so entry 17's MC-2e question asks whether they are one event (Thayan Evokers). Unverified.
+- S12 (0), Owner: Tribute's "paid" check is `placed >= N`, so a halved tribute (an opponent's Halving Season) reads as unpaid. CR 702.104b says "as specified". Waits for entry 17's Tribute question.
+- S19 (EB-3), Owner: `PutExiledCardsIntoOwnersGraveyardEffect` (Covenant of Minds) gives no order prompt for the cards it puts into one graveyard (CR 404.3). This is an engine-wide policy: entry 17's EB-3 question asks whether every multi-card move into one graveyard should ask. Dakra Mystic's part was no defect. Sure, low.
 
-#### Missing events or records (searches, coin flips, seeks, shuffles, counters, draws) (0)
+#### Missing events or records (searches, coin flips, seeks, shuffles, counters, draws) (1)
+
+- N99 (MC-2g): a draw that another replacement made instead (a Notion Thief's redirect, Thought Reflection's second draw) can pause for a draw choice. It then resumes outside its modified event (`GameData.drawEventDepth` 1), so its card counts as unreplaced (CR 614.6). The fix is the same as the one MC-2g made for N94 (`PendingCardDraw.endOfModifiedEvent`), applied to the redirected draws. No implemented "that card" reader can observe it. Of the code.
 
 #### Wrong targets and choices (3)
 
-- `ChoosePermanentsEffect` keeps a lone chosen permanent as the source's chosen permanent, so Deepfathom Echo (if folded onto it) or any copier choosing its model would leave a "the chosen creature" card's copy with a choice it never made (Dauntless Bodyguard) (CR 607.2d). Sure of the code.
-- The prompt callers (about 415 calls of `beginPermanentChoice`, `beginAnyTargetChoice`, `beginMultiPermanentChoice`, `beginMultiPermanentOrPlayerChoice`) that count or auto-pick candidates before prompting don't drop a permanent that can't be chosen (`GameQueryService.cantBeChosen`; the prompts themselves do since D15), so a lone such candidate can be taken or an empty prompt opened; only Glimpse the Unthinkable (playtest) has the ability. Unverified.
-- Nowhere to Run: "spells and abilities" are any player's, but it is modelled as its controller's only (multiplayer). Sure.
+- T1 (TK-2): there is one `Permanent.chosenPermanentId`, and it outlives a copy effect. A copied "the chosen creature" ability (Dauntless Bodyguard, or Deepfathom Echo if it is folded onto `ChoosePermanentsEffect`) then reads a choice it never made (CR 607.2d, 707.7). It is written by 49 call sites in 28 files and read in 26. A fix needs choices keyed by their linking ability. Only Zenos yae Galvus reads `ChoosePermanentsEffect`'s write. Sure of the code.
+- T5 (TR-3): the prompt callers (about 415 calls of `beginPermanentChoice`, `beginAnyTargetChoice`, `beginMultiPermanentChoice` and `beginMultiPermanentOrPlayerChoice`) count or auto-pick candidates before prompting. They don't drop a permanent that can't be chosen (`GameQueryService.cantBeChosen`), so a lone such candidate can be taken or an empty prompt opened. The prompts themselves have dropped them since D15. Only Glimpse the Unthinkable (a playtest card) has the ability, so this is a sweep, not a card fix. Unverified.
+- T13 (0), Owner: Nowhere to Run's "spells and abilities" are any player's, but it is modelled as its controller's only (multiplayer). Waits for entry 17's Nowhere to Run question. Sure.
 
-#### Payments and costs (3)
+#### Payments and costs (5)
 
-- The free casts ask for their cost-increase mana before their targets are chosen (the queue also before its modes; since FC-1 none asks for a spell with no legal mode or target): a mana ability activated in that window that removes the only target leaves the mana in the pool and the card uncast, where the target is chosen first and the spell cast (CR 601.2c, 601.2g). Sure of the code.
-- Development (Research // Development): two or more opponents letting its controller draw in one round draw one card, not one per accepting opponent (CR 118.12a: each paid cost is that player's; its 2006 rulings don't settle it). Sure of the code.
-- Madame Null, Power Broker asks "pay 0 life" for a creature with 0 power (HEAD's behaviour, pinned in U8: `MadameNullPowerBrokerTest.zeroPowerAsksForZeroLife`); the U3b orchestrator's decision (Q4) says it doesn't ask (CR 119.4).
+- P12 (FC-1): the free casts ask for their cost-increase mana before their targets are chosen (the queue also asks before its modes). Since FC-1, a spell with no legal mode or target isn't asked. A mana ability activated in that window that removes the only target leaves the mana in the pool and the card uncast. With the target chosen first, the spell would be cast (CR 601.2c, 601.2g). A fix moves `FreeCastCostIncreaseSupport.payOrAsk` after the target prompts of every `PausedCast` flow. Sure of the code.
+- P21 (0), Owner: Development (Research // Development) draws one card when two or more opponents let its controller draw in one round, not one per accepting opponent (CR 118.12a: each paid cost is that player's; its 2006 rulings don't settle it). Entry 17's orchestrator decision U3c Q2 keeps one draw per round until the owner reviews it. Sure of the code.
+- P25 (0), Owner: Madame Null, Power Broker asks "pay 0 life" for a creature with 0 power. That is HEAD's behaviour, pinned in U8 by `MadameNullPowerBrokerTest.zeroPowerAsksForZeroLife`. The U3b orchestrator decision (Q4) says it doesn't ask (CR 119.4). Waits for entry 17's U8 question.
+- N5 (FC-4): a free cast never offers a kicker with a non-mana cost (sacrifice, tap or discard). FC-4 made the mana kicker offered whenever mana abilities could pay it (`ExileFreeCastSupport.offerKickerForFreeCast`, CR 601.2g), but the non-mana parts need the free-cast pickers that O90 and O91 need too (CR 601.2b). Sure of the code.
+- N80 (MC-2d): with Jaya Ballard's emblem, a card whose printed flashback cost can be paid is always cast with flashback. The graveyard request can't choose the emblem's cast for its mana cost instead (CR 601.2b, 118.9a). A fix needs a request field threaded through the about 14 `playFlashbackSpell` overloads of `GameService` and `SpellCastingService`, `GameData.GraveyardCastReplay`, `PlayCardRequestDispatchService` and the client. P3 (the emblem casting for the mana cost, not with flashback) is already right and pinned. Sure of the code.
 
 #### Layers and copy values (3)
 
-- Esix's copies keep none of the replaced copy's instructions (Faerie Artisans); Dance of Many waits for it. Sure of the code.
-- Thought Partition and Hydroponics Architect write colour, mana cost, supertype and subtype into runtime copies (layer 1, CR 613). Sure of the code.
-- Ability borrowers in a CR 613.8b dependency loop are approximated by assembly order: a borrower being assembled supplies only its card's abilities, so an earlier lender in the loop is right, but a later one supplies its own borrowed abilities too (by the code, two Experiment Kraj: the earlier one gets a second copy of its own ability; no test), and a three-borrower cycle can miss a lender's borrowed abilities. Needs the lender graph of every borrower to find the loop and apply it in timestamp order (LY-5: left). Sure of the code, rare.
+- L2 (0), Owner: Esix's copies keep none of the replaced copy's instructions (Faerie Artisans), and Dance of Many waits for it. Waits for entry 17's T1 question (do the substitutes keep the creating effect's instructions). Sure of the code.
+- L8 (PP-1): Thought Partition and Hydroponics Architect write colour, mana cost and supertypes into runtime copies (layer 1), which a copy then copies. A fix needs perpetual colour, set-mana-cost and supertype stores on the physical card, read by the layered pass and by every reader of a card's colour, mana cost and supertypes outside the battlefield. Hydroponics Architect's subtype and trigger already have stores. Sure of the code.
+- L11 (LY-5): ability borrowers in a dependency loop are approximated by assembly order (CR 613.8b). A borrower being assembled supplies only its card's abilities, so an earlier lender in the loop is right. A later one supplies its own borrowed abilities too: by the code, of two Experiment Krajs the earlier gets a second copy of its own ability (no test). A three-borrower cycle can miss a lender's borrowed abilities. A fix needs every borrower's lender graph to find the loop, then applies it in timestamp order. Sure of the code, rare.
 
-#### Logs and hidden information (2)
+#### Logs and hidden information (3)
 
-- `cardsThisWay(REVEAL)` names a card a later step reordered within its library (CR 701.20d); no card reads it so. Unverified.
-- `getRevealedOpponentHand` returns only the first opponent's hand (multiplayer); needs a hand per opponent in `GameStateMessage` and the frontend (owner question in entry 17, MP-2). Sure of the code.
+- H1 (FD-2): `cardsThisWay(REVEAL)` still names a card after a later step reordered it within its library, though a reordered revealed card stops being revealed and becomes a new object (CR 701.20d). A fix needs a library-order stay across about 280 shuffle and reorder sites. No card reads it so. Latent.
+- H7 (MP-2), Owner: `GameViewProjectionFactory.getRevealedOpponentHand` (Zur's Weirding, Telepathy) returns only the first opponent's hand, since `GameStateMessage` and the frontend have one opponent hand slot. Entry 17's MP-2 question asks whether this goes to `missing-features-to-do.md`. Sure of the code.
+- N98 (MC-2g): since MC-2g, a face-down spell's target id is its own stack id, not its card's (CR 708.5). MC-2g found and fixed three handlers that keyed a `GameData` record by the target id, but there was no full sweep of handlers that use a spell target's `entry.getTargetId()` as a card id (a map key, `findCardById`, an exile lookup). Each such reader should go through `StackEntry.isIdentifiedBy` or the entry's card. Of the code.
 
-#### Other (27)
+#### Other (28)
 
-- Casting checks left from runs 40 and 41: Scrycast (Biting Remark; `ScryInteractionHandler`, `ScryAiStrategy`, code: the scry answer casts it with no `canCastDuringResolution` check, and the AI strategies have no `CastingPermissionService`); the may-cast offers don't ask the shared check; an ability leaves the stack before it resolves, where CR 608.2n removes it last. Unverified. FC-2: Knowledge Pool's timing, the split exile cast and suspend's type restriction fixed.
-- Krovikan Vampire's `ReturnDamagedCreaturesThatDiedUnderControlEffect` (a mass return with control and sacrifice links) puts an Aura card that died animated onto the battlefield with no host choice (CR 303.4f, 303.4g); Lim-Dûl's head since rules-fixes EB-1 and `ReturnDyingCreatureToBattlefieldEffect`, `ReturnDyingCreatureToOwnerBattlefieldEffect` since EB-2 go through the entry batch. Unverified.
-- Cards with no printing identity: the `Supplier`-built conjures and spellbook drafts, the hand paths not marking a card conjured (runs 29 to 31); Protean War Engine (P08); Darigaaz, Skywriter Djinn, Oracle of the Alpha built by hand, Juggernaut Peddler, Calim, Mephidross Slime by constructor or `Supplier`, Goblin Influx Array's Reckless Ringleader a blank `new Card()` (P16). Sure.
-- `isPreventedFromDealingDamage` pre-checks left before the damage pools skip the damage event (Selfless Squire misses them) and the CR 616.1 order: Bomb Squad's `RemoveAllCountersThenDestroyReferencedPermanentAndDamageControllerEffectHandler` (asked before the destruction; the creature deals the damage as it last existed, an owner question in entry 17) and the combat damage step (`CombatDamageService`'s three `isPreventedFromDealingDamage(…, true)` checks) (CR 616.1). Sure of the code.
-- The set exchanges (Reins of Power, Twist Allegiance) and Perplexing Chimera don't check `cantBeControlledByOtherPlayers`; CR 701.12a's set reading unsettled. Unverified.
-- Fear of Sleep Paralysis' lock (`GameQueryService.stunCountersLocked`) is read by the untap replacement and `PermanentCounterSupport`'s and `DestructionSupport`'s shared removals since MC-1, not by the removals that set counts directly (remove-counter costs in `ActivatedAbilityExecutionService` and `ResolutionCostPaymentService`, the counter-kind choice lists of `removableCounterKinds`, handlers calling `setCounterCount`). Fairly sure, low.
-- `hasLukkaExilePermission` matches a name starting "Lukka,", not the Lukka planeswalker type: `CardSubtype` has no LUKKA (adding it bumps `StoredSet.CONVERSION_VERSION`; batch it with another mapping change). CP-1 made it read the live planeswalker type and skip face-down permanents. Sure, low.
-- No seeded game random source: about 180 `ThreadLocalRandom` sites, random-target picks included, so tests can't fix a random pick. Sure.
-- Reality Twist: a Volcanic Island offers the unlisted Island type's U; `RealityTwistTest` asserts it and the 2013 ruling is ambiguous for unlisted types. Unsure.
-- Boseiju, Hall of the Bandit Lord: when a land-mana replacement applies, the produced mana may lose its rider (CR 106.6a). Unverified.
-- Valki (and any "becomes a copy" of a card with an exile/return pair): a copied reader of every link (`exiledWithSource()`, about 200 cards) still reads the cards the copier exiled with its own abilities, where it should read only what its copied exile ability exiled (CR 607.1, 607.2a); Valki's hand exile records no link, so with two or more opponents a copied unlinked reader (Lazav, Wearer of Faces) sees it too. Needs every printed exile to record its own link. LY-5 fixed the borrowers (Myr Welder, Territory Forge, Idris, Locus read their own exile's link). Fairly sure.
-- `PerpetuallyGrantKeywordsToTriggeringCardEffect` over `Subjects.sourceObjectCard()` (Heir to Dragonfire, PP-1): an ability of a card in a hand records no hand stay, so `SubjectResolutionService.sourceObjectCard` looks in the hand, exile and graveyard, and a card that went from the hand to a graveyard before the ability resolved still gains flying (CR 400.7).
-- A card with both a perpetual evoke and a plain perpetual alternative cost offers only the first granted one (`GameQueryService.findGrantedAlternateCast`) (CR 601.2b).
-- Combat damage's protection is applied by `CombatDamageService.protectionPreventsCombatDamage` before the recipient's pool, which orders it only beside Phantom Centaur's counter prevention, so protection and another prevention of combat damage aren't ordered (CR 702.16e, 616.1). Sure of the code.
-- "May pay" mana paid from the pool without the tax-paid event (Tax Taker): Reflect (`ReflectMayEffectHandler`) still pays with `payResolutionCost`; its only card, Mirrored Lotus, reflects for {0}, so no mana and no event. The others were fixed in PY-1 (`TaxTakerTest.EffectPromptTaxes`). Latent.
-- Perplex's discard-hand ransom names the payer as the discard's cause, so an opponent's Perplex doesn't count as "a spell or ability an opponent controls causes you to discard" for Obstinate Baloth or Wilt-Leaf Liege: not settled by the rules (an owner question in entry 17, CT-1). Unsure.
-- Mana abilities that work from the graveyard, exile or the command zone count as mana sources for `couldPossiblyPay` but can't be activated during a may-pay prompt (only hand abilities can, step 10 run U3a); no implemented card has one today. Sure, harmless today.
-- Quenchable Fire, Glass Asp, Nafs Asp, Sabertooth Cobra: the special action that pays before the delayed trigger (`AbilityActivationService.payDelayedTriggerCost`, CR 116.2c) raises no tax-paid event, so Tax Taker doesn't see mana an opponent pays for your spell's or creature's delayed ability; it changes play only with Tax Taker and the rules don't say whether it is a "tax". Sure of the code.
-- `UnlessPaysEffectHandler.nextStep` now sets the entry's accepted players to the payers who chose to pay before every branch (for `eachUnless`); an entry that also had a `TemptingOfferEffect` or Snort's discard set them before its "unless" would lose that list. Sure of the code.
-- Sword-Point Diplomacy asks about the revealed cards in library order; its ruling lets the caster choose the order the cards are processed in (it matters only when an opponent's life runs short). Unsure it is worth a prompt.
-- Decoy Gambit (`ReturnTargetCreaturesUnlessControllersDrawEffect`) still offers "have you draw a card" when its caster can't draw; whether an opponent may choose it then (CR 608.2d: an impossible option can't be chosen; CR 121.3 bars a player who can't draw from choosing to draw, but here another player makes the choice) is not settled by the rules or its rulings. Sure the question is open.
-- Missing feature (owner): no client chooser for an "[A] or [B]" additional cast cost (`AnyOfCost` as `addCastingCost`) (CR 601.2b).
-- The free-cast additional-cost chooser ("Choose how to pay the additional cost.") is asked after the targets, not as the spell is announced (CR 601.2b, before 601.2c).
-- A free cast (`ExileFreeCastQueueSupport`) doesn't offer an "[A] or [B]" cost's graveyard-exile or forage alternative: there is no free-cast graveyard picker, so a free Soaring Stoneglider or Feed the Cycle pays its mana alternative or is skipped (CR 601.2b). Sure.
-- Exile and library-top casts still refuse tap-, blight- and graveyard-exile-or-mana spells (Disruption Protocol, Wild Unraveling, Soaring Stoneglider) as "not supported from this zone"; library top takes only an "[A] or [B]" cost of sacrifice, mana, life and discard alternatives. Sure.
-- Battle cry is built on "creatures you control" (B2 keeps it), but CR 702.91a gives +1/+0 to "each other attacking creature", a teammate's attackers too (Two-Headed Giant).
-- "Attacking creatures get" / "other attacking creatures get" written as `BoostEffect.creaturesYouControl(…, attacking)` (Iroh, Firebending Instructor, Kangee's Lieutenant, Motivated Pony, Targ Nar, Honored Crop-Captain and others) leaves out a teammate's attackers (Two-Headed Giant), as battle cry does (Q7); `allCreatures(…, attacking)` would say it.
+- O1 (FC-2): casting checks left from runs 40 and 41. Scrycast (Biting Remark): the scry answer (`ScryInteractionHandler`) casts it with no `canCastDuringResolution` check, and the AI strategies (`ScryAiStrategy`) have no `CastingPermissionService`. Biting Remark has no Oracle data in Scryfall or MTGJSON. The may-cast offers don't ask the shared check. An ability leaves the stack before it resolves, though CR 608.2n removes it last. FC-2 fixed Knowledge Pool's timing, the split exile cast and suspend's type restriction. Unverified.
+- O3 (EB-2): Krovikan Vampire's `ReturnDamagedCreaturesThatDiedUnderControlEffect` puts an Aura card that died animated onto the battlefield with no host choice (CR 303.4f, 303.4g). It is a mass return with control and sacrifice links, so the whole return must move onto the entry batch. Lim-Dûl's head (EB-1), `ReturnDyingCreatureToBattlefieldEffect` and `ReturnDyingCreatureToOwnerBattlefieldEffect` (EB-2) already go through it. Unverified.
+- O6 (0), Owner: cards with no printing identity. These are the `Supplier`-built conjures and spellbook drafts and the hand paths that don't mark a card conjured (runs 29 to 31); Protean War Engine (P08); Darigaaz, Skywriter Djinn and Oracle of the Alpha built by hand; Juggernaut Peddler, Calim and Mephidross Slime built by constructor or `Supplier`; and Goblin Influx Array's Reckless Ringleader, a blank `new Card()` (P16). This is an infrastructure decision: see entry 17 (Z, printing identity). Sure.
+- O9 (DM-1), part Owner: DM-1 removed the effect handlers' `isPreventedFromDealingDamage` pre-checks. Two are left, and they skip the damage event (Selfless Squire misses them) and the CR 616.1 order. (1) Bomb Squad's `RemoveAllCountersThenDestroyReferencedPermanentAndDamageControllerEffectHandler` asks before the destruction; it waits for entry 17's DM-1 question. (2) The combat damage step has three `isPreventedFromDealingDamage(…, true)` checks in `CombatDamageService`, which should move into the damage pools. Sure of the code.
+- O11 (0), Owner: the set exchanges (Reins of Power, Twist Allegiance) and Perplexing Chimera don't check `cantBeControlledByOtherPlayers`. The set reading of CR 701.12a is unsettled. Waits for entry 17's set-exchange question. Unverified.
+- O13 (MC-1): Fear of Sleep Paralysis' lock (`GameQueryService.stunCountersLocked`) is read by the untap replacement and, since MC-1, by `PermanentCounterSupport`'s and `DestructionSupport`'s shared removals. The removals that set counts directly don't read it: the remove-counter costs in `ActivatedAbilityExecutionService` and `ResolutionCostPaymentService`, the counter-kind choice lists of `removableCounterKinds`, and handlers calling `setCounterCount`. Fairly sure, low.
+- O14 (CP-1): `hasLukkaExilePermission` matches a name starting "Lukka,", not the Lukka planeswalker type, because `CardSubtype` has no LUKKA. Adding it bumps `StoredSet.CONVERSION_VERSION`, so batch it with another mapping change. CP-1 made it read the live planeswalker type and skip face-down permanents. Sure, low.
+- O21 (0), Owner: there is no seeded game random source. About 180 `ThreadLocalRandom` sites, random-target picks included, mean tests can't fix a random pick. Waits for entry 17's seeded-random question. Sure.
+- O23 (0), Owner: Reality Twist lets a Volcanic Island tap for the unlisted Island type's U. `RealityTwistTest` asserts it, and the 2013 ruling is ambiguous for unlisted types. Waits for entry 17's Reality Twist question. Unsure.
+- O24 (0), Owner: Boseiju, Hall of the Bandit Lord's mana may lose its rider when a land-mana replacement applies (CR 106.6a). Waits for entry 17's Boseiju question. Unverified.
+- O33 (LY-5): Valki, and any "becomes a copy" of a card with an exile/return pair. A copied reader of every link (`exiledWithSource()`, about 200 cards) still reads the cards the copier exiled with its own abilities. It should read only what its copied exile ability exiled (CR 607.1, 607.2a). Valki's hand exile records no link, so with two or more opponents a copied unlinked reader (Lazav, Wearer of Faces) sees it too. A fix needs every printed exile to record its own link. LY-5 fixed the borrowers (Myr Welder, Territory Forge, Idris and Locus read their own exile's link). No two-player case was found where a copied non-borrower reader observes it. Fairly sure.
+- O47 (PP-1): a card with both a perpetual evoke and a plain perpetual alternative cost offers only the first granted one (`GameQueryService.findGrantedAlternateCast`) (CR 601.2b, 118.9a). It is reachable: Aquatic Subtlety's evoke on a blue artifact creature duplicate that Flames of Moradin conjured with its {R} cost. A fix needs a cast-request field naming the chosen cost through `GameService`, the websocket, the frontend and the AI. Sure of the code.
+- O57 (DM-1): combat damage's protection is applied by `CombatDamageService.protectionPreventsCombatDamage` before the recipient's damage pool. The pool orders it only beside Phantom Centaur's counter prevention, so protection and any other prevention of combat damage aren't ordered (CR 702.16e, 616.1). DM-1 moved every noncombat dealer onto the pool's protection rule. Sure of the code.
+- O60 (PY-1): Reflect (`ReflectMayEffectHandler`) still pays its "may pay" mana with `payResolutionCost`, not `payManaFromPool`, so Tax Taker would see no tax-paid event. Its only card, Mirrored Lotus, reflects for {0}, so there is no mana and no event. PY-1 fixed the others (`TaxTakerTest.EffectPromptTaxes`). Latent.
+- O65 (CT-1), Owner: Perplex's discard-hand ransom names the payer as the discard's cause. So an opponent's Perplex doesn't count as "a spell or ability an opponent controls causes you to discard" for Obstinate Baloth or Wilt-Leaf Liege. The rules don't settle it: waits for entry 17's CT-1 question. CT-1 fixed The Serpent Society's poison half. Unsure.
+- O71 (PY-1): mana abilities that work from the graveyard, exile or the command zone count as mana sources for `couldPossiblyPay`, but they can't be activated during a may-pay prompt (only hand abilities can, step 10 run U3a). No implemented card has one, and PY-1 found it not cheap. Sure, harmless today.
+- O72 (PY-1), Owner: Quenchable Fire, Glass Asp, Nafs Asp and Sabertooth Cobra raise no tax-paid event for the special action that pays before the delayed trigger (`AbilityActivationService.payDelayedTriggerCost`, CR 116.2c). So Tax Taker doesn't see mana an opponent pays for your spell's or creature's delayed ability. Tax Taker's text doesn't define "tax": waits for entry 17's U3b Q5. Sure of the code.
+- O76 (PY-1): `UnlessPaysEffectHandler.nextStep` sets the entry's accepted players to the payers who chose to pay before every branch (for `eachUnless`). An entry that also had a `TemptingOfferEffect` or Snort's discard set them before its "unless" would lose that list. No card has both. Sure of the code, latent.
+- O81 (MC-1), Owner: Sword-Point Diplomacy asks about the revealed cards in library order, though its ruling lets the caster choose the order they are processed in. It matters only when an opponent's life runs short. Entry 17's MC-1 question asks whether a prompt is wanted, up front or card by card. Unsure it is worth a prompt.
+- O82 (0), Owner: Decoy Gambit (`ReturnTargetCreaturesUnlessControllersDrawEffect`) still offers "have you draw a card" when its caster can't draw. Whether an opponent may choose it then is not settled by the rules or its rulings (CR 608.2d: an impossible option can't be chosen; CR 121.3 bars a player who can't draw from choosing to draw, but here another player makes the choice). Waits for entry 17's U6b question.
+- O85 (0), Owner: there is no client chooser for an "[A] or [B]" additional cast cost (`AnyOfCost` as `addCastingCost`) (CR 601.2b), so Bone Shards, Demand Answers, Minion Missile and Souls of the Lost can't be cast with their discard from the UI. It is a missing feature: entry 17's U7 Q3 asks whether it moves to `missing-features-to-do.md`.
+- O86 (FC-4): the free-cast additional-cost chooser ("Choose how to pay the additional cost.") is asked after the targets, not as the spell is announced (CR 601.2b, before 601.2c). Moving it needs the chosen alternative carried through every free-cast target prompt (`ExileCastSpellTarget`, `LibraryCastSpellTarget`, `GraveyardCastSpellTarget`) to `beginSacrificeCostIfNeeded`. It changes play for no card. Sure of the code.
+- O90 (FC-4): a free cast (`ExileFreeCastQueueSupport`) doesn't offer an "[A] or [B]" cost's graveyard-exile or forage alternative, so a free Soaring Stoneglider or Feed the Cycle pays its mana alternative or is skipped (CR 601.2b). A fix needs a free-cast graveyard-exile picker and a Food picker on the prepared entry. Sure.
+- O91 (FC-4): exile and library-top casts still refuse tap, blight and graveyard-exile-or-mana spells (Disruption Protocol, Wild Unraveling, Soaring Stoneglider) as "not supported from this zone". FC-3 made library top take an "[A] or [B]" cost of sacrifice, mana, life and discard alternatives. A fix needs O90's pickers plus request fields on the exile and library-top casts. Sure.
+- O93 (0), Owner: battle cry is built on "creatures you control" (B2 keeps it), but CR 702.91a gives +1/+0 to "each other attacking creature", a teammate's attackers too (Two-Headed Giant). The engine has no team play: entry 17 (Z, teammates' attackers) asks whether to keep this line.
+- O97 (0), Owner: "attacking creatures get" and "other attacking creatures get" are written as `BoostEffect.creaturesYouControl(…, attacking)` (Iroh, Firebending Instructor, Kangee's Lieutenant, Motivated Pony, Targ Nar, Honored Crop-Captain and others). This leaves out a teammate's attackers (Two-Headed Giant), as battle cry does; `allCreatures(…, attacking)` would say it. The same entry 17 question as O93.
+- N77 (FC-4), with N11 and N12's rest (CP-1, FC-4): no exile cast path casts an Adventure through a play permission. `playCardFromExile` casts the card itself, and the dispatch's `adventure` flag goes to the hand path; `ExileReducedCastSupport.castFromExileWithNormalCostDuringResolution` also casts only the card. So `ExileTopCardMayPlayThisTurnEffect`'s `castOnly` ("you may cast that card": Ragavan, Daxos) gives a land card with an Adventure (the FIN towns) no permission, though the towns' rulings let such an effect cast the Adventure (N11). The permission can't be given without also letting the land be played (CR 716.3, 716.3a). Nathan Drake, Treasure Hunter's exile cast is the same gap (N12's rest). Sure of the code.
+- N7 (CL-1): a test cleanup, not a rules defect. 135 card-test classes carry their own private `addOpponent` / `addThirdPlayer` helper, which could be `GameTestHarness.addOpponent(name)`. Many copies differ from the harness's (a fixed connection name, no session registration), so each must be checked as it is moved. CL-1 added the missing `@DisplayName`s.
 
 ---
 

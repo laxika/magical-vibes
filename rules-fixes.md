@@ -60,7 +60,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | UI Frontend | UI-1 | UI-1 done 2026-11-27 |
 | LG, CL Logs and non-rules cleanup | LG-1, CL-1 | CL-1, LG-1 done 2026-11-27 |
 | FT Missing features | FT-1, FT-2 | FT-1, FT-2 done 2026-11-27 (N86 to MC-2e) |
-| Z Close | Z | open |
+| Z Close | Z | bookkeeping done 2026-11-28 (entry 18 holds the 50 lines left; owner questions open; full suite run still to ask) |
 
 ## Ground rules for every run
 
@@ -1992,7 +1992,17 @@ for "becomes plotted"). No owner questions, no new lines.
 - Update `agent-docs/` for every new shared piece (effect-building-blocks.md first).
 - Delete this file when nothing in it is open.
 
-Outcome:
+Outcome: 2026-11-28, bookkeeping. Audit of the 252 entry 18 IDs (at `0e1a0e686aa`): 164 fixed, 44 dropped (O18, O19, O30,
+O31 and O84 moved to entry 16), 22 left, 22 waiting on the owner, none unaccounted. Of N1 to N100: 84 fixed, 8 dropped (N25, N29,
+N36, N42, N46, N50, N57, N75), 8 left (N5's non-mana kickers, N7's test helpers, N11, N12's Nathan Drake part, N77, N80, N98,
+N99). Left: F2, M11, T1, T5, P12, L8, L11, H1, O1, O3, O9 (its combat step; Bomb Squad is the owner's), O13, O14, O33, O47, O57,
+O60, O71, O76, O86, O90, O91. Owner: M3, M9, S8, S12, S19, T13, P21, P25, L2, H7, O6, O11, O21, O23, O24, O65, O72, O81, O82,
+O85, O93, O97. O41's hand half was fixed by N73 (MC-2f). Entry 18 rewritten to these 50 lines, each with its ID and the run
+that left it (F 1, M 3, S 3, E 1, T 3, P 5, L 3, H 3, Other 28; N11 and N12's rest share N77's line); its prompt points here.
+Entry 17: the step-0 questions for O6 and O93 / O97 had no item and were added; the count is 70 (it said 61). agent-docs rows
+added for `QueueReflexiveAbilityEffect` (`aboutDeclaredTarget`), `EachFightsADifferentOneEffect` / `FightSupport.fightTogether`,
+`GameQueryService.getEffectiveSpellColors` and `ChooseAttackTargetsForCreatedTokensEffect.forEnteredAttacking`; the other new
+pieces already had rows. Not done yet: the full suite run (the owner's). This file stays until the owner questions are answered.
 
 ## Agent brief
 
