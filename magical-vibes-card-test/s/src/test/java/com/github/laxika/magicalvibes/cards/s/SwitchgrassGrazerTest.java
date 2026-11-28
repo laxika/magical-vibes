@@ -52,29 +52,31 @@ class SwitchgrassGrazerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("An unsaddled attack does not trigger")
-    void unsaddledAttackDoesNotTrigger() {
+    @DisplayName("An unsaddled attack still deals 1 damage but gives no perpetual rider")
+    void unsaddledAttackDealsDamageWithoutRiders() {
         addCreatureReady(player1, new SwitchgrassGrazer());
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0));
-        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
 
-        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
         assertThat(bls.canBlock(gd, target)).isTrue();
     }
 
     @Test
-    @DisplayName("The attack trigger checks saddled when attackers are declared")
-    void checksSaddledAtDeclaration() {
-        Permanent grazer = addCreatureReady(player1, new SwitchgrassGrazer());
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+    @DisplayName("An unsaddled attack can deal its 1 damage to a player")
+    void unsaddledAttackCanDamagePlayer() {
+        gd.playerAutoStopSteps.put(player1.getId(), java.util.EnumSet.of(TurnStep.DECLARE_BLOCKERS));
+        addCreatureReady(player1, new SwitchgrassGrazer());
+        int lifeBefore = gd.getLife(player2.getId());
 
         declareAttackers(player1, List.of(0));
-        grazer.setSaddled(true);
-        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
 
-        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 1);
     }
 
     @Test

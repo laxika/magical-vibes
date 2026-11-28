@@ -2,10 +2,12 @@ package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TextReplacement;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.DeterminedOnce;
 import com.github.laxika.magicalvibes.model.amount.Divided;
@@ -14,9 +16,11 @@ import com.github.laxika.magicalvibes.model.amount.HalvedRoundedUp;
 import com.github.laxika.magicalvibes.model.amount.IfSourceAttacking;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
+import com.github.laxika.magicalvibes.model.condition.ActivePlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.Condition;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
@@ -58,6 +62,9 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.trigger.SpellFilter;
+import com.github.laxika.magicalvibes.model.trigger.StateTrigger;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -215,6 +222,79 @@ public final class TextChangeTransformer {
             }
         }
         return spell == filter.spell() ? filter : filter.withSpell(spell);
+    }
+
+    /**
+     * {@code ability}, a triggered ability of a permanent, read through the permanent's own text replacements and any
+     * global color-word change ({@link #transform(CardEffect, List, List)}'s order): its effects, its intervening "if"
+     * and event condition, and a state trigger's permanent filters ("when you control no Islands", CR 612.1). Returns
+     * the same instance when no replacement changes it.
+     */
+    public static TriggeredAbility transformTriggeredAbility(TriggeredAbility ability, List<TextReplacement> own,
+                                                             List<TextReplacement> global) {
+        List<TextReplacement> replacements = inOrder(own, global);
+        if (replacements.isEmpty()) {
+            return ability;
+        }
+        List<EffectRegistration> effects = new ArrayList<>(ability.effects().size());
+        boolean effectsChanged = false;
+        for (EffectRegistration registration : ability.effects()) {
+            CardEffect effect = transform(registration.effect(), replacements);
+            effectsChanged |= effect != registration.effect();
+            effects.add(new EffectRegistration(effect, registration.simultaneousWithPrevious()));
+        }
+        TriggerOptions options = ability.options();
+        Condition interveningIf = transformCondition(options.interveningIf(), replacements);
+        Condition eventCondition = transformCondition(options.eventCondition(), replacements);
+        boolean optionsChanged = interveningIf != options.interveningIf() || eventCondition != options.eventCondition();
+        List<TriggerCondition> conditions = new ArrayList<>(ability.conditions().size());
+        boolean conditionsChanged = false;
+        for (TriggerCondition condition : ability.conditions()) {
+            TriggerCondition transformed = condition.trigger() instanceof StateTrigger state
+                    ? transformStateTrigger(condition, state, replacements) : condition;
+            conditionsChanged |= transformed != condition;
+            conditions.add(transformed);
+        }
+        if (!effectsChanged && !optionsChanged && !conditionsChanged) {
+            return ability;
+        }
+        return new TriggeredAbility(conditionsChanged ? conditions : ability.conditions(),
+                optionsChanged ? new TriggerOptions(interveningIf, options.limit(), options.multiplicity(),
+                        eventCondition) : options,
+                effectsChanged ? effects : ability.effects(), ability.chapterTargets(), ability.instance(),
+                ability.grantingPermanentId(), ability.targetFilter());
+    }
+
+    private static Condition transformCondition(Condition condition, List<TextReplacement> replacements) {
+        Condition result = condition;
+        for (TextReplacement replacement : replacements) {
+            Substitution substitution = resolve(replacement);
+            if (result != null && substitution != null) {
+                result = apply(result, substitution);
+            }
+        }
+        return result;
+    }
+
+    private static TriggerCondition transformStateTrigger(TriggerCondition condition, StateTrigger state,
+                                                          List<TextReplacement> replacements) {
+        PermanentPredicate source = state.sourcePredicate();
+        PermanentPredicate battlefield = state.battlefieldPredicate();
+        PermanentPredicate referenced = state.referencedPermanentPredicate();
+        for (TextReplacement replacement : replacements) {
+            Substitution substitution = resolve(replacement);
+            if (substitution != null) {
+                source = apply(source, substitution);
+                battlefield = apply(battlefield, substitution);
+                referenced = apply(referenced, substitution);
+            }
+        }
+        if (source == state.sourcePredicate() && battlefield == state.battlefieldPredicate()
+                && referenced == state.referencedPermanentPredicate()) {
+            return condition;
+        }
+        return new TriggerCondition(new StateTrigger(state.predicate(), source, battlefield,
+                state.maximumBattlefieldMatches(), state.minimumBattlefieldMatches(), referenced), condition.zones());
     }
 
     /**
@@ -449,7 +529,9 @@ public final class TextChangeTransformer {
             }
             case GrantNonAbilityEffectEffect grant -> {
                 CardEffect wrapped = apply(grant.effect(), substitution);
-                yield wrapped == grant.effect() ? grant : new GrantNonAbilityEffectEffect(wrapped, grant.subject());
+                PermanentPredicate filter = apply(grant.filter(), substitution);
+                yield wrapped == grant.effect() && filter == grant.filter() ? grant
+                        : new GrantNonAbilityEffectEffect(wrapped, grant.subject(), filter);
             }
             case GrantEffectEffect grant -> {
                 CardEffect wrapped = apply(grant.effect(), substitution);
@@ -579,6 +661,16 @@ public final class TextChangeTransformer {
             case NotCondition not -> {
                 Condition inner = apply(not.inner(), substitution);
                 yield inner == not.inner() ? not : new NotCondition(inner);
+            }
+            // "If you control two or more Islands" (Noggle Hedge-Mage), "if that player controls a nonblack, nonland
+            // permanent" (Urborg Stalker): the words of the counted permanents.
+            case ControlsPermanentCount count -> {
+                PermanentPredicate filter = apply(count.filter(), substitution);
+                yield filter == count.filter() ? count : new ControlsPermanentCount(count.minCount(), filter);
+            }
+            case ActivePlayerControlsPermanent controls -> {
+                PermanentPredicate filter = apply(controls.filter(), substitution);
+                yield filter == controls.filter() ? controls : new ActivePlayerControlsPermanent(filter);
             }
             // "If you sacrifice an Island this way": the words of the permanent and card filters.
             case HappenedThisWay happened -> {

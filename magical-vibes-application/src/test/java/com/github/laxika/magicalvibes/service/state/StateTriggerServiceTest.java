@@ -100,7 +100,7 @@ class StateTriggerServiceTest {
         sut = new StateTriggerService(gameLogService, predicateEvaluationService, null,
                 triggeredAbilityStackService, org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService.class), triggerIndex);
         // A permanent's abilities as the layers leave it: its card's, unless a test says otherwise.
-        lenient().when(triggerIndex.permanentAbilities(eq(gd), any())).thenAnswer(invocation ->
+        lenient().when(triggerIndex.textChangedPermanentAbilities(eq(gd), any())).thenAnswer(invocation ->
                 invocation.<Permanent>getArgument(1).getCard().getTriggeredAbilities());
         lenient().when(triggeredAbilityStackService.put(eq(gd), any()))
                 .thenAnswer(invocation -> putOnStack(invocation.getArgument(1)));
@@ -147,7 +147,7 @@ class StateTriggerServiceTest {
             gd.playerBattlefields.get(player1Id).add(perm);
             TriggeredAbility granted = new TriggeredAbility(Triggers.state((gameData, p, controllerId) -> true),
                     new GainLifeEffect(1));
-            when(triggerIndex.permanentAbilities(gd, perm)).thenReturn(List.of(granted));
+            when(triggerIndex.textChangedPermanentAbilities(gd, perm)).thenReturn(List.of(granted));
 
             service.checkStateTriggers(gd);
 

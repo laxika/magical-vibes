@@ -3,12 +3,14 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.m.MasterfulReplication;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -19,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SupperForSpidersTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Returns an opponent's creature card that died this turn as a Food artifact, not one that didn't")
     void returnsEligibleOpponentCreaturesAsFoodArtifacts() {
         harness.addToBattlefield(player2, new LlanowarElves());
         harness.setGraveyard(player2, List.of(new GrizzlyBears()));
@@ -34,10 +37,10 @@ class SupperForSpidersTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
 
         Permanent returned = findPermanent(player1, "Llanowar Elves");
-        assertThat(returned.getCard().getType()).isEqualTo(CardType.ARTIFACT);
-        assertThat(returned.getCard().getAdditionalTypes()).isEmpty();
-        assertThat(returned.getCard().getSubtypes()).containsExactly(CardSubtype.FOOD);
+        assertThat(gqs.isArtifact(gd, returned)).isTrue();
         assertThat(gqs.isCreature(gd, returned)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, returned, CardSubtype.FOOD)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, returned, CardSubtype.ELF)).isFalse();
         assertThat(findPermanents(player1, "Grizzly Bears")).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .extracting(card -> card.getName())
@@ -45,6 +48,7 @@ class SupperForSpidersTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The Food keeps its own abilities and can be sacrificed for 3 life, going to its owner's graveyard")
     void retainsOriginalAbilitiesAndCanBeSacrificedForFood() {
         harness.addToBattlefield(player2, new LlanowarElves());
         harness.setHand(player1, List.of(new LightningBolt()));
@@ -74,6 +78,7 @@ class SupperForSpidersTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Returns every eligible opponent card and none from your own graveyard")
     void returnsEveryEligibleOpponentCardButLeavesYourOwnGraveyardAlone() {
         harness.addToBattlefield(player2, new LlanowarElves());
         harness.addToBattlefield(player2, new GrizzlyBears());
@@ -100,6 +105,7 @@ class SupperForSpidersTest extends BaseCardTest {
 
     @Test
     @CardUsed(SculptingSteel.class)
+    @DisplayName("A copy of the Food copies the printed creature card, not the Food types")
     void copyingReturnedFoodCopiesOriginalCreatureTypes() {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new LightningBolt()));
@@ -122,8 +128,35 @@ class SupperForSpidersTest extends BaseCardTest {
                 .filter(permanent -> !permanent.getId().equals(food.getId()))
                 .findFirst().orElseThrow();
         assertThat(gqs.isCreature(gd, copy)).isTrue();
-        assertThat(copy.getCard().hasType(CardType.ARTIFACT)).isFalse();
-        assertThat(copy.getCard().getSubtypes()).containsExactly(CardSubtype.BEAR);
+        assertThat(gqs.isArtifact(gd, copy)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, copy, CardSubtype.BEAR)).isTrue();
         assertThat(gqs.isCreature(gd, food)).isFalse();
+    }
+
+    @Test
+    @CardUsed({MasterfulReplication.class, Ornithopter.class})
+    @DisplayName("A Food that becomes a copy of an artifact creature is still only a Food artifact")
+    void foodThatBecomesACopyKeepsItsFoodTypes() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent ornithopter = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
+
+        harness.setHand(player1, List.of(new SupperForSpiders(), new MasterfulReplication()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0);
+        Permanent food = findPermanent(player1, "Grizzly Bears");
+
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.castInstant(player1, 0, 1, ornithopter.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveName(gd, food)).isEqualTo("Ornithopter");
+        assertThat(gqs.isCreature(gd, food)).isFalse();
+        assertThat(gqs.isArtifact(gd, food)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, food, CardSubtype.FOOD)).isTrue();
     }
 }

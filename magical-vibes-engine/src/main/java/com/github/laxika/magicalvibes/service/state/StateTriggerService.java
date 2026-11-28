@@ -281,10 +281,11 @@ public class StateTriggerService {
      * The state-triggered abilities of {@code permanent} (CR 603.8), in order, as the layers leave it
      * ({@link TriggerIndex#permanentAbilities}): its card's, unless it is face down (CR 708.2) or lost them, those
      * granted it for a duration, and those other permanents' static abilities grant it (Olivia, Crimson Bride's "it
-     * gains 'When you don't control a legendary Vampire, exile this creature'", CR 613.1f).
+     * gains 'When you don't control a legendary Vampire, exile this creature'", CR 613.1f), its card's own read through
+     * its text changes, its game state, intervening "if" and effects (Magical Hack on Sea Serpent, CR 612.1).
      */
     private List<TriggeredAbility> stateTriggeredAbilities(GameData gameData, Permanent permanent) {
-        return triggerIndex.permanentAbilities(gameData, permanent).stream()
+        return triggerIndex.textChangedPermanentAbilities(gameData, permanent).stream()
                 .filter(ability -> ability.hasWatchedTrigger(STATE)).toList();
     }
 

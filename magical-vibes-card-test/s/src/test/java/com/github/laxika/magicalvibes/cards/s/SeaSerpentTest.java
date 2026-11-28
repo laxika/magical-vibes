@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.cards.m.MagicalHack;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.PhantasmalTerrain;
@@ -16,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SeaSerpent.class, Island.class, Forest.class, PhantasmalTerrain.class, StoneRain.class})
+@CardUsed({MagicalHack.class, SeaSerpent.class, Island.class, Forest.class, PhantasmalTerrain.class, StoneRain.class})
 class SeaSerpentTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrificed when controller controls no Islands")
@@ -162,5 +164,22 @@ class SeaSerpentTest extends BaseCardTest {
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(serpent)));
 
         harness.assertLife(player2, 15);
+    }
+
+    @Test
+    @DisplayName("Changed from Islands to Swamps, it is sacrificed while you control Islands but no Swamps")
+    void textChangedTriggerConditionReadsTheNewWord() {
+        harness.addToBattlefield(player1, new Island());
+        Permanent serpent = harness.addToBattlefieldAndReturn(player1, new SeaSerpent());
+        harness.setHand(player1, List.of(new MagicalHack()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, serpent.getId());
+        harness.handleListChoice(player1, "ISLAND");
+        harness.handleListChoice(player1, "SWAMP");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Sea Serpent");
+        harness.assertInGraveyard(player1, "Sea Serpent");
     }
 }

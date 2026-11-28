@@ -1033,9 +1033,9 @@ public class SubjectResolutionService {
      * a permission to cast it), while it is still the object the ability refers to (CR 400.7): the source permanent's
      * own physical card while it is that permanent; for an ability of a card in a graveyard or exile, or one that
      * triggered as its permanent went to the graveyard (CR 400.7e), the card in that stay
-     * ({@link CardSubject.SourceCard}); for an ability of a card in a hand (Heir to Dragonfire), the card while it is in
-     * that hand (an ability of a card in a hand, exile or a graveyard whose stay the entry doesn't record is looked
-     * for in those zones); else the permanent a step of this resolution put onto the battlefield from that card
+     * ({@link CardSubject.SourceCard}); for an ability of a card in a hand that keeps it there (Heir to Dragonfire), the
+     * card in the hand stay it was activated from ({@code StackEntry.sourceHandEntryVersion}; an ability of a card in a
+     * hand, exile or a graveyard whose stay the entry doesn't record is looked for in those zones); else the permanent a step of this resolution put onto the battlefield from that card
      * ("return this card ... It perpetually gets +1/+0", CR 400.7j). A copy's ability is about the copying permanent's
      * own card. {@code null} once the object has changed zones: a battlefield ability's card that went to a graveyard
      * since is a new object, not the card a dies trigger finds.
@@ -1056,8 +1056,12 @@ public class SubjectResolutionService {
         UUID cardId = card.getId();
         long exileStay = entry.getSourceExileEntryVersion();
         long graveyardStay = entry.sourceCardGraveyardEntryVersion();
+        long handStay = entry.getSourceHandEntryVersion();
         LocatedCard found = null;
-        if (exileStay >= 0) {
+        if (handStay >= 0) {
+            found = gameData.handEntryVersions.getOrDefault(cardId, 0L) != handStay
+                    ? null : locate(gameData, cardId, Zone.HAND);
+        } else if (exileStay >= 0) {
             found = gameData.exileEntryVersionsOf(List.of(cardId)).get(cardId) != exileStay
                     ? null : locate(gameData, cardId, Zone.EXILE);
         } else if (graveyardStay >= 0) {

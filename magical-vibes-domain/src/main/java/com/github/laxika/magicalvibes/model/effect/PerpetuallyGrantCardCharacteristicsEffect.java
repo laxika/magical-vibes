@@ -16,7 +16,8 @@ import java.util.Set;
  * replacing the ones it had ("perpetually becomes a Dragon"); otherwise they are added to the existing
  * subtypes ("in addition to its other types").
  *
- * <p>{@code cards} names other cards than the source's ("it perpetually becomes an artifact" after an exile step).
+ * <p>{@code cards} names other cards than the source's ("it perpetually becomes an artifact" after an exile step);
+ * without it the grant is to the ability's own object, as {@code Subjects.sourceObjectCard()} names it (CR 400.7).
  */
 public record PerpetuallyGrantCardCharacteristicsEffect(
         Set<CardType> cardTypes,

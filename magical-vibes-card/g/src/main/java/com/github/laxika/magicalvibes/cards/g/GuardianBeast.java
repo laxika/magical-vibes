@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.effect.CantBeControlledByOtherPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeEnchantedByOtherAurasEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantNonAbilityEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -32,11 +32,11 @@ public class GuardianBeast extends Card {
                         noncreatureArtifact)));
         addStaticEffect(new ConditionalEffect(
                 new SourceUntapped(),
-                new GrantEffectEffect(CantBeEnchantedByOtherAurasEffect.keepingExistingAuras(),
+                new GrantNonAbilityEffectEffect(CantBeEnchantedByOtherAurasEffect.keepingExistingAuras(),
                         Subjects.permanentsYouControl(), noncreatureArtifact)));
         addStaticEffect(new ConditionalEffect(
                 new SourceUntapped(),
-                new GrantEffectEffect(new CantBeControlledByOtherPlayersEffect(),
+                new GrantNonAbilityEffectEffect(new CantBeControlledByOtherPlayersEffect(),
                         Subjects.permanentsYouControl(), noncreatureArtifact)));
     }
 }

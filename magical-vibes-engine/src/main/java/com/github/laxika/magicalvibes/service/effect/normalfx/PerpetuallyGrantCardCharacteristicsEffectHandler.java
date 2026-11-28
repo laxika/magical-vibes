@@ -1,15 +1,12 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantCardCharacteristicsEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +27,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PerpetuallyGrantCardCharacteristicsEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameQueryService gameQueryService;
     private final SubjectResolutionService subjectResolutionService;
     private final GameLogService gameLogService;
 
@@ -50,14 +46,12 @@ public class PerpetuallyGrantCardCharacteristicsEffectHandler implements NormalE
                     perpetual.cards(), located, change(perpetual));
             return;
         }
-        Permanent source = entry.getSourcePermanentId() != null
-                ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId()) : null;
-        Card card = source == null || source.getOriginalCard() == null
-                ? entry.getCard() : source.getOriginalCard();
-        if (card == null) {
-            return;
+        // "This creature perpetually becomes ...": the ability's own object, its physical card, while it is still that
+        // object (CR 400.7); a Second Little Pig returned to hand in response is a new object.
+        var self = subjectResolutionService.sourceObjectCard(gameData, entry, effect);
+        if (self != null) {
+            grant(gameData, self.card().getId(), perpetual);
         }
-        grant(gameData, card.getId(), perpetual);
     }
 
     /** " perpetually becomes an artifact in addition to its other types.", " perpetually gains an ability.". */

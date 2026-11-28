@@ -2614,6 +2614,9 @@ public class AbilityActivationService {
         );
         configureHandAbilityTargets(stackEntry, ability, targetIds);
         stackEntry.setCyclingAbility(ability.isCyclingAbility());
+        if (ability.isSourceStaysInHand()) {
+            stackEntry.setSourceHandEntryVersion(gameData.handEntryVersions.getOrDefault(card.getId(), 0L));
+        }
         flushActivatedAbilityCostTriggers(gameData);
         recordHandAbilityActivationUse(gameData, card, abilityIndex);
         int insertionIndex = Math.min(Math.max(stackSizeBeforeCosts, 0), gameData.stack.size());

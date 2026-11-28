@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CantHaveOrGainKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantNonAbilityEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -17,7 +17,7 @@ public class ArchetypeOfImagination extends Card {
     public ArchetypeOfImagination() {
         addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, Subjects.creaturesYouControl()));
         addStaticEffect(new RemoveKeywordEffect(Keyword.FLYING, Subjects.creaturesYourOpponentsControl()));
-        addStaticEffect(new GrantEffectEffect(
+        addStaticEffect(new GrantNonAbilityEffectEffect(
                 new CantHaveOrGainKeywordEffect(Keyword.FLYING), Subjects.creaturesYourOpponentsControl()));
     }
 }

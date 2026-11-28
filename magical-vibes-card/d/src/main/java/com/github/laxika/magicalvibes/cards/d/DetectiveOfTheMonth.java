@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AscendEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantNonAbilityEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,7 +21,7 @@ public class DetectiveOfTheMonth extends Card {
     public DetectiveOfTheMonth() {
         addStaticEffect(new AscendEffect());
         addStaticEffect(new ConditionalEffect(new ControllerHasCityBlessing(),
-                new GrantEffectEffect(new CantBeBlockedEffect(), Subjects.creaturesYouControl(),
+                new GrantNonAbilityEffectEffect(new CantBeBlockedEffect(), Subjects.creaturesYouControl(),
                         new PermanentHasSubtypePredicate(CardSubtype.DETECTIVE))));
         addTrigger(Triggers.youDrawSecondCardEachTurn(),
                 new CreateTokenEffect(1, "Detective", 2, 2, CardColor.WHITE,

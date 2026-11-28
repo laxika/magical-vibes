@@ -4,21 +4,18 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSaddled;
 import com.github.laxika.magicalvibes.model.effect.BecomeSaddledUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageNotRemovedDuringCleanupEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetThenPerpetuallyGrantStaticEffectsIfCreatureDamagedEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.SaddleCost;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
-import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
-import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
-import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -27,17 +24,14 @@ import java.util.List;
 public class SwitchgrassGrazer extends Card {
 
     public SwitchgrassGrazer() {
-        target(new AnyTargetPredicateTargetFilter(
-                new PermanentAnyOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentIsPlaneswalkerPredicate(),
-                        new PermanentIsBattlePredicate())),
-                new PlayerRelationPredicate(PlayerRelation.ANY),
-                "Target must be any target"))
-                .addTrigger(Triggers.attacks(),
-                        TriggerOptions.DEFAULT.withInterveningIf(new SourceIsSaddled()),
-                        new DealDamageToAnyTargetThenPerpetuallyGrantStaticEffectsIfCreatureDamagedEffect(
-                                1, List.of(new CantBlockEffect(), new DamageNotRemovedDuringCleanupEffect())));
+        // The damage is dealt on every attack; only the perpetual rider asks whether it is saddled (a plain "if" read
+        // as the ability resolves, not an intervening "if").
+        addTrigger(Triggers.attacks(),
+                DealDamageEffect.toAnyTarget(1),
+                new ConditionalEffect(new SourceIsSaddled(), new PerpetuallyGrantAbilitiesEffect(
+                        Subjects.cardsOf(Subjects.thisWay(StepKind.DEAL_DAMAGE, new PermanentIsCreaturePredicate())),
+                        List.of(StaticAbility.of(new CantBlockEffect()),
+                                StaticAbility.of(new DamageNotRemovedDuringCleanupEffect())))));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

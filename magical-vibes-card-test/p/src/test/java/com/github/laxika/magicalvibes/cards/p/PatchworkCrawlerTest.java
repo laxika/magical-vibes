@@ -265,4 +265,23 @@ class PatchworkCrawlerTest extends BaseCardTest {
         assertThat(gd.getCardsExiledByPermanent(crawler.getId())).contains(sisters, bears);
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(crawler);
     }
+
+    @Test
+    @DisplayName("Doesn't have the abilities of a creature card a borrowed Patchwork Crawler ability exiled (CR 607.2a)")
+    void doesNotGainAbilitiesOfCreatureExiledByABorrowedCrawlerAbility() {
+        Permanent crawler = addCrawlerReady(player1);
+        Card otherCrawler = new PatchworkCrawler();
+        Card sorcerer = new ProdigalSorcerer();
+        harness.setGraveyard(player1, List.of(otherCrawler, sorcerer));
+        addManaForAbility(player1);
+        harness.activateAbility(player1, 0, 0, null, otherCrawler.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+
+        addManaForAbility(player1);
+        harness.activateAbility(player1, 0, 1, null, sorcerer.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+
+        assertThat(gd.getCardsExiledByPermanent(crawler.getId())).contains(sorcerer);
+        assertThat(gqs.computeStaticBonus(gd, crawler).grantedActivatedAbilities()).hasSize(1);
+    }
 }

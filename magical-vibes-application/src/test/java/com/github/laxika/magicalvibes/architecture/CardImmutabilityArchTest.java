@@ -75,7 +75,6 @@ class CardImmutabilityArchTest {
             "GraveyardReturnSupport",
             "LivingWeaponEffectHandler",
             "ExileDyingCreatureAndCreateSpiritTokenCopyEffectHandler", // decorates freshly assembled Spirit token-copy cards
-            "ReturnOpponentCreaturesFromGraveyardAsFoodEffectHandler", // changes fresh runtime copies into Food cards
             "MeldWithNamedCreatureEffectHandler", // stamps the set code on the fresh meld-result card it just instantiated
             "TurnFaceUpCopyService", // restores copy exceptions on the fresh runtime copy installed by PermanentCopierService
             "LudevicCopySupport", // decorates the fresh clone-copy card installed by PermanentCopierService
@@ -102,7 +101,6 @@ class CardImmutabilityArchTest {
             "SpellbookCardChoiceInteractionHandler", // decorates a newly conjured spellbook card
             "ChooseCreatureCardFromHandAndConjureDuplicateIntoHandEffectHandler", // stamps a fresh duplicate
             "ChooseCardFromGraveyardAndConjureDuplicateIntoHandEffectHandler", // decorates a fresh conjured duplicate
-            "DealDamageToAnyTargetThenPerpetuallyGrantStaticEffectsIfCreatureDamagedEffectHandler", // grants effects on a fresh runtime copy
             "EachControlledLandOfChosenNonbasicTypeBecomesCopyOfTargetCreatureUntilEndOfTurnEffectHandler", // adds haste to fresh clone-copy cards
             "EachOpponentChoosesCreatureCreateTokenCopyWithTotalPowerToughnessEffectHandler", // decorates fresh token-copy cards
             "ExileArtifactThenSeekArtifactAndPerpetuallyBecomeCreatureEffectHandler", // alters a fresh runtime copy

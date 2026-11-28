@@ -135,10 +135,7 @@ public class PermanentCopierService {
             return faceDownCopiableCard(permanent);
         }
         // The Aura characteristics a bestowed creature has are type-changing, so they are not copiable (CR 707.2).
-        Card original = permanent.getBecomeCreatureBaseCard() != null
-                && permanent.getBecomeCreatureResultCard() == permanent.getCard()
-                ? permanent.getBecomeCreatureBaseCard()
-                : permanent.isBestow() ? permanent.getOriginalCard() : permanent.getCard();
+        Card original = permanent.isBestow() ? permanent.getOriginalCard() : permanent.getCard();
         if (permanent.getFullTextCopyBaseCard() != null) {
             // Text borrowed from the graveyard (Volrath's Shapeshifter) is not copiable (CR 707.2).
             original = permanent.getFullTextCopyBaseCard();

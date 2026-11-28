@@ -468,14 +468,7 @@ class EventAbilitySupport {
         if (gameData.textReplacements(permanent.getId()).isEmpty() && globalWordChange.isEmpty()) {
             return ability;
         }
-        List<EffectRegistration> transformed = new ArrayList<>(ability.effects().size());
-        boolean changed = false;
-        for (EffectRegistration registration : ability.effects()) {
-            CardEffect effect = TextChangeTransformer.transform(registration.effect(),
-                    gameData.textReplacements(permanent.getId()), globalWordChange);
-            changed |= effect != registration.effect();
-            transformed.add(new EffectRegistration(effect, registration.simultaneousWithPrevious()));
-        }
-        return changed ? ability.withEffects(transformed) : ability;
+        return TextChangeTransformer.transformTriggeredAbility(ability, gameData.textReplacements(permanent.getId()),
+                globalWordChange);
     }
 }

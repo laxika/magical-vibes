@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import java.util.List;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.cards.s.SleightOfMind;
 import com.github.laxika.magicalvibes.cards.a.ArdentMilitia;
 import com.github.laxika.magicalvibes.cards.l.LlanowarDruid;
 import com.github.laxika.magicalvibes.cards.n.NullRod;
@@ -11,7 +15,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({UrborgStalker.class, ArdentMilitia.class, NullRod.class, WindingCanyons.class,
+@CardUsed({SleightOfMind.class, UrborgStalker.class, ArdentMilitia.class, NullRod.class, WindingCanyons.class,
         LlanowarDruid.class})
 class UrborgStalkerTest extends BaseCardTest {
 
@@ -119,5 +123,21 @@ class UrborgStalkerTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Changed from black to white, its intervening if counts its own black body as nonwhite")
+    void textChangedInterveningIfReadsTheNewWord() {
+        Permanent stalker = harness.addToBattlefieldAndReturn(player1, new UrborgStalker());
+        harness.setHand(player1, List.of(new SleightOfMind()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, stalker.getId());
+        harness.handleListChoice(player1, "BLACK");
+        harness.handleListChoice(player1, "WHITE");
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 19);
     }
 }

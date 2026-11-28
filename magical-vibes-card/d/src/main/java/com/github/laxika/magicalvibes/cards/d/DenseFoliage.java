@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantNonAbilityEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 
@@ -12,6 +12,6 @@ public class DenseFoliage extends Card {
 
     public DenseFoliage() {
         // Creatures can't be the targets of spells (abilities can still target them).
-        addStaticEffect(new GrantEffectEffect(TargetingRestrictionEffect.spells(), Subjects.allCreatures()));
+        addStaticEffect(new GrantNonAbilityEffectEffect(TargetingRestrictionEffect.spells(), Subjects.allCreatures()));
     }
 }

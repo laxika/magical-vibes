@@ -37,6 +37,7 @@ public class ExileTargetCreatureCardFromGraveyardPutCounterOnSourceEffectHandler
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        String abilityLink = ((ExileTargetCreatureCardFromGraveyardPutCounterOnSourceEffect) effect).abilityLink();
         UUID targetCardId = entry.getTargetCardIds() == null || entry.getTargetCardIds().isEmpty()
                 ? entry.getTargetId() : entry.getTargetCardIds().getFirst();
         Card targetCard = targetCardId == null
@@ -56,7 +57,7 @@ public class ExileTargetCreatureCardFromGraveyardPutCounterOnSourceEffectHandler
         }
         synchronized (gameData.exiledCards) {
             gameData.exiledCards.replaceAll(exiled -> exiled.card().getId().equals(targetCardId)
-                    ? exiled.withAbilityLink(ExileTargetCreatureCardFromGraveyardPutCounterOnSourceEffect.ABILITY_LINK)
+                    ? exiled.withAbilityLink(abilityLink)
                     : exiled);
         }
 

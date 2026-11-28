@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.o.Ovinize;
 import com.github.laxika.magicalvibes.cards.c.ControlMagic;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -19,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DetectiveOfTheMonth.class, Forest.class, GrizzlyBears.class, ControlMagic.class, TurnToFrog.class})
+@CardUsed({Ovinize.class, DetectiveOfTheMonth.class, Forest.class, GrizzlyBears.class, ControlMagic.class, TurnToFrog.class})
 class DetectiveOfTheMonthTest extends BaseCardTest {
 
     @Test
@@ -258,5 +260,24 @@ class DetectiveOfTheMonthTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
                 gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
+    }
+
+    @Test
+    @DisplayName("With the city's blessing, another Detective that lost all abilities still can't be blocked")
+    void detectiveThatLostItsAbilitiesStillCantBeBlocked() {
+        addCreatureReady(player1, new DetectiveOfTheMonth());
+        Permanent other = addCreatureReady(player1, new DetectiveOfTheMonth());
+        gd.playersWithCityBlessing.add(player1.getId());
+
+        ovinize(other);
+
+        assertThat(gqs.hasLostAllAbilities(gd, other)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, other)).isTrue();
+    }
+
+    private void ovinize(Permanent target) {
+        harness.setHand(player1, List.of(new Ovinize()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 }

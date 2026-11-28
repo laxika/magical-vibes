@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatchingPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantNonAbilityEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -34,7 +34,7 @@ public class WallCrawl extends Card {
                 Set.of(Keyword.REACH), Set.of()),
                 new GainLifeEffect(new PermanentCount(spiders, CountScope.CONTROLLER)));
         addStaticEffect(new StaticBoostEffect(1, 1, Subjects.creaturesYouControl(), spiders));
-        addStaticEffect(new GrantEffectEffect(
+        addStaticEffect(new GrantNonAbilityEffectEffect(
                 new CantBeBlockedByCreaturesMatchingPredicateEffect(
                         new PermanentHasKeywordPredicate(Keyword.DEFENDER)),
                 Subjects.creaturesYouControl(), spiders));

@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantNonAbilityEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
@@ -240,6 +241,10 @@ public class StaticEffectSupport implements SubjectResolutionService.StaticReads
         } else if (wrapped instanceof GrantEffectEffect grant) {
             if (names(context, grant.subject(), grant.filter())) {
                 accumulator.addGrantedEffect(grant.effect());
+            }
+        } else if (wrapped instanceof GrantNonAbilityEffectEffect grant) {
+            if (names(context, grant.subject(), grant.filter())) {
+                accumulator.addNonAbilityEffect(grant.effect());
             }
         } else if (wrapped instanceof AnimatePermanentsEffect animate
                 && names(context, animate.subject(), animate.filter())) {

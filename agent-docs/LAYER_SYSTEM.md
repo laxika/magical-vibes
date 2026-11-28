@@ -376,8 +376,12 @@ extend the transformer's visitor when a card needs them): `PreventDamageEffect.f
 `TargetingRestrictionEffect` (also inside a floating `GrantNonAbilityEffectEffect`),
 `GrantControllerSpellsCantBeCounteredByColorsEffect`, `GrantLifelinkToControllerSpellsByColorEffect`,
 `BoostControllerDamageThisTurnEffect`'s `color`, a life-gain trigger's `causedBySpell` filter,
-`AwardAnyColorManaEffect`'s `subtype`, color/land-type words inside trigger conditions and intervening "if"s
-other than a cast trigger's spell filter, the effects of state-triggered and activation-watching abilities, and activated-ability target restrictions. The remaining `CardColor`/`CardSubtype`-carrying
+`AwardAnyColorManaEffect`'s `subtype`, color/land-type words inside trigger conditions other than a cast trigger's spell
+filter and a state trigger's permanent filters, intervening "if"s other than `ControlsPermanentCount`,
+`ActivePlayerControlsPermanent` and the `Condition` combinators (`TextChangeTransformer.transformTriggeredAbility`, read by
+`TriggerIndex.textChangedPermanentAbilities` for step, attack, block and state triggers), the abilities activation-watching
+abilities list (`SpellTriggers.activated` reads `permanentAbilities`; no implemented watcher has a word the visitor rewrites),
+and activated-ability target restrictions. The remaining `CardColor`/`CardSubtype`-carrying
 effect types (token creators, one-shot damage/draw/return effects, costs) consume their
 parameters at resolution and are never re-read from a permanent's text. Text changes applied to
 a spell on the stack instead rewrite that stack entry's frozen resolving effects immediately.

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.o.Ovinize;
 import com.github.laxika.magicalvibes.cards.b.BlackcleaveGoblin;
 import com.github.laxika.magicalvibes.cards.g.GrimAffliction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -19,7 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MeliraSylvokOutcast.class, BlackcleaveGoblin.class, GrizzlyBears.class, IchorRats.class,
+@CardUsed({Ovinize.class, MeliraSylvokOutcast.class, BlackcleaveGoblin.class, GrizzlyBears.class, IchorRats.class,
         GrimAffliction.class, TurnToFrog.class})
 class MeliraSylvokOutcastTest extends BaseCardTest {
 
@@ -209,5 +210,23 @@ class MeliraSylvokOutcastTest extends BaseCardTest {
 
         assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
         harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("A creature you control that lost all abilities still can't have -1/-1 counters put on it")
+    void creatureThatLostItsAbilitiesStillCantGetMinusCounters() {
+        harness.addToBattlefield(player1, new MeliraSylvokOutcast());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        ovinize(bears);
+
+        assertThat(gqs.hasLostAllAbilities(gd, bears)).isTrue();
+        assertThat(gqs.cantHaveMinusOneMinusOneCounters(gd, bears)).isTrue();
+    }
+
+    private void ovinize(Permanent target) {
+        harness.setHand(player1, List.of(new Ovinize()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 }

@@ -4,6 +4,15 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TextReplacement;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.StateTrigger;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
@@ -232,5 +241,42 @@ class TextChangeTransformerTest {
 
         assertThat(TextChangeTransformer.transform(boost, List.of(MOUNTAIN_TO_ISLAND)))
                 .isEqualTo(BoostEffect.targetPermanent(1, 1, new PermanentHasSubtypePredicate(CardSubtype.ISLAND)));
+    }
+
+    @Test
+    @DisplayName("A land type replacement rewrites a non-ability rule's set filter")
+    void landTypeReplacementRewritesANonAbilityRulesFilter() {
+        GrantNonAbilityEffectEffect rule = new GrantNonAbilityEffectEffect(new CantBeBlockedEffect(),
+                Subjects.creaturesYouControl(), new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN));
+
+        CardEffect result = TextChangeTransformer.transform(rule, List.of(MOUNTAIN_TO_ISLAND));
+
+        assertThat(result).isEqualTo(new GrantNonAbilityEffectEffect(new CantBeBlockedEffect(),
+                Subjects.creaturesYouControl(), new PermanentHasSubtypePredicate(CardSubtype.ISLAND)));
+    }
+
+    @Test
+    @DisplayName("A triggered ability's state trigger and intervening if are rewritten, its unchanged parts kept")
+    void triggeredAbilityTriggerConditionAndInterveningIfAreRewritten() {
+        TriggeredAbility stateAbility = new TriggeredAbility(
+                Triggers.battlefieldHasAtMost(0, new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN)),
+                new SacrificeSelfEffect());
+        TriggeredAbility upkeepAbility = new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new ControlsPermanentCount(2, new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN))),
+                new GainLifeEffect(1));
+
+        TriggeredAbility changedState = TextChangeTransformer.transformTriggeredAbility(
+                stateAbility, List.of(MOUNTAIN_TO_ISLAND), List.of());
+        TriggeredAbility changedUpkeep = TextChangeTransformer.transformTriggeredAbility(
+                upkeepAbility, List.of(MOUNTAIN_TO_ISLAND), List.of());
+
+        assertThat(((StateTrigger) changedState.conditions().getFirst().trigger()).battlefieldPredicate())
+                .isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.ISLAND));
+        assertThat(changedState.effects()).isSameAs(stateAbility.effects());
+        assertThat(changedUpkeep.options().interveningIf())
+                .isEqualTo(new ControlsPermanentCount(2, new PermanentHasSubtypePredicate(CardSubtype.ISLAND)));
+        assertThat(TextChangeTransformer.transformTriggeredAbility(
+                upkeepAbility, List.of(BLACK_TO_BLUE), List.of())).isSameAs(upkeepAbility);
     }
 }

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.o.Ovinize;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 import java.util.List;
 
-@CardUsed({HeraldOfSecretStreams.class, GrizzlyBears.class})
+@CardUsed({Ovinize.class, HeraldOfSecretStreams.class, GrizzlyBears.class})
 class HeraldOfSecretStreamsTest extends BaseCardTest {
 
     @Test
@@ -116,5 +118,24 @@ class HeraldOfSecretStreamsTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    @DisplayName("A creature with a +1/+1 counter that lost all abilities still can't be blocked")
+    void creatureThatLostItsAbilitiesStillCantBeBlocked() {
+        harness.addToBattlefield(player1, new HeraldOfSecretStreams());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        ovinize(bears);
+
+        assertThat(gqs.hasLostAllAbilities(gd, bears)).isTrue();
+        assertThat(gqs.hasCantBeBlocked(gd, bears)).isTrue();
+    }
+
+    private void ovinize(Permanent target) {
+        harness.setHand(player1, List.of(new Ovinize()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 }

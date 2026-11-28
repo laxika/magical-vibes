@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.o.Ovinize;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MirrorEntity;
@@ -20,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WallCrawl.class, GiantSpider.class, GrizzlyBears.class, WallOfDust.class, MirrorEntity.class, Opalescence.class})
+@CardUsed({Ovinize.class, WallCrawl.class, GiantSpider.class, GrizzlyBears.class, WallOfDust.class, MirrorEntity.class, Opalescence.class})
 class WallCrawlTest extends BaseCardTest {
 
     @Test
@@ -158,4 +159,26 @@ class WallCrawlTest extends BaseCardTest {
         return crawl;
     }
 
+    @Test
+    @DisplayName("A Spider that lost all abilities still can't be blocked by creatures with defender")
+    void spiderThatLostItsAbilitiesStillCantBeBlockedByDefenders() {
+        Permanent spider = addCreatureReady(player1, new GiantSpider());
+        Permanent defender = addCreatureReady(player2, new WallOfDust());
+        harness.addToBattlefield(player1, new WallCrawl());
+        ovinize(spider);
+        spider.setAttacking(true);
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                indexOf(player2, defender), indexOf(player1, spider)))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("cannot block");
+    }
+
+    private void ovinize(Permanent target) {
+        harness.setHand(player1, List.of(new Ovinize()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+    }
 }

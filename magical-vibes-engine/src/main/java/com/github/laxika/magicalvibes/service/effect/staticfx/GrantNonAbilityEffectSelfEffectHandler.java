@@ -30,7 +30,7 @@ public class GrantNonAbilityEffectSelfEffectHandler implements StaticEffectHandl
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var grant = (GrantNonAbilityEffectEffect) effect;
-        if (support.names(context, grant.subject(), null)) {
+        if (support.names(context, grant.subject(), grant.filter())) {
             accumulator.addNonAbilityEffect(grant.effect());
         }
     }

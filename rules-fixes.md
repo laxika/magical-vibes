@@ -55,7 +55,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | CB Combat | CB-1 | CB-1 done 2026-11-27 (M11's block half left: it needs multi-defender combat damage) |
 | PP Perpetual changes | PP-1 | PP-1 done 2026-11-27 (L8, O47 left; O41's hand half left) |
 | PL Each player chooses, then all act | PL-1 | PL-1 done 2026-11-27 (Gilded Ambusher's damage reading for the owner) |
-| MC Single cards | MC-1, MC-2 | MC-1 done 2026-11-27 (O13's direct counter removals left; O81 for the owner); MC-2a, MC-2b, MC-2c, MC-2d done 2026-11-28 (MC-2b: N62's stack half is N92; MC-2c: N50 dropped; MC-2d: N25 dropped, N80 left); MC-2e done 2026-11-28 (S8 for the owner, N97 added) |
+| MC Single cards | MC-1, MC-2 | MC-1 done 2026-11-27 (O13's direct counter removals left; O81 for the owner); MC-2a, MC-2b, MC-2c, MC-2d done 2026-11-28 (MC-2b: N62's stack half is N92; MC-2c: N50 dropped; MC-2d: N25 dropped, N80 left); MC-2e done 2026-11-28 (S8 for the owner, N97 added); MC-2f done 2026-11-28 (N75 dropped; N82 left; N81's activation half and N83's library half dropped) |
 | AI Hard / easy AI | AI-1, AI-2 | AI-1, AI-2 done 2026-11-27 |
 | UI Frontend | UI-1 | UI-1 done 2026-11-27 |
 | LG, CL Logs and non-rules cleanup | LG-1, CL-1 | CL-1, LG-1 done 2026-11-27 |
@@ -1747,6 +1747,45 @@ look-back readers see one event even when the watcher leaves first (pinned: Dour
 Outcome); no card was found whose leave reader sees a characteristic an earlier member of the same removal gave a later one.
 Tests: 591 XML files, 7,949 tests, 0 failures (the card classes of every changed effect and path and their helper users, 8
 application classes, the architecture tests, the AI module). New line N97 (MC-2g). Ratchet 2850 / 2237 to 2849 / 2236, five ledger rows; no `CONVERSION_VERSION` change.
+
+MC-2f: done 2026-11-28. Fixed, each with a test that failed first: N64, N71, N73, N74, N76, N81 (step, attack, block and state
+triggers), N83 (Patchwork Crawler); dropped: N75; left: N82. N64: a source's unquoted rule over a set is a STATIC
+`GrantNonAbilityEffectEffect`, which now takes `GrantEffectEffect`'s optional filter (text-changeable), and is reached inside a
+`ConditionalEffect` too (`StaticEffectSupport`'s self path; `GameQueryService`'s legacy assembly merges the accumulator's
+non-ability effects whatever the permanent lost, CR 613.1f): a sweep of the 113 `GrantEffectEffect` card files moved 25 cards
+(Wall Crawl, Siege Behemoth, Ruxa, Zilortha, Apex of Ikoria, Graaz, Frost Fair Lure Fish, Detective of the Month, Herald of
+Secret Streams, Serpent of Yawning Depths, Infiltrator's Magemark, Midnight Pathlighter, Shifting Sliver, Sonorous Howlbonder,
+Tanglewalker, Dense Foliage, Spellbane Centaur, Melira, Guardian Beast, five Archetypes, Case of the Market Melee); quoted
+abilities and keywords (Proud Wildbonder, Cloudsteel Kirin, Hish's daunt, the Questing Role) stay grants; Melira's reader
+special case went. Ovinize on the affected creature failed first for Wall Crawl, Herald, Pathlighter and Detective; Melira's
+passed (its reader special case). N71: Supper for Spiders is `PutCardsOntoBattlefieldEffect(cardsInGraveyards(eachOpponent(),
+creature put there from the battlefield this turn)).underControlOf(you()).enteringWith(SetCardTypesEffect, GrantSubtypeEffect(FOOD,
+overriding), GrantActivatedAbilityEffect)` like Vraska, the Silencer (its rulings; CR 613.1a, 613.1d, 707.2): a Food made a copy
+of Ornithopter by Masterful Replication stays a noncreature Food artifact; its handler, effect and `Permanent`'s
+`becomeCreatureBaseCard`/`ResultCard` went. N74: Switchgrass Grazer deals its 1 damage on every attack, only the perpetual rider
+asks "is saddled" (a plain "if", CR 603.4): `DealDamageEffect.toAnyTarget(1)` + `ConditionalEffect(SourceIsSaddled,
+PerpetuallyGrantAbilitiesEffect(cardsOf(thisWay(DEAL_DAMAGE, creature)), ...))`; the bespoke effect and handler went, the test that
+asserted no trigger was rewritten. N76: `PerpetuallyGrantCardCharacteristicsEffect` without `cards` grants through
+`sourceObjectCard` (a Second Little Pig bounced in response doesn't become a Spirit, CR 400.7). N73: a stays-in-hand ability records
+its hand stay (`StackEntry.sourceHandEntryVersion`), read by `sourceObjectCard` (Heir to Dragonfire discarded, or discarded and
+returned, before its ability resolves gains nothing). N81: `TextChangeTransformer.transformTriggeredAbility` rewrites a triggered
+ability's effects, intervening "if" and event condition (new `ControlsPermanentCount` and `ActivePlayerControlsPermanent` cases)
+and a state trigger's permanent filters, and `StateTriggerService` lists `textChangedPermanentAbilities` (Magical Hack's
+Island-to-Swamp on Sea Serpent sacrifices it; Sleight of Mind's black-to-white on Urborg Stalker damages its controller; CR 612.1,
+the line's 612.2 is about which words change). Its activation half dropped: no implemented activation watcher has a word the
+visitor rewrites (their token colours are resolution-time parameters); other `Condition` types stay in LAYER_SYSTEM.md's known
+gaps. N83: `ExileTargetCreatureCardFromGraveyardPutCounterOnSourceEffect` carries its link (`withAbilityLink`) and a borrowed copy
+records the borrower's gained link (`linkGainedEffect`, CR 607.2a): a Patchwork Crawler with another Crawler's ability no longer
+gains Prodigal Sorcerer's ability from the card that ability exiled. The `ExileTopCardOfOwnLibraryEffectHandler` half dropped:
+nothing reads that constant link. N75 dropped: the cast-time change is right and pinned (on the stack, kept when countered,
+`MischievousLookoutTest`); the entry-trigger-shaped wiring in `SpellCastingService` is a cleanup, not a rules defect. N82 left
+(too big for this run), confirmed by a probe test: Idris with Mimic Vat imprinted, a creature dies, the borrowed trigger exiles it
+and "returns each other card exiled with" the source, Idris's own imprinted Mimic Vat included (Idris drops to 3/3 and loses the
+Vat's abilities). The fix needs a borrowed triggered ability linked like the activated ones: `linkGainedEffect` recursing through
+`MayEffect`/`SequenceEffect`/`ConditionalEffect`, `ExileGraveyardCardsEffect` recording a gained link, `exiledWithSource()` of the
+borrowed ability rewritten to `exiledWithSourceBy(link)`, and `CreateTokenCopyOfImprintedCardEffect` reading that link so the
+borrowed pair stays linked (CR 607.5). Tests: 538 XML files, 6,713 tests, 1 failure (the N82 probe, removed); after it the architecture tests, the AI module and the touched classes: 138 files, 1,842 tests, 0 failures.
+Ratchet 2849 / 2236 to 2847 / 2234, two ledger rows; no `CONVERSION_VERSION` change.
 
 ### AI. Hard / easy AI (`magical-vibes-ai`)
 

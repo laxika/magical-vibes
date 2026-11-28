@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainAbilitiesOfLastChosenExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureCardFromGraveyardPutCounterOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndTrackWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardExiledWithSourceToBattlefieldEffect;
@@ -56,7 +57,8 @@ public class GainAbilitiesOfLastChosenExiledCardSelfEffectHandler implements Sta
     /**
      * An exile ability gained from the chosen card tracks its cards under a link of its own, and the gained
      * ability that returns them looks only at that link, so neither touches cards exiled by the
-     * gaining permanent's own abilities. A gained imprint exile doesn't imprint: the gaining permanent's own
+     * gaining permanent's own abilities; an exile that records a constant link of its printed ability (Patchwork
+     * Crawler's) records the gained link instead. A gained imprint exile doesn't imprint: the gaining permanent's own
      * imprint readers ("all abilities of the exiled card") read only what its own imprint exiled (CR 607.2a).
      */
     static CardEffect linkGainedEffect(CardEffect effect, String link) {
@@ -65,6 +67,9 @@ public class GainAbilitiesOfLastChosenExiledCardSelfEffectHandler implements Sta
         }
         if (effect instanceof ReturnCardExiledWithSourceToBattlefieldEffect returnEffect) {
             return returnEffect.withAbilityLink(link);
+        }
+        if (effect instanceof ExileTargetCreatureCardFromGraveyardPutCounterOnSourceEffect exile) {
+            return exile.withAbilityLink(link);
         }
         if (effect instanceof ExileGraveyardCardsEffect exile && exile.imprint()) {
             return exile.notImprinting();

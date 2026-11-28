@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class SecondLittlePigTest extends BaseCardTest {
 
     @Test
+    @DisplayName("White mana pays the ability, which perpetually transforms the untapped Pig")
     void whiteManaTransformsPigWithoutTappingIt() {
         Permanent pig = harness.addToBattlefieldAndReturn(player1, new SecondLittlePig());
         harness.addMana(player1, ManaColor.WHITE, 4);
@@ -32,6 +33,7 @@ class SecondLittlePigTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Black mana transforms a tapped Pig, and the change survives cleanup")
     void blackManaTransformsTappedPigAndTransformationSurvivesCleanup() {
         Permanent pig = harness.addToBattlefieldAndReturn(player1, new SecondLittlePig());
         pig.tap();
@@ -49,6 +51,7 @@ class SecondLittlePigTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The ability can't be activated once the Pig is a Spirit")
     void cannotActivateAfterBecomingSpirit() {
         Permanent pig = harness.addToBattlefieldAndReturn(player1, new SecondLittlePig());
         harness.addMana(player1, ManaColor.WHITE, 8);
@@ -84,6 +87,21 @@ class SecondLittlePigTest extends BaseCardTest {
         Permanent copy = findPermanent(player2, "Second Little Pig");
         assertThat(gqs.hasKeyword(gd, copy, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasKeyword(gd, pig, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A Pig returned to hand before the ability resolves is a new object and doesn't become a Spirit")
+    void bouncedPigIsNotTransformed() {
+        SecondLittlePig card = new SecondLittlePig();
+        Permanent pig = harness.addToBattlefieldAndReturn(player1, card);
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.getPermanentRemovalService().removePermanentToHand(gd, pig);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Second Little Pig");
+        assertThat(gqs.cardHasSubtype(card, CardSubtype.SPIRIT, gd, player1.getId())).isFalse();
     }
 
     private void assertSpiritTransformation(Permanent pig) {

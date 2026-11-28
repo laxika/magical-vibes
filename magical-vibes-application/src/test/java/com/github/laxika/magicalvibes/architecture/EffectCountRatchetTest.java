@@ -26,8 +26,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class EffectCountRatchetTest {
 
-    private static final int RECORD_BASELINE = 2849;
-    private static final int HANDLER_BASELINE = 2236;
+    private static final int RECORD_BASELINE = 2847;
+    private static final int HANDLER_BASELINE = 2234;
 
     private static final String EFFECT_PKG =
             "magical-vibes-domain/src/main/java/com/github/laxika/magicalvibes/model/effect";

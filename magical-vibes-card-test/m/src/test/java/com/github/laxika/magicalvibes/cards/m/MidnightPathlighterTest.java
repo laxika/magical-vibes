@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.o.Ovinize;
 import com.github.laxika.magicalvibes.cards.s.SolemnSimulacrum;
 import com.github.laxika.magicalvibes.cards.s.SramSeniorEdificer;
 import com.github.laxika.magicalvibes.model.Dungeon;
@@ -17,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MidnightPathlighter.class, SolemnSimulacrum.class, SramSeniorEdificer.class})
+@CardUsed({Ovinize.class, MidnightPathlighter.class, SolemnSimulacrum.class, SramSeniorEdificer.class})
 class MidnightPathlighterTest extends BaseCardTest {
 
     @Test
@@ -128,5 +130,29 @@ class MidnightPathlighterTest extends BaseCardTest {
 
         harness.assertLife(player1, 18);
         assertThat(gd.playerDungeonProgress).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A creature you control that lost all abilities still can't be blocked by nonlegendary creatures")
+    void creatureThatLostItsAbilitiesStillCantBeBlockedByNonlegendary() {
+        addCreatureReady(player1, new MidnightPathlighter());
+        Permanent attacker = addCreatureReady(player1, new SolemnSimulacrum());
+        Permanent blocker = addCreatureReady(player2, new SolemnSimulacrum());
+        ovinize(attacker);
+
+        declareAttackersAndPrepareBlockers(List.of(1));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(
+                        gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                        gd.playerBattlefields.get(player1.getId()).indexOf(attacker)))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("legendary creatures");
+    }
+
+    private void ovinize(Permanent target) {
+        harness.setHand(player1, List.of(new Ovinize()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 }

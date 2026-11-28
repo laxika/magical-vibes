@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantNonAbilityEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -17,7 +17,7 @@ public class InfiltratorsMagemark extends Card {
     public InfiltratorsMagemark() {
         target(TargetFilters.creature())
                 .addStaticEffect(new StaticBoostEffect(1, 1, Subjects.otherCreaturesYouControl(), new PermanentIsEnchantedPredicate()))
-                .addStaticEffect(new GrantEffectEffect(
+                .addStaticEffect(new GrantNonAbilityEffectEffect(
                         new CanBeBlockedOnlyByFilterEffect(
                                 new PermanentHasKeywordPredicate(Keyword.DEFENDER),
                                 "creatures with defender"),

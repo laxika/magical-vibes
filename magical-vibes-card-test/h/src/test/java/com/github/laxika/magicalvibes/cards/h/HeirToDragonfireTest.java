@@ -161,4 +161,38 @@ class HeirToDragonfireTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, upgradedPermanent, Keyword.FLYING)).isTrue();
         assertThat(gqs.hasEffectiveSubtype(gd, upgradedPermanent, CardSubtype.DRAGON)).isTrue();
     }
+
+    @Test
+    @DisplayName("A Heir that left the hand before its hand ability resolves is a new object and gains nothing")
+    void heirThatLeftTheHandGainsNothing() {
+        HeirToDragonfire card = new HeirToDragonfire();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateHandAbility(player1, 0, null);
+
+        gd.playerHands.get(player1.getId()).remove(card);
+        harness.setGraveyard(player1, List.of(card));
+        harness.passBothPriorities();
+
+        assertThat(gqs.cardHasSubtype(card, CardSubtype.DRAGON, gd, player1.getId())).isFalse();
+        assertThat(gqs.cardHasSubtype(card, CardSubtype.HUMAN, gd, player1.getId())).isTrue();
+        assertThat(gd.perpetualCardSubtypes).doesNotContainKey(card.getId());
+    }
+
+    @Test
+    @DisplayName("A Heir that left the hand and came back before its hand ability resolves is a new object")
+    void heirThatReturnedToTheHandGainsNothing() {
+        HeirToDragonfire card = new HeirToDragonfire();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateHandAbility(player1, 0, null);
+
+        gd.playerHands.get(player1.getId()).remove(card);
+        gd.addCardToHand(player1.getId(), card);
+        harness.passBothPriorities();
+
+        assertThat(gqs.cardHasSubtype(card, CardSubtype.DRAGON, gd, player1.getId())).isFalse();
+    }
 }

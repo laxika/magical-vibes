@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsSolved;
 import com.github.laxika.magicalvibes.model.effect.DamageNotRemovedDuringCleanupEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantNonAbilityEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.SolveSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
@@ -37,7 +37,7 @@ public class CaseOfTheMarketMelee extends Card {
                 "Target must be any target"))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), DealDamageEffect.toAnyTarget(1));
 
-        addStaticEffect(new GrantEffectEffect(
+        addStaticEffect(new GrantNonAbilityEffectEffect(
                 new DamageNotRemovedDuringCleanupEffect(), Subjects.allCreatures()));
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),

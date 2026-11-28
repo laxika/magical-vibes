@@ -850,6 +850,13 @@ public class StackEntry {
      * "this card" names nothing once that card left exile, even if it was exiled again, a new object (CR 400.7).
      */
     @Setter private long sourceExileEntryVersion = -1;
+    /**
+     * The hand incarnation ({@code GameData.handEntryVersions}) the ability's source card had as an ability of a card in
+     * a hand that keeps it there was activated (Heir to Dragonfire's "reveal this card from your hand"), or {@code -1}
+     * when none was recorded: "this card" names nothing once that card left the hand, even if it came back, a new object
+     * (CR 400.7).
+     */
+    @Setter private long sourceHandEntryVersion = -1;
     /** The {@link #sourceGraveyardEntryVersion} of a "this card" that is in no graveyard the ability can find. */
     public static final long NO_GRAVEYARD_STAY = Long.MAX_VALUE;
     /**
@@ -1637,6 +1644,7 @@ public class StackEntry {
         this.triggeringSpellTurnCastIndex = source.triggeringSpellTurnCastIndex;
         this.sourceGraveyardEntryVersion = source.sourceGraveyardEntryVersion;
         this.sourceExileEntryVersion = source.sourceExileEntryVersion;
+        this.sourceHandEntryVersion = source.sourceHandEntryVersion;
         this.triggeringPermanentSnapshot = source.triggeringPermanentSnapshot == null
                 ? null : new Permanent(source.triggeringPermanentSnapshot);
         this.triggeringAttachments = source.triggeringAttachments;

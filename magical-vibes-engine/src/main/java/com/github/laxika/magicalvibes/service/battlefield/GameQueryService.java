@@ -5306,21 +5306,8 @@ public class GameQueryService {
      * from effects granted by other permanents (e.g. Melira, Sylvok Outcast).
      */
     public boolean cantHaveMinusOneMinusOneCounters(GameData gameData, Permanent permanent) {
-        UUID recipientController = findPermanentController(gameData, permanent.getId());
-        if (recipientController != null && isCreature(gameData, permanent)) {
-            // The restriction is a rule of the source's own static ability, not an ability granted to
-            // the creature, so the recipient losing its abilities doesn't lift it.
-            for (ActiveStaticEffect<GrantEffectEffect> active
-                    : activeStaticEffects(gameData, recipientController, GrantEffectEffect.class)) {
-                GrantEffectEffect grant = active.effect();
-                if (cantHaveCountersOfKind(grant.effect(), CounterType.MINUS_ONE_MINUS_ONE)
-                        && grant.subject() instanceof PermanentSubject.ControlledBy
-                        && staticSubjectNames(gameData, active.source(), active.controllerId(),
-                        recipientController, permanent, grant.subject())) {
-                    return true;
-                }
-            }
-        }
+        // A rule of another permanent's static ability (Melira) is a non-ability effect among the granted ones, kept
+        // through the recipient's losing its abilities.
         return computeStaticBonus(gameData, permanent).grantedEffects().stream()
                 .anyMatch(effect -> cantHaveCountersOfKind(effect, CounterType.MINUS_ONE_MINUS_ONE));
     }
@@ -8008,6 +7995,17 @@ public class GameQueryService {
                     } else {
                         mergedEffects.add(effect);
                     }
+                }
+            }
+            // A rule another permanent's conditional static ability applies (Guardian Beast's "can't be enchanted",
+            // Siege Behemoth's) is no ability of this one: neither its losing abilities nor "can't gain abilities"
+            // stops it (CR 613.1f).
+            for (CardEffect effect : accumulator.getNonAbilityEffects()) {
+                int overlap = layeredOccurrences.getOrDefault(effect, 0);
+                if (overlap > 0) {
+                    layeredOccurrences.put(effect, overlap - 1);
+                } else {
+                    mergedEffects.add(effect);
                 }
             }
             grantedEffects = mergedEffects;
