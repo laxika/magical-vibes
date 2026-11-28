@@ -62,10 +62,37 @@ public class ChooseAttackTargetsForCreatedTokensEffectHandler implements NormalE
         }
     }
 
+    /**
+     * Chooses the attack targets of {@code permanentIds}, put onto the battlefield attacking by an effect (CR 508.4): now,
+     * or, while another prompt of the resolution is open (the entering card's copy choice), in a step spliced after the
+     * effect resolving now, so the choice isn't skipped. Returns whether a prompt is pending.
+     */
+    public boolean enteredAttacking(GameData gameData, UUID controllerId, List<UUID> permanentIds) {
+        if (!gameData.interaction.isAwaitingInput()) {
+            return chooseAttackTargets(gameData, controllerId, permanentIds);
+        }
+        StackEntry entry = gameData.resolvingEntry != null ? gameData.resolvingEntry
+                : gameData.pendingEffectResolutionEntry;
+        if (entry != null && entry.getResolvingEffectIndex() >= 0) {
+            entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, List.of(
+                    ChooseAttackTargetsForCreatedTokensEffect.forEnteredAttacking(controllerId, permanentIds)));
+        }
+        return false;
+    }
+
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var step = (ChooseAttackTargetsForCreatedTokensEffect) effect;
         UUID controllerId = step.controllerId();
+        if (step.enteredAttackingIds() != null) {
+            chooseAttackTargets(gameData, controllerId, step.enteredAttackingIds().stream()
+                    .filter(id -> {
+                        Permanent permanent = gameQueryService.findPermanentById(gameData, id);
+                        return permanent != null && permanent.isAttacking() && permanent.getAttackTarget() == null;
+                    })
+                    .toList());
+            return;
+        }
         List<UUID> createdIds = entry.getCreatedPermanentIds();
         boolean inCombat = controllerId.equals(gameData.activePlayerId)
                 && gameData.currentStep != null && gameData.currentStep.isCombatPhase();

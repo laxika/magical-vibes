@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.n.NissaNaturesArtisan;
+import com.github.laxika.magicalvibes.cards.o.ObNixilisUnshackled;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({VerdantCrescendo.class, Forest.class, NissaNaturesArtisan.class})
+@CardUsed({VerdantCrescendo.class, Forest.class, NissaNaturesArtisan.class, ObNixilisUnshackled.class})
 class VerdantCrescendoTest extends BaseCardTest {
 
     @Test
@@ -67,6 +68,24 @@ class VerdantCrescendoTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).contains(nissa);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(nissa);
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Its two searches before the one shuffle are one library search (CR 701.23h)")
+    void bothSearchesAreOneLibrarySearch() {
+        harness.addToBattlefield(player2, new ObNixilisUnshackled());
+        Card forest = new Forest();
+        Card nissa = new NissaNaturesArtisan();
+        harness.setLibrary(player1, List.of(forest, nissa));
+        harness.setLife(player1, 30);
+        castVerdantCrescendo();
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
     }
 
     private void castVerdantCrescendo() {

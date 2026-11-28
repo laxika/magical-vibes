@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.cards.g.GrafdiggersCage;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LiquimetalCoating;
 import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
@@ -22,7 +23,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({NimDeathmantle.class, GrizzlyBears.class, Shock.class, TelJiladFallen.class,
-        MarchOfTheMachines.class, LiquimetalCoating.class, Pacifism.class})
+        MarchOfTheMachines.class, LiquimetalCoating.class, Pacifism.class, GrafdiggersCage.class})
 class NimDeathmantleTest extends BaseCardTest {
 
     @Test
@@ -242,5 +243,24 @@ class NimDeathmantleTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Tel-Jilad Fallen");
         assertThat(deathmantle.getAttachedTo()).isEqualTo(bears.getId());
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Grafdigger's Cage keeps the dead creature in its graveyard")
+    void grafdiggersCageStopsTheReturn() {
+        harness.addToBattlefield(player1, new NimDeathmantle());
+        harness.addToBattlefield(player2, new GrafdiggersCage());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 }

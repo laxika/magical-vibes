@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.AttachCreatedTokensToHostsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.rules.AttachmentEvent;
@@ -12,6 +14,7 @@ import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -38,6 +41,7 @@ public class AttachCreatedTokensToHostsEffectHandler implements NormalEffectHand
         var attach = (AttachCreatedTokensToHostsEffect) effect;
         List<UUID> hostIds = attach.hostIds();
         List<UUID> created = entry.getCreatedPermanentIds();
+        recordCreation(gameData, entry, attach.createdFrom());
         if (hostIds.isEmpty() || attach.createdFrom() >= created.size()) {
             return;
         }
@@ -60,5 +64,23 @@ public class AttachCreatedTokensToHostsEffectHandler implements NormalEffectHand
             aura.setTimestamp(gameData.nextTimestamp());
             gameData.rulesEvents.occur(new AttachmentEvent.AuraAttached(aura, host.getId()));
         }
+    }
+
+    /**
+     * The creation's CREATE_TOKEN result, the tokens it made from {@code createdFrom} on and their controllers, recorded
+     * now that the creation has finished ("when you do", Curse of the Werefox): the creating step stopped for its
+     * replacements' order before it knew them.
+     */
+    private void recordCreation(GameData gameData, StackEntry entry, int createdFrom) {
+        List<UUID> all = entry.getCreatedPermanentIds();
+        List<UUID> created = List.copyOf(all.subList(Math.min(createdFrom, all.size()), all.size()));
+        List<UUID> controllers = new ArrayList<>();
+        for (UUID tokenId : created) {
+            UUID controllerId = gameQueryService.findPermanentController(gameData, tokenId);
+            if (controllerId != null) {
+                controllers.add(controllerId);
+            }
+        }
+        entry.recordStep(StepKind.CREATE_TOKEN, StepOutcome.ofObjects(created, controllers));
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.c.Clone;
 import com.github.laxika.magicalvibes.cards.d.DaringBuccaneer;
 import com.github.laxika.magicalvibes.cards.d.DarksteelRelic;
 import com.github.laxika.magicalvibes.cards.m.MerfolkLooter;
@@ -27,7 +28,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ThroneOfTheGrimCaptain.class, TheGrimCaptain.class, ThrashingBrontodon.class,
         MerfolkLooter.class, DaringBuccaneer.class, VampireNoble.class, DarksteelRelic.class,
-        QuintoriusKand.class, OakenSiren.class, RiverHeraldScout.class, VitosInquisitor.class})
+        QuintoriusKand.class, OakenSiren.class, RiverHeraldScout.class, VitosInquisitor.class, Clone.class})
 class ThroneOfTheGrimCaptainTest extends BaseCardTest {
 
     @Test
@@ -234,6 +235,35 @@ class ThroneOfTheGrimCaptainTest extends BaseCardTest {
             assertThat(gd.playerBattlefields.get(player2.getId())).contains(planeswalker);
             assertThat(gd.interaction.isAwaitingInput()).isTrue();
         });
+    }
+
+    @Test
+    @DisplayName("A returned creature whose entry asks a copy choice still gets its attack target chosen")
+    void returnedCreatureAskingAnEntryChoiceStillChoosesItsAttackTarget() {
+        Player player3 = harness.addOpponent("Player3");
+        Permanent captain = addReadyCaptain();
+        Permanent noble = harness.addToBattlefieldAndReturn(player1, new VampireNoble());
+        Card clone = new Clone();
+        gd.addToExile(player1.getId(), clone, captain.getId());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            gs.declareAttackers(gd, player1, List.of(0), Map.of(0, player2.getId()));
+            resolveAllTriggers();
+            harness.handleMayAbilityChosen(player1, true);
+            harness.handleMayAbilityChosen(player1, true);
+            harness.handlePermanentChosen(player1, noble.getId());
+            harness.handlePermanentChosen(player1, player3.getId());
+        });
+
+        Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getOriginalCard().getId().equals(clone.getId()))
+                .findFirst().orElseThrow();
+        assertThat(returned.isAttacking()).isTrue();
+        assertThat(returned.getAttackTarget()).isEqualTo(player3.getId());
     }
 
     private Permanent addReadyCaptain() {

@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.RemoveCounterFromC
 import com.github.laxika.magicalvibes.service.effect.normalfx.RemoveAllMireCountersFromChosenLandEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SuspectChosenOtherCreatureEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokenAttachedToTargetEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.EachFightsADifferentOneEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnAurasFromGraveyardAttachedToCreaturesEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RedHerringExchangeEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RingTemptsYouEffectHandler;
@@ -94,6 +95,7 @@ public class PermanentChoiceHandlerService {
             kathrilEffectHandler;
     private final SuspectChosenOtherCreatureEffectHandler suspectChosenOtherCreatureEffectHandler;
     private final CreateTokenAttachedToTargetEffectHandler createTokenAttachedToTargetEffectHandler;
+    private final EachFightsADifferentOneEffectHandler eachFightsADifferentOneEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokenCopyOfTargetPermanentEffectHandler
             createTokenCopyOfTargetPermanentEffectHandler;
     private final ChooseCounterTypeOnControlledCreatureThenPutOnOtherCreaturesEffectHandler
@@ -945,6 +947,9 @@ public class PermanentChoiceHandlerService {
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
         } else if (context instanceof PermanentChoiceContext.CreateTokenCopyOfOneOfTriggeringPermanents) {
             createTokenCopyOfTargetPermanentEffectHandler.completeTriggeringPermanentChoice(gameData, permanentId);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+        } else if (context instanceof PermanentChoiceContext.FightPairing pairing) {
+            eachFightsADifferentOneEffectHandler.completePairing(gameData, permanentId, pairing);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
         } else if (context instanceof PermanentChoiceContext.CreateTokenAttachedToOneOfTriggeringPermanents attach) {
             createTokenAttachedToTargetEffectHandler.completeTriggeringPermanentChoice(gameData, permanentId, attach);

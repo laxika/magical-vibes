@@ -3,13 +3,15 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryAndOrGraveyardForCardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.SearchZonesForCardNamedToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -40,7 +42,8 @@ public class GateToTheAfterlife extends Card {
                 true,
                 "{2}",
                 List.of(new SacrificeSelfCost(),
-                        new SearchZonesForCardNamedToBattlefieldEffect("God-Pharaoh's Gift")),
+                        SearchLibraryAndOrGraveyardForCardToBattlefieldEffect.inZones(
+                                new CardNamedPredicate("God-Pharaoh's Gift"), Zone.GRAVEYARD, Zone.HAND, Zone.LIBRARY)),
                 "{2}, {T}, Sacrifice Gate to the Afterlife: Search your graveyard, hand, and/or library "
                         + "for a card named God-Pharaoh's Gift and put it onto the battlefield. If you search "
                         + "your library this way, shuffle. Activate only if there are six or more creature "

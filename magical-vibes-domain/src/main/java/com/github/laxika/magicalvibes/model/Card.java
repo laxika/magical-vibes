@@ -1030,7 +1030,11 @@ public class Card {
         effectTargetIndexMap.computeIfAbsent(effect, ignored -> new ArrayList<>()).add(targetIndex);
         switch (effect) {
             case ConditionalEffect e -> bindEffectToTargetGroup(e.wrapped(), targetIndex);
-            case QueueReflexiveAbilityEffect e -> bindEffectToTargetGroup(e.effect(), targetIndex);
+            // The group is the reflexive ability's own target, unless the carrying ability declares it and the
+            // reflexive ability is about it without targeting (QueueReflexiveAbilityEffect.aboutDeclaredTarget).
+            case QueueReflexiveAbilityEffect e -> {
+                if (e.declaredTarget() == null) bindEffectToTargetGroup(e.effect(), targetIndex);
+            }
             case ConditionalReplacementEffect e -> {
                 if (e.baseEffect() != null) bindEffectToTargetGroup(e.baseEffect(), targetIndex);
                 bindEffectToTargetGroup(e.upgradedEffect(), targetIndex);

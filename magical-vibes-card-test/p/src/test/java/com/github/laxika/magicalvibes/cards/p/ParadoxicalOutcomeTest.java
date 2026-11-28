@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
+import com.github.laxika.magicalvibes.cards.d.DourPortMage;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
@@ -28,7 +29,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ParadoxicalOutcome.class, Forest.class, FountainOfYouth.class, GrizzlyBears.class, Island.class})
+@CardUsed({ParadoxicalOutcome.class, Forest.class, FountainOfYouth.class, GrizzlyBears.class, Island.class,
+        DourPortMage.class})
 class ParadoxicalOutcomeTest extends BaseCardTest {
 
     @Test
@@ -204,6 +206,22 @@ class ParadoxicalOutcomeTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Paradoxical Outcome");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The permanents return as one event: Dour Port-Mage draws once for them")
+    void permanentsReturnTogether() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new DourPortMage());
+        harness.setHand(player1, List.of(new ParadoxicalOutcome()));
+        harness.setLibrary(player1, List.of(new Forest(), new Island(), new Forest(), new Island()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castAndResolveInstant(player1, 0, List.of(first.getId(), second.getId()));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(5);
     }
 
     private void giveControl(Permanent permanent, UUID controllerId) {

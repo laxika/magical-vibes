@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -48,6 +50,48 @@ public class FightSupport {
         dealMutualDamage(gameData, entry, second, first, secondPower);
         ActionEvents.fought(gameData, first, firstControllerId);
         ActionEvents.fought(gameData, second, secondControllerId);
+    }
+
+    /**
+     * Has each of {@code first} fight the creature at the same index of {@code second}, all the fights at the same time
+     * ("each of the fights happens at the same time", Ezuri's Predation): every creature's power is read before any
+     * damage is dealt, and the damage is dealt at once ({@link DamageSupport#dealAtOnce}). A pair whose creature is gone
+     * or no creature doesn't fight (CR 701.14b).
+     */
+    public void fightTogether(GameData gameData, StackEntry entry, List<Permanent> first, List<Permanent> second) {
+        record Fight(Permanent one, Permanent other, UUID oneControllerId, UUID otherControllerId, int onePower,
+                     int otherPower) {
+        }
+        List<Fight> fights = new ArrayList<>();
+        for (int i = 0; i < Math.min(first.size(), second.size()); i++) {
+            Permanent one = first.get(i);
+            Permanent other = second.get(i);
+            if (one == null || other == null || !gameQueryService.isCreature(gameData, one)
+                    || !gameQueryService.isCreature(gameData, other)) {
+                continue;
+            }
+            fights.add(new Fight(one, other, gameQueryService.findPermanentController(gameData, one.getId()),
+                    gameQueryService.findPermanentController(gameData, other.getId()),
+                    gameQueryService.getPowerBasedDamage(gameData, one),
+                    gameQueryService.getPowerBasedDamage(gameData, other)));
+        }
+        if (fights.isEmpty()) {
+            return;
+        }
+        for (Fight fight : fights) {
+            gameData.permanentsThatFoughtThisTurn.add(fight.one().getId());
+            gameData.permanentsThatFoughtThisTurn.add(fight.other().getId());
+        }
+        damageSupport.dealAtOnce(gameData, () -> {
+            for (Fight fight : fights) {
+                dealMutualDamage(gameData, entry, fight.one(), fight.other(), fight.onePower());
+                dealMutualDamage(gameData, entry, fight.other(), fight.one(), fight.otherPower());
+            }
+        });
+        for (Fight fight : fights) {
+            ActionEvents.fought(gameData, fight.one(), fight.oneControllerId());
+            ActionEvents.fought(gameData, fight.other(), fight.otherControllerId());
+        }
     }
 
     /** Has {@code first} and {@code second} deal damage equal to their power to each other, without fighting. */

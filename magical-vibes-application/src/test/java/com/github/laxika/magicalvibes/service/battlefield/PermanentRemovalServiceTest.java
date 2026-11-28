@@ -17,6 +17,8 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreaturesYouControlToHandInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -386,6 +388,23 @@ class PermanentRemovalServiceTest {
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(creature);
             verify(graveyardService).addCardToGraveyard(eq(gd), eq(player2Id), eq(creature.getOriginalCard()),
                     eq(Zone.BATTLEFIELD), eq(player1Id), samePermanent(creature), eq(false));
+        }
+
+        @Test
+        @DisplayName("A triggering permanent leaving while its ability resolves updates that ability's last-known power")
+        void triggeringPermanentLeavingDuringItsOwnResolutionUpdatesTheResolvingEntry() {
+            Permanent creature = addPermanent(player1Id, createCreature("Pumped creature"));
+            stubGraveyardForCreature(creature, player1Id);
+            when(gameQueryService.getEffectivePower(gd, creature)).thenReturn(5);
+            StackEntry resolving = new StackEntry(StackEntryType.ACTIVATED_ABILITY, createCreature("Watcher"),
+                    player1Id, "Watcher's ability", List.of());
+            resolving.setTriggeringPermanentId(creature.getId());
+            resolving.setTriggeringPermanentPowerAtTrigger(2);
+            gd.resolvingEntry = resolving;
+
+            prs.removePermanentToGraveyard(gd, creature);
+
+            assertThat(resolving.getTriggeringPermanentPowerAtTrigger()).isEqualTo(5);
         }
 
         @Test

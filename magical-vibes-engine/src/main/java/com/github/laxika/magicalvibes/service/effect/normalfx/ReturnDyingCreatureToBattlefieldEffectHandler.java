@@ -56,7 +56,9 @@ public class ReturnDyingCreatureToBattlefieldEffectHandler implements NormalEffe
         if (dyingCard != null && !entry.isTriggeringCardIncarnation(gameData.graveyardEntryVersion(dyingCard.getId()))) {
             dyingCard = null;
         }
-        if (dyingCard != null && gameQueryService.cantEnterFaceUp(dyingCard)) {
+        if (dyingCard != null && (gameQueryService.cantEnterFaceUp(dyingCard)
+                || gameQueryService.isCardBlockedFromEnteringFromZone(gameData, dyingCard, Zone.GRAVEYARD))) {
+            // A card that can't enter from its graveyard (Grafdigger's Cage) stays there.
             return;
         }
         if (dyingCard == null) {

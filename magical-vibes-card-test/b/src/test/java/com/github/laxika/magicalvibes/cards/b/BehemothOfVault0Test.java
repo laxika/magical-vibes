@@ -77,7 +77,7 @@ class BehemothOfVault0Test extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot pay the death trigger when energy is below the target's mana value")
+    @DisplayName("With energy below the target's mana value the payment isn't offered and nothing is destroyed")
     void insufficientEnergyDoesNotDestroyTarget() {
         Permanent behemoth = castBehemoth();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -86,8 +86,9 @@ class BehemothOfVault0Test extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
     }

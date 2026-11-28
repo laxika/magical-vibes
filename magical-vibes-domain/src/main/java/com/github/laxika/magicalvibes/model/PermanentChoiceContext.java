@@ -2687,6 +2687,23 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect effect)
             implements PermanentChoiceContext {}
 
+    /**
+     * {@code EachFightsADifferentOneEffect}'s pairing: the controller chooses which of {@code candidates} fights
+     * {@code askedFor} ({@code choosingFighter}: one of the fighters for that opponent; otherwise one of the opponents for
+     * that fighter). {@code pickers} are the creatures of {@code askedFor}'s side still to pair after it, and the pairs
+     * made so far are {@code pairedFighters} / {@code pairedOpponents}, index by index.
+     */
+    record FightPairing(com.github.laxika.magicalvibes.model.effect.EachFightsADifferentOneEffect effect,
+                        UUID askedFor, boolean choosingFighter, List<UUID> pickers, List<UUID> candidates,
+                        List<UUID> pairedFighters, List<UUID> pairedOpponents) implements PermanentChoiceContext {
+        public FightPairing {
+            pickers = List.copyOf(pickers);
+            candidates = List.copyOf(candidates);
+            pairedFighters = List.copyOf(pairedFighters);
+            pairedOpponents = List.copyOf(pairedOpponents);
+        }
+    }
+
     /** Contractual Safeguard: choose the creature whose counter kind is copied. */
     record ContractualSafeguardReference() implements PermanentChoiceContext {}
     record ChooseCounterTypeOnControlledPermanentReference() implements PermanentChoiceContext {}

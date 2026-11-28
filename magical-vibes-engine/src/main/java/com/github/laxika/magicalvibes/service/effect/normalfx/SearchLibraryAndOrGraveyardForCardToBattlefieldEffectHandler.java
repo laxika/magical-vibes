@@ -51,7 +51,15 @@ public class SearchLibraryAndOrGraveyardForCardToBattlefieldEffectHandler implem
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        doResolve(gameData, entry, (SearchLibraryAndOrGraveyardForCardToBattlefieldEffect) effect);
+        var search = (SearchLibraryAndOrGraveyardForCardToBattlefieldEffect) effect;
+        // "A card with the same name as that spell" (Mishra, Artificer Prodigy): the triggering spell's name, read now.
+        CardPredicate filter = AmountEvaluationService.bindTriggeringSpellName(gameData, search.filter(), entry);
+        if (filter != search.filter()) {
+            search = new SearchLibraryAndOrGraveyardForCardToBattlefieldEffect(filter, search.zones(),
+                    search.attachToSource(), search.attachAuraOrEquipment(), search.manaValueBound(),
+                    search.enterWithCounters());
+        }
+        doResolve(gameData, entry, search);
     }
 
     private void doResolve(GameData gameData, StackEntry entry,

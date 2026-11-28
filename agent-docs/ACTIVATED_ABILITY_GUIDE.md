@@ -424,7 +424,7 @@ new ActivatedAbility(requiresTap, manaCost, effects, description)
 ```java
 // {2}, {T}, Sacrifice this artifact: <tutor>. Activate only if there are six or more creature cards in your graveyard.
 new ActivatedAbility(true, "{2}",
-    List.of(new SacrificeSelfCost(), new SearchZonesForCardNamedToBattlefieldEffect("God-Pharaoh's Gift")),
+    List.of(new SacrificeSelfCost(), SearchLibraryAndOrGraveyardForCardToBattlefieldEffect.inZones(new CardNamedPredicate("God-Pharaoh's Gift"), Zone.GRAVEYARD, Zone.HAND, Zone.LIBRARY)),
     "{2}, {T}, Sacrifice Gate to the Afterlife: Search your graveyard, hand, and/or library for a card named God-Pharaoh's Gift and put it onto the battlefield. ...")
     .withRequiredGraveyardCards(new CardTypePredicate(CardType.CREATURE), 6, "creature cards in your graveyard")
 ```

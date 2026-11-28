@@ -401,7 +401,6 @@ Run the test classes of every card that used a deleted class (scripts/effect-inv
 - Tariff (`EachPlayerSacrificesGreatestManaValueCreatureUnlessPaysEffect`): needs a ransom read from the object (its mana cost).
 - Whirlwind Denial (`CounterOpponentsSpellsAndAbilitiesUnlessPaysEffect`): stays its own record (owner's decision U2: APNAP choices, then one counter); its payment is on `ResolutionCostPaymentService`.
 - Fade Away, Killing Wave (`EachCreatureControllerSacrificesPermanentUnlessPaysEffect`, `KillingWaveEffect`): stay (a chosen subset paid as one event, their rulings).
-- Behemoth of Vault 0 (`PayEnergyThenDestroyTargetPermanentEffect`): its "when you do, destroy that permanent" is about the declared target, which `QueueReflexiveAbilityEffect` would target again.
 - Enchanter's Bane, Star Athlete (`TargetPermanentControllerMaySacrificeOrDamageEffect`): an "unless" whose damage is dealt by the target; fold onto `UnlessPaysEffect` with a `DamageFromSourceCost` dealt by another permanent.
 - Unnatural Hunger (`SacrificeOtherCreatureOrDamageEffect`): a sacrifice ransom; the record's other cards are "if you can't" steps already.
 - `ReturnMultiplePermanentsToHandCost` (26 activation-cost cards): fold into `ReturnPermanentToHandCost.youControl(count, filter, words)` with the activation-cost path.
@@ -426,7 +425,7 @@ Run the test classes of every card that used a deleted class (scripts/effect-inv
 - Demonic Hordes' `OpponentChoosesPermanentToSacrificeEffect` and Infernal Denizen's `OpponentMayGainControlOfCreatureYouControlEffect` were `blocked-other` on the old forced-cost fallback list; both are now ordinary steps of their resolution (U4a), so their folds (`ChoosePlayerEffect` + `ChoosePermanentsEffect.chosenBy(playersThisWay(CHOOSE))` + the verb) are open for a fold run. Sure of the code.
 - Eye for an Eye, Harm's Way, Jade Monolith, Shaman en-Kor, General's Regalia, Nova Pentacle: their chosen-source handlers now ask `DamageSourceChoiceSupport.choosable` (rules-fixes DM-3); fold them onto `ChooseDamageSourceEffect` plus a step that reads the choice.
 
-#### Blocked records by cause (684)
+#### Blocked records by cause (682)
 
 #### The first half prompts mid-step (blocked-step-model) (127)
 
@@ -798,7 +797,7 @@ Folding would add a component only this card sets (the guard rail "never add a p
 - `SuspectChosenOtherCreatureEffect`: Frantic Scapegoat: 'if you do, this creature is no longer suspected' needs a verb that removes the suspected designation, which only this card has.
 - `TargetCreatureDealsPowerDamageToEachTargetEffect`: Spinning Wheel Kick; the bite would need every recipient of its group, and the AI scores this record as creature damage (canDamageCreatures, TargetPower) where the bite's group form is not; one card.
 
-#### Costs, "unless" and payments (51)
+#### Costs, "unless" and payments (50)
 
 - `AllowPlayExiledCostCardThisTurnEffect`: Primordial Mist moved to AllowPlayCardsFromExileEffect.thisTurn(exiledAsCost()) and the this-turn mode deleted; Chitinous Crawler's undurationed 'you may play it' (CR 608.2g, a land too) needs a normal-cost play-now offer over a card subject.
 - `AllureOfTheUnknownEffect`: 'That opponent may cast the exiled card without paying its mana cost' needs a cast-now step cast by another player (MayCastDiscardedCardWithoutPayingManaCostEffect offers only the controller.
@@ -826,7 +825,6 @@ Folding would add a component only this card sets (the guard rail "never add a p
 - `OpponentChoosesPermanentToSacrificeEffect`: Demonic Hordes, cost-shape: the sacrifice is a ForcedCostOrElseEffect fallback run through DestructionSupport.resolveForcedCostElseEffects' per-class list on a carrier entry, where a ChoosePlayerEffect + ChoosePermanentsEffect.chosenBy(playersThisWay(CHOOSE)) ….
 - `OpponentGainsControlOfSourceCreatureEffect`: "an opponent" is a choice at resolution (CR 608.2d) with no subject; the handler takes the first opponent by seat (right for two players) and DestructionSupport calls it as a forced-cost fallback.
 - `OpponentMayGainControlOfCreatureYouControlEffect`: Infernal Denizen, cost-shape: a ForcedCostOrElseEffect fallback (DestructionSupport's per-class list returns once its may prompt starts).
-- `PayEnergyThenDestroyTargetPermanentEffect`: the energy ransom exists (PayEnergyCost(TargetManaValue)); its 'when you do, destroy that permanent' is a reflexive ability about the declared target, which QueueReflexiveAbilityEffect would target again (Behemoth of Vault 0).
 - `PayLifeOrPayManaCost`: Redirect Lightning: a choice between two costs (5 life or {2}) as an additional cost, with payment units for waived base costs.
 - `PerpetuallyReduceCostForHandCardsSharingTargetSpellEffect`: Absorb Energy: 'that spell' is the target spell, read also when it can't be countered (CR 608.2h); CardSharesCardTypeWithCardsPredicate binds a CardSubject and cardsThisWay(COUNTER_SPELL) names nothing when the counter fails.
 - `ProtectionRacketEffect`: Protection Racket: repeat a process for each opponent in turn order (reveal the top card, that opponent may pay life equal to its mana value, exile it, else into your hand): no for-each-player repeat over a step sequence; one card.
@@ -973,7 +971,7 @@ Waits on the owner (no gift opponent is recorded; "Waiting on the owner" below).
 - `EachOtherPlayerDrawsCardEffect`: the 4 non-gift files moved (Words of Wisdom, Deadpool Trading Card, Master of the Feast to DrawCardEffect(1, eachOpponent()); Baleful Mastery to ChoosePlayerEffect.opponent() + DrawCardEffect(1, playersThisWay(CHOOSE)), its multiplayer ruling).
 - `TargetOpponentCreatesTokenEffect`: declares no target and derives the opponent (two players): the target or promised opponent must reach the entry before it can be a subject; also fires the gift-given event.
 
-#### Other (each note names the missing part) (195)
+#### Other (each note names the missing part) (194)
 
 - `ActivePlayerExilesCardFromGraveyardEffect`: "if the player doesn't" also covers an accepted exile from an empty graveyard: needs the player graveyard choice to record an EXILE step (Web of Inertia).
 - `ActivePlayerRevealsUntilCreatureToBattlefieldRestToGraveyardEffect`: the handler now enters the creature through the entry batch (as-enters choices, a card that can't enter from the library stays there); still blocked on the record declaring Oath of Druids' player target.
@@ -1010,7 +1008,6 @@ Waits on the owner (no gift opponent is recorded; "Waiting on the owner" below).
 - `ConjureDuplicateOfTargetExiledCardIntoHandEffect`: left. Each face folds onto ConjureCardsEffect.duplicateOf(targetCardExiledWithSource(filter), intoHand()) + the perpetual steps over cardsThisWay(CONJURE), but not at a clean point: (1) the specialize trigger is one made ability whose steps would each need ….
 - `CopyTargetSpellOrAbilityEffect`: copies a targeted stack entry of any of those kinds with its own retarget choice (Return the Favor): one copy path with the triggering sibling first.
 - `CopyTriggeringSpellOrAbilityEffect`: dispatches to three copy paths by what triggered (spell, activated, triggered ability), from the trigger snapshot; the target sibling has a fourth: one copy path first (step 10).
-- `CreatedTokensFightDifferentOpponentCreaturesEffect`: Ezuri's Predation: needs the one fight path with a fighter PermanentSubject (5m's blocker of SourceFightsTargetCreatureEffect and EnchantedCreatureFightsTargetCreatureEffect) plus a pairing the controller chooses between createdThisResolution() and the ….
 - `CreateTokenAttachedToDefendingPlayerEffect`: host is a player (defending player), not a PermanentSubject; folds once the attach verb takes a player host.
 - `CreateTokenCopyAndLinkToSourceEffect`: face-down copies are decided; the token copy with trackWithSource would express it, but its Esix replacement (a625b69fdc's survivor path) creates copies the source doesn't track, so Dance of Many's 'the token' would miss them (Faerie Artisans already has that ….
 - `CreateTokenCopyOfSourceForEachOtherPlayerEffect`: token-controller axis of CreateTokenCopyOfTargetPermanentEffect (its createForTargetController flag is controllerOf(target())); the source copies belong with CreateTokenCopyOfSourceEffect (step 10).
@@ -1217,6 +1214,10 @@ questions under "The owner's open questions", the decisions under "The owner's d
 - 2026-11-27, MC-1 (entry 18, line O81): Sword-Point Diplomacy's ruling lets the caster choose the order the revealed cards
   are processed in; the engine asks in library order. Is a prompt wanted, and is the order chosen up front or card by card
   (the ruling doesn't say)? With every revealed card known to the opponents, the order changes no two-player outcome.
+- 2026-11-28, MC-2e (entry 18, line S8): Mythweaver Poq's "for each of them, conjure a duplicate of it onto the battlefield":
+  is that one conjure event for all the duplicates (a "whenever you conjure one or more other cards" reader such as Thayan
+  Evokers triggers once) or one per duplicate (as now)? Conjure is digital-only: the CR has no conjure rule and the card has no
+  rulings.
 
 #### Orchestrator decisions for the owner to review
 
@@ -1306,13 +1307,11 @@ Don't commit.
 - `TargetOpponentCreatesTokenEffect`'s gift branch gives the gift to `getOpponentId`; waits for the owner's gift-opponent answer (entry 17). Sure of the code.
 - `CombatBlockService.handleDeclareBlockersStep`, `declareBlockers` and `getBlockableAttackerIndices` take the defending player as `getOpponentId`: only the first opponent declares blockers, against every attacker; each attacked player should declare in APNAP order against only the creatures attacking them (CR 802.4, 802.4a, 802.4b). First `CombatDamageService` must read more than one defending battlefield (`buildBlockerMap` and its index-keyed damage state use `getOpponentId`'s), then the AI and the frontend; whether several defenders' blocks are one block event ("one or more creatures become blocked") is unsettled. CB-1 fixed the `DefendingPlayer…` conditions. Sure.
 
-#### Simultaneity and APNAP (CR 101.4, 603.10a, 608.2e) (5)
+#### Simultaneity and APNAP (CR 101.4, 603.10a, 608.2e) (3)
 
-- Ezuri's Predation pairs by battlefield order and fights one at a time (rulings: you choose the pairs, fights are simultaneous). Sure.
 - Mythweaver Poq's simultaneous duplicates are one conjure event each (unsettled). Unverified.
 - Tribute's "paid" check is `placed >= N`, so a halved tribute (an opponent's Halving Season) reads as unpaid (CR 702.104b: "as specified").
 - `PutExiledCardsIntoOwnersGraveyardEffect` (Covenant of Minds) gives no CR 404.3 order prompt for the cards it puts into one graveyard; an engine-wide policy, see entry 17 (EB-3). Sure, low.
-- Ezuri's Predation: "those creatures" are read at the fight, not when counted (CR 608.2h).
 
 #### Missing events or records (searches, coin flips, seeks, shuffles, counters, draws) (0)
 
@@ -1339,13 +1338,11 @@ Don't commit.
 - `cardsThisWay(REVEAL)` names a card a later step reordered within its library (CR 701.20d); no card reads it so. Unverified.
 - `getRevealedOpponentHand` returns only the first opponent's hand (multiplayer); needs a hand per opponent in `GameStateMessage` and the frontend (owner question in entry 17, MP-2). Sure of the code.
 
-#### Other (30)
+#### Other (27)
 
 - Casting checks left from runs 40 and 41: Scrycast (Biting Remark; `ScryInteractionHandler`, `ScryAiStrategy`, code: the scry answer casts it with no `canCastDuringResolution` check, and the AI strategies have no `CastingPermissionService`); the may-cast offers don't ask the shared check; an ability leaves the stack before it resolves, where CR 608.2n removes it last. Unverified. FC-2: Knowledge Pool's timing, the split exile cast and suspend's type restriction fixed.
 - Krovikan Vampire's `ReturnDamagedCreaturesThatDiedUnderControlEffect` (a mass return with control and sacrifice links) puts an Aura card that died animated onto the battlefield with no host choice (CR 303.4f, 303.4g); Lim-Dûl's head since rules-fixes EB-1 and `ReturnDyingCreatureToBattlefieldEffect`, `ReturnDyingCreatureToOwnerBattlefieldEffect` since EB-2 go through the entry batch. Unverified.
-- Limitless Rekindling's pool is seven YECL printings; its text names a random instant or sorcery card of the whole expansion. Fairly sure.
 - Cards with no printing identity: the `Supplier`-built conjures and spellbook drafts, the hand paths not marking a card conjured (runs 29 to 31); Protean War Engine (P08); Darigaaz, Skywriter Djinn, Oracle of the Alpha built by hand, Juggernaut Peddler, Calim, Mephidross Slime by constructor or `Supplier`, Goblin Influx Array's Reckless Ringleader a blank `new Card()` (P16). Sure.
-- `ConjureCardToBattlefieldEffectHandler` gives a conjured land no land-enter handling. Unverified for a land with an enter ability (Mishra's Foundry and Forest have none).
 - `isPreventedFromDealingDamage` pre-checks left before the damage pools skip the damage event (Selfless Squire misses them) and the CR 616.1 order: Bomb Squad's `RemoveAllCountersThenDestroyReferencedPermanentAndDamageControllerEffectHandler` (asked before the destruction; the creature deals the damage as it last existed, an owner question in entry 17) and the combat damage step (`CombatDamageService`'s three `isPreventedFromDealingDamage(…, true)` checks) (CR 616.1). Sure of the code.
 - The set exchanges (Reins of Power, Twist Allegiance) and Perplexing Chimera don't check `cantBeControlledByOtherPlayers`; CR 701.12a's set reading unsettled. Unverified.
 - Fear of Sleep Paralysis' lock (`GameQueryService.stunCountersLocked`) is read by the untap replacement and `PermanentCounterSupport`'s and `DestructionSupport`'s shared removals since MC-1, not by the removals that set counts directly (remove-counter costs in `ActivatedAbilityExecutionService` and `ResolutionCostPaymentService`, the counter-kind choice lists of `removableCounterKinds`, handlers calling `setCounterCount`). Fairly sure, low.
@@ -1362,7 +1359,6 @@ Don't commit.
 - Mana abilities that work from the graveyard, exile or the command zone count as mana sources for `couldPossiblyPay` but can't be activated during a may-pay prompt (only hand abilities can, step 10 run U3a); no implemented card has one today. Sure, harmless today.
 - Quenchable Fire, Glass Asp, Nafs Asp, Sabertooth Cobra: the special action that pays before the delayed trigger (`AbilityActivationService.payDelayedTriggerCost`, CR 116.2c) raises no tax-paid event, so Tax Taker doesn't see mana an opponent pays for your spell's or creature's delayed ability; it changes play only with Tax Taker and the rules don't say whether it is a "tax". Sure of the code.
 - `UnlessPaysEffectHandler.nextStep` now sets the entry's accepted players to the payers who chose to pay before every branch (for `eachUnless`); an entry that also had a `TemptingOfferEffect` or Snort's discard set them before its "unless" would lose that list. Sure of the code.
-- Behemoth of Vault 0: "when you do, destroy that permanent" is a reflexive ability about the declared target, which `QueueReflexiveAbilityEffect` would target again (needs a reflexive ability about an earlier target) (CR 118.3).
 - Sword-Point Diplomacy asks about the revealed cards in library order; its ruling lets the caster choose the order the cards are processed in (it matters only when an opponent's life runs short). Unsure it is worth a prompt.
 - Decoy Gambit (`ReturnTargetCreaturesUnlessControllersDrawEffect`) still offers "have you draw a card" when its caster can't draw; whether an opponent may choose it then (CR 608.2d: an impossible option can't be chosen; CR 121.3 bars a player who can't draw from choosing to draw, but here another player makes the choice) is not settled by the rules or its rulings. Sure the question is open.
 - Missing feature (owner): no client chooser for an "[A] or [B]" additional cast cost (`AnyOfCost` as `addCastingCost`) (CR 601.2b).

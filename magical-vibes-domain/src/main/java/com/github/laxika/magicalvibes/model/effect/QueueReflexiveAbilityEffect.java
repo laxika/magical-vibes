@@ -29,13 +29,24 @@ import java.util.Objects;
  *                             (an {@code AmountThisWay} reads the steps before it, CR 608.2h), so its target
  *                             restriction and its effect read it as the event value; {@code null} keeps the resolving
  *                             entry's
+ * @param declaredTarget       "you may pay ... equal to target permanent's mana value. When you do, destroy that
+ *                             permanent": the target the ability carrying this step declares as it goes on the stack
+ *                             (CR 603.3d), the reflexive ability being about it with no target of its own (its
+ *                             "that creature"), or {@code null} when the card-level target belongs to the reflexive
+ *                             ability
  */
 public record QueueReflexiveAbilityEffect(CardEffect effect, boolean useEntryTargetAsTriggeringPermanent,
-                                           boolean aboutPickedPermanent, DynamicAmount eventValue)
+                                           boolean aboutPickedPermanent, DynamicAmount eventValue,
+                                           TargetSpec declaredTarget)
         implements CardEffect {
 
     public QueueReflexiveAbilityEffect(CardEffect effect) {
         this(effect, false, false);
+    }
+
+    public QueueReflexiveAbilityEffect(CardEffect effect, boolean useEntryTargetAsTriggeringPermanent,
+                                       boolean aboutPickedPermanent, DynamicAmount eventValue) {
+        this(effect, useEntryTargetAsTriggeringPermanent, aboutPickedPermanent, eventValue, null);
     }
 
     public QueueReflexiveAbilityEffect(CardEffect effect, boolean useEntryTargetAsTriggeringPermanent,
@@ -64,6 +75,17 @@ public record QueueReflexiveAbilityEffect(CardEffect effect, boolean useEntryTar
         return new QueueReflexiveAbilityEffect(effect, true, false);
     }
 
+    /**
+     * The reflexive ability about the target its carrying ability declares ({@code declaredTarget}, chosen as that
+     * ability goes on the stack): it has no target, and "that permanent" is the carrying ability's target, which its
+     * effect names as {@code Subjects.triggering()} (Behemoth of Vault 0: "you may pay an amount of {E} equal to target
+     * nonland permanent's mana value. When you do, destroy that permanent", its rulings).
+     */
+    public static QueueReflexiveAbilityEffect aboutDeclaredTarget(CardEffect effect, TargetSpec declaredTarget) {
+        return new QueueReflexiveAbilityEffect(effect, true, false, null,
+                Objects.requireNonNull(declaredTarget, "declaredTarget"));
+    }
+
     /** The reflexive ability about the next permanent an earlier step of the resolution picked. */
     public static QueueReflexiveAbilityEffect aboutPickedPermanent(CardEffect effect) {
         return new QueueReflexiveAbilityEffect(effect, false, true);
@@ -74,7 +96,12 @@ public record QueueReflexiveAbilityEffect(CardEffect effect, boolean useEntryTar
     }
 
     @Override
+    public TargetSpec targetSpec() {
+        return declaredTarget == null ? TargetSpec.NONE : declaredTarget;
+    }
+
+    @Override
     public boolean targetsChosenByReflexiveAbility() {
-        return true;
+        return declaredTarget == null;
     }
 }

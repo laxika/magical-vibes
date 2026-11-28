@@ -185,7 +185,8 @@ class GateToTheAfterlifeTest extends BaseCardTest {
         }
 
         @Test
-        void putsGiftFromGraveyardOntoBattlefield() {
+        @DisplayName("Asks whether the library is searched before any card is shown, a graveyard match too")
+        void asksWhetherTheLibraryIsSearchedFirst() {
             harness.addToBattlefield(player1, new GateToTheAfterlife());
             List<Card> graveyard = creatureCards(6);
             graveyard.add(new GodPharaohsGift());
@@ -197,43 +198,73 @@ class GateToTheAfterlifeTest extends BaseCardTest {
             harness.activateAbility(player1, 0, 0, null);
             harness.passBothPriorities();
 
+            assertThat(gd.interaction.activeInteraction())
+                    .isInstanceOf(com.github.laxika.magicalvibes.model.PendingInteraction.AndOrSearchZonesChoice.class);
+            harness.assertNotOnBattlefield(player1, "God-Pharaoh's Gift");
+        }
+
+        @Test
+        @DisplayName("Without searching the library, puts the Gift from the graveyard onto the battlefield")
+        void putsGiftFromGraveyardOntoBattlefield() {
+            harness.addToBattlefield(player1, new GateToTheAfterlife());
+            List<Card> graveyard = creatureCards(6);
+            Card gift = new GodPharaohsGift();
+            graveyard.add(gift);
+            harness.setGraveyard(player1, graveyard);
+            harness.setHand(player1, List.of());
+            harness.setLibrary(player1, List.of(new Forest()));
+            harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+            harness.activateAbility(player1, 0, 0, null);
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, false);
+            harness.handleMultipleCardsChosen(player1, List.of(gift.getId()));
+
             harness.assertOnBattlefield(player1, "God-Pharaoh's Gift");
             assertThat(gd.playerGraveyards.get(player1.getId()))
                     .noneMatch(card -> card instanceof GodPharaohsGift);
         }
 
         @Test
+        @DisplayName("Puts the Gift from the hand onto the battlefield")
         void putsGiftFromHandOntoBattlefield() {
             harness.addToBattlefield(player1, new GateToTheAfterlife());
             harness.setGraveyard(player1, creatureCards(6));
-            harness.setHand(player1, List.of(new GodPharaohsGift()));
+            Card gift = new GodPharaohsGift();
+            harness.setHand(player1, List.of(gift));
             harness.setLibrary(player1, List.of(new Forest()));
             harness.addMana(player1, ManaColor.COLORLESS, 2);
 
             harness.activateAbility(player1, 0, 0, null);
             harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, false);
+            harness.handleMultipleCardsChosen(player1, List.of(gift.getId()));
 
             harness.assertOnBattlefield(player1, "God-Pharaoh's Gift");
             assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         }
 
         @Test
+        @DisplayName("Searching the library puts the Gift from it onto the battlefield")
         void putsGiftFromLibraryOntoBattlefield() {
             harness.addToBattlefield(player1, new GateToTheAfterlife());
             harness.setGraveyard(player1, creatureCards(6));
             harness.setHand(player1, List.of());
-            harness.setLibrary(player1, List.of(new GodPharaohsGift(), new Forest()));
+            Card gift = new GodPharaohsGift();
+            harness.setLibrary(player1, List.of(gift, new Forest()));
             harness.addMana(player1, ManaColor.COLORLESS, 2);
 
             harness.activateAbility(player1, 0, 0, null);
             harness.passBothPriorities();
-            harness.handleCardChosen(player1, 0);
+            harness.handleMayAbilityChosen(player1, true);
+            harness.handleMultipleCardsChosen(player1, List.of(gift.getId()));
 
             harness.assertOnBattlefield(player1, "God-Pharaoh's Gift");
             assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         }
 
         @Test
+        @DisplayName("A searched library may find nothing though it holds the Gift")
         void canFailToFindGiftInLibrary() {
             harness.addToBattlefield(player1, new GateToTheAfterlife());
             harness.setGraveyard(player1, creatureCards(6));
@@ -243,7 +274,8 @@ class GateToTheAfterlifeTest extends BaseCardTest {
 
             harness.activateAbility(player1, 0, 0, null);
             harness.passBothPriorities();
-            harness.handleCardChosen(player1, -1);
+            harness.handleMayAbilityChosen(player1, true);
+            harness.handleMultipleCardsChosen(player1, List.of());
 
             harness.assertNotOnBattlefield(player1, "God-Pharaoh's Gift");
             assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
@@ -284,15 +316,19 @@ class GateToTheAfterlifeTest extends BaseCardTest {
         }
 
         @Test
+        @DisplayName("The six-creature restriction isn't checked again as the ability resolves")
         void graveyardRestrictionIsNotRecheckedOnResolution() {
             harness.addToBattlefield(player1, new GateToTheAfterlife());
             harness.setGraveyard(player1, creatureCards(6));
-            harness.setHand(player1, List.of(new GodPharaohsGift()));
+            Card gift = new GodPharaohsGift();
+            harness.setHand(player1, List.of(gift));
             harness.addMana(player1, ManaColor.COLORLESS, 2);
             harness.activateAbility(player1, 0, 0, null);
 
             harness.setGraveyard(player1, List.of(new GateToTheAfterlife()));
             harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, false);
+            harness.handleMultipleCardsChosen(player1, List.of(gift.getId()));
 
             harness.assertOnBattlefield(player1, "God-Pharaoh's Gift");
         }

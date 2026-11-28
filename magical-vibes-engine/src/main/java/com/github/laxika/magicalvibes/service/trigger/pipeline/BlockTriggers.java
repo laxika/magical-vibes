@@ -140,14 +140,17 @@ public class BlockTriggers {
                 if (!event.blockerWasBlocking()) {
                     creatureBlocks(gameData, pairs);
                 }
-                if (!blocked.isEmpty()) {
-                    becomesBlocked(gameData, pair.attacker(), activeId, List.of(pair.blocker()), true);
+                // "Becomes blocked" triggers only for an attacker the block newly blocks (CR 509.3c); "becomes blocked
+                // by a creature" for every creature an effect makes block it, an already blocked one too (CR 509.3d).
+                boolean newlyBlocked = !blocked.isEmpty();
+                becomesBlocked(gameData, pair.attacker(), activeId, List.of(pair.blocker()), newlyBlocked);
+                if (newlyBlocked) {
                     attachedCombat(gameData, pair.attacker(), Triggers.becomesBlocked(), null, oncePerBlock);
-                    attachedPerBlocker(gameData, pair.attacker(), List.of(pair.blocker()));
-                    creatureYouControlBecomesBlocked(gameData, activeId, pair.attacker(), List.of(pair.blocker()),
-                            true);
-                    creatureBecomesBlocked(gameData, List.of(pair.attacker()), pairs);
                 }
+                attachedPerBlocker(gameData, pair.attacker(), List.of(pair.blocker()));
+                creatureYouControlBecomesBlocked(gameData, activeId, pair.attacker(), List.of(pair.blocker()),
+                        newlyBlocked);
+                creatureBecomesBlocked(gameData, newlyBlocked ? List.of(pair.attacker()) : List.of(), pairs);
                 creaturesBlock(gameData, pairs);
             }
             case ENTERED_BLOCKING -> {

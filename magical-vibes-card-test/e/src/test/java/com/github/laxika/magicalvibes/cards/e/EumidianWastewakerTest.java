@@ -107,6 +107,36 @@ class EumidianWastewakerTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed({com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet.class,
+            com.github.laxika.magicalvibes.cards.n.NecromancersMagemark.class})
+    @DisplayName("A sacrificed creature's death replacement is chosen before the chosen card is discarded")
+    void deathReplacementIsAskedBeforeTheDiscard() {
+        addCreatureReady(player1, new EumidianWastewaker());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefieldAndReturn(player1, new com.github.laxika.magicalvibes.cards.n.NecromancersMagemark())
+                .setAttachedTo(bears.getId());
+        harness.addToBattlefield(player2, new com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new Forest()));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.handleListChoice(player2, ChoiceContext.EachPlayerSacrificeOrDiscardChoice.DISCARD);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
+                .isInstanceOf(ChoiceContext.DeathExileReplacementChoice.class);
+        assertThat(gd.playerHands.get(player2.getId())).extracting(card -> card.getName()).containsExactly("Forest");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bears);
+
+        harness.handleListChoice(player1, "Return it to its owner's hand (Necromancer's Magemark)");
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(bears.getCard());
+        harness.assertInGraveyard(player2, "Forest");
+    }
+
+    @Test
     @DisplayName("Both players choose before anything is discarded or sacrificed, then all happen together (ruling)")
     void bothPlayersChooseBeforeAnyoneActs() {
         addCreatureReady(player1, new EumidianWastewaker());

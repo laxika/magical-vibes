@@ -51,7 +51,7 @@ import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.amount.TriggeringSpellModeCount;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchZonesForCardNamedToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryAndOrGraveyardForCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
@@ -1368,7 +1368,8 @@ class SpellTriggersTest {
         @DisplayName("puts the ability on the stack with its may unchanged and the spell as its triggering card (CR 603.5)")
         void searchReadsTheTriggeringSpellAsItResolves() {
             Permanent perm = createPermanent("Mishra, Artificer Prodigy");
-            var may = new MayEffect(SearchZonesForCardNamedToBattlefieldEffect.namedAsTriggeringSpell(),
+            var may = new MayEffect(SearchLibraryAndOrGraveyardForCardToBattlefieldEffect.inZones(
+                    new CardSharesNameWithTriggeringSpellPredicate(), Zone.GRAVEYARD, Zone.HAND, Zone.LIBRARY),
                     "Search for a copy?");
             var ability = castAbility(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.ARTIFACT)),
                     may);

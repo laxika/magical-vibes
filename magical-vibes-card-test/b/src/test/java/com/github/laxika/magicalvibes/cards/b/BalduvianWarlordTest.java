@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.InfiltrationLens;
 import com.github.laxika.magicalvibes.cards.k.KjeldoranOutrider;
 import com.github.laxika.magicalvibes.cards.t.TauntingElf;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -19,7 +21,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BalduvianWarlord.class, BarrelingAttack.class, KjeldoranOutrider.class, TauntingElf.class})
+@CardUsed({BalduvianWarlord.class, BarrelingAttack.class, KjeldoranOutrider.class, TauntingElf.class,
+        InfiltrationLens.class, GrizzlyBears.class})
 class BalduvianWarlordTest extends BaseCardTest {
 
     @Test
@@ -203,6 +206,36 @@ class BalduvianWarlordTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(PermanentGrants.powerBoostOf(gd, chosenAttacker)).isEqualTo(1);
         assertThat(PermanentGrants.toughnessBoostOf(gd, chosenAttacker)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Made to block an already blocked attacker, the blocker triggers its \"becomes blocked by a creature\"")
+    void blockingAnAlreadyBlockedAttackerTriggersBecomesBlockedByACreature() {
+        Permanent warlord = addCreatureReady(player2, new BalduvianWarlord());
+        Permanent formerAttacker = addCreatureReady(player1, new KjeldoranOutrider());
+        Permanent chosenAttacker = addCreatureReady(player1, new KjeldoranOutrider());
+        harness.addToBattlefieldAndReturn(player1, new InfiltrationLens()).setAttachedTo(chosenAttacker.getId());
+        Permanent blocker = addCreatureReady(player2, new KjeldoranOutrider());
+        Permanent otherBlocker = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+
+        declareAttackersAndPrepareBlockers(List.of(indexOf(player1, formerAttacker), indexOf(player1, chosenAttacker)));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(indexOf(player2, blocker), indexOf(player1, formerAttacker)),
+                new BlockerAssignment(indexOf(player2, otherBlocker), indexOf(player1, chosenAttacker))));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player2, indexOf(player2, warlord), null, blocker.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, chosenAttacker.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(blocker.getBlockingTargetIds()).containsExactly(chosenAttacker.getId());
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
     }
 
     private void setUpCombat(Permanent formerAttacker, Permanent chosenAttacker, Permanent blocker) {

@@ -264,8 +264,8 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
         log.info("Game {} - {} returns from exile ({}) to the battlefield",
                 gameData.id, card.getName(), sourceName);
         battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card, null, false);
-        if (enterAttacking && !gameData.interaction.isAwaitingInput()) {
-            attackTargetChooser.chooseAttackTargets(gameData, controllerId, List.of(permanent.getId()));
+        if (enterAttacking) {
+            attackTargetChooser.enteredAttacking(gameData, controllerId, List.of(permanent.getId()));
         }
     }
 

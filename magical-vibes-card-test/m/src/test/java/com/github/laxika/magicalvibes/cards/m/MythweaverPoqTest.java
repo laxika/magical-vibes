@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.e.EvolvingWilds;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
+import com.github.laxika.magicalvibes.cards.j.JwarIsleRefuge;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.SplendidReclamation;
 import com.github.laxika.magicalvibes.cards.t.TheGitrogMonster;
@@ -19,7 +20,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MythweaverPoq.class, Forest.class, Plains.class, TheGitrogMonster.class, EvolvingWilds.class, SplendidReclamation.class, ThayanEvokers.class})
+@CardUsed({MythweaverPoq.class, Forest.class, Plains.class, TheGitrogMonster.class, EvolvingWilds.class, SplendidReclamation.class, ThayanEvokers.class,
+        JwarIsleRefuge.class})
 class MythweaverPoqTest extends BaseCardTest {
 
     @Test
@@ -196,5 +198,21 @@ class MythweaverPoqTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gameLogContains("conjures a duplicate of Plains onto the battlefield.")).isTrue();
+    }
+
+    @Test
+    @DisplayName("A duplicate of a land with an enter ability enters tapped and triggers its own enter ability")
+    void duplicateOfLandGetsItsOwnEntryHandling() {
+        addCreatureReady(player1, new MythweaverPoq());
+        harness.setHand(player1, List.of(new JwarIsleRefuge()));
+        harness.setLife(player1, 20);
+
+        harness.playLand(player1, 0);
+        resolveAllTriggers();
+
+        List<Permanent> refuges = findPermanents(player1, "Jwar Isle Refuge");
+        assertThat(refuges).hasSize(2);
+        assertThat(refuges).allMatch(Permanent::isTapped);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
     }
 }

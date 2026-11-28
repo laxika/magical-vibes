@@ -11,7 +11,8 @@ import java.util.UUID;
  * permanent at the same time). A handler whose token creation the creating player may stop to order its replacements
  * (CR 616.1) inserts it after itself, so the tokens are attached once the creation has finished and every token it
  * made, however the replacements changed the count, is known. Tokens of other kinds the creation made (a Squirrel
- * Chatterfang added, a Food Tippy-Toe added) are left alone. Never put on a card.
+ * Chatterfang added, a Food Tippy-Toe added) are left alone. It records the creation's {@code CREATE_TOKEN} step, every
+ * token made from {@code createdFrom} on, so a later "when you do" reads it (Curse of the Werefox). Never put on a card.
  *
  * @param createdFrom the index in the resolution's created permanents of the first token this creation made
  * @param hostIds     the permanents the tokens are created attached to, one per token before replacements

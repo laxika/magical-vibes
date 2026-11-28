@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.e.EncroachingMycosynth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -21,7 +22,8 @@ class MishraArtificerProdigyTest extends BaseCardTest {
     @DisplayName("Casting an artifact offers the same-name battlefield search")
     void artifactCastOffersSameNameSearch() {
         harness.addToBattlefield(player1, new MishraArtificerProdigy());
-        harness.setHand(player1, List.of(new Spellbook(), new Spellbook()));
+        Card inHand = new Spellbook();
+        harness.setHand(player1, List.of(new Spellbook(), inHand));
 
         harness.castArtifact(player1, 0);
 
@@ -32,6 +34,8 @@ class MishraArtificerProdigyTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMultipleCardsChosen(player1, List.of(inHand.getId()));
 
         harness.assertOnBattlefield(player1, "Spellbook");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -69,11 +73,14 @@ class MishraArtificerProdigyTest extends BaseCardTest {
     void findsMatchingCardInGraveyard() {
         harness.addToBattlefield(player1, new MishraArtificerProdigy());
         harness.setHand(player1, List.of(new Spellbook()));
-        harness.setGraveyard(player1, List.of(new Spellbook()));
+        Card inGraveyard = new Spellbook();
+        harness.setGraveyard(player1, List.of(inGraveyard));
 
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMultipleCardsChosen(player1, List.of(inGraveyard.getId()));
 
         harness.assertOnBattlefield(player1, "Spellbook");
         harness.assertNotInGraveyard(player1, "Spellbook");
@@ -85,12 +92,14 @@ class MishraArtificerProdigyTest extends BaseCardTest {
     void findsMatchingCardInLibrary() {
         harness.addToBattlefield(player1, new MishraArtificerProdigy());
         harness.setHand(player1, List.of(new Spellbook()));
-        harness.setLibrary(player1, List.of(new Spellbook(), new GrizzlyBears()));
+        Card inLibrary = new Spellbook();
+        harness.setLibrary(player1, List.of(inLibrary, new GrizzlyBears()));
 
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleCardChosen(player1, 0);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of(inLibrary.getId()));
 
         harness.assertOnBattlefield(player1, "Spellbook");
         assertThat(gd.playerDecks.get(player1.getId())).extracting(card -> card.getName())
@@ -108,7 +117,8 @@ class MishraArtificerProdigyTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleCardChosen(player1, -1);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         harness.assertNotOnBattlefield(player1, "Spellbook");
         assertThat(gd.playerDecks.get(player1.getId())).extracting(card -> card.getName())

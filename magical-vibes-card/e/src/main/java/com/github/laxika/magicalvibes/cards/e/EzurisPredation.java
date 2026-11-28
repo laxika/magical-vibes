@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.CreatedTokensFightDifferentOpponentCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.EachFightsADifferentOneEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
@@ -26,6 +27,8 @@ public class EzurisPredation extends Card {
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.OPPONENTS),
                 "Phyrexian Beast", 4, 4, CardColor.GREEN,
                 List.of(CardSubtype.PHYREXIAN, CardSubtype.BEAST), Set.of(), Set.of()));
-        addSpellEffect(new CreatedTokensFightDifferentOpponentCreaturesEffect());
+        // "Each of those tokens fights a different one of those creatures": its caster pairs them, all fights at once.
+        addSpellEffect(new EachFightsADifferentOneEffect(Subjects.createdThisResolution(),
+                Subjects.controlledBy(Subjects.eachOpponent(), new PermanentIsCreaturePredicate())));
     }
 }

@@ -55,7 +55,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | CB Combat | CB-1 | CB-1 done 2026-11-27 (M11's block half left: it needs multi-defender combat damage) |
 | PP Perpetual changes | PP-1 | PP-1 done 2026-11-27 (L8, O47 left; O41's hand half left) |
 | PL Each player chooses, then all act | PL-1 | PL-1 done 2026-11-27 (Gilded Ambusher's damage reading for the owner) |
-| MC Single cards | MC-1, MC-2 | MC-1 done 2026-11-27 (O13's direct counter removals left; O81 for the owner); MC-2a, MC-2b, MC-2c, MC-2d done 2026-11-28 (MC-2b: N62's stack half is N92; MC-2c: N50 dropped; MC-2d: N25 dropped, N80 left) |
+| MC Single cards | MC-1, MC-2 | MC-1 done 2026-11-27 (O13's direct counter removals left; O81 for the owner); MC-2a, MC-2b, MC-2c, MC-2d done 2026-11-28 (MC-2b: N62's stack half is N92; MC-2c: N50 dropped; MC-2d: N25 dropped, N80 left); MC-2e done 2026-11-28 (S8 for the owner, N97 added) |
 | AI Hard / easy AI | AI-1, AI-2 | AI-1, AI-2 done 2026-11-27 |
 | UI Frontend | UI-1 | UI-1 done 2026-11-27 |
 | LG, CL Logs and non-rules cleanup | LG-1, CL-1 | CL-1, LG-1 done 2026-11-27 |
@@ -1342,7 +1342,7 @@ Outcome already settled.
 - MC-2e, zone moves and single cards: S3 and S21 (Ezuri's Predation), O5, O7, S8, O79's Behemoth part, N28, N36, N40, N54,
   N70, N84, N86, N89, N90.
 - MC-2f, layers, perpetual changes and links: N64, N71, N73, N74, N75, N76, N81, N82, N83.
-- MC-2g, lines the earlier parts added: N91, N92, N93, N94, N95, N96, and any later N line no part lists.
+- MC-2g, lines the earlier parts added: N91, N92, N93, N94, N95, N96, N97, and any later N line no part lists.
 
 Lines: O5 (Limitless Rekindling's pool), O7 (`ConjureCardToBattlefieldEffectHandler`: a conjured land gets no land-enter handling;
 check that the handler still exists after run J), S8 (Mythweaver Poq's simultaneous duplicates: rulings first, else an owner
@@ -1618,6 +1618,12 @@ creatures", a life-only flashback) pays no cost increase: `SpellCastingService.p
 branch pays `additionalCost` (Thalia, Guardian of Thraben's tax) only beside a mana or tap cost (CR 601.2f). Of the code,
 unverified by a test.
 
+New line N97 (seen in MC-2e, N89's rest): Agency Outfitter's "you may search your graveyard, hand and/or library for a card named
+Magnifying Glass and/or a card named Thinking Cap" (`SearchZonesForCardNamedToBattlefieldEffect.resolveMultipleNames`) takes a
+graveyard or hand match unasked and searches the library for every name still missing, so its controller can't leave the library
+unsearched (no shuffle) or decline a hand match; it needs the `AndOrSearchZonesChoice` with a two-name pick (CR 701.23a, 701.23b);
+sure of the code.
+
 Outcome:
 
 MC-2a: done 2026-11-28. Fixed: N19, N20, N21, N22, N23. N19: the AI's single target of a triggered ability
@@ -1703,6 +1709,44 @@ taken (lifelink) or declined (deathtouch and lifelink); pinned. N80 left, too bi
 emblem over a payable printed flashback needs a request field threaded through the ~14 `playFlashbackSpell` overloads of
 `GameService` and `SpellCastingService`, `GameData.GraveyardCastReplay`, `PlayCardRequestDispatchService` and the client. New line
 N96. No effect class added or deleted, so no ledger or ratchet change; no `CONVERSION_VERSION` change.
+
+MC-2e: done 2026-11-28. Fixed, each with a test that failed first: S3, O79 (Behemoth of Vault 0), N28, N40, N54, N70, N84,
+N86, N89 (Gate to the Afterlife, Say Its Name, Mishra; Agency Outfitter's two names are N97), N90; dropped: S21, O5, O7, N36;
+left: S8 (owner question, entry 17). S3: Ezuri's Predation's caster pairs its tokens with the opposing creatures and every fight
+happens at once (its rulings; CR 701.14a): the new shared `EachFightsADifferentOneEffect(fighters, opponents)` asks, for each
+creature of the smaller side, which of the other side's it fights (`PermanentChoiceContext.FightPairing`, unasked when the
+candidates left are alike), the larger side's extras fight nothing (the Doubling Season ruling), and `FightSupport.fightTogether`
+reads every power before dealing the damage as one event (`DamageSupport.dealAtOnce`); `CreatedTokensFightDifferentOpponent
+CreaturesEffect` and its handler went (entry 16's line settled). O79: Behemoth is `UnlessPaysEffect.youMayPay(new PayEnergyCost(
+new TargetManaValue()), QueueReflexiveAbilityEffect.aboutDeclaredTarget(new DestroyTargetPermanentEffect(Subjects.triggering()),
+spec))`: a payer with too little energy isn't asked (CR 118.3) and the reflexive ability has no target, "that permanent" being the
+dies trigger's target (its rulings); the new `aboutDeclaredTarget` makes the carrying ability declare the target, its record
+non-targeting, and `Card.bindEffectToTargetGroup` no longer binds its inner effect; `PayEnergyThenDestroyTargetPermanentEffect`
+and its handler went. N28: `ReturnDyingCreatureToBattlefieldEffectHandler` asks `isCardBlockedFromEnteringFromZone` (Nim
+Deathmantle under Grafdigger's Cage). N40: `PermanentRemovalService` refreshes `gameData.resolvingEntry`'s last-known values of a
+triggering permanent that leaves while its ability resolves (CR 608.2h; no card does it, pinned in `PermanentRemovalServiceTest`).
+N54: a token-attached creation that stops for the replacement order records its CREATE_TOKEN step from the inserted
+`AttachCreatedTokensToHostsEffect`, so Curse of the Werefox still fights under Anointed Procession and Tippy-Toe (the Role
+creations attached to controlled creatures now record the step too). N70: a creature returned attacking while an entry prompt is
+open gets its attack target chosen in a step spliced after the effect (`ChooseAttackTargetsForCreatedTokensEffect
+.forEnteredAttacking`; CR 508.4; The Grim Captain returning a Clone with two opponents). N84: Eumidian Wastewaker asks the chosen
+sacrifices' CR 616.1 death replacements before any card is discarded (`AsksDeathReplacementsFirst`, as Torment of Hailfire).
+N86: a creature an effect makes block an already blocked attacker triggers its "becomes blocked by a creature" abilities
+(`BlockTriggers`' EFFECT branch, CR 509.3d; Balduvian Warlord with Infiltration Lens); "becomes blocked" still needs a newly
+blocked attacker (CR 509.3c). N89: the one-name "graveyard, hand, and/or library" searches are `SearchLibraryAndOrGraveyard
+ForCardToBattlefieldEffect.inZones(name, GRAVEYARD, HAND, LIBRARY)`, which asks whether the library is searched first (CR 701.23a);
+its handler binds `CardSharesNameWithTriggeringSpellPredicate` (Mishra), and `SearchZonesForCardNamedToBattlefieldEffect
+.namedAsTriggeringSpell` went; Kassandra and Shaun & Rebecca say "and" and Arachnus Spinner already asks graveyard, library or
+both, so they stay. N90: Verdant Crescendo's land search neither shuffles nor counts as a search of its own (CR 701.23h), so Ob
+Nixilis, Unshackled triggers once. S21 dropped: between the count and the fights nothing can change which creatures the
+opponents control (no player acts, no state-based actions, its ruling), so reading them at the fight is reading those creatures.
+O5 dropped: fixed in defect run D22 (the 59 ECL instants and sorceries, tested). O7 dropped: the handler is gone and a conjured
+land enters with its land-enter handling (pinned: Mythweaver Poq's duplicate Jwar Isle Refuge enters tapped and gains life).
+N36 dropped: an effect's removals are already one rules-event batch (EffectResolutionService, CR 603.2c), so "one or more" and
+look-back readers see one event even when the watcher leaves first (pinned: Dour Port-Mage under Ghostway and Paradoxical
+Outcome); no card was found whose leave reader sees a characteristic an earlier member of the same removal gave a later one.
+Tests: 591 XML files, 7,949 tests, 0 failures (the card classes of every changed effect and path and their helper users, 8
+application classes, the architecture tests, the AI module). New line N97 (MC-2g). Ratchet 2850 / 2237 to 2849 / 2236, five ledger rows; no `CONVERSION_VERSION` change.
 
 ### AI. Hard / easy AI (`magical-vibes-ai`)
 

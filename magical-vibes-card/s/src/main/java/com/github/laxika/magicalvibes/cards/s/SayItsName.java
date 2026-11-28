@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryAndOrGraveyardForCardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
@@ -12,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchZonesForCardNamedToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -47,7 +48,9 @@ public class SayItsName extends Card {
                         new ExileNCardsFromGraveyardCost(2, null, new CardAllOfPredicate(List.of(
                                 new CardNamedPredicate("Say Its Name"),
                                 new CardNotPredicate(new CardIsSelfPredicate())))),
-                        new SearchZonesForCardNamedToBattlefieldEffect("Altanak, the Thrice-Called")),
+                        SearchLibraryAndOrGraveyardForCardToBattlefieldEffect.inZones(
+                                new CardNamedPredicate("Altanak, the Thrice-Called"),
+                                Zone.GRAVEYARD, Zone.HAND, Zone.LIBRARY)),
                 "Exile this card and two other cards named Say Its Name from your graveyard: Search your "
                         + "graveyard, hand, and/or library for a card named Altanak, the Thrice-Called and "
                         + "put it onto the battlefield. If you search your library this way, shuffle. "

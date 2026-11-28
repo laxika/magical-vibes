@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -16,8 +17,28 @@ import java.util.UUID;
  * @param sacrificeAtEndStep whether every token of the creation is sacrificed at the beginning of the next end step
  * @param attackTargetId     the player or permanent every created token attacks, or {@code null} to let
  *                           {@code controllerId} choose
+ * @param enteredAttackingIds the permanents an effect put onto the battlefield attacking while another prompt was
+ *                            open (an exiled card returned attacking whose entry asked a copy choice): those of them
+ *                            still attacking get their attack targets chosen instead of the created tokens, or
+ *                            {@code null} for the created tokens
  */
 public record ChooseAttackTargetsForCreatedTokensEffect(UUID controllerId, int createdFromIndex,
-                                                        boolean sacrificeAtEndStep, UUID attackTargetId)
+                                                        boolean sacrificeAtEndStep, UUID attackTargetId,
+                                                        List<UUID> enteredAttackingIds)
         implements CardEffect {
+
+    public ChooseAttackTargetsForCreatedTokensEffect(UUID controllerId, int createdFromIndex,
+                                                     boolean sacrificeAtEndStep, UUID attackTargetId) {
+        this(controllerId, createdFromIndex, sacrificeAtEndStep, attackTargetId, null);
+    }
+
+    public ChooseAttackTargetsForCreatedTokensEffect {
+        enteredAttackingIds = enteredAttackingIds == null ? null : List.copyOf(enteredAttackingIds);
+    }
+
+    /** The attack-target choice of {@code permanentIds}, put onto the battlefield attacking by an effect. */
+    public static ChooseAttackTargetsForCreatedTokensEffect forEnteredAttacking(UUID controllerId,
+                                                                                List<UUID> permanentIds) {
+        return new ChooseAttackTargetsForCreatedTokensEffect(controllerId, 0, false, null, permanentIds);
+    }
 }

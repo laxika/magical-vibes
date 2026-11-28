@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.cards.d.DourPortMage;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Ghostway.class, GhostWarden.class, SkarrgTheRagePits.class, SkySwallower.class})
+@CardUsed({Ghostway.class, GhostWarden.class, SkarrgTheRagePits.class, SkySwallower.class, DourPortMage.class,
+        GrizzlyBears.class})
 class GhostwayTest extends BaseCardTest {
 
     @Test
@@ -134,6 +137,21 @@ class GhostwayTest extends BaseCardTest {
         assertThat(returned.getId()).isNotEqualTo(original.getId());
         assertThat(returned.isTapped()).isFalse();
         assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Its creatures leave as one event: Dour Port-Mage, exiled with them, draws once")
+    void creaturesLeaveTogether() {
+        harness.addToBattlefield(player1, new DourPortMage());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+
+        castGhostway(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 
     private void castGhostway(Player caster) {

@@ -57,9 +57,10 @@ public class CreateTokenAttachedToTargetEffectHandler implements NormalEffectHan
             return;
         }
         if (!(e.subject() instanceof PermanentSubject.Target)) {
-            resolve(gameData, entry, e, subjectResolutionService.permanents(gameData, entry, e, e.subject())
-                    .stream().map(Permanent::getId).toList());
-            recordCreated(gameData, entry, createdBefore);
+            if (resolve(gameData, entry, e, subjectResolutionService.permanents(gameData, entry, e, e.subject())
+                    .stream().map(Permanent::getId).toList(), createdBefore)) {
+                recordCreated(gameData, entry, createdBefore);
+            }
             return;
         }
         List<UUID> targetIds = entry.targetsForEffect(e);
@@ -68,8 +69,21 @@ public class CreateTokenAttachedToTargetEffectHandler implements NormalEffectHan
         if (targetIds.isEmpty() && entry.targetsForBoundEffectGroup(e) == null && entry.getTargetId() != null) {
             targetIds = List.of(entry.getTargetId());
         }
-        resolve(gameData, entry, e, targetIds);
-        recordCreated(gameData, entry, createdBefore);
+        if (resolve(gameData, entry, e, targetIds, createdBefore)) {
+            recordCreated(gameData, entry, createdBefore);
+        }
+    }
+
+    /**
+     * Resolves {@code e} for {@code targetIds} as a step of its own and records it (an "up to one target" Role's
+     * creation, {@code CreateTokenAttachedToUpToOneTargetEffectHandler}), or leaves the record to the attach step a
+     * stopped creation inserts.
+     */
+    void resolveStep(GameData gameData, StackEntry entry, CreateTokenAttachedToTargetEffect e, List<UUID> targetIds) {
+        int createdBefore = entry.getCreatedPermanentIds().size();
+        if (resolve(gameData, entry, e, targetIds, createdBefore)) {
+            recordCreated(gameData, entry, createdBefore);
+        }
     }
 
     /** The step's result: the tokens it created and their controllers ("when you do", Curse of the Werefox). */
@@ -103,8 +117,7 @@ public class CreateTokenAttachedToTargetEffectHandler implements NormalEffectHan
                     "Choose one of the creatures that entered to attach the token to.");
             return false;
         }
-        resolve(gameData, entry, e, candidates);
-        return true;
+        return resolve(gameData, entry, e, candidates, entry.getCreatedPermanentIds().size());
     }
 
     /** Attaches the token of the effect waiting in {@code context} to the chosen {@code chosenPermanentId}. */
@@ -119,8 +132,9 @@ public class CreateTokenAttachedToTargetEffectHandler implements NormalEffectHan
             throw new IllegalStateException("Choose one of the creatures that entered");
         }
         int createdBefore = entry.getCreatedPermanentIds().size();
-        resolve(gameData, entry, context.effect(), List.of(chosenPermanentId));
-        recordCreated(gameData, entry, createdBefore);
+        if (resolve(gameData, entry, context.effect(), List.of(chosenPermanentId), createdBefore)) {
+            recordCreated(gameData, entry, createdBefore);
+        }
     }
 
     private List<UUID> triggeringCandidates(GameData gameData, StackEntry entry,
@@ -140,22 +154,27 @@ public class CreateTokenAttachedToTargetEffectHandler implements NormalEffectHan
      * Creates the token attached to each host in turn, each host's creation its own event. One its creating player stops
      * to order its replacements (CR 616.1) finishes after the answer, so its tokens are attached by an inserted
      * {@link AttachCreatedTokensToHostsEffect} step once every token it made is known, and the hosts after it get their
-     * tokens in steps of their own after that one.
+     * tokens in steps of their own after that one. That attach step records this step's CREATE_TOKEN result, every token
+     * made from {@code stepCreatedFrom} on, once they are all known ("when you do", Curse of the Werefox), so this step
+     * records none as it stops.
+     *
+     * @return whether every creation finished without stopping
      */
-    void resolve(GameData gameData, StackEntry entry, CreateTokenAttachedToTargetEffect e,
-                 List<UUID> targetIds) {
+    boolean resolve(GameData gameData, StackEntry entry, CreateTokenAttachedToTargetEffect e,
+                    List<UUID> targetIds, int stepCreatedFrom) {
         for (int i = 0; i < targetIds.size(); i++) {
-            int createdBefore = entry.getCreatedPermanentIds().size();
             if (!createAttachedToken(gameData, entry, e, targetIds.get(i))) {
                 List<CardEffect> rest = new ArrayList<>();
-                rest.add(new AttachCreatedTokensToHostsEffect(createdBefore, List.of(targetIds.get(i))));
+                // From the step's first token: those of the hosts before this one are attached already.
+                rest.add(new AttachCreatedTokensToHostsEffect(stepCreatedFrom, List.of(targetIds.get(i))));
                 targetIds.subList(i + 1, targetIds.size()).forEach(hostId -> rest.add(
                         new CreateTokenAttachedToTargetEffect(e.token(), e.targetControllerRelation(),
                                 e.targetFilter(), Subjects.named(hostId))));
                 entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, rest);
-                return;
+                return false;
             }
         }
+        return true;
     }
 
     /** @return false when the creation stopped for its replacements' order, so nothing was attached yet */

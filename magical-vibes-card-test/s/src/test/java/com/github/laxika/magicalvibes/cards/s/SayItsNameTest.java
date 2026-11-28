@@ -61,6 +61,8 @@ class SayItsNameTest extends BaseCardTest {
 
         harness.activateGraveyardAbility(player1, 0);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMultipleCardsChosen(player1, List.of(altanak.getId()));
 
         harness.assertOnBattlefield(player1, "Altanak, the Thrice-Called");
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
@@ -151,6 +153,7 @@ class SayItsNameTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Finds Altanak in the hand without searching the library")
     void findsAltanakInHand() {
         AltanakTheThriceCalled altanak = new AltanakTheThriceCalled();
         harness.forceActivePlayer(player1);
@@ -163,12 +166,15 @@ class SayItsNameTest extends BaseCardTest {
         assertThat(gd.exiledCards).hasSize(3);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMultipleCardsChosen(player1, List.of(altanak.getId()));
 
         assertThat(findPermanent(player1, "Altanak, the Thrice-Called").getCard()).isSameAs(altanak);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
     @Test
+    @DisplayName("Searching the library finds Altanak there")
     void findsAltanakInLibrary() {
         AltanakTheThriceCalled altanak = new AltanakTheThriceCalled();
         Forest land = new Forest();
@@ -180,7 +186,8 @@ class SayItsNameTest extends BaseCardTest {
 
         harness.activateGraveyardAbility(player1, 0);
         harness.passBothPriorities();
-        harness.handleCardChosen(player1, 0);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of(altanak.getId()));
 
         assertThat(findPermanent(player1, "Altanak, the Thrice-Called").getCard()).isSameAs(altanak);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(land);
@@ -188,6 +195,7 @@ class SayItsNameTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A searched library may find nothing though Altanak is in it")
     void canFailToFindAltanakInLibrary() {
         AltanakTheThriceCalled altanak = new AltanakTheThriceCalled();
         harness.forceActivePlayer(player1);
@@ -198,7 +206,8 @@ class SayItsNameTest extends BaseCardTest {
 
         harness.activateGraveyardAbility(player1, 0);
         harness.passBothPriorities();
-        harness.handleCardChosen(player1, -1);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         harness.assertNotOnBattlefield(player1, "Altanak, the Thrice-Called");
         assertThat(gd.playerDecks.get(player1.getId())).contains(altanak).hasSize(2);

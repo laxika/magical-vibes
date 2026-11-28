@@ -85,6 +85,11 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
         if (queueEffect.useEntryTargetAsTriggeringPermanent() && entry.getTargetId() != null) {
             record.setTriggeringPermanentId(entry.getTargetId());
         }
+        if (queueEffect.declaredTarget() != null) {
+            // About the target the carrying ability declared: "that permanent", acted on without targeting it.
+            record.setTargetId(entry.getTargetId());
+            record.setNonTargeting(true);
+        }
         recordSetup.accept(record);
         triggeredAbilityStackService.putMade(gameData, record);
     }

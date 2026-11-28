@@ -2437,9 +2437,13 @@ public class PermanentRemovalService {
                 unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, target, target.getAttachedTo(), playerId);
                 List<StackEntry> watchingEntries = new ArrayList<>(gameData.stackEntriesAndTriggerRecords());
                 watchingEntries.addAll(gameData.pendingManaAbilityTriggers);
-                if (gameData.pendingEffectResolutionEntry != null
-                        && !watchingEntries.contains(gameData.pendingEffectResolutionEntry)) {
-                    watchingEntries.add(gameData.pendingEffectResolutionEntry);
+                // The entry resolving now and a parked one read it as it last existed too: a triggering permanent
+                // that leaves while its own ability resolves (CR 608.2h).
+                for (StackEntry resolving : java.util.Arrays.asList(
+                        gameData.resolvingEntry, gameData.pendingEffectResolutionEntry)) {
+                    if (resolving != null && !watchingEntries.contains(resolving)) {
+                        watchingEntries.add(resolving);
+                    }
                 }
                 // The Auras and Equipment attached to it as it leaves, for every entry it is the source of (CR 608.2h).
                 List<UUID> sourceAttachmentIds = attachedAurasAndEquipment(gameData, target.getId());

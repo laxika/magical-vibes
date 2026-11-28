@@ -38,7 +38,7 @@ public class CreateTokenAttachedToUpToOneTargetEffectHandler implements NormalEf
         if (targetIds.isEmpty() || declined) {
             return;
         }
-        delegate.resolve(gameData, entry, new CreateTokenAttachedToTargetEffect(
+        delegate.resolveStep(gameData, entry, new CreateTokenAttachedToTargetEffect(
                 optionalEffect.token(), optionalEffect.targetControllerRelation(), optionalEffect.targetFilter()),
                 targetIds);
     }

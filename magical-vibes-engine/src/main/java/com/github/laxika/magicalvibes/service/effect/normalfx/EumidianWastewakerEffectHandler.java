@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -32,16 +33,18 @@ import org.springframework.stereotype.Component;
  * <p>You, then the defending player, each choose to discard or to sacrifice (a player who can do only one of them
  * does that) and choose the card or permanent; nothing happens until both have chosen, and then the discards and the
  * sacrifice happen together (the card's ruling, CR 101.4). The discard picks wait in
- * {@link GameData#deferredDiscardSelections}; the sacrifice picks in {@link EumidianWastewakerState}. The discards are
- * made first, with every chosen permanent still on the battlefield, so a replacement of a permanent being sacrificed
- * still applies to them; then the chosen permanents leave as one departure, which ends this step on a CR 616.1
- * question and resolves it again once answered. Only land cards that end up in a graveyard are counted: a land token,
+ * {@link GameData#deferredDiscardSelections}; the sacrifice picks in {@link EumidianWastewakerState}. Once all have
+ * chosen, the chosen permanents' CR 616.1 death replacement questions are asked before anything happens (marked
+ * {@link AsksDeathReplacementsFirst}: until then it changes nothing but its recorded picks, so the rerun resumes at the
+ * same point); then the discards are made, with every chosen permanent still on the battlefield, so a replacement of a
+ * permanent being sacrificed still applies to them, and the chosen permanents leave as one departure with those
+ * answers. Only land cards that end up in a graveyard are counted: a land token,
  * a card that is a land only on the battlefield (Ashaya, Soul of the Wild) and a card a replacement put elsewhere are
  * not (the card's ruling).
  */
 @Component
 @RequiredArgsConstructor
-public class EumidianWastewakerEffectHandler implements NormalEffectHandlerBean {
+public class EumidianWastewakerEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PlayerInputService playerInputService;
@@ -171,6 +174,12 @@ public class EumidianWastewakerEffectHandler implements NormalEffectHandlerBean 
      * departure. The land cards discarded into a graveyard are counted now; the sacrificed ones once they are gone.
      */
     private void actTogether(GameData gameData, StackEntry entry, CardEffect effect, EumidianWastewakerState state) {
+        // CR 616.1: the sacrifices' death replacements are chosen before anything is discarded or sacrificed.
+        destructionSupport.askDeathReplacementsBeforeSacrifice(gameData, state.chosenSacrificeIds.stream()
+                .map(permanentId -> gameQueryService.findPermanentById(gameData, permanentId))
+                .filter(java.util.Objects::nonNull)
+                .toList());
+        gameData.deathReplacementsCanRerunEffect = false;
         gameData.rerunCurrentEffectAfterInteraction = false;
         state.currentPlayerId = null;
         Map<UUID, List<Card>> discarded =

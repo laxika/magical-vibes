@@ -2,24 +2,29 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.c.ChatterfangSquirrelGeneral;
 import com.github.laxika.magicalvibes.cards.d.DoublingSeason;
 import com.github.laxika.magicalvibes.cards.j.JinnieFayJetmirsSecond;
 import com.github.laxika.magicalvibes.cards.v.Vigor;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({EzurisPredation.class, HillGiant.class, AirElemental.class, DoublingSeason.class, Vigor.class, JinnieFayJetmirsSecond.class})
+@CardUsed({EzurisPredation.class, HillGiant.class, AirElemental.class, DoublingSeason.class, Vigor.class, JinnieFayJetmirsSecond.class,
+        ChatterfangSquirrelGeneral.class})
 class EzurisPredationTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Creates a Beast for each opposing creature and each fights a different one")
     void createsOneBeastForEachOpposingCreatureAndEachFightsADifferentCreature() {
         addCreatureReady(player2, new HillGiant());
         addCreatureReady(player2, new AirElemental());
@@ -37,6 +42,7 @@ class EzurisPredationTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Creates nothing when opponents control no creatures")
     void doesNotCreateTokensWhenOpponentsControlNoCreatures() {
         castEzurisPredation();
 
@@ -45,6 +51,7 @@ class EzurisPredationTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Ignores the caster's own creatures")
     void ignoresCreaturesControlledByTheCaster() {
         addCreatureReady(player1, new AirElemental());
         addCreatureReady(player2, new HillGiant());
@@ -59,6 +66,7 @@ class EzurisPredationTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The extra tokens Doubling Season makes fight nothing (ruling)")
     void extraTokensFromDoublingSeasonDoNotFight() {
         harness.addToBattlefield(player1, new DoublingSeason());
         addCreatureReady(player2, new AirElemental());
@@ -71,6 +79,7 @@ class EzurisPredationTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Every fight reads power before any damage, so Vigor's counters come too late")
     void fightDamageUsesPowerBeforeVigorAddsCounters() {
         harness.addToBattlefield(player2, new Vigor());
         addCreatureReady(player2, new HillGiant());
@@ -87,6 +96,7 @@ class EzurisPredationTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The original tokens still fight after Jinnie Fay's replacement is declined")
     void originalTokensStillFightAfterDecliningJinnieFayReplacement() {
         harness.addToBattlefield(player1, new JinnieFayJetmirsSecond());
         addCreatureReady(player2, new HillGiant());
@@ -101,6 +111,7 @@ class EzurisPredationTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Jinnie Fay's replacement tokens fight in their place")
     void replacementCatTokensStillFight() {
         harness.addToBattlefield(player1, new JinnieFayJetmirsSecond());
         addCreatureReady(player2, new HillGiant());
@@ -113,6 +124,31 @@ class EzurisPredationTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Hill Giant");
         assertThat(findPermanent(player2, "Hill Giant").getMarkedDamage()).isEqualTo(2);
         assertThat(findPermanent(player1, "Jinnie Fay, Jetmir's Second").getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Its caster chooses which of those tokens fights which creature (ruling)")
+    void casterChoosesWhichTokenFightsWhichCreature() {
+        harness.addToBattlefield(player1, new ChatterfangSquirrelGeneral());
+        Permanent giant = addCreatureReady(player2, new HillGiant());
+        Permanent elemental = addCreatureReady(player2, new AirElemental());
+
+        castEzurisPredation();
+
+        PendingInteraction.PermanentChoice pairing = gd.interaction.activeInteraction(
+                PendingInteraction.PermanentChoice.class);
+        assertThat(pairing).isNotNull();
+        assertThat(pairing.validIds()).hasSize(4);
+        Permanent squirrel = findPermanents(player1, "Squirrel").getFirst();
+        harness.handlePermanentChosen(player1, squirrel.getId());
+        Permanent beast = findPermanents(player1, "Phyrexian Beast").getFirst();
+        harness.handlePermanentChosen(player1, beast.getId());
+
+        assertThat(giant.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        harness.assertInGraveyard(player2, "Air Elemental");
+        assertThat(findPermanents(player1, "Phyrexian Beast")).hasSize(1);
+        assertThat(findPermanents(player1, "Squirrel")).hasSize(1);
     }
 
     private void castEzurisPredation() {
