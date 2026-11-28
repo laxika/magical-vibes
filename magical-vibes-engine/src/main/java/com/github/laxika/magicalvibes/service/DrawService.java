@@ -1117,7 +1117,17 @@ public class DrawService {
     }
 
     public boolean isDrawPrevented(GameData gameData, UUID playerId) {
-        int cardsDrawnThisTurn = gameData.cardsDrawnThisTurn.getOrDefault(playerId, 0);
+        return isDrawPrevented(gameData, playerId, 0);
+    }
+
+    /**
+     * Whether a draw restriction stops the player from drawing one more card once the {@code committedDraws} draws an
+     * effect has already chosen for them, but not yet made, are counted as drawn this turn. A choice that would add a
+     * draw past a "can't draw more than one card each turn" limit is then impossible and can't be chosen (CR 608.2d,
+     * 121.3).
+     */
+    public boolean isDrawPrevented(GameData gameData, UUID playerId, int committedDraws) {
+        int cardsDrawnThisTurn = gameData.cardsDrawnThisTurn.getOrDefault(playerId, 0) + committedDraws;
         return gameQueryService.activeStaticEffects(gameData, DrawRestrictionEffect.class).stream()
                 .anyMatch(active -> active.effect().appliesTo(active.controllerId(), playerId)
                         && active.effect().preventsDraw(cardsDrawnThisTurn));

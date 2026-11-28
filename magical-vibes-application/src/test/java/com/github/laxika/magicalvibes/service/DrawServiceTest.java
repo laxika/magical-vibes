@@ -25,6 +25,8 @@ import com.github.laxika.magicalvibes.model.effect.AbundanceDrawReplacementEffec
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawFromBottomOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawRestrictionEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCanDrawOnlyOneCardEachTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstNonDrawStepDrawFourReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -307,6 +309,21 @@ class DrawServiceTest {
         card.setName(name);
         card.setType(type);
         return card;
+    }
+
+    @Test
+    @DisplayName("draws already chosen but not yet made count toward a one-card-each-turn limit")
+    void committedDrawsCountTowardDrawLimit() {
+        Card narsetCard = createCard("Narset", CardType.PLANESWALKER);
+        OpponentsCanDrawOnlyOneCardEachTurnEffect limit = new OpponentsCanDrawOnlyOneCardEachTurnEffect();
+        narsetCard.addStaticEffect(limit);
+        Permanent narset = new Permanent(narsetCard);
+        lenient().when(gameQueryService.activeStaticEffects(gd, DrawRestrictionEffect.class)).thenReturn(
+                List.of(new GameQueryService.ActiveStaticEffect<>(limit, narset, player2Id)));
+
+        assertThat(sut.isDrawPrevented(gd, player1Id)).isFalse();
+        assertThat(sut.isDrawPrevented(gd, player1Id, 1)).isTrue();
+        assertThat(sut.isDrawPrevented(gd, player2Id, 1)).isFalse();
     }
 
     @Test

@@ -64,6 +64,7 @@ class DecoyGambitTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can be cast with no targets and returns nothing")
     void canChooseNoTargets() {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new DecoyGambit()));
@@ -77,6 +78,7 @@ class DecoyGambitTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot target a creature its caster controls")
     void cannotTargetOwnCreature() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new DecoyGambit()));
@@ -87,6 +89,7 @@ class DecoyGambitTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A target that left the battlefield offers no draw choice")
     void missingTargetDoesNotOfferDrawChoice() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new DecoyGambit()));
@@ -102,6 +105,7 @@ class DecoyGambitTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Returns the creature to its owner's hand, not its controller's")
     void returnsCreatureToOwnerRatherThanController() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player2, List.of(new ControlMagic()));
@@ -120,6 +124,7 @@ class DecoyGambitTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Opponents choose in turn order, not in target order")
     void choicesFollowTurnOrderRatherThanTargetOrder() {
         Player third = addOpponent();
         Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -136,6 +141,7 @@ class DecoyGambitTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The caster draws only after every opponent has chosen")
     void drawsWaitUntilAllOpponentsHaveChosen() {
         Player third = addOpponent();
         Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -154,6 +160,7 @@ class DecoyGambitTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Creatures return only after every opponent has chosen")
     void returnsWaitUntilAllOpponentsHaveChosen() {
         Player third = addOpponent();
         Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -170,6 +177,7 @@ class DecoyGambitTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A target that changed to another opponent's control is illegal")
     void changingToAnotherOpponentMakesTargetIllegal() {
         Player third = addOpponent();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -187,6 +195,7 @@ class DecoyGambitTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The draw can't be chosen when the caster can't draw, so the creature returns")
     void prohibitedDrawCannotBeChosenInsteadOfReturningCreature() {
         harness.addToBattlefieldAndReturn(player2, new NarsetParterOfVeils())
                 .setCounterCount(CounterType.LOYALTY, 5);
@@ -203,6 +212,26 @@ class DecoyGambitTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInHand(player2, "Grizzly Bears");
         harness.assertNotInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("A later opponent can't choose a draw past the caster's limit after an earlier opponent chose one")
+    void drawChosenByEarlierOpponentCountsTowardDrawLimit() {
+        Player third = addOpponent();
+        harness.addToBattlefieldAndReturn(player2, new NarsetParterOfVeils())
+                .setCounterCount(CounterType.LOYALTY, 5);
+        gd.cardsDrawnThisTurn.remove(player1.getId());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(third, new GrizzlyBears());
+        castMultiplayer(List.of(first.getId(), second.getId()));
+
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(first);
+        harness.assertInHand(third, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 
     private void cast(Permanent target) {

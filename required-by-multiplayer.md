@@ -53,3 +53,18 @@ copies (the same opponent), the permanent's enters trigger and the opponent leav
 effect then reads one "the chosen gift player" subject. Choosing the opponent isn't targeting, so hexproof or
 protection doesn't stop it. Tests: in a three-player game, a "gift a card" spell (Dewdrop Cure) and a "gift a tapped
 Fish" spell (Into the Flood Maw) promised to one opponent give only that opponent the gift.
+
+## 4. "Other attacking creatures get" leaves out a teammate's attackers
+
+**Found:** 2026-11-28, rules-fixes run Z (refactors-to-do.md entry 18, lines O93 and O97); moved here 2026-11-28 by the owner
+
+**Problem.** Battle cry and the "attacking creatures get" / "other attacking creatures get" boosts are built over the creatures
+their controller controls: battle cry on "creatures you control" (B2 keeps it), and Iroh, Firebending Instructor, Kangee's
+Lieutenant, Motivated Pony, Targ Nar, Honored Crop-Captain and others on `BoostEffect.creaturesYouControl(…, attacking)`. CR
+702.91a gives battle cry's +1/+0 to "each other attacking creature", so in a Two-Headed Giant game (CR 810.1) a teammate's
+attacking creatures get it too, and the same goes for the "attacking creatures get" cards. With no team play the two forms give
+the same result.
+
+**Needs.** Team play (Two-Headed Giant's shared turns and attacks). Then these effects say what their text says,
+`BoostEffect.allCreatures(…, attacking)` (an opponent's creatures can't be attacking on your turn), each with a test where a
+teammate's attacker gets the boost.

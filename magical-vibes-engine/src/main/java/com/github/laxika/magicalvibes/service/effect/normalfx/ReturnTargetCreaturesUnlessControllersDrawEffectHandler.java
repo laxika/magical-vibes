@@ -23,7 +23,9 @@ import org.springframework.stereotype.Component;
 /**
  * Resolves Decoy Gambit's per-target bounce-or-draw choices. Each creature's controller is asked in turn order
  * (CR 101.4). Once every choice is made, the caster draws one card per "draw" answer and then the creatures
- * chosen to return leave the battlefield together (Decoy Gambit ruling, 2020-04-17).
+ * chosen to return leave the battlefield together (Decoy Gambit ruling, 2020-04-17). A controller isn't offered the
+ * draw when the caster couldn't draw one more card after the draws already chosen, and that creature returns: an
+ * impossible option can't be chosen (CR 608.2d, 121.3).
  */
 @Component
 @RequiredArgsConstructor
@@ -79,7 +81,7 @@ public class ReturnTargetCreaturesUnlessControllersDrawEffectHandler implements 
             if (targetControllerId == null) {
                 continue;
             }
-            if (drawService.isDrawPrevented(gameData, sourceControllerId)) {
+            if (drawService.isDrawPrevented(gameData, sourceControllerId, drawCount)) {
                 returnTargetIds.add(targetId);
                 continue;
             }

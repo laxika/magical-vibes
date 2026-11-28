@@ -8,6 +8,7 @@
 - **Card data is stored already mapped, so a mapping change needs a version bump.** Bump `StoredSet.CONVERSION_VERSION` whenever you change `FaceOracleMapper`, `TypeLineParser`, `OracleTextNormalizer`, the maps and parsers in `CardDataSupport`, `StoredSetConverter` or either `SetSource`, and whenever you add or rename a constant in `Keyword`, `CardSubtype`, `CardType` or `CardSupertype`. Without the bump every stored set in `card-data-cache` keeps the old mapping; with it the server downloads each set again on its next load.
 - Never write banner/section comments — `// --- Aura & enchantment ---`, `// ===== Helpers =====`, `//////// Combat ////////` and any similar divider one-liner. They are not documentation. Javadoc on the type and its members is the only place to explain grouping.
 - Do not ever run the full test suite! Ask me and I'll run it for you.
+- Multiplayer-only bugs and missing features go in `required-by-multiplayer.md`, not `refactors-to-do.md` or `missing-features-to-do.md`. That covers anything that only shows with more than two players or with teams, or that needs the engine, the view or the client to model more than one opponent. Those entries wait until proper multiplayer is implemented; don't fix them before then.
 
 ## Implementing cards
 

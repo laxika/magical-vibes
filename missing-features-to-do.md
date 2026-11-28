@@ -376,6 +376,44 @@ approval before changing the protocol or the frontend. Start with failing tests.
 
 ---
 
+## 82. No client chooser for an "[A] or [B]" additional cast cost
+
+**Status:** open · **Found:** 2026-11-26, effect cleanup step 10 run U7 (entry 17's U7 Q3, refactors-to-do.md entry 18 line O85);
+moved here 2026-11-28 by the owner
+
+**Failing tests:**
+- None yet (the engine side works: the card tests cast these spells by request). Add frontend tests: casting Bone Shards from hand
+  with both a creature and another card available asks whether to sacrifice a creature or discard a card, then asks for the
+  permanent or the card, and the cast request carries `sacrificePermanentId` or `discardHandCardIndex`; with only one alternative
+  payable, it goes straight to that alternative's picker.
+
+**What the rules require.** CR 601.2b: a player announces which alternative or additional costs they intend to pay as the spell is
+cast. Bone Shards ("sacrifice a creature or discard a card"), Demand Answers ("sacrifice an artifact or discard a card"), Minion
+Missile and Souls of the Lost ("discard a card or sacrifice a permanent") have an `AnyOfCost` as `addCastingCost`.
+`AdditionalSpellCostService.chosenAlternative` reads the chosen alternative from whichever selection field of the cast request is
+filled in, and the AI fills them in. The client has a life-or-mana chooser (`additionalCostLifePayment` /
+`additionalCostManaCost` in `targeting-choice.service.ts`) and a sacrifice picker, but nothing that offers the discard
+alternative, so a human player can't cast these spells by discarding a card.
+
+**Why it's large.** The game view has to tell the client which alternatives a hand card's additional cost has and which are
+payable now (today it sends only the life-and-mana pair), and the client needs a chooser plus a hand-card picker for the discard,
+fitted into the cast flow before targets (CR 601.2b, before 601.2c). Free casts have their own engine chooser
+(`ExileFreeCastQueueSupport`, "Choose how to pay the additional cost."), which refactors-to-do.md entry 18 lines O86, O90 and O91
+track.
+
+**Prompt to start it:**
+
+```
+Do missing-features-to-do.md entry 82: a client chooser for an "[A] or [B]" additional cast cost (AnyOfCost as addCastingCost).
+Read AGENTS.md and agent-docs/ARCHITECTURE.md first, then AdditionalSpellCostService (chosenAlternative), how the game view
+describes a hand card's additional costs, and the cast flow in magical-vibes-frontend's targeting-choice.service.ts
+(additionalCostLifePayment, the sacrifice picker). Verify CR 601.2b and 601.2c with get_rule. Propose the view field and the
+client flow (choose the alternative, then its permanent or card, before targets) and show me before changing the protocol.
+Cover Bone Shards, Demand Answers, Minion Missile and Souls of the Lost, with tests on both sides. Don't commit.
+```
+
+---
+
 <!--
 Template — copy everything between the lines, give it the next number, and append above.
 
