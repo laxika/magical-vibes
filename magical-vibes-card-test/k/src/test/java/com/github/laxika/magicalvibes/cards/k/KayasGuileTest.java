@@ -219,17 +219,36 @@ class KayasGuileTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Flashback with all four modes is refused, since entwine can't be paid from the graveyard")
-    void flashbackRefusesAllModesWithoutPayingEntwine() {
+    @DisplayName("Flashback with all four modes pays entwine with the flashback cost")
+    void flashbackPaysEntwineForAllModes() {
         KayasGuile guile = grantFlashbackToGuile();
+        harness.setLife(player1, 20);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castFlashback(player1, graveyardIndex(guile),
+                ChooseOneEffect.encodeModeSelection(2, 4, new int[]{0, 1, 2, 3}), null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        harness.passBothPriorities();
+        harness.assertLife(player1, 24);
+        harness.assertOnBattlefield(player1, "Spirit");
+    }
+
+    @Test
+    @DisplayName("Flashback with all four modes is refused, paying nothing, when the entwine mana is missing")
+    void flashbackRefusesAllModesWithoutEntwineMana() {
+        KayasGuile guile = grantFlashbackToGuile();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         assertThatThrownBy(() -> harness.castFlashback(player1, graveyardIndex(guile),
                 ChooseOneEffect.encodeModeSelection(2, 4, new int[]{0, 1, 2, 3}), null))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(guile);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(5);
         assertThat(gd.stack).isEmpty();
     }
 

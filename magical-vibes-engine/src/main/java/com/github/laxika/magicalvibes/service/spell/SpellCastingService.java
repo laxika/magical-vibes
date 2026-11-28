@@ -3832,6 +3832,10 @@ public class SpellCastingService {
 
         UUID playerId = player.getId();
         CastStartState castStart = CastStartState.of(gameData, playerId);
+        List<Card> castSourceCards = gameData.castingSourceCards(playerId);
+        if (cardIndex >= 0 && cardIndex < castSourceCards.size()) {
+            gameData.forgetEarlierCastSnapshots(castSourceCards.get(cardIndex).getId());
+        }
 
         // Refresh the caster's "spend white as red" permission (Sunglasses of Urza) from current board
         // state so this cast's affordability checks and payment honor it.
@@ -10438,6 +10442,7 @@ public class SpellCastingService {
         if (graveyardModalBackFace) {
             effectiveXValue = 0;
         }
+        gameData.forgetEarlierCastSnapshots(physicalGraveyardCard.getId());
         Card card = graveyardBestowCast != null ? bestowAuraSpellCopy(physicalGraveyardCard)
                 : graveyardModalBackFace
                 ? physicalGraveyardCard.createRuntimeCopyWithFace(physicalGraveyardCard.getBackFaceCard())
@@ -10812,7 +10817,6 @@ public class SpellCastingService {
                 || additionalCosts.putOpponentOwnedExiledCardIntoGraveyardCost() != null
                 || additionalCosts.discardRandomCost() != null
                 || additionalCosts.discardHand()
-                || escalatePaymentsOwed > 0 && !additionalCosts.escalateCost().taps()
                 || additionalCosts.sacrificeFractionRoundedUpCost() != null
                 || additionalCosts.tieredManaCost() != null
                 || additionalCosts.chooseCreatureTypeCost() != null
@@ -10838,11 +10842,23 @@ public class SpellCastingService {
                     gameData, player, castHalf, additionalCosts.tapMultipleCost(),
                     additionalCostSacrificePermanentIds, effectiveXValue);
         }
-        // A tap escalate cost is paid for each mode beyond the first, whatever cost the cast pays (CR 702.120a).
-        if (escalatePaymentsOwed > 0) {
+        // An escalate or entwine cost is an additional cost, paid with whatever cost the cast pays (CR 702.120a,
+        // 702.42a): its mana with that cost, its taps, sacrifices or discards after it.
+        EscalateCost graveyardEscalate = escalatePaymentsOwed > 0 ? additionalCosts.escalateCost() : null;
+        if (graveyardEscalate != null && graveyardEscalate.taps()) {
             additionalSpellCostService.validateEscalateTapCost(gameData, player, castHalf,
-                    additionalCosts.escalateCost(), graveyardModesChosen, additionalCostSacrificePermanentIds);
+                    graveyardEscalate, graveyardModesChosen, additionalCostSacrificePermanentIds);
         }
+        if (graveyardEscalate != null && graveyardEscalate.sacrifices()) {
+            additionalSpellCostService.validateEscalateSacrificeCost(gameData, player, castHalf,
+                    graveyardEscalate, graveyardModesChosen, additionalCostSacrificePermanentIds);
+        }
+        if (graveyardEscalate != null && graveyardEscalate.discards()) {
+            additionalSpellCostService.validateEscalateDiscardCost(gameData, player, castHalf,
+                    graveyardEscalate, graveyardModesChosen, discardHandCardIndices, -1);
+        }
+        String graveyardEscalateMana = additionalSpellCostService.escalateManaSuffix(castHalf, graveyardEscalate,
+                graveyardModesChosen);
         if (additionalCosts.sacrificeAnyNumberCost() != null) {
             additionalSpellCostService.validateSacrificeAnyNumberOfPermanentsCost(
                     gameData, player, castHalf, additionalCosts.sacrificeAnyNumberCost(),
@@ -11039,13 +11055,18 @@ public class SpellCastingService {
                 && graveyardBestowManaCost == null && !isGraveyardCast && !grantedFlashback && !emblemFlashback
                 && !grantedGraveyardCardCast && !isGrantedGraveyardCast && !isGrantedGraveyardPlay && !isRetrace
                 && !isJumpStart && !isGrantedCyclingGraveyardCast && !isMayCastTopInstantOrSorcery;
-        askCastCostSacrificesFirst(gameData, player, false, castStart, graveyardCastCostSacrificeIds(
+        Set<UUID> graveyardCostSacrificeIds = graveyardCastCostSacrificeIds(
                 additionalCosts, effectiveForageCost,
                 paysPrintedFlashbackCosts ? flashbackOpt.get() : null,
                 isGraveyardCast && !isHarmonize && !isDisturb ? graveyardCastOpt.orElseThrow() : null,
                 isGrantedCyclingGraveyardCast ? filteredGraveyardAdditionalCosts : List.of(),
                 effectiveXValue, sacrificePermanentId, additionalCostSacrificePermanentIds, tapPermanentIds,
-                costReductionSacrificeIds), graveyardCastLifePayments(card, targetingLifeTax,
+                costReductionSacrificeIds);
+        if (graveyardEscalate != null && graveyardEscalate.sacrifices()) {
+            graveyardCostSacrificeIds.addAll(additionalCostSacrificePermanentIds);
+        }
+        askCastCostSacrificesFirst(gameData, player, false, castStart, graveyardCostSacrificeIds,
+                graveyardCastLifePayments(card, targetingLifeTax,
                 paysPrintedFlashbackCosts ? flashbackOpt.get() : null,
                 isGraveyardCast ? graveyardCastOpt.orElseThrow() : null,
                 isGrantedCyclingGraveyardCast && filteredGraveyardPermission.isPresent()
@@ -11105,7 +11126,7 @@ public class SpellCastingService {
                 withoutPayingManaCost, graveyardBestowManaCost,
                 effectiveXValue, additionalCost, delveReduction, convokeContributions,
                 tapPermanentIds, retraceDiscardHandCardIndex, sacrificePermanentId,
-                additionalCostSacrificePermanentIds, discardHandCardIndices);
+                additionalCostSacrificePermanentIds, discardHandCardIndices, graveyardEscalateMana);
         if (usingSharedColorDiscardAlternativeCost) {
             paySharedColorDiscardAlternativeCost(gameData, player, card, sharedColorDiscardHandCardIndex, -1);
         }
@@ -11113,9 +11134,13 @@ public class SpellCastingService {
             payTapMultiplePermanentsCost(gameData, player, castHalf, additionalCosts.tapMultipleCost(),
                     additionalCostSacrificePermanentIds, effectiveXValue);
         }
-        if (escalatePaymentsOwed > 0) {
-            payEscalateTapCost(gameData, player, castHalf, additionalCosts.escalateCost(), graveyardModesChosen,
+        if (graveyardEscalate != null) {
+            payEscalateTapCost(gameData, player, castHalf, graveyardEscalate, graveyardModesChosen,
                     additionalCostSacrificePermanentIds);
+            payEscalateSacrificeCost(gameData, player, castHalf, graveyardEscalate, graveyardModesChosen,
+                    additionalCostSacrificePermanentIds);
+            payEscalateDiscardCost(gameData, player, castHalf, graveyardEscalate, graveyardModesChosen,
+                    discardHandCardIndices, -1);
         }
         payFlashbackGraveyardExileCost(gameData, player, card, graveyard, graveyardCardIndex,
                 flashbackOpt, effectiveXValue, exileGraveyardCardIndices);
@@ -12220,6 +12245,7 @@ public class SpellCastingService {
         } else {
             card = exiledEntry.card();
         }
+        gameData.forgetEarlierCastSnapshots(card.getId());
         // Discord's copies are represented in exile with the normal temporary play permission,
         // but they must still be cast as copies so they cease to exist after resolving rather than
         // going to a graveyard or becoming a permanent card.
@@ -13539,6 +13565,7 @@ public class SpellCastingService {
         if (castAsAdventure && adventureCharacteristics == null) {
             throw new IllegalStateException("Card does not have a castable Adventure face");
         }
+        gameData.forgetEarlierCastSnapshots(physicalCard.getId());
         Card card = castFaceDown ? CastingPermissionService.faceDownSpellCharacteristics(physicalCard)
                 : castAsAdventure ? adventureCharacteristics : physicalCard;
         if (card.isCastOnlyFromGraveyard()) {
@@ -17136,7 +17163,7 @@ public class SpellCastingService {
                                                 List<UUID> tapPermanentIds, Integer retraceDiscardHandCardIndex,
                                                 UUID sacrificePermanentId,
                                                 List<UUID> additionalCostSacrificePermanentIds,
-                                                List<Integer> discardHandCardIndices) {
+                                                List<Integer> discardHandCardIndices, String escalateMana) {
         UUID playerId = player.getId();
         // GraveyardCast may override the normal mana cost with an alternate one ("by paying {W}{U}{B}{R}{G}
         // rather than paying its mana cost" — Worldheart Phoenix). When present, it is paid like a normal
@@ -17179,7 +17206,7 @@ public class SpellCastingService {
                 throw new IllegalStateException("Harmonize has no mana cost");
             }
             ManaCost cost = castingCostService.applyColoredManaCostReductions(
-                    gameData, playerId, card, new ManaCost(harmonizeManaCost));
+                    gameData, playerId, card, new ManaCost(harmonizeManaCost + escalateMana));
             int reduction = harmonizeTapPower(gameData, tapPermanentIds);
             // A harmonize granted until end of turn to a card that already has harmonize (Songcrafter Mage)
             // is a second harmonize ability whose cost is the card's mana cost; the cheaper payable one is used.
@@ -17187,7 +17214,7 @@ public class SpellCastingService {
                     && !card.getManaCost().equals(harmonizeManaCost)
                     && gameData.hasGrantedCardAbility(card.getId(), GrantedCardAbilityEffect.Ability.HARMONIZE)
                     ? castingCostService.applyColoredManaCostReductions(
-                            gameData, playerId, card, new ManaCost(card.getManaCost()))
+                            gameData, playerId, card, new ManaCost(card.getManaCost() + escalateMana))
                     : null;
             ManaPool pool = gameData.playerManaPools.get(playerId);
             int before = pool.getTotalAllMana();
@@ -17211,7 +17238,7 @@ public class SpellCastingService {
 
         if (graveyardAlternateManaCost != null) {
             ManaCost cost = castingCostService.applyColoredManaCostReductions(
-                    gameData, playerId, card, new ManaCost(graveyardAlternateManaCost));
+                    gameData, playerId, card, new ManaCost(graveyardAlternateManaCost + escalateMana));
             ManaPool pool = gameData.playerManaPools.get(playerId);
             int before = pool.getTotalAllMana();
             withMulticoloredSpellMana(gameData, playerId, card, () -> {
@@ -17239,7 +17266,7 @@ public class SpellCastingService {
 
         if (paysLifeEqualToManaValue) {
             ManaPool pool = gameData.playerManaPools.get(playerId);
-            ManaCost additionalMana = new ManaCost("{0}");
+            ManaCost additionalMana = new ManaCost(escalateMana.isEmpty() ? "{0}" : escalateMana);
             if (gameData.getLife(playerId) < card.getManaValue()
                     || !gameQueryService.canPlayerLoseLife(gameData, playerId)
                     || !gameQueryService.canPayLifeForCosts(gameData)
@@ -17266,7 +17293,7 @@ public class SpellCastingService {
                 throw new IllegalStateException("Disturb has no mana cost");
             }
             ManaCost cost = castingCostService.applyColoredManaCostReductions(
-                    gameData, playerId, card, new ManaCost(manaCostOpt.get().manaCost()));
+                    gameData, playerId, card, new ManaCost(manaCostOpt.get().manaCost() + escalateMana));
             ManaPool pool = gameData.playerManaPools.get(playerId);
             int before = pool.getTotalAllMana();
             withMulticoloredSpellMana(gameData, playerId, card, () -> {
@@ -17293,7 +17320,8 @@ public class SpellCastingService {
                     : card.getManaCost();
             ManaCost cost = castingCostService.applyColoredManaCostReductions(
                     gameData, playerId, card,
-                    new ManaCost(withoutPayingManaCost ? "" : grantedFlashbackManaCost), cardHasFlashback);
+                    new ManaCost((withoutPayingManaCost ? "" : grantedFlashbackManaCost) + escalateMana),
+                    cardHasFlashback);
             ManaPool pool = gameData.playerManaPools.get(playerId);
             int before = pool.getTotalAllMana();
             AnyManaSpending manaSpending = castingPermissionService.anyManaSpending(
@@ -17390,7 +17418,7 @@ public class SpellCastingService {
             var manaCostOpt = flashback.getCost(ManaCastingCost.class);
             if (manaCostOpt.isPresent()) {
                 ManaCost cost = castingCostService.applyColoredManaCostReductions(
-                        gameData, playerId, card, new ManaCost(manaCostOpt.get().manaCost()), true);
+                        gameData, playerId, card, new ManaCost(manaCostOpt.get().manaCost() + escalateMana), true);
                 ManaPool pool = gameData.playerManaPools.get(playerId);
                 int before = pool.getTotalAllMana();
                 int manaXValue = cost.hasX() ? effectiveXValue : 0;
@@ -17403,7 +17431,7 @@ public class SpellCastingService {
                         String grantedCost = Optional.ofNullable(gameData.grantedFlashbackCost(card.getId()))
                                 .orElse(card.getManaCost());
                         payableCost = castingCostService.applyColoredManaCostReductions(
-                                gameData, playerId, card, new ManaCost(grantedCost), true);
+                                gameData, playerId, card, new ManaCost(grantedCost + escalateMana), true);
                     }
                     int payableXValue = payableCost.hasX() ? effectiveXValue : 0;
                     if (!payableCost.canPayFlashbackFromGraveyard(pool, payableXValue + additionalCost - delveReduction)) {
@@ -17413,11 +17441,20 @@ public class SpellCastingService {
                     return null;
                 });
                 manaSpent = before - pool.getTotalAllMana();
+            } else if (tapCost.isEmpty() && !escalateMana.isEmpty()) {
+                ManaCost escalateOnly = new ManaCost(escalateMana);
+                ManaPool pool = gameData.playerManaPools.get(playerId);
+                int before = pool.getTotalAllMana();
+                if (!escalateOnly.canPayFlashbackFromGraveyard(pool, 0)) {
+                    throw new IllegalStateException("Not enough mana to pay flashback cost");
+                }
+                escalateOnly.payFlashbackFromGraveyard(pool, 0);
+                manaSpent = before - pool.getTotalAllMana();
             }
 
             if (tapCost.isPresent()) {
-                if (manaCostOpt.isEmpty() && additionalCost > 0) {
-                    ManaCost taxCost = new ManaCost("");
+                if (manaCostOpt.isEmpty() && (additionalCost > 0 || !escalateMana.isEmpty())) {
+                    ManaCost taxCost = new ManaCost(escalateMana);
                     ManaPool pool = gameData.playerManaPools.get(playerId);
                     if (!taxCost.canPayFlashbackFromGraveyard(pool, additionalCost)) {
                         throw new IllegalStateException("Not enough mana to pay flashback cost");

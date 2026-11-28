@@ -72,12 +72,13 @@ class ValgavothTerrorEaterTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Ward can be paid by sacrificing three nonland permanents")
+    @DisplayName("Ward can be paid by sacrificing three chosen nonland permanents")
     void wardCanBePaidBySacrificingThreeNonlands() {
         Permanent valgavoth = harness.addToBattlefieldAndReturn(player1, new ValgavothTerrorEater());
         Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent third = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent kept = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         prepareMainPhase(player2);
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
@@ -89,7 +90,33 @@ class ValgavothTerrorEaterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Valgavoth, Terror Eater");
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player2.getId())).extracting(Permanent::getId)
+                .contains(kept.getId())
+                .doesNotContain(first.getId(), second.getId(), third.getId());
+        assertThat(gd.getCardsExiledByPermanent(valgavoth.getId()))
+                .anyMatch(card -> card.getName().equals("Shock"));
+    }
+
+    @Test
+    @DisplayName("With exactly three nonland permanents, paying the ward sacrifices them all unasked")
+    void wardPaymentWithExactlyThreeIsUnasked() {
+        Permanent valgavoth = harness.addToBattlefieldAndReturn(player1, new ValgavothTerrorEater());
+        for (int i = 0; i < 3; i++) {
+            harness.addToBattlefield(player2, new GrizzlyBears());
+        }
+        harness.addToBattlefield(player2, new Forest());
+        prepareMainPhase(player2);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, valgavoth.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
+        assertThat(countPermanents(player2, "Grizzly Bears")).isZero();
+        harness.assertOnBattlefield(player2, "Forest");
+        harness.passBothPriorities();
         assertThat(gd.getCardsExiledByPermanent(valgavoth.getId()))
                 .anyMatch(card -> card.getName().equals("Shock"));
     }
@@ -390,6 +417,7 @@ class ValgavothTerrorEaterTest extends BaseCardTest {
         Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
         prepareMainPhase(player2);
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
@@ -400,6 +428,6 @@ class ValgavothTerrorEaterTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player2,
                 List.of(first.getId(), second.getId()))).isInstanceOf(IllegalStateException.class);
-        assertThat(countPermanents(player2, "Grizzly Bears")).isEqualTo(3);
+        assertThat(countPermanents(player2, "Grizzly Bears")).isEqualTo(4);
     }
 }

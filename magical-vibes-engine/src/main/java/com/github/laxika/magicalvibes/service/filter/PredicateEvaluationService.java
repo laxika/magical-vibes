@@ -5783,13 +5783,16 @@ public class PredicateEvaluationService {
     }
 
     /**
-     * Triggered mana abilities (CR 605.1b) that fire when a land is tapped for mana and add mana
-     * on resolution, such as Caged Sun's extra-mana trigger, alone or as the first step of the ability's
-     * sequence (Overabundance, Winter's Night).
+     * Triggered mana abilities (CR 605.1b) that fire when a land is tapped for mana, or a land's ability adds mana,
+     * and add mana on resolution, such as Caged Sun's extra-mana trigger, alone or as the first step of the
+     * ability's sequence (Overabundance, Winter's Night).
      */
     private static boolean hasTriggeredManaAbility(Card card) {
-        return WatchedAbilities.rawEffects(WatchedAbilities.printed(card, Triggers.playerTapsLandForMana(),
-                Zone.BATTLEFIELD)).stream()
+        return java.util.stream.Stream.concat(
+                        WatchedAbilities.rawEffects(WatchedAbilities.printed(card, Triggers.playerTapsLandForMana(),
+                                Zone.BATTLEFIELD)).stream(),
+                        WatchedAbilities.rawEffects(WatchedAbilities.printed(card,
+                                Triggers.landAbilityCausesYouToAddMana(), Zone.BATTLEFIELD)).stream())
                 .map(effect -> effect instanceof SequenceEffect sequence ? sequence.steps().getFirst() : effect)
                 .anyMatch(effect -> effect instanceof AddManaOfTypeProducedByTappedPermanentEffect
                         || effect instanceof AddOneOfEachManaTypeProducedByLandEffect

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.effect.PreventionScope;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -35,6 +36,21 @@ class HeroismTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
         assertThat(Prevention.preventedFromDealingCombat(gd)).contains(attacker.getId());
+    }
+
+    @Test
+    @DisplayName("The prevention an unpaid attacker gets is controlled by Heroism's controller")
+    void preventionIsControlledByHeroismsController() {
+        addHeroismAndWhiteCreature();
+        Permanent attacker = addAttacker(player2, new BrassclawOrcs());
+
+        activateHeroism();
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.preventionEffects(PreventionScope.ALL_BY_SELF))
+                .filteredOn(prevention -> attacker.getId().equals(prevention.affectedPermanentId()))
+                .singleElement()
+                .satisfies(prevention -> assertThat(prevention.controllerId()).isEqualTo(player1.getId()));
     }
 
     @Test

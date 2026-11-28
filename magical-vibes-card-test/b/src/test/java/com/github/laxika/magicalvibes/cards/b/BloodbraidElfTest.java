@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.p.ProsperTomeBound;
 import com.github.laxika.magicalvibes.cards.p.Pyroclasm;
 import com.github.laxika.magicalvibes.cards.t.ThaliaGuardianOfThraben;
+import com.github.laxika.magicalvibes.cards.v.ValkiGodOfLies;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.cards.w.WearTear;
 import com.github.laxika.magicalvibes.model.Card;
@@ -30,7 +31,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({BloodbraidElf.class, Forest.class, GrizzlyBears.class, HillGiant.class,
-        LlanowarElves.class, Mountain.class, Plains.class, ProsperTomeBound.class})
+        LlanowarElves.class, Mountain.class, Plains.class, ProsperTomeBound.class, ValkiGodOfLies.class})
 class BloodbraidElfTest extends BaseCardTest {
 
     @Test
@@ -261,6 +262,26 @@ class BloodbraidElfTest extends BaseCardTest {
         assertThat(gd.stack).noneMatch(se -> se.getCard() == hit);
         assertThat(mountain.isTapped()).isFalse();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(hit);
+    }
+
+    @Test
+    @DisplayName("A cascade into a modal double-faced card casts only a face whose mana value is less than the cascade spell's")
+    void cascadeCastsOnlyAFaceWithLesserManaValue() {
+        setupCasterTurn();
+        ValkiGodOfLies valki = new ValkiGodOfLies();
+        harness.setLibrary(player1, List.of(valki));
+
+        castBloodbraidElf();
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+
+        PendingInteraction.ColorChoice faceChoice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        if (faceChoice != null) {
+            assertThat(faceChoice.options()).containsExactly("Valki, God of Lies");
+            harness.handleListChoice(player1, "Valki, God of Lies");
+        }
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getId().equals(valki.getId())
+                && entry.getCard().getName().equals("Valki, God of Lies"));
     }
 
     private void setupCasterTurn() {

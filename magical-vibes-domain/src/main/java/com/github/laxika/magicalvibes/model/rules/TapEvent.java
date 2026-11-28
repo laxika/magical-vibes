@@ -89,6 +89,22 @@ public sealed interface TapEvent extends RulesEvent {
         }
     }
 
+    /**
+     * A mana ability of the land {@code landId} without {T} in its cost, activated by {@code playerId}, added
+     * {@code producedColors} (empty when not known). A land tapped for mana is {@link LandTappedForMana}.
+     */
+    record LandManaAbilityAddedMana(UUID playerId, UUID landId, Set<ManaColor> producedColors) implements TapEvent {
+
+        public LandManaAbilityAddedMana {
+            producedColors = Set.copyOf(producedColors);
+        }
+
+        @Override
+        public LandManaAbilityAddedMana deepCopy() {
+            return this;
+        }
+    }
+
     /** {@code tappingPlayerId} tapped the creature {@code creatureId} for mana. */
     record CreatureTappedForMana(UUID tappingPlayerId, UUID creatureId) implements TapEvent {
 

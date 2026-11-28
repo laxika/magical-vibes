@@ -76,6 +76,7 @@ public class TapTriggers {
     /** The trigger of a tapped-for-mana ability as the door gets it: a permanent tapped for mana. */
     private static final TapTrigger TAPPED_FOR_MANA = Triggers.tappedForMana();
     private static final Trigger PLAYER_TAPS_LAND = Triggers.playerTapsLandForMana();
+    private static final Trigger LAND_ABILITY_ADDS_MANA = Triggers.landAbilityCausesYouToAddMana();
     private static final Trigger PLAYER_TAPS_PERMANENT = Triggers.playerTapsPermanentForMana();
     private static final Trigger YOU_TAP_CREATURE = Triggers.youTapCreatureForMana();
     private static final Trigger YOU_TAP_NONLAND_PERMANENT = Triggers.youTapNonlandPermanentForMana();
@@ -139,6 +140,12 @@ public class TapTriggers {
             case TapEvent.SelfTappedForMana self -> selfTappedForMana(gameData, self.permanent(), self.controllerId());
             case TapEvent.LandTappedForMana land -> landTapped(gameData, land.tappingPlayerId(), land.landId(),
                     land.producedColors());
+            case TapEvent.LandManaAbilityAddedMana land -> {
+                if (landAbilityAddedMana(gameData, land.playerId(), land.landId(), land.producedColors())) {
+                    gameOutcomeService.checkWinCondition(gameData);
+                }
+                triggeredAbilityQueueService.beginStackDoorChoices(gameData);
+            }
             case TapEvent.CreatureTappedForMana creature -> creatureTapped(gameData, creature.tappingPlayerId(),
                     creature.creatureId());
             case TapEvent.PermanentTappedForMana permanent -> {
@@ -225,6 +232,9 @@ public class TapTriggers {
                     anyTriggered[0] = true;
                 }
             }
+        }
+        if (landAbilityAddedMana(gameData, tappingPlayerId, tappedLandId, producedColors)) {
+            anyTriggered[0] = true;
         }
         applyTurnScopedExtraLandTapMana(gameData, tappingPlayerId, tappedLandId);
         if (anyTriggered[0]) {
@@ -345,6 +355,29 @@ public class TapTriggers {
         Permanent tapped = gameQueryService.findPermanentById(gameData, tappedId);
         return tapped != null && predicateEvaluationService.matchesPermanentPredicate(tapped, read.filter(),
                 FilterContext.of(gameData).withSourceCardId(sourceCard.getId()).withSourceControllerId(controllerId));
+    }
+
+    /**
+     * "Whenever a land's ability causes you to add one or more mana" (Caged Sun): any mana ability of the land
+     * {@code landId}, a tap for mana or not (CR 605.1a), triggers the abilities of the permanents {@code playerId}, who
+     * activated it, controls. Their extra mana is a triggered mana ability (CR 605.1b, 605.4a).
+     *
+     * @return whether one triggered
+     */
+    private boolean landAbilityAddedMana(GameData gameData, UUID playerId, UUID landId, Set<ManaColor> producedColors) {
+        boolean anyTriggered = false;
+        for (Permanent perm : List.copyOf(gameData.playerBattlefields.getOrDefault(playerId, List.of()))) {
+            TriggerJudge judge = conditionEvaluationService.judge(gameData,
+                    ConditionContext.forPermanent(perm, playerId));
+            for (List<TapRead> reads : readAsJudged(abilities.abilities(gameData, perm, LAND_ABILITY_ADDS_MANA),
+                    LAND_ABILITY_ADDS_MANA, judge)) {
+                if (collect(gameData, new Source(perm, playerId, effectsOf(reads), perm.getCard(), null),
+                        playerId, landId, producedColors, playerId)) {
+                    anyTriggered = true;
+                }
+            }
+        }
+        return anyTriggered;
     }
 
     /**

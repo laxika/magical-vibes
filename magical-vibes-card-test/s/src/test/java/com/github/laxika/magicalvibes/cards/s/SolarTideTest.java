@@ -3,22 +3,25 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.a.AlphaMyr;
 import com.github.laxika.magicalvibes.cards.g.GoldMyr;
+import com.github.laxika.magicalvibes.cards.p.PastInFlames;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.v.VulshokBerserker;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SolarTide.class, GoldMyr.class, AlphaMyr.class, VulshokBerserker.class, Plains.class})
+@CardUsed({SolarTide.class, GoldMyr.class, AlphaMyr.class, VulshokBerserker.class, Plains.class, PastInFlames.class})
 class SolarTideTest extends BaseCardTest {
 
     @Test
@@ -58,6 +61,33 @@ class SolarTideTest extends BaseCardTest {
         Permanent threePower = harness.addToBattlefieldAndReturn(player2, new VulshokBerserker());
 
         cast(new int[]{0, 1}, List.of(firstLand.getId(), secondLand.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .doesNotContain(firstLand, secondLand, onePower);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(threePower);
+    }
+
+    @Test
+    @DisplayName("Cast with a flashback grant, choosing both modes still sacrifices two lands for entwine")
+    void flashbackEntwineSacrificesTwoLands() {
+        SolarTide tide = new SolarTide();
+        harness.setGraveyard(player1, List.of(tide));
+        harness.setHand(player1, List.of(new PastInFlames()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castAndResolveSorcery(player1, 0, 0);
+        Permanent firstLand = harness.addToBattlefieldAndReturn(player1, new Plains());
+        Permanent secondLand = harness.addToBattlefieldAndReturn(player1, new Plains());
+        Permanent onePower = harness.addToBattlefieldAndReturn(player1, new GoldMyr());
+        Permanent threePower = harness.addToBattlefieldAndReturn(player2, new VulshokBerserker());
+        addMana();
+
+        harness.ensurePriority(player1);
+        harness.getGameService().playFlashbackSpell(gd, player1,
+                gd.playerGraveyards.get(player1.getId()).indexOf(tide),
+                ChooseOneEffect.encodeModeSelection(1, 2, new int[]{0, 1}), null, List.of(), null, null,
+                List.of(), null, null, List.of(firstLand.getId(), secondLand.getId()), Map.of());
+        harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .doesNotContain(firstLand, secondLand, onePower);

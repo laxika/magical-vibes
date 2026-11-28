@@ -7489,6 +7489,40 @@ public class GameData {
         spellCastManaSpent.remove(spellCardId);
     }
 
+    /**
+     * Forgets every cast-time snapshot of {@code spellCardId} (the mana spent and its kinds, colours and sources, the
+     * converge value, the spliced names and keywords) as a new cast of that card begins: a card that left the stack
+     * unresolved (countered into its owner's hand) is a new object (CR 400.7), so its next cast must not read what an
+     * earlier one spent. Does nothing while a spell with that card is on the stack or resolving, since a copy cast
+     * shares its original's card id.
+     */
+    public void forgetEarlierCastSnapshots(UUID spellCardId) {
+        if (spellCardId == null
+                || stack.stream().anyMatch(entry -> entry.getCard() != null
+                        && spellCardId.equals(entry.getCard().getId()))
+                || pendingEffectResolutionEntry != null && pendingEffectResolutionEntry.getCard() != null
+                        && spellCardId.equals(pendingEffectResolutionEntry.getCard().getId())) {
+            return;
+        }
+        spellCastManaSpent.remove(spellCardId);
+        spellCastCreatureManaSpent.remove(spellCardId);
+        spellCastConvergeValue.remove(spellCardId);
+        spellCastColorsSpent.remove(spellCardId);
+        spellCastManaSpentByColor.remove(spellCardId);
+        spellCastSnowManaSpent.remove(spellCardId);
+        spellCastSnowManaSpentByColor.remove(spellCardId);
+        spellCastTreasureManaSpent.remove(spellCardId);
+        spellCastArtifactManaSpent.remove(spellCardId);
+        spellCastCaveManaSpent.remove(spellCardId);
+        spellCastDesertManaSpent.remove(spellCardId);
+        spellCastManaSourceIds.remove(spellCardId);
+        spellCastManaSourceAmounts.remove(spellCardId);
+        spellCastUsedTreasureMana.remove(spellCardId);
+        spellCastSplicedNames.remove(spellCardId);
+        spellCastSplicedKeywords.remove(spellCardId);
+        spellCastManaSpentOnX.remove(spellCardId);
+    }
+
     public void markSpellCastUsedTreasureMana(UUID spellCardId) {
         spellCastUsedTreasureMana.put(spellCardId, true);
     }

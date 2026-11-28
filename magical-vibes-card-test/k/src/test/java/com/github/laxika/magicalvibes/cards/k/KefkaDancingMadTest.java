@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.s.SolRing;
+import com.github.laxika.magicalvibes.cards.v.ValkiGodOfLies;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({KefkaDancingMad.class, SolRing.class, Island.class})
+@CardUsed({KefkaDancingMad.class, SolRing.class, Island.class, ValkiGodOfLies.class})
 class KefkaDancingMadTest extends BaseCardTest {
 
     @Test
@@ -151,6 +153,24 @@ class KefkaDancingMadTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(spell);
         assertThat(gd.exiledCards).isEmpty();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A modal double-faced card cast as its back face makes its owner lose the back face's mana value")
+    void backFaceCastLosesTheSpellsManaValue() {
+        addCreatureReady(player1, new KefkaDancingMad());
+        ValkiGodOfLies valki = new ValkiGodOfLies();
+        valki.setOwnerId(player2.getId());
+        harness.setGraveyard(player2, List.of(valki));
+
+        resolveControllerEndStep();
+        harness.handleMultipleCardsChosen(player1, List.of(valki.getId()));
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .contains("Tibalt, Cosmic Impostor");
+        harness.handleListChoice(player1, "Tibalt, Cosmic Impostor");
+
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getName().equals("Tibalt, Cosmic Impostor"));
+        harness.assertLife(player2, 13);
     }
 
     private void resolveControllerEndStep() {

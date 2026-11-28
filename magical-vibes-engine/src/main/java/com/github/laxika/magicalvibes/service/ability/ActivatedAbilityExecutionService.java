@@ -1030,13 +1030,17 @@ public class ActivatedAbilityExecutionService {
             // see a land tapped for the mana of its basic land types.
             boolean manaAddedAtResolution = snapshotEffects.stream().anyMatch(
                     com.github.laxika.magicalvibes.model.effect.ChooseColorAtResolutionEffect.class::isInstance);
-            if (!manaTypeChoicePending && !manaAddedAtResolution && ability.isRequiresTap()
+            // A land's mana ability without {T} (a storage land's withdrawal, Rain of Filth's "Sacrifice this land")
+            // isn't a tap for mana, but it is a land's ability adding mana (Caged Sun; CR 106.12, 605.1a).
+            if (!manaTypeChoicePending && !manaAddedAtResolution
                     && (gameQueryService.isLand(gameData, permanent)
                     || permanent.getCard().hasType(CardType.LAND))) {
                 int stackBeforeLandTapTriggers = gameData.stack.size();
                 Set<ManaColor> producedColors = newlyProducedManaTypes(
                         manaTypesBefore, pool.getAllManaTotals());
-                gameData.rulesEvents.occur(new TapEvent.LandTappedForMana(playerId, permanent.getId(), producedColors));
+                gameData.rulesEvents.occur(ability.isRequiresTap()
+                        ? new TapEvent.LandTappedForMana(playerId, permanent.getId(), producedColors)
+                        : new TapEvent.LandManaAbilityAddedMana(playerId, permanent.getId(), producedColors));
                 if (gameData.stack.size() > stackBeforeLandTapTriggers) {
                     List<StackEntry> deferredLandTapTriggers = new ArrayList<>(
                             gameData.stack.subList(stackBeforeLandTapTriggers, gameData.stack.size()));
@@ -1055,8 +1059,9 @@ public class ActivatedAbilityExecutionService {
             if (manaTypeChoicePending) {
                 List<StackEntry> deferred = new ArrayList<>(gameData.pendingManaAbilityTriggers.subList(
                         pendingTriggersBefore, gameData.pendingManaAbilityTriggers.size()));
-                gameData.pendingRevertableManaActivation = new PendingManaActivation(
+                PendingManaActivation parked = new PendingManaActivation(
                         playerId, permanent.getId(), poolBefore, creatureManaBefore, List.copyOf(deferred), manaTypesBefore);
+                gameData.pendingRevertableManaActivation = ability.isRequiresTap() ? parked : parked.asWithoutTap();
             } else if (revertable) {
                 List<StackEntry> deferred = new ArrayList<>(gameData.pendingManaAbilityTriggers.subList(
                         pendingTriggersBefore, gameData.pendingManaAbilityTriggers.size()));

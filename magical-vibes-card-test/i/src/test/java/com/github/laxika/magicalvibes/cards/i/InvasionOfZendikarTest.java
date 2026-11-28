@@ -10,10 +10,12 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -23,6 +25,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({AwakenedSkyclave.class, ConverterBeast.class, Forest.class, InvasionOfZendikar.class,
         Plains.class})
 class InvasionOfZendikarTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("The battle its resolved spell becomes was cast, from its caster's hand")
+    void resolvedBattleWasCastFromHand() {
+        harness.setLibrary(player1, List.of());
+        harness.castFromHand(player1, new InvasionOfZendikar(), "{3}{G}");
+        harness.passBothPriorities();
+
+        Permanent battle = findPermanent(player1, "Invasion of Zendikar");
+        assertThat(battle.isCast()).isTrue();
+        assertThat(battle.getCastFromZone()).isEqualTo(Zone.HAND);
+        assertThat(battle.getCastControllerId()).isEqualTo(player1.getId());
+    }
 
     @Test
     void searchesForUpToTwoBasicLandsAndPutsThemOntoTheBattlefieldTapped() {

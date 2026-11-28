@@ -31,6 +31,8 @@ import java.util.UUID;
  * @param standalone        the activation was made with priority and no payment in progress, so
  *                          once its colour is chosen its controller receives priority and its
  *                          non-mana triggers go on the stack instead of being held revertable
+ * @param withoutTap        the mana ability has no {T} in its cost (a storage land's withdrawal): its land wasn't
+ *                          tapped for mana, though its ability adds mana
  */
 public record PendingManaActivation(
         UUID playerId,
@@ -39,27 +41,34 @@ public record PendingManaActivation(
         EnumMap<ManaColor, Integer> creatureManaBefore,
         List<StackEntry> deferredTriggers,
         EnumMap<ManaColor, Integer> allManaBefore,
-        boolean standalone
+        boolean standalone,
+        boolean withoutTap
 ) {
     public PendingManaActivation(UUID playerId, UUID permanentId,
                                  EnumMap<ManaColor, Integer> poolBefore,
                                  EnumMap<ManaColor, Integer> creatureManaBefore,
                                  List<StackEntry> deferredTriggers,
                                  EnumMap<ManaColor, Integer> allManaBefore) {
-        this(playerId, permanentId, poolBefore, creatureManaBefore, deferredTriggers, allManaBefore, false);
+        this(playerId, permanentId, poolBefore, creatureManaBefore, deferredTriggers, allManaBefore, false, false);
     }
 
     public PendingManaActivation(UUID playerId, UUID permanentId,
                                  EnumMap<ManaColor, Integer> poolBefore,
                                  EnumMap<ManaColor, Integer> creatureManaBefore,
                                  List<StackEntry> deferredTriggers) {
-        this(playerId, permanentId, poolBefore, creatureManaBefore, deferredTriggers, poolBefore, false);
+        this(playerId, permanentId, poolBefore, creatureManaBefore, deferredTriggers, poolBefore, false, false);
+    }
+
+    /** This activation marked as made by a mana ability without {T} in its cost. */
+    public PendingManaActivation asWithoutTap() {
+        return new PendingManaActivation(playerId, permanentId, poolBefore, creatureManaBefore,
+                deferredTriggers, allManaBefore, standalone, true);
     }
 
     /** This activation marked as made on its own, with no payment in progress. */
     public PendingManaActivation asStandalone() {
         return new PendingManaActivation(playerId, permanentId, poolBefore, creatureManaBefore,
-                deferredTriggers, allManaBefore, true);
+                deferredTriggers, allManaBefore, true, withoutTap);
     }
 
     /** This activation with {@code moreTriggers} also deferred by it. */
@@ -70,6 +79,6 @@ public record PendingManaActivation(
         List<StackEntry> all = new ArrayList<>(deferredTriggers);
         all.addAll(moreTriggers);
         return new PendingManaActivation(playerId, permanentId, poolBefore, creatureManaBefore,
-                List.copyOf(all), allManaBefore, standalone);
+                List.copyOf(all), allManaBefore, standalone, withoutTap);
     }
 }

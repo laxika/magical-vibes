@@ -1364,14 +1364,8 @@ public class StackResolutionService {
         Card card = disturbCharacteristics(entry, physicalCard);
         UUID controllerId = entry.getControllerId();
 
-        Permanent perm = new Permanent(physicalCard);
-        if (card != physicalCard) {
-            perm.setCard(card);
-            perm.setTransformed(true);
-        }
-        if (entry.isCopy()) {
-            perm.becomeTokenFromCopiedSpell();
-        }
+        // The permanent records what its spell was cast with ("if it was cast", the zone, the mana spent).
+        Permanent perm = createEnteringPermanent(gameData, entry, physicalCard, card);
         // Planeswalkers with printed loyalty "X" (e.g. Nissa, Steward of Elements) enter with
         // loyalty counters equal to the X paid for their {X} cost. Scryfall's non-numeric "X"
         // loyalty parses to 0, so an {X} in the mana cost is the reliable signal.
@@ -1416,7 +1410,8 @@ public class StackResolutionService {
         Card card = entry.getCard();
         UUID controllerId = entry.getControllerId();
 
-        Permanent perm = new Permanent(card);
+        // The permanent records what its spell was cast with ("if it was cast", the zone, the mana spent).
+        Permanent perm = createEnteringPermanent(gameData, entry, card, card);
         int startingDefense = card.getDefense() != null ? card.getDefense() : 0;
         startingDefense = gameQueryService.replaceCounters(gameData, perm, controllerId,
                 CounterType.DEFENSE, startingDefense, controllerId);

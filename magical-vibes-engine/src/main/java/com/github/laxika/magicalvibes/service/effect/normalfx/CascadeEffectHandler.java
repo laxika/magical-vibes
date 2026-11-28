@@ -135,6 +135,10 @@ public class CascadeEffectHandler implements NormalEffectHandlerBean {
                         .shuffleAfterSelection(false)
                         .prompt(prompt)
                         .destination(LibrarySearchDestination.CAST_WITHOUT_PAYING)
+                        // Cascade casts only if the resulting spell's mana value is less (CR 702.85a): a modal
+                        // double-faced card's back face or a split card's half is judged as cast. Jodah's own text
+                        // has no such clause: either face may be cast (its 2022-09-09 ruling).
+                        .mayCastManaValueAtMost(cascade.declinedCardStaysExiled() ? null : threshold - 1)
                         .build(),
                 prompt,
                 true));

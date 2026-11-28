@@ -62,8 +62,10 @@ public class PreventCombatDamageFromAttackingCreaturesUnlessPaysHandler implemen
             UUID attackerId = ability.targetCardId();
             Permanent attacker = gameQueryService.findPermanentById(gameData, attackerId);
             if (attacker != null) {
+                // The prevention is the effect of Heroism's ability, so its controller controls it, not the payer.
                 PreventionSupport.preventCombatDamageDealtBy(gameData, ability.sourceCard().getName(),
-                        ability.sourcePermanentId(), ability.controllerId(), attackerId, Duration.UNTIL_END_OF_TURN);
+                        ability.sourcePermanentId(), ability.sourceControllerId(), attackerId,
+                        Duration.UNTIL_END_OF_TURN);
                 gameLogService.append(gameData, GameLog.builder()
                         .text("All combat damage ")
                         .card(attacker.getCard())

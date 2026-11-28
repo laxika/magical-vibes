@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.PowerWordKill;
+import com.github.laxika.magicalvibes.cards.r.Remand;
 import com.github.laxika.magicalvibes.cards.w.WilyGoblin;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -20,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({KalainReclusivePainter.class, WilyGoblin.class, FugitiveWizard.class, GrizzlyBears.class,
-        PowerWordKill.class, Counterspell.class})
+        PowerWordKill.class, Counterspell.class, Remand.class})
 class KalainReclusivePainterTest extends BaseCardTest {
 
     @Test
@@ -195,6 +196,30 @@ class KalainReclusivePainterTest extends BaseCardTest {
         Permanent wizard = harness.enterBattlefieldAndReturn(player1, wizardCard);
         resolveAllTriggers();
 
+        assertThat(wizard.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A creature spell returned to hand and cast again without Treasure mana gets no counter")
+    void recastAfterRemandReadsOnlyTheNewCast() {
+        addReadyKalain(player1);
+        createTreasure();
+        sacrificeTreasureFor(ManaColor.BLUE);
+        FugitiveWizard wizardCard = new FugitiveWizard();
+        harness.setHand(player1, List.of(wizardCard));
+        harness.castCreature(player1, 0);
+        harness.setHand(player2, List.of(new Remand()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, wizardCard.getId());
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Fugitive Wizard");
+
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent wizard = findPermanent(player1, "Fugitive Wizard");
         assertThat(wizard.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 

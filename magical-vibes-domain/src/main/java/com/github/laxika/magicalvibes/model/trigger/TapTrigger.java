@@ -109,6 +109,11 @@ public record TapTrigger(TapEvent event, ObjectRelation relation, PermanentPredi
     public enum TapEvent {
         /** A player taps the permanent for mana: activates a mana ability with {T} in its cost. */
         TAPPED_FOR_MANA,
+        /**
+         * A mana ability of the permanent, with {T} in its cost or not, adds mana for the player who activated it: "a
+         * land's ability causes you to add mana" (Caged Sun).
+         */
+        ABILITY_ADDS_MANA,
         /** The permanent becomes tapped, whatever taps it. */
         BECOMES_TAPPED,
         /**

@@ -4703,6 +4703,12 @@ public class LibraryChoiceHandlerService
                     return;
                 }
             }
+            if (cardIndex >= 0 && spellManaValueLimit < Integer.MAX_VALUE) {
+                // Only a face within the limit may be cast, each modal double-faced face by its own mana value
+                // (CR 712.8c; cascade's "if the resulting spell's mana value is less", CR 702.85a).
+                exileFreeCastQueueSupport.offerFaces(gameData, searchCards.get(cardIndex),
+                        candidate -> candidate.getManaValue() <= spellManaValueLimit);
+            }
             exileFreeCastQueueSupport.queueRemainderToLibraryBottom(gameData,
                     sourceCards.stream().map(Card::getId).toList());
             exileFreeCastQueueSupport.castChosenSpellsWithoutPaying(gameData, player,
@@ -4823,6 +4829,16 @@ public class LibraryChoiceHandlerService
             faces.addAll(!allowedFaces.isEmpty() ? allowedFaces
                     : card.isModalDoubleFaced() && card.getBackFaceCard() != null
                     ? java.util.EnumSet.of(SpellFace.CARD, SpellFace.BACK_FACE) : java.util.EnumSet.of(SpellFace.CARD));
+        }
+        // A modal double-faced card's face is cast with its own mana value (CR 712.8c): a face above the limit is
+        // left out ("if the resulting spell's mana value is less", cascade, CR 702.85a).
+        if (card.isModalDoubleFaced() && card.getBackFaceCard() != null) {
+            if (card.getManaValue() > spellManaValueLimit) {
+                faces.remove(SpellFace.CARD);
+            }
+            if (card.getBackFaceCard().getManaValue() > spellManaValueLimit) {
+                faces.remove(SpellFace.BACK_FACE);
+            }
         }
         return faces;
     }

@@ -1761,6 +1761,15 @@ public final class Triggers {
     }
 
     /**
+     * "Whenever a land's ability causes you to add one or more mana" (Caged Sun): a land's mana ability you activate,
+     * tapping it for mana or not (CR 605.1a): a storage land's removal of counters, a granted "Sacrifice this land: Add
+     * {B}".
+     */
+    public static TapTrigger landAbilityCausesYouToAddMana() {
+        return new TapTrigger(TapTrigger.TapEvent.ABILITY_ADDS_MANA, ObjectRelation.YOU_CONTROL, LAND);
+    }
+
+    /**
      * "Whenever enchanted land is tapped for mana", also fortified. Read by the collector of
      * {@link #playerTapsLandForMana()}, which judges that the land is the one the source is attached to.
      */

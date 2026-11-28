@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GemstoneMine;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.m.Manabarbs;
 import com.github.laxika.magicalvibes.cards.p.Piracy;
+import com.github.laxika.magicalvibes.cards.r.RainOfFilth;
 import com.github.laxika.magicalvibes.cards.t.Taiga;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -27,7 +29,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({CagedSun.class, CityOfBrass.class, Forest.class, GemstoneMine.class, Mountain.class, Piracy.class, ShimmeringGrotto.class, Taiga.class,
-        WoodlandCemetery.class})
+        WoodlandCemetery.class, RainOfFilth.class, CalciformPools.class, Manabarbs.class})
 class CagedSunTest extends BaseCardTest {
 
     private static Card createCreature(String name, int power, int toughness, CardColor color) {
@@ -364,5 +366,56 @@ class CagedSunTest extends BaseCardTest {
         harness.handleListChoice(player1, "GREEN");
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A land's mana ability without {T} (Rain of Filth's sacrifice) producing the chosen color adds one extra mana")
+    void landAbilityWithoutTapGetsBonus() {
+        Permanent sun = harness.addToBattlefieldAndReturn(player1, new CagedSun());
+        sun.setChosenColor(CardColor.BLACK);
+        harness.addToBattlefield(player1, new Forest());
+        harness.castFromHand(player1, new RainOfFilth(), "{B}");
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 1, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Forest");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A storage land's withdrawal of the chosen color adds one extra mana of it")
+    void storageLandWithdrawalGetsBonus() {
+        Permanent sun = harness.addToBattlefieldAndReturn(player1, new CagedSun());
+        sun.setChosenColor(CardColor.WHITE);
+        Permanent pools = harness.addToBattlefieldAndReturn(player1, new CalciformPools());
+        pools.setCounterCount(CounterType.STORAGE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 1, 1, null, null);
+        harness.handleListChoice(player1, "2");
+        harness.handleListChoice(player1, "WHITE");
+        harness.handleListChoice(player1, "WHITE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A storage land's withdrawal isn't a tap for mana: Manabarbs deals no damage")
+    void storageLandWithdrawalIsNotATapForMana() {
+        harness.addToBattlefield(player2, new Manabarbs());
+        Permanent pools = harness.addToBattlefieldAndReturn(player1, new CalciformPools());
+        pools.setCounterCount(CounterType.STORAGE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "1");
+        harness.handleListChoice(player1, "BLUE");
+        resolveAllTriggers();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        harness.assertLife(player1, 20);
     }
 }

@@ -1339,7 +1339,7 @@ Don't commit.
 - `cardsThisWay(REVEAL)` names a card a later step reordered within its library (CR 701.20d); no card reads it so. Unverified.
 - `getRevealedOpponentHand` returns only the first opponent's hand (multiplayer); needs a hand per opponent in `GameStateMessage` and the frontend (owner question in entry 17, MP-2). Sure of the code.
 
-#### Other (31)
+#### Other (30)
 
 - Casting checks left from runs 40 and 41: Scrycast (Biting Remark; `ScryInteractionHandler`, `ScryAiStrategy`, code: the scry answer casts it with no `canCastDuringResolution` check, and the AI strategies have no `CastingPermissionService`); the may-cast offers don't ask the shared check; an ability leaves the stack before it resolves, where CR 608.2n removes it last. Unverified. FC-2: Knowledge Pool's timing, the split exile cast and suspend's type restriction fixed.
 - Krovikan Vampire's `ReturnDamagedCreaturesThatDiedUnderControlEffect` (a mass return with control and sacrifice links) puts an Aura card that died animated onto the battlefield with no host choice (CR 303.4f, 303.4g); Lim-Dûl's head since rules-fixes EB-1 and `ReturnDyingCreatureToBattlefieldEffect`, `ReturnDyingCreatureToOwnerBattlefieldEffect` since EB-2 go through the entry batch. Unverified.
@@ -1353,7 +1353,6 @@ Don't commit.
 - No seeded game random source: about 180 `ThreadLocalRandom` sites, random-target picks included, so tests can't fix a random pick. Sure.
 - Reality Twist: a Volcanic Island offers the unlisted Island type's U; `RealityTwistTest` asserts it and the 2013 ruling is ambiguous for unlisted types. Unsure.
 - Boseiju, Hall of the Bandit Lord: when a land-mana replacement applies, the produced mana may lose its rider (CR 106.6a). Unverified.
-- Caged Sun's "a land's ability causes you to add" misses land mana abilities without {T}; `youTapLandForMana` fires only for {T} abilities. Sure, low.
 - Valki (and any "becomes a copy" of a card with an exile/return pair): a copied reader of every link (`exiledWithSource()`, about 200 cards) still reads the cards the copier exiled with its own abilities, where it should read only what its copied exile ability exiled (CR 607.1, 607.2a); Valki's hand exile records no link, so with two or more opponents a copied unlinked reader (Lazav, Wearer of Faces) sees it too. Needs every printed exile to record its own link. LY-5 fixed the borrowers (Myr Welder, Territory Forge, Idris, Locus read their own exile's link). Fairly sure.
 - `PerpetuallyGrantKeywordsToTriggeringCardEffect` over `Subjects.sourceObjectCard()` (Heir to Dragonfire, PP-1): an ability of a card in a hand records no hand stay, so `SubjectResolutionService.sourceObjectCard` looks in the hand, exile and graveyard, and a card that went from the hand to a graveyard before the ability resolved still gains flying (CR 400.7).
 - A card with both a perpetual evoke and a plain perpetual alternative cost offers only the first granted one (`GameQueryService.findGrantedAlternateCast`) (CR 601.2b).

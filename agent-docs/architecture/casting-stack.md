@@ -134,6 +134,11 @@ Why: Kefnet's copy is cast from the hand and Spellweaver Volute's from a graveya
 Owner: `StackEntry`, `PermanentRemovalService`.
 Why: an ability of a sacrificed source still reads them.
 
+### Cast-time snapshots belong to one cast (CR 400.7)
+The mana-spent, colour, converge and splice snapshots kept by card id are forgotten as a new cast of that card begins, so a spell returned to hand unresolved and cast again reads only its new cast.
+Owner: `GameData.forgetEarlierCastSnapshots`, called by each `SpellCastingService` cast path.
+Why: the Treasure and artifact maps merge, so Kalain read both casts' Treasure mana.
+
 ### Per-resolution facts live on the entry
 Removed permanents' controllers, cards milled as a cost, the mana-payment player and the power-cost revealed card are stored on the entry and copied with it. Connive and Channel Harm choices continue the same resolution.
 Owner: `StackEntry`.

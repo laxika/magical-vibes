@@ -26,7 +26,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * @param qualifyingCardFilter optional additional filter for the qualifying nonland card
  * @param declinedCardStaysExiled whether a hit the caster declines to cast is left exiled instead of
  *                                going to the bottom with the rest (Jodah, the Unifier: "Put the
- *                                rest on the bottom")
+ *                                rest on the bottom"); such a cast has no "if the resulting spell's
+ *                                mana value is less" clause, so either face may be cast
  */
 public record CascadeEffect(boolean instantOrSorceryOnly, CardPredicate qualifyingCardFilter,
                              boolean deferCastUntilEndOfTurn, boolean declinedCardStaysExiled)

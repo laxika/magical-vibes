@@ -8,7 +8,11 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.StepOutcome;
+import com.github.laxika.magicalvibes.model.condition.Condition;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.service.FaceDownVisibility;
@@ -57,7 +61,48 @@ public class DiscardEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (DiscardEffect) effect;
+        // "[A player] may discard a card. If they do, ..." (CR 118.12): the discard a later "if they do / can't" reads
+        // is a cost paid as this resolves, not an effect, so Library of Leng's replacement doesn't apply to it (its
+        // ruling). A discard asked with a prompt keeps the mark until its chosen discards end.
+        boolean paidAsCost = readByLaterIfTheyDo(entry);
+        if (paidAsCost) {
+            gameData.discardPaidAsCost = true;
+        }
+        try {
+            discard(gameData, entry, (DiscardEffect) effect);
+        } finally {
+            if (paidAsCost && !gameData.interaction.isAwaitingInput()) {
+                gameData.discardPaidAsCost = false;
+            }
+        }
+    }
+
+    /**
+     * Whether a later step of {@code entry}'s resolution is conditioned on whether this discard happened ("If you
+     * do", "If that player can't"), with no filter on the cards discarded.
+     */
+    private static boolean readByLaterIfTheyDo(StackEntry entry) {
+        List<CardEffect> effects = entry.getEffectsToResolve();
+        for (int i = entry.getResolvingEffectIndex() + 1; i >= 1 && i < effects.size(); i++) {
+            if (effects.get(i) instanceof ConditionalEffect conditional && readsWhetherDiscarded(conditional.condition())) {
+                return true;
+            }
+            if (effects.get(i) instanceof DiscardEffect) {
+                return false;
+            }
+        }
+        return false;
+    }
+
+    private static boolean readsWhetherDiscarded(Condition condition) {
+        if (condition instanceof NotCondition not) {
+            return readsWhetherDiscarded(not.inner());
+        }
+        return condition instanceof HappenedThisWay happened && happened.kind() == StepKind.DISCARD
+                && happened.minimum() == 1 && happened.filter() == null && happened.cardFilter() == null;
+    }
+
+    private void discard(GameData gameData, StackEntry entry, DiscardEffect e) {
         if (!gameData.eachPlayerRummage.active) {
             // A new discard step (not a rerun after one player's choice): every card discarded from here on, as this
             // resolves or as its discard prompts are answered, is added to the step's result (GameData.discarded).

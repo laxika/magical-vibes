@@ -1493,7 +1493,14 @@ public class ExileFreeCastQueueSupport {
         String sourceName = null;
         for (PendingFreeCastLifeLoss loss : pending) {
             if (gameData.findExiledCard(loss.cardId()) == null) {
-                losses.merge(loss.ownerId(), loss.manaValue(), Integer::sum);
+                // The spell's mana value, as the face it was cast as (CR 202.3, 712.8c, 716.3a), not the card's.
+                int manaValue = gameData.stack.stream()
+                        .filter(entry -> !entry.isCopy() && entry.getPhysicalCard() != null
+                                && loss.cardId().equals(entry.getPhysicalCard().getId()))
+                        .findFirst()
+                        .map(StackEntry::getSpellManaValue)
+                        .orElse(loss.manaValue());
+                losses.merge(loss.ownerId(), manaValue, Integer::sum);
                 sourceName = loss.sourceName();
             }
         }

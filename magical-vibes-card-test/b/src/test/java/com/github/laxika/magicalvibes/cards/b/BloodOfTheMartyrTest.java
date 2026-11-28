@@ -2,7 +2,10 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.f.FireDrake;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.i.Inferno;
+import com.github.laxika.magicalvibes.cards.p.PreyUpon;
+import com.github.laxika.magicalvibes.cards.v.VampireNighthawk;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -21,7 +24,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({BloodOfTheMartyr.class, BrothersOfFire.class, FireDrake.class, Inferno.class, BlightMamba.class,
-        GrizzlyBears.class})
+        GrizzlyBears.class, PreyUpon.class, VampireNighthawk.class, HillGiant.class})
 class BloodOfTheMartyrTest extends BaseCardTest {
 
     @Test
@@ -40,6 +43,39 @@ class BloodOfTheMartyrTest extends BaseCardTest {
         assertThat(target.getMarkedDamage()).isZero();
         assertThat(gd.getLife(player1.getId())).isEqualTo(19);
         assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("A fighting creature's damage taken instead is still that creature's: its lifelink applies")
+    void redirectedFightDamageIsDealtByTheFightingCreature() {
+        harness.setLife(player1, 20);
+        Permanent nighthawk = harness.addToBattlefieldAndReturn(player1, new VampireNighthawk());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castBloodOfTheMartyr();
+
+        castPreyUpon(nighthawk, bears);
+        acceptAllRedirectChoices();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+        assertThat(nighthawk.getMarkedDamage()).isZero();
+        assertThat(bears.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("A declined redirect leaves a fighting creature's damage its own: deathtouch and lifelink apply")
+    void declinedFightDamageIsDealtByTheFightingCreature() {
+        harness.setLife(player1, 20);
+        Permanent nighthawk = harness.addToBattlefieldAndReturn(player1, new VampireNighthawk());
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        castBloodOfTheMartyr();
+
+        castPreyUpon(nighthawk, giant);
+        while (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, false);
+        }
+
+        harness.assertNotOnBattlefield(player2, "Hill Giant");
+        assertThat(gd.getLife(player1.getId())).isEqualTo(22);
     }
 
     @Test
@@ -240,6 +276,13 @@ class BloodOfTheMartyrTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.addMana(player2, ManaColor.RED, 2);
         harness.activateAbility(player2, indexOf(player2, brothers), null, targetId);
+        harness.passBothPriorities();
+    }
+
+    private void castPreyUpon(Permanent yours, Permanent theirs) {
+        harness.setHand(player1, List.of(new PreyUpon()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castSorcery(player1, 0, List.of(yours.getId(), theirs.getId()));
         harness.passBothPriorities();
     }
 

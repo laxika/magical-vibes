@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -27,6 +28,22 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class AjaniGoldmaneTest extends BaseCardTest {
 
     // ===== Casting =====
+
+    @Test
+    @DisplayName("The planeswalker its resolved spell becomes was cast, from its caster's hand")
+    void resolvedPlaneswalkerWasCastFromHand() {
+        harness.setHand(player1, List.of(new AjaniGoldmane()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castPlaneswalker(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent ajani = findPermanent(player1, "Ajani Goldmane");
+        assertThat(ajani.isCast()).isTrue();
+        assertThat(ajani.getCastFromZone()).isEqualTo(Zone.HAND);
+        assertThat(ajani.getCastControllerId()).isEqualTo(player1.getId());
+        assertThat(ajani.getManaSpentToCast()).isEqualTo(4);
+    }
 
     @Test
     @DisplayName("Casting puts planeswalker spell on the stack")

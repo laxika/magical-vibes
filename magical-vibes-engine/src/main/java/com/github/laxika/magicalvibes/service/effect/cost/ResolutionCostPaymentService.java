@@ -147,7 +147,8 @@ import org.springframework.stereotype.Component;
  *   move to the graveyard has a death replacement question, which its pick's completion asks first (CR 616.1). The
  *   permanent is recorded on the entry as it was ("this way", CR 608.2h).</li>
  *   <li>{@link SacrificeMultiplePermanentsCost}: exactly that many chosen permanents, sacrificed together with their
- *   death replacements asked first (CR 616.1).</li>
+ *   death replacements asked first (CR 616.1); when only that many could be sacrificed and none has a death
+ *   replacement question, they are sacrificed together unasked (CR 608.2d).</li>
  *   <li>{@link DiscardHandCost}: the discard-hand action; payable with an empty hand.</li>
  *   <li>{@link PutCounterOnControlledCreatureCost#blight} with a fixed count: the payer puts the -1/-1 counters on one
  *   creature they control that can get them (CR 701.68a, 701.68b), through the counter action and its replacements,
@@ -635,6 +636,19 @@ public class ResolutionCostPaymentService {
                         payment.entry());
                 if (candidates.size() < sacrifice.count()) {
                     yield Outcome.NOT_PAID;
+                }
+                if (candidates.size() == sacrifice.count()) {
+                    List<Permanent> all = candidates.stream()
+                            .map(id -> gameQueryService.findPermanentById(gameData, id))
+                            .toList();
+                    if (all.stream().noneMatch(permanent ->
+                            permanentRemovalService.hasDeathReplacementQuestion(gameData, permanent))) {
+                        // The one possible answer is made unasked (CR 608.2d), as for a single sacrifice; with a
+                        // death replacement question the pick asks it first, before they leave together (CR 616.1).
+                        destructionSupport.sacrificeTogether(gameData, all, payerId);
+                        permanentRemovalService.removeOrphanedAuras(gameData);
+                        yield afterImmediatePayment(gameData);
+                    }
                 }
                 playerInputService.beginMultiPermanentChoice(gameData, payerId, candidates, sacrifice.count(),
                         new MultiPermanentChoiceContext.ResolutionCostPayment(sacrifice, payerId, payment.sourceCard(),

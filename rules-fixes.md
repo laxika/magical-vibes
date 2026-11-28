@@ -55,7 +55,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | CB Combat | CB-1 | CB-1 done 2026-11-27 (M11's block half left: it needs multi-defender combat damage) |
 | PP Perpetual changes | PP-1 | PP-1 done 2026-11-27 (L8, O47 left; O41's hand half left) |
 | PL Each player chooses, then all act | PL-1 | PL-1 done 2026-11-27 (Gilded Ambusher's damage reading for the owner) |
-| MC Single cards | MC-1, MC-2 | MC-1 done 2026-11-27 (O13's direct counter removals left; O81 for the owner); MC-2a, MC-2b, MC-2c done 2026-11-28 (MC-2b: N62's stack half is N92; MC-2c: N50 dropped) |
+| MC Single cards | MC-1, MC-2 | MC-1 done 2026-11-27 (O13's direct counter removals left; O81 for the owner); MC-2a, MC-2b, MC-2c, MC-2d done 2026-11-28 (MC-2b: N62's stack half is N92; MC-2c: N50 dropped; MC-2d: N25 dropped, N80 left) |
 | AI Hard / easy AI | AI-1, AI-2 | AI-1, AI-2 done 2026-11-27 |
 | UI Frontend | UI-1 | UI-1 done 2026-11-27 |
 | LG, CL Logs and non-rules cleanup | LG-1, CL-1 | CL-1, LG-1 done 2026-11-27 |
@@ -1342,7 +1342,7 @@ Outcome already settled.
 - MC-2e, zone moves and single cards: S3 and S21 (Ezuri's Predation), O5, O7, S8, O79's Behemoth part, N28, N36, N40, N54,
   N70, N84, N86, N89, N90.
 - MC-2f, layers, perpetual changes and links: N64, N71, N73, N74, N75, N76, N81, N82, N83.
-- MC-2g, lines the earlier parts added: N91, N92, N93, N94, N95, and any later N line no part lists.
+- MC-2g, lines the earlier parts added: N91, N92, N93, N94, N95, N96, and any later N line no part lists.
 
 Lines: O5 (Limitless Rekindling's pool), O7 (`ConjureCardToBattlefieldEffectHandler`: a conjured land gets no land-enter handling;
 check that the handler still exists after run J), S8 (Mythweaver Poq's simultaneous duplicates: rulings first, else an owner
@@ -1613,6 +1613,11 @@ are kept only while the new drawer's replacement chain runs synchronously; if th
 choice, Blood Scrivener's sacrifice question) its resumption has forgotten them, so an already applied Thief can redirect the
 same draw again (CR 614.5). Of the code, rare.
 
+New line N96 (seen in MC-2d): a printed flashback cost with no mana and no tap part (Dread Return's "Flashback—Sacrifice three
+creatures", a life-only flashback) pays no cost increase: `SpellCastingService.payFlashbackOrGraveyardCastCost`'s printed
+branch pays `additionalCost` (Thalia, Guardian of Thraben's tax) only beside a mana or tap cost (CR 601.2f). Of the code,
+unverified by a test.
+
 Outcome:
 
 MC-2a: done 2026-11-28. Fixed: N19, N20, N21, N22, N23. N19: the AI's single target of a triggered ability
@@ -1670,6 +1675,34 @@ hands" (`fromAnywhereBut(HAND).ofTheirOwn()`, like Avatar's Wrath), which does; 
 `ChooseOpponentOnEnterEffect` put onto the battlefield by an effect already asks (the entry batch's as-enters pass); pinned with
 three-player Black Vise tests for Open the Vaults and Tinker. New lines N94, N95. No effect class added or deleted, so no ledger
 or ratchet change; no `CONVERSION_VERSION` change.
+
+MC-2d: done 2026-11-28. Fixed, each with a test that failed first: N16, N17, N26, N38, N39, N59, N87, N88, O25; dropped: N25;
+left: N80. N16: Heroism's prevention is controlled by Heroism's controller (`ability.sourceControllerId()`); no reader of a
+by-self prevention reads its controller yet, so the pin reads the floating effect. N17: a resolution-time
+`SacrificeMultiplePermanentsCost` with exactly that many candidates, none with a death replacement question, is sacrificed together
+unasked (CR 608.2d, 603.10a; Valgavoth, Hecatomb). N26: a graveyard cast pays a mana, sacrifice or discard escalate or entwine
+(CR 702.120a, 702.42a, 601.2f): the mana goes into every graveyard mana branch (`payFlashbackOrGraveyardCastCost`'s
+`escalateMana`), the sacrifices and discards are validated before anything is paid, asked first as cost sacrifices and paid after
+the mana (Kaya's Guile's pin of the refusal rewritten; Solar Tide under Past in Flames). N38: `GameData.forgetEarlierCastSnapshots`
+clears every cast-time snapshot of a card as each cast path (hand, graveyard, exile, library top) begins, not while a spell of that
+card is on the stack or resolving (CR 400.7; Kalain after Remand). N39: planeswalker and battle spells enter through
+`createEnteringPermanent`, so they record the cast, its zone, controller and mana (and entering counters, grants, a copy's token
+status). N59: `DiscardEffectHandler` marks a discard a later unfiltered `HappenedThisWay.discarded()` (or its `NotCondition`)
+reads as paid as a cost (CR 118.12 covers "does, doesn't, or can't", so Brain Pry's and Urgoros's mandatory forms too; Library of
+Leng's ruling); Pack Guardian under Leng. N87: keyword cascade casts only a face whose mana value is less (CR 702.85a,
+`mayCastManaValueAtMost`), and the library free cast now judges each modal double-faced face by its own mana value (CR 712.8c;
+`LibraryChoiceHandlerService.castableFaces`, `ExileFreeCastQueueSupport.offerFaces` for an exiled hit);
+Jodah's own trigger has no such clause (its 2022-09-09 ruling, either face). N88: Kefka's life loss reads the cast spell's mana
+value from its stack entry (`StackEntry.getSpellManaValue`, matched by the physical card: Tibalt, 7). O25: a land's mana ability
+without {T} emits `TapEvent.LandManaAbilityAddedMana` (direct and parked activations, `PendingManaActivation.withoutTap`); the new
+`TapTrigger.TapEvent.ABILITY_ADDS_MANA` / `Triggers.landAbilityCausesYouToAddMana()` is matched by `TapTriggers` for it and for every
+land tapped for mana; Caged Sun uses it (Rain of Filth, Calciform Pools; CR 106.12, 605.1a, 605.1b), Manabarbs still sees only taps,
+and Moonsilver Key's triggered-mana-ability reader reads the new key. `PotentialManaService` models no Caged Sun bonus for any land,
+so there was no estimate to extend. N25 dropped: Blood of the Martyr with Prey Upon already deals the fighter's damage as its own,
+taken (lifelink) or declined (deathtouch and lifelink); pinned. N80 left, too big for this run: the choice of Jaya Ballard's
+emblem over a payable printed flashback needs a request field threaded through the ~14 `playFlashbackSpell` overloads of
+`GameService` and `SpellCastingService`, `GameData.GraveyardCastReplay`, `PlayCardRequestDispatchService` and the client. New line
+N96. No effect class added or deleted, so no ledger or ratchet change; no `CONVERSION_VERSION` change.
 
 ### AI. Hard / easy AI (`magical-vibes-ai`)
 

@@ -175,8 +175,8 @@ class HecatombTest extends BaseCardTest {
         harness.setLife(player2, 20);
         castHecatomb();
 
+        // Exactly four creatures: all are sacrificed unasked (CR 608.2d).
         harness.handleMayAbilityChosen(player1, true);
-        answerForcedPick(player1);
 
         int targetsChosen = 0;
         for (int i = 0; i < 12 && targetsChosen < 4; i++) {

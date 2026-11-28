@@ -1798,8 +1798,10 @@ public class ChoiceHandlerService {
         if (source != null) {
             int stackBeforeTriggers = gameData.stack.size();
             if (gameQueryService.isLand(gameData, source)) {
-                gameData.rulesEvents.occur(new TapEvent.LandTappedForMana(playerId, source.getId(),
-                        newlyProducedColors(gameData, parkedActivation, playerId)));
+                Set<ManaColor> produced = newlyProducedColors(gameData, parkedActivation, playerId);
+                gameData.rulesEvents.occur(parkedActivation.withoutTap()
+                        ? new TapEvent.LandManaAbilityAddedMana(playerId, source.getId(), produced)
+                        : new TapEvent.LandTappedForMana(playerId, source.getId(), produced));
             }
             gameData.rulesEvents.separately(() -> gameData.rulesEvents.emit(new SpellEvent.ManaAbilityResolved(source, playerId, manaProduced)));
             if (gameData.stack.size() > stackBeforeTriggers) {

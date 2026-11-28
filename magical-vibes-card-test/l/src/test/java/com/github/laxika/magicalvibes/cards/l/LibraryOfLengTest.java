@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.cards.p.PainfulQuandary;
 import com.github.laxika.magicalvibes.cards.p.PossessedPortal;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.w.WildMongrel;
+import com.github.laxika.magicalvibes.cards.p.PackGuardian;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -27,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({LibraryOfLeng.class, BurningInquiry.class, Catalog.class, GrizzlyBears.class, Island.class, NullProfusion.class,
         WildMongrel.class, LurchingRotbeast.class, CollectiveBrutality.class, Shock.class, PainfulQuandary.class,
-        CarapaceForger.class, Memnite.class, PossessedPortal.class})
+        CarapaceForger.class, Memnite.class, PossessedPortal.class, PackGuardian.class, Forest.class})
 class LibraryOfLengTest extends BaseCardTest {
 
     @Test
@@ -292,5 +294,28 @@ class LibraryOfLengTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertOnBattlefield(player1, "Library of Leng");
         assertThat(gd.playerDecks.get(player1.getId())).noneMatch(card -> card instanceof GrizzlyBears);
+    }
+
+    @Test
+    @DisplayName("A card discarded for \"you may discard. If you do\" goes to the graveyard, as that discard is a cost")
+    void mayDiscardIfYouDoIsNotReplaced() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addToBattlefield(player1, new LibraryOfLeng());
+        harness.setHand(player1, List.of(new PackGuardian(), new Forest()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        harness.assertInGraveyard(player1, "Forest");
+        assertThat(gd.playerDecks.get(player1.getId())).noneMatch(card -> card instanceof Forest);
+        harness.assertOnBattlefield(player1, "Wolf");
+        assertThat(gd.discardPaidAsCost).isFalse();
     }
 }
