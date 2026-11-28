@@ -45,8 +45,10 @@ public class TributeHandler implements MayEffectHandlerBean {
         Permanent source = ability.sourcePermanentId() == null
                 ? null : gameQueryService.findPermanentById(gameData, ability.sourcePermanentId());
 
-        boolean paid = false;
-        if (source != null && accepted && !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, source)) {
+        // "If tribute wasn't paid" reads the chosen opponent's choice (CR 702.104b), not the count placed: a
+        // replacement that changes how many counters are put (Halving Season) doesn't undo the choice to pay.
+        boolean paid = source != null && accepted && !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, source);
+        if (paid) {
             // The chosen opponent puts the counters (CR 702.104a), so "if you / an opponent would put" judge them.
             int placed = gameQueryService.replaceCounters(gameData, source, CounterType.PLUS_ONE_PLUS_ONE,
                     tribute.counterCount(), player.getId());
@@ -57,7 +59,6 @@ public class TributeHandler implements MayEffectHandlerBean {
                         gameData, source, player.getId());
                 permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
                         gameData, source, placed);
-                paid = placed >= tribute.counterCount();
             }
         }
         if (source != null) {

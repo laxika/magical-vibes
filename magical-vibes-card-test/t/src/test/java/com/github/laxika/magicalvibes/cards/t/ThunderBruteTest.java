@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.h.HalvingSeason;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ThunderBrute.class})
+@CardUsed({ThunderBrute.class, HalvingSeason.class})
 class ThunderBruteTest extends BaseCardTest {
 
     @Test
@@ -84,6 +85,19 @@ class ThunderBruteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(brute.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, brute, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Tribute halved by Halving Season still counts as paid, so no haste trigger")
+    void halvedTributeStillCountsAsPaid() {
+        harness.addToBattlefield(player1, new HalvingSeason());
+        Permanent brute = castThunderBrute();
+
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(brute.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
         assertThat(gqs.hasKeyword(gd, brute, Keyword.HASTE)).isFalse();
     }
 

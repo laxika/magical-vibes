@@ -1264,7 +1264,7 @@ run's Outcome and the lines they found (N1 to N100) are in `rules-fixes.md`; its
 run commits are `git log --oneline 0e1a0e686aa..75990c830da`. What the effect cleanup and the runs built for card and engine
 authors is in `agent-docs/architecture/effect-building-blocks.md`; `scripts/effect-audit-ledger.csv` keeps every class's verdict.
 
-**Problem.** 17 lines are left: what the runs didn't fix or drop. Each starts with its ID: a
+**Problem.** 16 lines are left: what the runs didn't fix or drop. Each starts with its ID: a
 letter and number refers to entry 18 at commit `0e1a0e686aa` (print them with the awk command under "Line IDs" in
 `git show 75990c830da:rules-fixes.md`), an N number to that file's `N<n>` line. The run named after the ID is the one whose Outcome
 left it. The owner answered every entry 17 question that held a line here (2026-11-28); the answers that change play are
@@ -1292,9 +1292,8 @@ Don't commit.
 
 
 
-#### Simultaneity and APNAP (CR 101.4, 603.10a, 608.2e) (2)
+#### Simultaneity and APNAP (CR 101.4, 603.10a, 608.2e) (1)
 
-- S12 (0): Tribute's "paid" check is `placed >= N`, so a halved tribute (an opponent's Halving Season) reads as unpaid. The owner decided (2026-11-28) that it counts as paid: the chosen opponent chose to put the counters on it (CR 702.104a), and a replacement that changes how many are placed doesn't undo that choice. The "if tribute wasn't paid" check should read the opponent's choice, not the count placed. Sure of the code.
 - G1 (graveyard arrangement, 2026-11-28): a chosen "discard N cards" (Mind Rot: `DiscardEffect` through `CardChoiceHandlerService.handleDiscardCardChosen`) discards each card as it is picked, each its own rules event batch, though the cards are discarded together. So a "whenever you discard one or more cards" ability sees one event per card, and `GraveyardArrangementService` can't offer to arrange them. Each pick should be recorded and the cards discarded together once the last is picked, as the each-opponent rummage already does (`targetOpponentsDiscardThenDraw`). A mill, a wrath and every other one-effect move are one batch already. Sure of the code.
 
 
