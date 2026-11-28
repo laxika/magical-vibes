@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.MiracleCast;
+import com.github.laxika.magicalvibes.model.PendingCardDraw;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -164,6 +165,8 @@ public class DrawService {
     private static final String WORDS_OF_WASTE_NAME = "Words of Waste";
     private static final UUID WORDS_OF_WIND_CHOICE_ID = UUID.nameUUIDFromBytes(WORDS_OF_WIND_NAME.getBytes());
     private static final UUID WORDS_OF_WASTE_CHOICE_ID = UUID.nameUUIDFromBytes(WORDS_OF_WASTE_NAME.getBytes());
+    private static final UUID WORDS_OF_WORSHIP_CHOICE_ID = UUID.nameUUIDFromBytes(WORDS_OF_WORSHIP_NAME.getBytes());
+    private static final UUID WORDS_OF_WILDING_CHOICE_ID = UUID.nameUUIDFromBytes(WORDS_OF_WILDING_NAME.getBytes());
     private static final CreateTokenEffect HULLBREACHER_TREASURE = CreateTokenEffect.ofTreasureToken(1);
     private static final String RING_OF_MARF_CHOICE_NAME = "Ring of Ma'r\u00fbf";
     private final GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
@@ -257,6 +260,13 @@ public class DrawService {
         if (amount <= 0) {
             return;
         }
+        if (drawChoicePending(gameData)) {
+            // The instruction waits whole: its replacements apply as it is performed, the drawer choosing among
+            // Alms Collectors of different opponents then (CR 616.1).
+            gameData.pendingCardDraws.addLast(PendingCardDraw.instruction(
+                    playerId, amount, skipOpponentDrawTwoOrMoreReplacement));
+            return;
+        }
 
         int drawAmount = amount;
         for (Permanent quantumRiddler : findQuantumRiddlerDrawReplacementSources(gameData, playerId)) {
@@ -270,19 +280,8 @@ public class DrawService {
 
         OpponentSource almsCollector = !skipOpponentDrawTwoOrMoreReplacement && drawAmount >= 2
                 ? findOpponentDrawTwoOrMoreReplacementSource(gameData, playerId) : null;
-        if (drawChoicePending(gameData)) {
-            if (almsCollector != null) {
-                gameData.pendingCardDraws.addLast(playerId);
-                gameData.pendingCardDraws.addLast(almsCollector.controllerId());
-            } else {
-                for (int i = 0; i < drawAmount; i++) {
-                    gameData.pendingCardDraws.addLast(playerId);
-                }
-            }
-            return;
-        }
 
-        List<UUID> laterDraws = new ArrayList<>(gameData.pendingCardDraws);
+        List<PendingCardDraw> laterDraws = new ArrayList<>(gameData.pendingCardDraws);
         gameData.pendingCardDraws.clear();
         try {
             if (almsCollector != null) {
@@ -312,7 +311,7 @@ public class DrawService {
                 }
                 if (drawChoicePending(gameData)) {
                     for (int remaining = i + 1; remaining < drawAmount; remaining++) {
-                        gameData.pendingCardDraws.addLast(playerId);
+                        gameData.pendingCardDraws.addLast(PendingCardDraw.single(playerId));
                     }
                     beginPausingDrawMayAbility(gameData);
                     break;
@@ -368,8 +367,14 @@ public class DrawService {
     public void resumePendingCardDraws(GameData gameData) {
         while (!gameData.pendingCardDraws.isEmpty() && !drawChoicePending(gameData)
                 && gameData.status != GameStatus.FINISHED) {
-            UUID playerId = gameData.pendingCardDraws.removeFirst();
-            resolveDrawCardInternal(gameData, playerId, pendingCyclingCard(gameData, playerId));
+            PendingCardDraw next = gameData.pendingCardDraws.removeFirst();
+            UUID playerId = next.playerId();
+            if (next.isInstruction()) {
+                resolveDrawCards(gameData, playerId, next.instructionAmount(), pendingCyclingCard(gameData, playerId),
+                        next.skipsOpponentDrawTwoOrMoreReplacement());
+            } else {
+                resolveDrawCardInternal(gameData, playerId, pendingCyclingCard(gameData, playerId));
+            }
         }
     }
 
@@ -545,14 +550,7 @@ public class DrawService {
                 && zursWeirdingPayable(gameData, playerId);
         boolean ringPending = hasNextDrawReplacement(gameData, playerId,
                 RegisterNextDrawFromOutsideGameReplacementEffect.class);
-        Permanent wordsOfWorshipSource = hasNextDrawReplacement(gameData, playerId,
-                RegisterNextDrawGainLifeReplacementEffect.class)
-                ? findBattlefieldPermanentNamed(gameData, playerId, WORDS_OF_WORSHIP_NAME) : null;
-        Permanent wordsOfWildingSource = hasNextDrawReplacement(gameData, playerId,
-                RegisterNextDrawCreateBearReplacementEffect.class)
-                ? findBattlefieldPermanentNamed(gameData, playerId, WORDS_OF_WILDING_NAME) : null;
-        Map<String, UUID> nextDrawWordsOptions = collectNextDrawWordsOptions(
-                gameData, playerId, wordsOfWorshipSource, wordsOfWildingSource);
+        Map<String, UUID> nextDrawWordsOptions = collectNextDrawWordsOptions(gameData, playerId);
         boolean wordsCompete = nextDrawWordsOptions.size() > 1;
         Permanent competingEnduringRenewalSource = findRevealTopCreatureToGraveyardElseDrawSource(gameData, playerId);
         Permanent competingStudyCounterSource = competingEnduringRenewalSource == null ? null
@@ -821,8 +819,9 @@ public class DrawService {
 
         // Notion Thief, Hullbreacher: an opponent of the source's controller who would draw a card except the first
         // one in each of their draw steps doesn't; the controller draws a card or creates a Treasure instead.
-        if (!firstDrawStepDraw && !extraDrawRedirects(gameData, playerId, Set.of()).isEmpty()) {
-            continueExtraDrawRedirects(gameData, playerId, playerId, Set.of());
+        Set<UUID> appliedExtraDrawRedirects = Set.copyOf(gameData.extraDrawRedirectsAppliedToCurrentDraw);
+        if (!firstDrawStepDraw && !extraDrawRedirects(gameData, playerId, appliedExtraDrawRedirects).isEmpty()) {
+            continueExtraDrawRedirects(gameData, playerId, playerId, appliedExtraDrawRedirects);
             return;
         }
 
@@ -1576,7 +1575,7 @@ public class DrawService {
             if (gameData.currentDrawDoublingApplied.contains(drawingPlayerId)) {
                 gameData.drawsFromAppliedDoubling.merge(drawingPlayerId, 1, Integer::sum);
             }
-            gameData.pendingCardDraws.addFirst(drawingPlayerId);
+            gameData.pendingCardDraws.addFirst(PendingCardDraw.single(drawingPlayerId));
             return true;
         }
         // Each unused replacement adds one draw to the first still-empty-hand draw.
@@ -1647,14 +1646,17 @@ public class DrawService {
     /**
      * Applies the opponents' extra-draw replacements to the draw {@code drawerId} would now make, which was first
      * {@code originalDrawerId}'s. With several that apply the drawer chooses one (CR 616.1, 616.1e); a Notion Thief
-     * makes its controller the drawer and the process repeats among the replacements not yet applied (CR 614.5,
-     * 616.1f; Notion Thief's ruling), a Hullbreacher ends it with a Treasure. When none applies the drawer draws.
+     * makes its controller the drawer, whose draw then goes through every replacement that applies to it, the
+     * extra-draw ones not yet applied included (CR 614.5, 616.1f; Notion Thief's ruling); a Hullbreacher ends it with
+     * a Treasure. When none applies the drawer draws.
      */
     private void continueExtraDrawRedirects(GameData gameData, UUID originalDrawerId, UUID drawerId,
                                             Set<UUID> appliedCardIds) {
         List<ExtraDrawRedirect> redirects = extraDrawRedirects(gameData, drawerId, appliedCardIds);
         if (redirects.isEmpty()) {
-            if (!performEmptyHandReplacementDraw(gameData, drawerId, originalDrawerId)) {
+            if (!drawerId.equals(originalDrawerId)) {
+                drawAsRedirectedExtraDraw(gameData, drawerId, appliedCardIds);
+            } else if (!performEmptyHandReplacementDraw(gameData, drawerId, originalDrawerId)) {
                 performDrawCard(gameData, drawerId);
             }
             return;
@@ -1710,7 +1712,26 @@ public class DrawService {
                     redirect.source().getCard().getSetCode());
             return;
         }
-        continueExtraDrawRedirects(gameData, originalDrawerId, redirect.controllerId(), applied);
+        drawAsRedirectedExtraDraw(gameData, redirect.controllerId(), applied);
+    }
+
+    /**
+     * The draw a Notion Thief made {@code drawerId} draw instead: a draw of theirs, so their own replacement effects
+     * apply to it (Thought Reflection, Abundance, dredge), and of the extra-draw ones only those not yet applied to it
+     * (CR 614.5, 616.1f).
+     */
+    private void drawAsRedirectedExtraDraw(GameData gameData, UUID drawerId, Set<UUID> appliedCardIds) {
+        boolean outermost = gameData.extraDrawRedirectsAppliedToCurrentDraw.isEmpty();
+        gameData.extraDrawRedirectsAppliedToCurrentDraw.addAll(appliedCardIds);
+        // A new draw of theirs, not one a doubling of their own made, so their doublers apply to it.
+        gameData.currentDrawDoublingApplied.remove(drawerId);
+        try {
+            resolveCurrentDrawCard(gameData, drawerId, false, null);
+        } finally {
+            if (outermost) {
+                gameData.extraDrawRedirectsAppliedToCurrentDraw.clear();
+            }
+        }
     }
 
     /**
@@ -2009,32 +2030,19 @@ public class DrawService {
         return null;
     }
 
-    private Permanent findBattlefieldPermanentNamed(GameData gameData, UUID playerId, String cardName) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) {
-            return null;
-        }
-        return battlefield.stream()
-                .filter(permanent -> permanent.getCard().getName().equals(cardName))
-                .findFirst()
-                .orElse(null);
-    }
-
     /**
      * The queued "next time you would draw a card this turn" replacements of the Words cycle that compete
      * for the next draw (CR 616.1), keyed by option label. Words of War replacements are distinct by
-     * target; Words of Wind and Words of Waste use fixed ids because their replacements do not depend on
+     * target; Words of Worship, Wilding, Wind and Waste use fixed ids because their replacements do not depend on
      * the source staying on the battlefield.
      */
-    private Map<String, UUID> collectNextDrawWordsOptions(GameData gameData, UUID playerId,
-                                                          Permanent wordsOfWorshipSource,
-                                                          Permanent wordsOfWildingSource) {
+    private Map<String, UUID> collectNextDrawWordsOptions(GameData gameData, UUID playerId) {
         Map<String, UUID> options = new LinkedHashMap<>();
-        if (wordsOfWorshipSource != null) {
-            options.put(WORDS_OF_WORSHIP_NAME, wordsOfWorshipSource.getId());
+        if (hasNextDrawReplacement(gameData, playerId, RegisterNextDrawGainLifeReplacementEffect.class)) {
+            options.put(WORDS_OF_WORSHIP_NAME, WORDS_OF_WORSHIP_CHOICE_ID);
         }
-        if (wordsOfWildingSource != null) {
-            options.put(WORDS_OF_WILDING_NAME, wordsOfWildingSource.getId());
+        if (hasNextDrawReplacement(gameData, playerId, RegisterNextDrawCreateBearReplacementEffect.class)) {
+            options.put(WORDS_OF_WILDING_NAME, WORDS_OF_WILDING_CHOICE_ID);
         }
         Set<UUID> seenTargets = new java.util.HashSet<>();
         for (FloatingContinuousEffect pending : nextDrawReplacements(gameData, playerId,
@@ -2062,8 +2070,22 @@ public class DrawService {
         return options;
     }
 
-    /** Applies the chosen Words of War, Words of Wind or Words of Waste replacement, if the id names one. */
+    /** Applies the chosen Words of War, Worship, Wilding, Wind or Waste replacement, if the id names one. */
     private boolean applyChosenNextDrawWordsReplacement(GameData gameData, UUID playerId, UUID choiceId) {
+        if (choiceId.equals(WORDS_OF_WORSHIP_CHOICE_ID)
+                && useNextDrawReplacement(gameData, playerId, RegisterNextDrawGainLifeReplacementEffect.class) != null) {
+            lifeSupport.applyGainLife(gameData, playerId, 5, WORDS_OF_WORSHIP_NAME);
+            return true;
+        }
+        if (choiceId.equals(WORDS_OF_WILDING_CHOICE_ID)) {
+            RegisterNextDrawCreateBearReplacementEffect bear = useNextDrawReplacement(gameData, playerId,
+                    RegisterNextDrawCreateBearReplacementEffect.class);
+            if (bear != null) {
+                permanentControlSupport.applyCreateToken(gameData, playerId, WORDS_OF_WILDING_BEAR, 1,
+                        bear.sourceSetCode());
+                return true;
+            }
+        }
         if (choiceId.equals(WORDS_OF_WIND_CHOICE_ID)
                 && useNextDrawReplacement(gameData, playerId,
                 RegisterNextDrawReturnPermanentsReplacementEffect.class) != null) {
@@ -2082,26 +2104,6 @@ public class DrawService {
             if (((RegisterNextDrawDamageReplacementEffect) replacement.effect()).targetId().equals(choiceId)) {
                 gameData.endFloatingEffect(replacement);
                 resolveNextDrawDamage(gameData, playerId, replacement);
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /** Applies one queued Words of Worship or Words of Wilding replacement chosen by the drawing player. */
-    private boolean applyChosenWordsReplacement(GameData gameData, UUID playerId, Permanent source) {
-        String sourceName = source.getCard().getName();
-        if (sourceName.equals(WORDS_OF_WORSHIP_NAME)
-                && useNextDrawReplacement(gameData, playerId, RegisterNextDrawGainLifeReplacementEffect.class) != null) {
-            lifeSupport.applyGainLife(gameData, playerId, 5, WORDS_OF_WORSHIP_NAME);
-            return true;
-        }
-        if (sourceName.equals(WORDS_OF_WILDING_NAME)) {
-            RegisterNextDrawCreateBearReplacementEffect bear = useNextDrawReplacement(gameData, playerId,
-                    RegisterNextDrawCreateBearReplacementEffect.class);
-            if (bear != null) {
-                permanentControlSupport.applyCreateToken(gameData, playerId, WORDS_OF_WILDING_BEAR, 1,
-                        bear.sourceSetCode());
                 return true;
             }
         }
@@ -2451,9 +2453,6 @@ public class DrawService {
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         if (source == null) {
             throw new IllegalStateException("That draw replacement is no longer available");
-        }
-        if (applyChosenWordsReplacement(gameData, playerId, source)) {
-            return;
         }
         MaySkipDrawSource maySkipDrawSource = findMaySkipDrawSource(gameData, playerId);
         if (maySkipDrawSource != null && maySkipDrawSource.sourcePermanentId().equals(sourcePermanentId)) {

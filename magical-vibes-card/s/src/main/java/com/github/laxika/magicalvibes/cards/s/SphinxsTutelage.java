@@ -6,6 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillOpponentRepeatOnSharedColorEffect;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -24,9 +27,11 @@ public class SphinxsTutelage extends Card {
 
     public SphinxsTutelage() {
         // Whenever you draw a card, target opponent mills two cards. If two nonland cards that
-        // share a color were milled this way, repeat this process. The two-player engine derives
-        // the sole opponent, so no target is chosen.
-        addTrigger(Triggers.youDrawCard(), new MillOpponentRepeatOnSharedColorEffect(2));
+        // share a color were milled this way, repeat this process.
+        target(new PlayerPredicateTargetFilter(
+                new PlayerRelationPredicate(PlayerRelation.OPPONENT),
+                "Target must be an opponent"
+        )).addTrigger(Triggers.youDrawCard(), new MillOpponentRepeatOnSharedColorEffect(2));
 
         // {5}{U}: Draw a card, then discard a card.
         addActivatedAbility(new ActivatedAbility(

@@ -1000,8 +1000,11 @@ public class GameData {
     /** Progress state for Whirlwind Denial's opponent-by-opponent pay-or-counter sequence. */
     public final WhirlwindDenialState whirlwindDenial = new WhirlwindDenialState();
 
-    /** Remaining individual draws after an interactive replacement, in resolution order. */
-    public final Deque<UUID> pendingCardDraws = new ArrayDeque<>();
+    /**
+     * Draws waiting behind an open draw choice, in resolution order: the remaining draws of an instruction under way,
+     * and whole instructions that began while the choice was open.
+     */
+    public final Deque<PendingCardDraw> pendingCardDraws = new ArrayDeque<>();
     /** Draws produced by a draw replacement (e.g. "draw two cards instead") still to be performed. */
     public final Deque<UUID> pendingReplacementCardDraws = new ArrayDeque<>();
     /**
@@ -1282,6 +1285,11 @@ public class GameData {
     public PendingGraveyardAbilityActivation pendingGraveyardAbilityActivation;
     /** Players whose draw redirect (Plagiarize) has already been applied to the draw being resolved (CR 614.5). */
     public final Set<UUID> drawRedirectsAppliedToCurrentDraw = ConcurrentHashMap.newKeySet();
+    /**
+     * Cards whose opponent extra-draw replacement (Notion Thief) has already been applied to the draw being resolved,
+     * while the player it made draw goes through their own draw replacements (CR 614.5, 616.1f).
+     */
+    public final Set<UUID> extraDrawRedirectsAppliedToCurrentDraw = ConcurrentHashMap.newKeySet();
     /** Number of Chains of Mephistopheles replacements already applied to the current draw. */
     public final Map<UUID, Integer> chainsDrawReplacementsApplied = new ConcurrentHashMap<>();
     /** Player IDs that have already taken their first draw of their own draw step this turn. Used by
@@ -10437,6 +10445,7 @@ public class GameData {
         copy.stolenCreatures.putAll(this.stolenCreatures);
         copy.cardOwnerOverrides.putAll(this.cardOwnerOverrides);
         copy.drawRedirectsAppliedToCurrentDraw.addAll(this.drawRedirectsAppliedToCurrentDraw);
+        copy.extraDrawRedirectsAppliedToCurrentDraw.addAll(this.extraDrawRedirectsAppliedToCurrentDraw);
         copy.chainsDrawReplacementsApplied.putAll(this.chainsDrawReplacementsApplied);
         copy.drawStepFirstDrawTaken.addAll(this.drawStepFirstDrawTaken);
         copy.firstNonDrawStepDrawReplacementsUsedThisTurn

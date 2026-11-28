@@ -14,7 +14,8 @@ import java.util.Set;
  *       {@code (eachPlayer(), castingSpells().from(zones))}; it stops flashback, graveyard casts, library-top casts and
  *       every other cast from those zones, never a land play (CR 305.1).</li>
  *   <li>"Your opponents can't cast spells from anywhere other than their hands" (Drannith Magistrate):
- *       {@code (eachOpponent(), castingSpells().fromAnywhereBut(HAND))}.</li>
+ *       {@code (eachOpponent(), castingSpells().fromAnywhereBut(HAND).ofTheirOwn())}: a spell cast from another
+ *       player's hand (Sen Triplets) is stopped too.</li>
  *   <li>"Players can't cast noncreature spells from graveyards or exile" (Soulless Jailer):
  *       {@code castingNoncreatureSpells().from(GRAVEYARD, EXILE)}.</li>
  *   <li>"You can't play lands" (Aggressive Mining, Rock Jockey under its condition): {@code (you(), playingLands())};
@@ -46,12 +47,6 @@ public record PlayersCantCastSpellsFromZonesEffect(PlayerSubject players, Player
 
     /** "Players can't cast spells from [zones]". */
     public PlayersCantCastSpellsFromZonesEffect(Set<Zone> zones) {
-        this(zones, true);
-    }
-
-    /** "Players can't cast spells from [zones]", or only the source controller's opponents. */
-    public PlayersCantCastSpellsFromZonesEffect(Set<Zone> zones, boolean appliesToAllPlayers) {
-        this(appliesToAllPlayers ? Subjects.eachPlayer() : Subjects.eachOpponent(),
-                PlayerRestriction.castingSpells().from(zones.toArray(Zone[]::new)));
+        this(Subjects.eachPlayer(), PlayerRestriction.castingSpells().from(zones.toArray(Zone[]::new)));
     }
 }

@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.c.CityOfTraitors;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -9,6 +11,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -140,5 +143,21 @@ class MonstrousHoundTest extends BaseCardTest {
         harness.addToBattlefield(player2, new CityOfTraitors());
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+    }
+
+    @Test
+    @DisplayName("With two opponents, it can't attack the one who controls as many lands")
+    void attackIsJudgedForEachDefendingPlayer() {
+        Player player3 = harness.addOpponent("Charlie");
+        addCreatureReady(player1, new MonstrousHound());
+        harness.addToBattlefield(player1, new CityOfTraitors());
+        harness.addToBattlefield(player3, new CityOfTraitors());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0), Map.of(0, player3.getId())))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

@@ -609,6 +609,25 @@ public class PermanentCounterSupport {
     }
 
     /**
+     * The creatures {@code playerId}'s opponents control that a counter of {@code counterType} could be put on, every
+     * opponent's in turn order: "a creature an opponent controls" is any opponent's, chosen again for each counter
+     * (Sheltering Ancient's cumulative upkeep, CR 702.24a, and its ruling).
+     */
+    public List<UUID> opponentCreaturesThatCanReceiveCounter(GameData gameData, UUID playerId, CounterType counterType) {
+        List<UUID> creatureIds = new ArrayList<>();
+        for (UUID opponentId : gameData.orderedPlayerIds) {
+            if (opponentId.equals(playerId)) continue;
+            for (Permanent permanent : gameData.playerBattlefields.getOrDefault(opponentId, List.of())) {
+                if (gameQueryService.isCreature(gameData, permanent)
+                        && canReceiveCounter(gameData, permanent, counterType)) {
+                    creatureIds.add(permanent.getId());
+                }
+            }
+        }
+        return creatureIds;
+    }
+
+    /**
      * Moves up to {@code amount} counters of {@code counterType} from {@code from} onto {@code to}, put by the
      * entry's controller (CR 122.5): nothing when both are one permanent, {@code from} has none, or {@code to} can't
      * have it. Returns how many were removed from {@code from}.

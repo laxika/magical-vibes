@@ -132,6 +132,19 @@ class GameDataDeepCopyTest {
     }
 
     @Test
+    @DisplayName("Deep copy keeps the Notion Thieves already applied to the draw being resolved, independently")
+    void deepCopyKeepsAppliedExtraDrawRedirects() {
+        UUID thiefCardId = UUID.randomUUID();
+        gd.extraDrawRedirectsAppliedToCurrentDraw.add(thiefCardId);
+
+        GameData copy = gd.simulationCopy();
+        copy.extraDrawRedirectsAppliedToCurrentDraw.clear();
+
+        assertThat(gd.extraDrawRedirectsAppliedToCurrentDraw).containsExactly(thiefCardId);
+        assertThat(gd.simulationCopy().extraDrawRedirectsAppliedToCurrentDraw).containsExactly(thiefCardId);
+    }
+
+    @Test
     @DisplayName("Deep copy keeps the graveyard permissions sharing an exile play quota, independently")
     void deepCopyKeepsSharedGraveyardPermissionsIndependent() {
         UUID groupId = UUID.randomUUID();

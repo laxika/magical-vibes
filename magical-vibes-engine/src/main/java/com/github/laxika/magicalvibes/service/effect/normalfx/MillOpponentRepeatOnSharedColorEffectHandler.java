@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillOpponentRepeatOnSharedColorEffect;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * Sphinx's Tutelage: the opponent mills {@code count} cards, and the whole process repeats while two
+ * Sphinx's Tutelage: the target opponent mills {@code count} cards, and the whole process repeats while two
  * nonland cards that share a color were milled by the latest iteration. The loop also ends when the
  * library runs out of cards (fewer than two milled).
  */
@@ -24,7 +23,6 @@ import org.springframework.stereotype.Component;
 public class MillOpponentRepeatOnSharedColorEffectHandler implements NormalEffectHandlerBean {
 
     private final GraveyardService graveyardService;
-    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -34,13 +32,8 @@ public class MillOpponentRepeatOnSharedColorEffectHandler implements NormalEffec
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         int count = ((MillOpponentRepeatOnSharedColorEffect) effect).count();
-        UUID opponentId = gameQueryService.getOpponentId(gameData, entry.getControllerId());
-        if (opponentId == null) {
-            return;
-        }
-        // Hexproof stops the opponent from being chosen, so nothing is milled.
-        if (gameQueryService.playerHasHexproof(gameData, opponentId)
-                && !gameQueryService.ignoresOpponentPlayerHexproof(gameData, entry.getControllerId())) {
+        UUID opponentId = entry.getTargetId();
+        if (opponentId == null || !gameData.playerIds.contains(opponentId)) {
             return;
         }
 

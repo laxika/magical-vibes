@@ -218,6 +218,36 @@ class WordsOfWorshipTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 
+    @Test
+    @DisplayName("The drawer still chooses between the Words replacements after Words of Worship left the battlefield")
+    void competingReplacementsStillChosenAfterSourceLeaves() {
+        harness.addToBattlefield(player1, new WordsOfWorship());
+        harness.addToBattlefield(player1, new WordsOfWilding());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GlorySeeker()));
+        harness.setLife(player1, 20);
+        prepareAbilityActivation();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, findPermanent(player1, "Words of Worship")));
+
+        draw(player1);
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.assertLife(player1, 20);
+        harness.handleListChoice(player1, "Words of Wilding");
+
+        harness.assertLife(player1, 20);
+        harness.assertOnBattlefield(player1, "Bear");
+        draw(player1);
+        harness.assertLife(player1, 25);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
     private void prepareAbilityActivation() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

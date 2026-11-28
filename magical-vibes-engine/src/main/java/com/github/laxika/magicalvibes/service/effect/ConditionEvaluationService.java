@@ -1659,10 +1659,11 @@ public class ConditionEvaluationService {
             case ControllerDidntPlayCardFromExileThisTurn ignored ->
                     ctx.controllerId() != null
                             && !gameData.playersWhoPlayedCardFromExileThisTurn.contains(ctx.controllerId());
-            case ControllerControlsMoreLandsThanOpponent ignored ->
-                    ctx.controllerId() != null
-                            && gameQueryService.controlsMoreLandsThan(
-                                    gameData, ctx.controllerId(), gameQueryService.getOpponentId(gameData, ctx.controllerId()));
+            case ControllerControlsMoreLandsThanOpponent ignored -> {
+                UUID otherPlayerId = combatOpponent(gameData, ctx);
+                yield otherPlayerId != null
+                        && gameQueryService.controlsMoreLandsThan(gameData, ctx.controllerId(), otherPlayerId);
+            }
             case ControllerControlsPrimeNumberOfLands ignored ->
                     isPrime((int) countControlledMatchingPermanents(
                             gameData, ctx, new PermanentIsLandPredicate()));
@@ -2631,11 +2632,31 @@ public class ConditionEvaluationService {
     }
 
     private boolean controlsMoreCreaturesThanOpponent(GameData gameData, ConditionContext ctx) {
+        UUID otherPlayerId = combatOpponent(gameData, ctx);
+        return otherPlayerId != null
+                && countCreaturesControlled(gameData, ctx.controllerId())
+                > countCreaturesControlled(gameData, otherPlayerId);
+    }
+
+    /**
+     * The player a "can't attack unless you control more … than defending player" / "can't block unless you control
+     * more … than attacking player" restriction compares with: for an attack, the defending player of the attack it is
+     * judged for (CR 508.5, 802.2a: each possible attack target in turn), and for a block the attacking player, the
+     * active player (CR 506.2). {@code null} when neither is named (the controller's own turn and no attack target), so
+     * the restriction is judged per attack target instead.
+     */
+    private UUID combatOpponent(GameData gameData, ConditionContext ctx) {
         UUID controllerId = ctx.controllerId();
-        if (controllerId == null) return false;
-        UUID opponentId = gameQueryService.getOpponentId(gameData, controllerId);
-        return countCreaturesControlled(gameData, controllerId)
-                > countCreaturesControlled(gameData, opponentId);
+        if (controllerId == null) return null;
+        UUID attacked = ctx.attackedTargetId();
+        if (attacked == null && ctx.sourcePermanent() != null && ctx.sourcePermanent().isAttacking()) {
+            attacked = ctx.sourcePermanent().getAttackTarget();
+        }
+        if (attacked != null) {
+            return gameQueryService.defendingPlayerOfAttackTarget(gameData, attacked);
+        }
+        UUID activePlayerId = gameData.activePlayerId;
+        return activePlayerId != null && !activePlayerId.equals(controllerId) ? activePlayerId : null;
     }
 
     private boolean controllerControlsFewerCreaturesThanEachOpponent(GameData gameData, UUID controllerId) {

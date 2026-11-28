@@ -31,7 +31,7 @@ class EntanglingTrapTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new CloudcrownOak()));
         harness.setLibrary(player2, List.of(new Forest()));
 
-        harness.inMutationScope(() -> harness.getClashSupport().performClash(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getClashSupport().performClash(gd, player1.getId(), player2.getId()));
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, opponentCreature.getId());
@@ -63,7 +63,7 @@ class EntanglingTrapTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest()));
         harness.setLibrary(player2, List.of(new CloudcrownOak()));
 
-        harness.inMutationScope(() -> harness.getClashSupport().performClash(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getClashSupport().performClash(gd, player1.getId(), player2.getId()));
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, opponentCreature.getId());
@@ -77,6 +77,21 @@ class EntanglingTrapTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The log names the opponent as the winner when the opponent revealed the higher mana value")
+    void logNamesOpponentAsWinner() {
+        harness.forceActivePlayer(player1);
+        harness.addToBattlefield(player1, new EntanglingTrap());
+        harness.addToBattlefieldAndReturn(player2, new CloudcrownOak());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(new CloudcrownOak()));
+
+        harness.inMutationScope(() -> harness.getClashSupport().performClash(gd, player1.getId(), player2.getId()));
+
+        assertThat(gameLogContains(player2.getUsername() + " won the clash.")).isTrue();
+        assertThat(gameLogContains("No one won the clash.")).isFalse();
+    }
+
+    @Test
     @DisplayName("Tied clash taps target but does not prevent untap")
     void tiedClashTapsOnly() {
         harness.forceActivePlayer(player1);
@@ -86,7 +101,7 @@ class EntanglingTrapTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new CloudcrownOak()));
         harness.setLibrary(player2, List.of(new CloudcrownOak()));
 
-        harness.inMutationScope(() -> harness.getClashSupport().performClash(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getClashSupport().performClash(gd, player1.getId(), player2.getId()));
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, opponentCreature.getId());
@@ -108,7 +123,7 @@ class EntanglingTrapTest extends BaseCardTest {
 
         harness.setLibrary(player1, List.of(new CloudcrownOak()));
         harness.setLibrary(player2, List.of(new Forest()));
-        harness.inMutationScope(() -> harness.getClashSupport().performClash(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getClashSupport().performClash(gd, player1.getId(), player2.getId()));
 
         harness.handlePermanentChosen(player1, opponentCreature.getId());
 
@@ -138,7 +153,7 @@ class EntanglingTrapTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new CloudcrownOak()));
         harness.setLibrary(player2, List.of(new Forest()));
 
-        harness.inMutationScope(() -> harness.getClashSupport().performClash(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getClashSupport().performClash(gd, player1.getId(), player2.getId()));
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
@@ -157,7 +172,7 @@ class EntanglingTrapTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new CloudcrownOak()));
         harness.setLibrary(player2, List.of(new Forest()));
 
-        harness.inMutationScope(() -> harness.getClashSupport().performClash(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getClashSupport().performClash(gd, player1.getId(), player2.getId()));
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
     }
@@ -173,7 +188,7 @@ class EntanglingTrapTest extends BaseCardTest {
 
         // Entangling Trap's "whenever you clash" is controlled by player1, so player1 must be the clasher
         // (the opponent's spell or ability causing the clash still lets the trigger fire, per the 2013-09-20 ruling).
-        harness.inMutationScope(() -> harness.getClashSupport().performClash(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getClashSupport().performClash(gd, player1.getId(), player2.getId()));
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, target.getId());
@@ -197,7 +212,7 @@ class EntanglingTrapTest extends BaseCardTest {
 
         // Entangling Trap's "whenever you clash" is controlled by player1, so player1 must be the clasher
         // (the opponent's spell or ability causing the clash still lets the trigger fire, per the 2013-09-20 ruling).
-        harness.inMutationScope(() -> harness.getClashSupport().performClash(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getClashSupport().performClash(gd, player1.getId(), player2.getId()));
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, target.getId());
@@ -219,7 +234,7 @@ class EntanglingTrapTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new CloudcrownOak()));
         harness.setLibrary(player2, List.of(new Forest()));
 
-        harness.inMutationScope(() -> harness.getClashSupport().performClash(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getClashSupport().performClash(gd, player1.getId(), player2.getId()));
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
@@ -237,7 +252,7 @@ class EntanglingTrapTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new CloudcrownOak()));
         harness.setLibrary(player2, List.of(new Forest()));
 
-        harness.inMutationScope(() -> harness.getClashSupport().performClash(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getClashSupport().performClash(gd, player1.getId(), player2.getId()));
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 

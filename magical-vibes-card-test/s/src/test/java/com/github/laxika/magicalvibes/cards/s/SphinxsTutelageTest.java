@@ -33,6 +33,7 @@ class SphinxsTutelageTest extends BaseCardTest {
                 new Island(), new Island()));
 
         advanceToDraw(player1);
+        chooseTarget(player2);
         harness.passBothPriorities(); // resolve the draw trigger
 
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(4);
@@ -46,6 +47,7 @@ class SphinxsTutelageTest extends BaseCardTest {
                 new GrizzlyBears(), new Island()));
 
         advanceToDraw(player1);
+        chooseTarget(player2);
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
@@ -59,6 +61,7 @@ class SphinxsTutelageTest extends BaseCardTest {
                 new LlanowarElves(), new Island()));
 
         advanceToDraw(player1);
+        chooseTarget(player2);
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
@@ -71,6 +74,7 @@ class SphinxsTutelageTest extends BaseCardTest {
         harness.setLibrary(player2, List.<Card>of(new GrizzlyBears(), new LlanowarElves()));
 
         advanceToDraw(player1);
+        chooseTarget(player2);
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
@@ -113,7 +117,7 @@ class SphinxsTutelageTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("An opponent with hexproof cannot be milled by the draw trigger")
+    @DisplayName("An opponent with hexproof can't be targeted, so the draw trigger mills no one")
     void cannotMillOpponentWithHexproof() {
         harness.addToBattlefield(player1, new SphinxsTutelage());
         harness.addToBattlefield(player2, new OrbsOfWarding());
@@ -135,6 +139,7 @@ class SphinxsTutelageTest extends BaseCardTest {
                 new Shock(), new Island(), new Island()));
 
         advanceToDraw(player1);
+        chooseTarget(player2);
         harness.passBothPriorities();
 
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
@@ -148,6 +153,7 @@ class SphinxsTutelageTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new GrizzlyBears()));
 
         advanceToDraw(player1);
+        chooseTarget(player2);
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
@@ -162,6 +168,7 @@ class SphinxsTutelageTest extends BaseCardTest {
                 new Shock(), new Shock(), new Island(), new Island(), new Island()));
 
         advanceToDraw(player1);
+        chooseTarget(player2);
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(6);
@@ -190,9 +197,51 @@ class SphinxsTutelageTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
 
+        chooseTarget(player2);
         resolveAllTriggers();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("With two opponents, its controller chooses which opponent mills")
+    void controllerChoosesTheTargetOpponent() {
+        Player player3 = harness.addOpponent("Charlie");
+        harness.addToBattlefield(player1, new SphinxsTutelage());
+        harness.setLibrary(player2, List.<Card>of(new GrizzlyBears(), new Shock(), new Island()));
+        harness.setLibrary(player3, List.<Card>of(new GrizzlyBears(), new Shock(), new Island()));
+
+        advanceToDraw(player1);
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validPlayerIds()).containsExactlyInAnyOrder(player2.getId(), player3.getId());
+        harness.handlePermanentChosen(player1, player3.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player3.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A hexproof opponent can't be chosen, so the other opponent is the only target")
+    void hexproofOpponentCannotBeTargeted() {
+        Player player3 = harness.addOpponent("Charlie");
+        harness.addToBattlefield(player1, new SphinxsTutelage());
+        harness.addToBattlefield(player2, new OrbsOfWarding());
+        harness.setLibrary(player2, List.<Card>of(new GrizzlyBears(), new Shock(), new Island()));
+        harness.setLibrary(player3, List.<Card>of(new GrizzlyBears(), new Shock(), new Island()));
+
+        advanceToDraw(player1);
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validPlayerIds()).containsExactly(player3.getId());
+    }
+
+    private void chooseTarget(Player opponent) {
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, opponent.getId());
     }
 
     private void advanceToDraw(Player activePlayer) {

@@ -21,28 +21,17 @@ public class ClashSupport {
     private final GameLogService gameLogService;
 
     /**
-     * Performs a clash for {@code clashingPlayerId} against their (single, 2-player) opponent
-     * (CR 701.30): both players reveal the top card of their library, the clashing player
-     * wins if their revealed card's mana value is strictly greater than the opponent's (CR 701.30d), and then
-     * each player's clash is an {@link ActionEvent.Clashed} that "whenever you clash" abilities trigger on.
+     * Performs a clash between {@code clashingPlayerId} and the opponent they chose to clash with ("clash with an
+     * opponent" means "choose an opponent; you and that opponent each clash", CR 701.30b), or {@code null} for none:
+     * both players reveal the top card of their library, and a player wins if their revealed card's mana value is
+     * higher than the other's (CR 701.30d). Each player's clash is then an {@link ActionEvent.Clashed} that "whenever
+     * you clash" abilities trigger on.
      *
-     * <p>The caller subsequently offers each player a top-or-bottom placement choice for their
-     * revealed card before continuing the clash effect.
-     * The "whenever you clash" triggers fire after the clash ends. Invoked from a clash-source card's
-     * effect resolution (see {@code ClashEffect}) or a test.
+     * <p>The caller subsequently offers each player a top-or-bottom placement choice for their revealed card before
+     * continuing the clash effect. Invoked from a clash-source card's effect resolution (see {@code ClashEffect}) or a
+     * test.
      *
-     * @return {@code true} if the clashing player won the clash (their revealed card had a strictly
-     *         greater mana value), so callers can apply an "if you won" reward.
-     */
-    public boolean performClash(GameData gameData, UUID clashingPlayerId) {
-        return performClash(gameData, clashingPlayerId, gameData.orderedPlayerIds.stream()
-                .filter(id -> !id.equals(clashingPlayerId))
-                .findFirst().orElse(null));
-    }
-
-    /**
-     * {@link #performClash(GameData, UUID)} with the opponent {@code clashingPlayerId} chose to clash with ("clash with
-     * an opponent" means "choose an opponent; you and that opponent each clash", CR 701.30b), or {@code null} for none.
+     * @return {@code true} if the clashing player won the clash, so callers can apply an "if you won" reward.
      */
     public boolean performClash(GameData gameData, UUID clashingPlayerId, UUID opponentId) {
         Card clashingCard = topCard(gameData, clashingPlayerId);
@@ -65,20 +54,20 @@ public class ClashSupport {
         clashLog.text(".");
         gameLogService.append(gameData, clashLog.build());
 
-        // CR 701.30d: win if your revealed card's mana value is higher than each other revealed card.
+        // CR 701.30d: a player wins if their revealed card's mana value is higher than each other revealed card.
         boolean won = clashingCard != null
                 && (opponentCard == null || clashingCard.getManaValue() > opponentCard.getManaValue());
+        boolean opponentWon = opponentId != null && opponentCard != null
+                && (clashingCard == null || opponentCard.getManaValue() > clashingCard.getManaValue());
 
-        String outcome = won
-                ? gameData.playerIdToName.get(clashingPlayerId) + " won the clash."
+        String outcome = won ? gameData.playerIdToName.get(clashingPlayerId) + " won the clash."
+                : opponentWon ? gameData.playerIdToName.get(opponentId) + " won the clash."
                 : "No one won the clash.";
         gameLogService.append(gameData, GameLog.text(outcome));
         log.info("Game {} - {} clashes (won={})", gameData.id, clashingPlayerId, won);
 
         gameData.rulesEvents.occur(new ActionEvent.Clashed(clashingPlayerId, won));
         if (opponentId != null) {
-            boolean opponentWon = opponentCard != null
-                    && (clashingCard == null || opponentCard.getManaValue() > clashingCard.getManaValue());
             gameData.rulesEvents.occur(new ActionEvent.Clashed(opponentId, opponentWon));
         }
         return won;

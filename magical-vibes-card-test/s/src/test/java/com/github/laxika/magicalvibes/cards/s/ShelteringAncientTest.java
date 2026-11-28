@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -180,6 +181,47 @@ class ShelteringAncientTest extends BaseCardTest {
 
         assertThat(raptor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(other.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ancient);
+    }
+
+    @Test
+    @DisplayName("With two opponents, each counter can go on a creature of either opponent")
+    void countersCanGoOnCreaturesOfDifferentOpponents() {
+        Player player3 = harness.addOpponent("Charlie");
+        Permanent ancient = harness.addToBattlefieldAndReturn(player1, new ShelteringAncient());
+        ancient.setCounterCount(CounterType.AGE, 1);
+        Permanent secondSeatCreature = harness.addToBattlefieldAndReturn(player2, new BorealCentaur());
+        Permanent thirdSeatCreature = harness.addToBattlefieldAndReturn(player3, new BorealCentaur());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(secondSeatCreature.getId(), thirdSeatCreature.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(thirdSeatCreature.getId()));
+        choice = gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(secondSeatCreature.getId(), thirdSeatCreature.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(secondSeatCreature.getId()));
+
+        assertThat(thirdSeatCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(secondSeatCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ancient);
+    }
+
+    @Test
+    @DisplayName("A creature of an opponent other than the first can pay the upkeep")
+    void creatureOfALaterOpponentPaysTheUpkeep() {
+        Player player3 = harness.addOpponent("Charlie");
+        Permanent ancient = harness.addToBattlefieldAndReturn(player1, new ShelteringAncient());
+        Permanent thirdSeatCreature = harness.addToBattlefieldAndReturn(player3, new BorealCentaur());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(thirdSeatCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(ancient);
     }
 }

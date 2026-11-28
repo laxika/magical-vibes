@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Peek;
+import com.github.laxika.magicalvibes.cards.t.ThoughtReflection;
 import com.github.laxika.magicalvibes.cards.t.TurnBurn;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -23,7 +24,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NotionThief.class, Forest.class, GrizzlyBears.class, Island.class, Peek.class, TurnBurn.class})
+@CardUsed({NotionThief.class, Forest.class, GrizzlyBears.class, Island.class, Peek.class, TurnBurn.class,
+        ThoughtReflection.class})
 class NotionThiefTest extends BaseCardTest {
 
     @Test
@@ -97,6 +99,25 @@ class NotionThiefTest extends BaseCardTest {
 
         harness.assertInHand(player1, "Island");
     }
+    @Test
+    @DisplayName("The controller's own draw replacements apply to the draw Notion Thief gives them")
+    void controllersDrawReplacementsApplyToTheStolenDraw() {
+        harness.addToBattlefield(player1, new NotionThief());
+        harness.addToBattlefield(player1, new ThoughtReflection());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Island(), new Island(), new Island()));
+        harness.setLibrary(player2, List.of(new Forest()));
+        harness.setHand(player2, List.of(new Peek()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertNotInHand(player2, "Forest");
+    }
+
     @Test
     @DisplayName("Opposing Notion Thieves return an extra draw to the original player")
     void opposingThievesReturnDrawToOriginalPlayer() {

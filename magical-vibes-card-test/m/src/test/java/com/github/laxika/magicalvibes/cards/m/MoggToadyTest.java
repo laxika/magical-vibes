@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -9,6 +11,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -169,5 +172,50 @@ class MoggToadyTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("With two opponents, it can attack only the one it has more creatures than")
+    void attackIsJudgedForEachDefendingPlayer() {
+        Player player3 = harness.addOpponent("Charlie");
+        addCreatureReady(player1, new MoggToady());
+        addCreatureReady(player1, new Mossdog());
+        addCreatureReady(player3, new Mossdog());
+        addCreatureReady(player3, new Mossdog());
+        addCreatureReady(player3, new Mossdog());
+        prepareAttack(player1);
+
+        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0), Map.of(0, player3.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> gs.declareAttackers(gd, player1, List.of(0), Map.of(0, player2.getId())));
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getAttackTarget())
+                .isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("With two opponents, it can't block when the attacking player controls more creatures")
+    void blockIsJudgedAgainstTheAttackingPlayer() {
+        Player player3 = harness.addOpponent("Charlie");
+        addCreatureReady(player3, new Mossdog());
+        addCreatureReady(player3, new Mossdog());
+        addCreatureReady(player3, new Mossdog());
+        addCreatureReady(player1, new MoggToady());
+        addCreatureReady(player1, new Mossdog());
+        prepareAttack(player3);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> gs.declareAttackers(gd, player3, List.of(0), Map.of(0, player1.getId())));
+        prepareDeclareBlockers(player3);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player1,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    private void prepareAttack(Player activePlayer) {
+        harness.forceActivePlayer(activePlayer);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
     }
 }

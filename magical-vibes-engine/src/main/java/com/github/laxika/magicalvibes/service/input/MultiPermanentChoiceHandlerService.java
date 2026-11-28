@@ -2026,11 +2026,7 @@ public class MultiPermanentChoiceHandlerService {
         Permanent target = permanentIds.isEmpty() ? null
                 : gameQueryService.findPermanentById(gameData, permanentIds.getFirst());
         if (target != null && gameQueryService.isCreature(gameData, target)
-                && !gameQueryService.cantHaveCounters(gameData, target)
-                && (context.counterType() != CounterType.PLUS_ONE_PLUS_ONE
-                || !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, target))
-                && (context.counterType() != CounterType.MINUS_ONE_MINUS_ONE
-                || !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, target))
+                && permanentCounterSupport.canReceiveCounter(gameData, target, context.counterType())
                 && gameData.pendingEffectResolutionEntry != null) {
             StackEntry placementEntry = new StackEntry(gameData.pendingEffectResolutionEntry);
             placementEntry.setControllerId(context.placingPlayerId());
@@ -2040,13 +2036,8 @@ public class MultiPermanentChoiceHandlerService {
 
         int remainingCount = context.remainingCount() - 1;
         if (remainingCount > 0) {
-            UUID opponentId = gameQueryService.getOpponentId(gameData, context.placingPlayerId());
-            List<UUID> candidates = destructionSupport.collectCreatureIds(gameData, opponentId,
-                    permanent -> !gameQueryService.cantHaveCounters(gameData, permanent)
-                            && (context.counterType() != CounterType.PLUS_ONE_PLUS_ONE
-                            || !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, permanent))
-                            && (context.counterType() != CounterType.MINUS_ONE_MINUS_ONE
-                            || !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, permanent)));
+            List<UUID> candidates = permanentCounterSupport.opponentCreaturesThatCanReceiveCounter(
+                    gameData, context.placingPlayerId(), context.counterType());
             if (!candidates.isEmpty()) {
                 playerInputService.beginMultiPermanentChoice(gameData, context.placingPlayerId(), candidates, 1,
                         new MultiPermanentChoiceContext.OpponentCreatureCounterPlacement(

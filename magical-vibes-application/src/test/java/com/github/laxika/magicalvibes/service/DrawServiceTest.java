@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.model.PendingCardDraw;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -132,7 +133,23 @@ class DrawServiceTest {
         sut.resolveDrawCards(gd, player2Id, 2);
 
         assertThat(gd.pendingMayAbilities).hasSize(1);
-        assertThat(gd.pendingCardDraws).containsExactly(player1Id, player2Id, player2Id);
+        assertThat(gd.pendingCardDraws).containsExactly(PendingCardDraw.single(player1Id),
+                PendingCardDraw.instruction(player2Id, 2, false));
+    }
+
+    @Test
+    @DisplayName("A draw instruction that waited behind a choice is performed whole when the draws resume")
+    void waitingInstructionIsPerformedWhenResumed() {
+        Card first = createCard("First", CardType.CREATURE);
+        Card second = createCard("Second", CardType.CREATURE);
+        gd.playerDecks.put(player2Id, new ArrayList<>(List.of(first, second)));
+        gd.playerHands.put(player2Id, new ArrayList<>());
+        gd.pendingCardDraws.add(PendingCardDraw.instruction(player2Id, 2, false));
+
+        sut.resumePendingCardDraws(gd);
+
+        assertThat(gd.playerHands.get(player2Id)).containsExactly(first, second);
+        assertThat(gd.pendingCardDraws).isEmpty();
     }
 
     @Test

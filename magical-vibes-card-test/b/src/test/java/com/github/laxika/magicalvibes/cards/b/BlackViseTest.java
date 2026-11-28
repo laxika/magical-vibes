@@ -5,6 +5,9 @@ import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IvoryMask;
 import com.github.laxika.magicalvibes.cards.m.MizziumTransreliquat;
+import com.github.laxika.magicalvibes.cards.o.OpenTheVaults;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.t.Tinker;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -19,7 +22,8 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BlackVise.class, GrizzlyBears.class, AvariceTotem.class, IvoryMask.class, Disenchant.class, MizziumTransreliquat.class})
+@CardUsed({BlackVise.class, GrizzlyBears.class, AvariceTotem.class, IvoryMask.class, Disenchant.class, MizziumTransreliquat.class,
+        OpenTheVaults.class, Tinker.class, Ornithopter.class})
 class BlackViseTest extends BaseCardTest {
 
     private List<Card> bears(int count) {
@@ -48,6 +52,45 @@ class BlackViseTest extends BaseCardTest {
 
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.validPlayerIds()).containsExactlyInAnyOrder(player2.getId(), player3.getId());
+        harness.handlePermanentChosen(player1, player3.getId());
+
+        assertThat(findPermanent(player1, "Black Vise").getRememberedTargetPlayerId()).isEqualTo(player3.getId());
+    }
+
+    @Test
+    @DisplayName("With two opponents, a Black Vise returned from a graveyard by an effect asks for the opponent")
+    void returnedByAnEffectChoosesTheOpponent() {
+        Player player3 = harness.addOpponent("Charlie");
+        harness.setGraveyard(player1, List.of(new BlackVise()));
+        harness.setHand(player1, List.of(new OpenTheVaults()));
+        harness.addMana(player1, ManaColor.WHITE, 6);
+
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.validPlayerIds()).containsExactlyInAnyOrder(player2.getId(), player3.getId());
+        harness.handlePermanentChosen(player1, player3.getId());
+
+        assertThat(findPermanent(player1, "Black Vise").getRememberedTargetPlayerId()).isEqualTo(player3.getId());
+    }
+
+    @Test
+    @DisplayName("With two opponents, a Black Vise put onto the battlefield by a library search asks for the opponent")
+    void putByASearchChoosesTheOpponent() {
+        Player player3 = harness.addOpponent("Charlie");
+        var ornithopter = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        harness.setHand(player1, List.of(new Tinker()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castSorceryWithSacrifice(player1, 0, ornithopter.getId());
+        harness.setLibrary(player1, List.of(new BlackVise()));
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
 
         PendingInteraction.PermanentChoice choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice.playerId()).isEqualTo(player1.getId());

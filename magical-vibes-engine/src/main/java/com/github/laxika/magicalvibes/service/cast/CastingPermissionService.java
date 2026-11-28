@@ -432,26 +432,26 @@ public class CastingPermissionService {
         return false;
     }
 
-    /** Whether a zone-bound restriction stops {@code playerId} playing a land from their hand (Experimental Frenzy). */
+    /**
+     * Whether a zone-bound restriction stops {@code playerId} playing a land from the hand they play from now: their
+     * own (Experimental Frenzy's "your hand"), or another player's while they play from it (Sen Triplets), which a
+     * restriction on their own hand doesn't cover.
+     */
     public boolean isLandPlayFromHandRestricted(GameData gameData, UUID playerId) {
-        return isLandPlayFromZoneRestricted(gameData, playerId, Zone.HAND);
-    }
-
-    /** Whether a zone-bound restriction stops {@code playerId} casting spells from their hand (Experimental Frenzy). */
-    public boolean isSpellCastingFromHandRestricted(GameData gameData, UUID playerId) {
+        boolean ownHand = !gameData.isForeignHandPlay(playerId);
         return gameQueryService.isPlayerRestricted(gameData, playerId,
-                restriction -> restriction.stopsSpellsFrom(Zone.HAND));
+                restriction -> restriction.isZoneBound() && restriction.stopsLandsFrom(Zone.HAND, ownHand));
     }
 
     /**
-     * Whether a resolved or static restriction bound to some zones stops {@code playerId} playing a land from
-     * {@code zone} ("they can't play cards from their hand", Memory Vessel; "other players can't play lands … from
-     * their graveyards", Shaman's Trance; "your opponents can't play land cards from graveyards", Tomik). A "can't play
-     * lands" restriction from every zone is asked apart.
+     * Whether a zone-bound restriction stops {@code playerId} casting spells from the hand they cast from now: their
+     * own (Experimental Frenzy's "your hand"), or another player's while they cast from it (Sen Triplets), which
+     * "anywhere other than their hands" covers (Avatar's Wrath, Drannith Magistrate) and "your hand" doesn't.
      */
-    private boolean isLandPlayFromZoneRestricted(GameData gameData, UUID playerId, Zone zone) {
+    public boolean isSpellCastingFromHandRestricted(GameData gameData, UUID playerId) {
+        boolean ownHand = !gameData.isForeignHandPlay(playerId);
         return gameQueryService.isPlayerRestricted(gameData, playerId,
-                restriction -> restriction.isZoneBound() && restriction.stopsLandsFrom(zone));
+                restriction -> restriction.stopsSpellsFrom(Zone.HAND, ownHand));
     }
 
     private boolean hasActiveDampingEngine(GameData gameData, UUID playerId) {
@@ -1513,8 +1513,14 @@ public class CastingPermissionService {
                 card, permission.landFilter(), sourceCardId, gameData, playerId));
     }
 
+    /**
+     * Whether a resolved or static restriction bound to some zones stops {@code playerId} playing a land from their
+     * own graveyard ("other players can't play lands … from their graveyards", Shaman's Trance; "your opponents can't
+     * play land cards from graveyards", Tomik). A "can't play lands" restriction from every zone is asked apart.
+     */
     public boolean isLandPlayFromGraveyardRestricted(GameData gameData, UUID playerId) {
-        return isLandPlayFromZoneRestricted(gameData, playerId, Zone.GRAVEYARD);
+        return gameQueryService.isPlayerRestricted(gameData, playerId,
+                restriction -> restriction.isZoneBound() && restriction.stopsLandsFrom(Zone.GRAVEYARD));
     }
 
     public boolean canPlayLandsFromTopOfLibrary(GameData gameData, UUID playerId) {

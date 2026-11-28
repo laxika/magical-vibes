@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.SenTripletsUpkeepEffect;
+import com.github.laxika.magicalvibes.cards.d.DrannithMagistrate;
 import com.github.laxika.magicalvibes.cards.e.Evangelize;
+import com.github.laxika.magicalvibes.cards.e.ExperimentalFrenzy;
 import com.github.laxika.magicalvibes.cards.j.JungleBasin;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.cards.v.VolcanicOffering;
@@ -29,7 +31,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({SenTriplets.class, Shock.class, ProdigalPyromancer.class, Forest.class, GrizzlyBears.class,
-        Evangelize.class, VolcanicOffering.class, JungleBasin.class})
+        Evangelize.class, VolcanicOffering.class, JungleBasin.class, ExperimentalFrenzy.class,
+        DrannithMagistrate.class})
 class SenTripletsTest extends BaseCardTest {
 
     /** Resolve Sen Triplets' upkeep trigger with {@code target} chosen; play1 controls Sen. */
@@ -145,6 +148,50 @@ class SenTripletsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertLife(player2, 18);
         harness.assertInGraveyard(player2, "Shock");
+    }
+
+    @Test
+    @DisplayName("Experimental Frenzy's \"your hand\" doesn't stop a spell cast from the opponent's hand")
+    void experimentalFrenzyDoesNotStopCastingFromOpponentsHand() {
+        harness.addToBattlefield(player1, new ExperimentalFrenzy());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new Shock()));
+        lockOpponent(player2);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        gs.playFromHandOf(gd, player1, player2.getId(), () -> harness.castInstant(player1, 0, player2.getId()));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Experimental Frenzy's \"your hand\" doesn't stop a land played from the opponent's hand")
+    void experimentalFrenzyDoesNotStopPlayingLandFromOpponentsHand() {
+        harness.addToBattlefield(player1, new ExperimentalFrenzy());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new Forest()));
+        lockOpponent(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        gs.playFromHandOf(gd, player1, player2.getId(), () -> harness.playLand(player1, 0));
+
+        harness.assertOnBattlefield(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Drannith Magistrate's \"anywhere other than their hands\" stops a spell cast from another player's hand")
+    void drannithMagistrateStopsCastingFromOpponentsHand() {
+        harness.addToBattlefield(player2, new DrannithMagistrate());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new Shock()));
+        lockOpponent(player2);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> gs.playFromHandOf(gd, player1, player2.getId(),
+                () -> harness.castInstant(player1, 0, player2.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test

@@ -419,7 +419,8 @@ public class ResolutionCostPaymentService {
             case FlipCoinsCost ignored -> true;
             case OpponentCreatesTokensCost ignored -> !opponentsForPayment(gameData, payerId, ignored).isEmpty();
             case PutCounterOnOpponentCreatureCost counters ->
-                    !opponentCreaturesForCounter(gameData, payerId, counters.counterType()).isEmpty();
+                    !permanentCounterSupport.opponentCreaturesThatCanReceiveCounter(gameData, payerId,
+                            counters.counterType()).isEmpty();
             case DrawCardsCost ignored -> !drawService.isDrawPrevented(gameData, payerId);
             case ExileTopCardOfLibraryCost exile -> libraryExileSupport.hasAtLeast(gameData, payerId, exile.count());
             case PutCardsFromSingleGraveyardOnBottomOfLibraryCost bottom -> singleGraveyardPayments(gameData, bottom)
@@ -921,7 +922,8 @@ public class ResolutionCostPaymentService {
             case FlipCoinsCost flip -> flipCoins(gameData, payer, flip, payment);
             case OpponentCreatesTokensCost tokens -> payToOpponents(gameData, payerId, tokens, tokens.count(), payment);
             case PutCounterOnOpponentCreatureCost counters -> {
-                List<UUID> candidates = opponentCreaturesForCounter(gameData, payerId, counters.counterType());
+                List<UUID> candidates = permanentCounterSupport.opponentCreaturesThatCanReceiveCounter(
+                        gameData, payerId, counters.counterType());
                 if (candidates.isEmpty()) {
                     yield Outcome.NOT_PAID;
                 }
@@ -1194,23 +1196,6 @@ public class ResolutionCostPaymentService {
         boolean stopped = coinFlipService.answerChoosingResultsFirst(gameData, pay,
                 new GameData.MayAnswerReplay(payer, payment.answering(), true));
         return stopped ? Outcome.ASKING : afterImmediatePayment(gameData);
-    }
-
-    /** The creatures {@code payerId}'s opponent controls that can get a counter of {@code kind}. */
-    private List<UUID> opponentCreaturesForCounter(GameData gameData, UUID payerId, CounterType kind) {
-        UUID opponentId = gameQueryService.getOpponentId(gameData, payerId);
-        if (opponentId == null) {
-            return List.of();
-        }
-        return gameData.playerBattlefields.getOrDefault(opponentId, List.of()).stream()
-                .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
-                .filter(permanent -> !gameQueryService.cantHaveCounters(gameData, permanent))
-                .filter(permanent -> kind != CounterType.MINUS_ONE_MINUS_ONE
-                        || !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, permanent))
-                .filter(permanent -> kind != CounterType.PLUS_ONE_PLUS_ONE
-                        || !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, permanent))
-                .map(Permanent::getId)
-                .toList();
     }
 
     /** How many payments of {@code bottom}'s size the graveyards hold, each from one graveyard. */

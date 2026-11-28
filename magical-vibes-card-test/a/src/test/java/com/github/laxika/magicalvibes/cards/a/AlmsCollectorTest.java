@@ -202,6 +202,39 @@ class AlmsCollectorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A two-card draw that waits behind another draw choice still lets its drawer choose between Alms Collectors")
+    void waitingDrawInstructionStillChoosesAmongCollectors() {
+        Player player3 = harness.addOpponent("Charlie");
+        Player player4 = harness.addOpponent("Dana");
+        harness.addToBattlefield(player3, new AlmsCollector());
+        harness.addToBattlefield(player4, new AlmsCollector());
+        for (Player player : List.of(player1, player2, player3, player4)) {
+            harness.setHand(player, List.of());
+            harness.setLibrary(player, List.of(new Forest(), new Forest(), new Forest()));
+        }
+
+        harness.inMutationScope(() -> {
+            harness.getDrawService().resolveDrawCards(gd, player1.getId(), 2);
+            harness.getDrawService().resolveDrawCards(gd, player2.getId(), 2);
+        });
+        PendingInteraction.ColorChoice first = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(first.playerId()).isEqualTo(player1.getId());
+        harness.handleListChoice(player1, first.options().stream()
+                .filter(option -> option.contains("Charlie")).findFirst().orElseThrow());
+
+        PendingInteraction.ColorChoice second = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(second).isNotNull();
+        assertThat(second.playerId()).isEqualTo(player2.getId());
+        harness.handleListChoice(player2, second.options().stream()
+                .filter(option -> option.contains("Dana")).findFirst().orElseThrow());
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player3.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player4.getId())).hasSize(1);
+    }
+
+    @Test
     @DisplayName("A face-down Alms Collector has no abilities, so an opponent's two-card draw is not replaced")
     void faceDownCollectorDoesNotReplaceDraws() {
         harness.addToBattlefieldAndReturn(player1, new AlmsCollector()).setFaceDown(2, 2, Set.of(CardType.CREATURE));

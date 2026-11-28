@@ -900,7 +900,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
                                 test.player1.getId(), 2)),
                 collected("you clash", "youClash", Triggers::youClash,
                         (test, collection) -> bean(com.github.laxika.magicalvibes.service.effect.normalfx.ClashSupport.class)
-                                .performClash(test.gd, test.player1.getId())));
+                                .performClash(test.gd, test.player1.getId(), test.player2.getId())));
     }
 
     /** The draw, discard, cycling, scry, search, shuffle and tap-for-mana triggers the first lists don't have. */

@@ -55,7 +55,7 @@ detail, is in `git show 3b0d60d42d4:effect-cleanup-queues.md` under "Defect queu
 | CB Combat | CB-1 | CB-1 done 2026-11-27 (M11's block half left: it needs multi-defender combat damage) |
 | PP Perpetual changes | PP-1 | PP-1 done 2026-11-27 (L8, O47 left; O41's hand half left) |
 | PL Each player chooses, then all act | PL-1 | PL-1 done 2026-11-27 (Gilded Ambusher's damage reading for the owner) |
-| MC Single cards | MC-1, MC-2 | MC-1 done 2026-11-27 (O13's direct counter removals left; O81 for the owner); MC-2a, MC-2b done 2026-11-28 (MC-2b: N62's stack half is N92) |
+| MC Single cards | MC-1, MC-2 | MC-1 done 2026-11-27 (O13's direct counter removals left; O81 for the owner); MC-2a, MC-2b, MC-2c done 2026-11-28 (MC-2b: N62's stack half is N92; MC-2c: N50 dropped) |
 | AI Hard / easy AI | AI-1, AI-2 | AI-1, AI-2 done 2026-11-27 |
 | UI Frontend | UI-1 | UI-1 done 2026-11-27 |
 | LG, CL Logs and non-rules cleanup | LG-1, CL-1 | CL-1, LG-1 done 2026-11-27 |
@@ -1602,6 +1602,16 @@ New line N93 (seen in MC-2b): a masked creature (Illusionary Mask) that deals no
 face up first and deals it as the face-down 2/2: only `CombatDamageService`'s combatant pass flips a masked creature that would
 deal damage, `DamageSupport` flips only the one dealt damage. Of the code, unverified by a test.
 
+New line N94 (seen in MC-2c): a draw instruction that waited behind a draw choice inside a modified event (the second of Alms
+Collector's two draws, queued while the first's prompt is open) is resumed with `GameData.drawEventDepth` back at 0, so its
+draw counts as unreplaced, "drawn by the instruction" for the E4/E6 readers (Pact Weapon, Jace, Mirror Mage); of the code,
+unverified by a test.
+
+New line N95 (seen in MC-2c): the Notion Thieves already applied to a draw (`GameData.extraDrawRedirectsAppliedToCurrentDraw`)
+are kept only while the new drawer's replacement chain runs synchronously; if that chain pauses (Abundance's may, a dredge
+choice, Blood Scrivener's sacrifice question) its resumption has forgotten them, so an already applied Thief can redirect the
+same draw again (CR 614.5). Of the code, rare.
+
 Outcome:
 
 MC-2a: done 2026-11-28. Fixed: N19, N20, N21, N22, N23. N19: the AI's single target of a triggered ability
@@ -1638,6 +1648,27 @@ twoCardOffer`, `withFaceDownPicksAtRandom` shared); its prompt already redacted 
 always sent, a card exiled face down as the "Face-down card" placeholder, and the client's guess from the graveyards is gone
 (`game-choice.service.ts`, a pool card outside the graveyards is labelled Exile; spec added). New lines N92, N93. No effect class
 added or deleted, so no ledger or ratchet change; no `CONVERSION_VERSION` change.
+
+MC-2c: done 2026-11-28. Fixed, each with a test that failed first: N49, N51, N65, N66, N67, N68, N69, N79; dropped: N50. N68:
+Sphinx's Tutelage's "target opponent" is a target (`MillOpponentRepeatOnSharedColorEffect` declares a player target, the card
+an opponent filter), so with two opponents its controller chooses and a hexproof opponent can't be chosen (CR 603.3d). N69:
+Monstrous Hound's, Mogg Toady's and Goblin Goon's comparison is with the defending player of each possible attack and, for a
+block, with the attacking player (CR 508.5, 802.2a, 506.2; their Oracle text). N49: Sheltering Ancient's counters can go on any
+opponent's creatures, chosen per age counter (its 2006-07-15 ruling, CR 702.24a; one finder,
+`PermanentCounterSupport.opponentCreaturesThatCanReceiveCounter`). N51: the clash log names the opponent when the opponent won
+(CR 701.30d), and the first-seat `performClash(gameData, player)` overload, used only by tests, is gone. N66: Words of Worship's
+and Wilding's replacements take fixed choice ids like Wind and Waste, so the drawer still orders them after their source left
+(CR 616.1). N67: the draw a Notion Thief gives its controller goes through that player's own draw replacements, the extra-draw
+ones not yet applied included (CR 614.5, 616.1f; `GameData.extraDrawRedirectsAppliedToCurrentDraw`). N65: a draw instruction
+that starts while a draw choice is open waits whole (`PendingCardDraw`, now the element of `GameData.pendingCardDraws`), so its
+Quantum Riddler and Alms Collector replacements apply as it is performed and its drawer chooses between collectors of different
+opponents (CR 616.1, Alms Collector's ruling). N79: the hand readers know when the hand is another player's (Sen Triplets'
+foreign-hand play): Experimental Frenzy's "your hand" doesn't stop it, and Drannith Magistrate is now "anywhere other than their
+hands" (`fromAnywhereBut(HAND).ofTheirOwn()`, like Avatar's Wrath), which does; the one-card
+`PlayersCantCastSpellsFromZonesEffect(zones, boolean)` constructor is gone. N50 dropped: a noncreature permanent with
+`ChooseOpponentOnEnterEffect` put onto the battlefield by an effect already asks (the entry batch's as-enters pass); pinned with
+three-player Black Vise tests for Open the Vaults and Tinker. New lines N94, N95. No effect class added or deleted, so no ledger
+or ratchet change; no `CONVERSION_VERSION` change.
 
 ### AI. Hard / easy AI (`magical-vibes-ai`)
 

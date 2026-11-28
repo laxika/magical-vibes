@@ -137,7 +137,7 @@ class InputCompletionServiceTest {
     void resumesPendingDrawsBeforeTriggerChoicesAndPriority() {
         DrawService drawService = mock(DrawService.class);
         ReflectionTestUtils.setField(service, "drawService", drawService);
-        gameData.pendingCardDraws.add(playerId);
+        gameData.pendingCardDraws.add(com.github.laxika.magicalvibes.model.PendingCardDraw.single(playerId));
         doAnswer(invocation -> {
             gameData.pendingCardDraws.clear();
             return null;
