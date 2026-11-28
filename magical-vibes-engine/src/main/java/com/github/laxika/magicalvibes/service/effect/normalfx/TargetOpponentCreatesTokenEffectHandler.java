@@ -52,6 +52,10 @@ public class TargetOpponentCreatesTokenEffectHandler implements NormalEffectHand
         if (controllerId == null) {
             return;
         }
+        if (e.gift()) {
+            // The gift is given even if no token is created (Jolly Gerbils' ruling).
+            ActionEvents.giftAbilityResolved(gameData, entry);
+        }
         UUID opponentId;
         if (e.creator() != null) {
             opponentId = subjectResolutionService.player(gameData, entry, effect, e.creator());
@@ -87,8 +91,5 @@ public class TargetOpponentCreatesTokenEffectHandler implements NormalEffectHand
         List<UUID> createdIds = permanentControlSupport.applyCreateToken(gameData, opponentId, e.token(),
                 amount, entry.getCard().getSetCode(), power, toughness);
         entry.getCreatedPermanentIds().addAll(createdIds);
-        if (e.gift()) {
-            ActionEvents.giftGiven(gameData, controllerId);
-        }
     }
 }

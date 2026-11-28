@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.condition.GiftPromised;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.EachOtherPlayerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GiftEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
@@ -31,12 +31,12 @@ public class ConsumedByGreed extends Card {
         CardTypePredicate creatureCards = new CardTypePredicate(CardType.CREATURE);
 
         addStaticEffect(new GiftEffect(1));
+        // The gift goes to the chosen opponent, not to the target (CR 702.174a): with two players, the opponent.
+        addSpellEffect(new ConditionalEffect(new GiftPromised(), new EachOtherPlayerDrawsCardEffect(1)));
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addSpellEffect(new ConditionalEffect(new GiftPromised(),
-                new DrawCardEffect(1, Subjects.targetPlayer())))
-                .addSpellEffect(new SacrificePermanentsEffect(
+        )).addSpellEffect(new SacrificePermanentsEffect(
                         1,
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),

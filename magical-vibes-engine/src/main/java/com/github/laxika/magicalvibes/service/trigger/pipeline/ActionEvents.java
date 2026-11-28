@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.VotingResult;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.rules.ActionEvent;
@@ -43,9 +44,26 @@ public final class ActionEvents {
         gameData.rulesEvents.occur(new ActionEvent.Sacrificed(sacrificingPlayerId));
     }
 
-    /** {@code giverId} gave a gift. */
+    /**
+     * {@code giverId} gave a gift (CR 702.174c): an instant or sorcery spell of theirs whose gift was promised resolves
+     * (a copy of it too, since the copy's gift is promised), or the gift triggered ability of a permanent of theirs
+     * resolves. The gift is given whether or not the chosen player gets it.
+     */
     public static void giftGiven(GameData gameData, UUID giverId) {
         gameData.rulesEvents.occur(new ActionEvent.GiftGiven(giverId));
+    }
+
+    /**
+     * {@code entry}, a permanent's gift triggered ability, gave its controller's gift as it resolved. An instant or
+     * sorcery spell's gift is given as the spell resolves ({@code StackResolutionService}), so for one this emits
+     * nothing.
+     */
+    public static void giftAbilityResolved(GameData gameData, StackEntry entry) {
+        if (entry.getEntryType() == StackEntryType.INSTANT_SPELL
+                || entry.getEntryType() == StackEntryType.SORCERY_SPELL) {
+            return;
+        }
+        giftGiven(gameData, entry.getControllerId());
     }
 
     /**

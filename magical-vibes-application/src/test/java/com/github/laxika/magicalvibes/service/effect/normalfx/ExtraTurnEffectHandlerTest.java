@@ -8,9 +8,11 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ExtraTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,6 +32,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ExtraTurnEffectHandlerTest {
@@ -39,6 +42,7 @@ class ExtraTurnEffectHandlerTest {
     @Mock private AuraAttachmentService auraAttachmentService;
     @Mock private TurnCleanupService turnCleanupService;
     @Mock private ExileService exileService;
+    @Mock private SubjectResolutionService subjectResolutionService;
     @InjectMocks
     private TurnSupport turnSupport;
     private GameData gd;
@@ -66,7 +70,7 @@ class ExtraTurnEffectHandlerTest {
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        extraTurnEffectHandler = new ExtraTurnEffectHandler(turnSupport, gameLogService);
+        extraTurnEffectHandler = new ExtraTurnEffectHandler(turnSupport, gameLogService, subjectResolutionService);
 
     }
 
@@ -184,5 +188,20 @@ class ExtraTurnEffectHandlerTest {
                 extraTurnEffectHandler.resolve(gd, entry, effect);
 
                 verify(gameLogService).append(eq(gd), eq(GameLog.text("Player2 takes 2 extra turns after this one.")));
+            }
+
+            @Test
+            @DisplayName("Grants the extra turn to each player an untargeted subject names")
+            void grantsExtraTurnToUntargetedPlayers() {
+                Card card = createCard("Perch Protection", CardType.INSTANT);
+                ExtraTurnEffect effect = new ExtraTurnEffect(1, Subjects.eachOpponent());
+                StackEntry entry = createUntargetedEntry(card, player1Id, List.of(effect));
+                when(subjectResolutionService.players(gd, entry, effect, Subjects.eachOpponent()))
+                        .thenReturn(List.of(player2Id));
+
+                extraTurnEffectHandler.resolve(gd, entry, effect);
+
+                assertThat(gd.extraTurns).containsExactly(player2Id);
+                verify(gameLogService).append(eq(gd), eq(GameLog.text("Player2 takes 1 extra turn after this one.")));
             }
 }

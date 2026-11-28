@@ -67,8 +67,7 @@ public class EachOtherPlayerDrawsCardEffectHandler implements NormalEffectHandle
         if (entry.isGiftPromised()
                 && entry.getCard().getStaticEffects()
                 .stream().anyMatch(GiftEffect.class::isInstance)) {
-            ActionEvents.giftGiven(
-                    gameData, entry.getControllerId());
+            ActionEvents.giftAbilityResolved(gameData, entry);
         }
     }
 }

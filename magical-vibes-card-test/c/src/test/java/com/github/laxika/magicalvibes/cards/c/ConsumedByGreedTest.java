@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
+import com.github.laxika.magicalvibes.cards.l.LeylineOfSanctity;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ConsumedByGreed.class, GrizzlyBears.class, HillGiant.class, HolyDay.class})
+@CardUsed({ConsumedByGreed.class, GrizzlyBears.class, HillGiant.class, HolyDay.class, LeylineOfSanctity.class})
 class ConsumedByGreedTest extends BaseCardTest {
 
     @Test
@@ -89,6 +90,7 @@ class ConsumedByGreedTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The opponent chooses which of the creatures tied for greatest power to sacrifice")
     void opponentChoosesOneOfTheCreaturesTiedForGreatestPower() {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player2, new HillGiant());
@@ -109,6 +111,7 @@ class ConsumedByGreedTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The gift returns a creature card even when the opponent has no creatures")
     void giftReturnsCreatureEvenWhenOpponentHasNoCreatures() {
         Card returnedCreature = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(returnedCreature));
@@ -125,6 +128,7 @@ class ConsumedByGreedTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A missing graveyard target doesn't stop the gift or the sacrifice")
     void missingGraveyardTargetDoesNotPreventGiftOrSacrifice() {
         Card returnedCreature = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(returnedCreature));
@@ -144,6 +148,7 @@ class ConsumedByGreedTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A promised gift can't target a card in an opponent's graveyard")
     void promisedGiftCannotTargetOpponentsGraveyard() {
         Card creature = new GrizzlyBears();
         harness.setGraveyard(player2, List.of(creature));
@@ -155,11 +160,31 @@ class ConsumedByGreedTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can't target its caster for the sacrifice")
     void cannotTargetTheCasterForSacrifice() {
         prepareSpell();
 
         assertThatThrownBy(() -> harness.castInstantWithGift(player1, 0, null,
                 List.of(player1.getId()), false))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The gift is given to the opponent even after the opponent target becomes illegal")
+    void giftIsGivenAfterOpponentTargetBecomesIllegal() {
+        Card returnedCreature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(returnedCreature));
+        harness.setLibrary(player2, List.of(new HolyDay()));
+        harness.addToBattlefield(player2, new HillGiant());
+        prepareSpell();
+
+        harness.castInstantWithGift(player1, 0, null,
+                List.of(player2.getId(), returnedCreature.getId()), true);
+        harness.addToBattlefield(player2, new LeylineOfSanctity());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Holy Day");
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 }

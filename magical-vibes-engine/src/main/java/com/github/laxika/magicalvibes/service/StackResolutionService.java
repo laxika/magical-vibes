@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.model.effect.GiftEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -1501,6 +1502,7 @@ public class StackResolutionService {
             if (entry.isExileAndReturnToHandAtNextEndStep()) {
                 entry.setExileInsteadOfGraveyard(true);
             }
+            giveSpellGiftIfPromised(gameData, entry);
             effectResolutionService.resolveEffects(gameData, entry);
 
             // A spell that pauses for input must remain undisposed until its effects finish.
@@ -1602,6 +1604,18 @@ public class StackResolutionService {
         }
         visualCueService.emit(gameData, VisualCueType.SPELL_RESOLVED, VisualCueService.Source.of(entry),
                 null, null, null);
+    }
+
+    /**
+     * An instant or sorcery spell whose gift was promised gives its controller's gift as it resolves, before its other
+     * effects (CR 702.174c, 702.174j), whether or not the chosen player gets the gift (Jolly Gerbils' ruling). A spell
+     * that doesn't resolve gives none.
+     */
+    private static void giveSpellGiftIfPromised(GameData gameData, StackEntry entry) {
+        if (isInstantOrSorcerySpell(entry) && entry.isGiftPromised() && entry.getCard() != null
+                && entry.getCard().getStaticEffects().stream().anyMatch(GiftEffect.class::isInstance)) {
+            ActionEvents.giftGiven(gameData, entry.getControllerId());
+        }
     }
 
     private static boolean isInstantOrSorcerySpell(StackEntry entry) {

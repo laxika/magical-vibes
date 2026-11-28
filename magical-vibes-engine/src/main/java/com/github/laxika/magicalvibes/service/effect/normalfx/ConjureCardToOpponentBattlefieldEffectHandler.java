@@ -71,7 +71,7 @@ public class ConjureCardToOpponentBattlefieldEffectHandler implements NormalEffe
                 opponentName + " receives a conjured ", conjuredCard, "."));
         ActionEvents.conjured(gameData, opponentId, 1);
         if (conjure.gift()) {
-            ActionEvents.giftGiven(gameData, entry.getControllerId());
+            ActionEvents.giftAbilityResolved(gameData, entry);
         }
     }
 }
