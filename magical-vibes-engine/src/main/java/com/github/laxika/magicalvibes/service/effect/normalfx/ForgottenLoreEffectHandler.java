@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.cost.ResolutionCostPaymentService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ForgottenLoreState;
@@ -44,6 +45,7 @@ public class ForgottenLoreEffectHandler implements NormalEffectHandlerBean {
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PermanentRemovalService permanentRemovalService;
     private final GameLogService gameLogService;
+    private final ResolutionCostPaymentService costPayment;
     @Autowired
     @Lazy
     private PotentialManaService potentialManaService;
@@ -180,12 +182,7 @@ public class ForgottenLoreEffectHandler implements NormalEffectHandlerBean {
     }
 
     private boolean pay(GameData gameData, UUID playerId, String repeatManaCost) {
-        ManaPool pool = gameData.playerManaPools.get(playerId);
-        ManaCost cost = new ManaCost(repeatManaCost);
-        if (pool == null || !cost.canPayResolutionCost(pool)) {
-            return false;
-        }
-        cost.payResolutionCost(pool);
-        return true;
+        // The controller pays for their own spell, so it is never a tax.
+        return costPayment.payManaFromPool(gameData, playerId, new ManaCost(repeatManaCost), playerId);
     }
 }

@@ -1833,6 +1833,21 @@ public class ResolutionCostPaymentService {
     }
 
     /**
+     * {@link #payManaFromPool(GameData, UUID, ManaCost, UUID)} for a cost with an {X}, paid with {@code xValue} for it;
+     * {@code false}, with nothing paid, when the pool can't pay that much.
+     */
+    public boolean payManaFromPool(GameData gameData, UUID payerId, ManaCost cost, int xValue, UUID taxingPlayerId) {
+        ManaPool pool = gameData.playerManaPools.get(payerId);
+        if (pool == null || cost.calculateMaxXForResolutionCost(pool) < xValue) {
+            return false;
+        }
+        int before = pool.getTotalAllMana();
+        cost.payResolutionCost(pool, xValue);
+        ActionEvents.taxPaid(gameData, payerId, taxingPlayerId, before - pool.getTotalAllMana());
+        return true;
+    }
+
+    /**
      * {@code cost} with {@code x} chosen for its X (CR 107.3f), as the mana cost then paid: mana spendable only on costs
      * with {X} may pay it, {B} with 2 life under K'rrik, and paying it records the {@code PAY_MANA} step and the tax as
      * any resolution-time mana payment ({@link #pay}).

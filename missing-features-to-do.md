@@ -414,6 +414,110 @@ Cover Bone Shards, Demand Answers, Minion Missile and Souls of the Lost, with te
 
 ---
 
+## 83. Free casts can't pay a non-mana additional or kicker cost, or choose it at announcement
+
+**Status:** open · **Found:** 2026-11-27, rules-fixes run FC-4 (refactors-to-do.md entry 18, lines N5, O86, O90 and O91); moved
+here 2026-11-28 by the owner
+
+**Failing tests:**
+- None yet. Add, each cast free from exile (`ExileFreeCastQueueSupport`) and from the top of a library: a kicker with a sacrifice,
+  tap or discard cost is offered and paid; a free Soaring Stoneglider exiles two graveyard cards instead of paying its mana
+  alternative; a free Feed the Cycle forages; Disruption Protocol (tap), Wild Unraveling (blight) and Soaring Stoneglider can be
+  cast from exile and from the top of the library; the additional-cost chooser is asked before the targets.
+
+**What the rules require.** CR 601.2b: as a spell is cast, its caster announces which additional and kicker costs they intend to
+pay, and that is before targets are chosen (CR 601.2c). The free-cast paths fall short in four ways:
+- N5: a free cast never offers a kicker with a non-mana cost (sacrifice, tap or discard). FC-4 made the mana kicker offered
+  whenever mana abilities could pay it (`ExileFreeCastSupport.offerKickerForFreeCast`, CR 601.2g).
+- O90: a free cast doesn't offer an "[A] or [B]" cost's graveyard-exile or forage alternative, so a free Soaring Stoneglider or
+  Feed the Cycle pays its mana alternative or is skipped.
+- O91: exile and library-top casts refuse tap, blight and graveyard-exile-or-mana spells (Disruption Protocol, Wild Unraveling,
+  Soaring Stoneglider) as "not supported from this zone". FC-3 made library top take an "[A] or [B]" cost of sacrifice, mana,
+  life and discard alternatives.
+- O86: the free-cast additional-cost chooser ("Choose how to pay the additional cost.") is asked after the targets. It changes
+  play for no card today.
+
+**Why it's large.** The free-cast flow needs pickers it doesn't have (a graveyard-exile picker, a Food picker, the non-mana kicker
+pickers) on the prepared entry, and the exile and library-top casts need request fields for them. Moving the chooser before the
+targets means carrying the chosen alternative through every free-cast target prompt (`ExileCastSpellTarget`,
+`LibraryCastSpellTarget`, `GraveyardCastSpellTarget`) to `beginSacrificeCostIfNeeded`. The AI has to answer each new prompt.
+
+**Prompt to start it:**
+
+```
+Do missing-features-to-do.md entry 83: let free casts and exile / library-top casts pay every non-mana additional and kicker
+cost, chosen as the spell is announced. Read AGENTS.md and agent-docs/ARCHITECTURE.md first, then ExileFreeCastQueueSupport,
+ExileFreeCastSupport.offerKickerForFreeCast, the free-cast target prompts (ExileCastSpellTarget, LibraryCastSpellTarget,
+GraveyardCastSpellTarget) and beginSacrificeCostIfNeeded, and the FC-3 / FC-4 Outcomes in rules-fixes.md (git show
+75990c830da:rules-fixes.md). Verify CR 601.2b, 601.2c and 601.2g with get_rule and the cards' Oracle text with get_card. Propose
+the pickers and request fields and show me before changing the protocol. Start with failing tests for the cards the entry
+names. Run only the touched test classes by FQCN. Don't commit.
+```
+
+## 84. A cast request can't name which alternative cost or cast permission to use
+
+**Status:** open · **Found:** 2026-11-27 and 2026-11-28, rules-fixes runs PP-1 and MC-2d (refactors-to-do.md entry 18, lines
+O47 and N80); moved here 2026-11-28 by the owner
+
+**Failing tests:**
+- None yet. Add: with Jaya Ballard's emblem, a graveyard card whose printed flashback cost can be paid can be cast through the
+  emblem for its mana cost instead; a card with both a perpetual evoke and a plain perpetual alternative cost (Aquatic
+  Subtlety's evoke on a blue artifact creature duplicate that Flames of Moradin conjured with its {R} cost) can be cast with
+  either.
+
+**What the rules require.** CR 601.2b and 118.9a: the caster announces which alternative cost they apply, and only one can be
+applied. The engine picks for them in two places:
+- N80: with Jaya Ballard's emblem, a card whose printed flashback cost can be paid is always cast with flashback, because the
+  graveyard request has no way to ask for the emblem's cast. The emblem casting for the mana cost, not with flashback, is
+  already right and pinned (P3).
+- O47: `GameQueryService.findGrantedAlternateCast` offers only the first granted perpetual alternative cost.
+
+**Why it's large.** A request field naming the chosen cost or permission has to be threaded through the about 14
+`playFlashbackSpell` overloads of `GameService` and `SpellCastingService`, `GameData.GraveyardCastReplay`,
+`PlayCardRequestDispatchService`, the websocket message, the frontend's cast flow and the AI.
+
+**Prompt to start it:**
+
+```
+Do missing-features-to-do.md entry 84: a cast request that names the alternative cost or cast permission the caster chose.
+Read AGENTS.md and agent-docs/ARCHITECTURE.md first, then GameQueryService.findGrantedAlternateCast, the playFlashbackSpell
+overloads in GameService and SpellCastingService, GameData.GraveyardCastReplay and PlayCardRequestDispatchService. Verify CR
+601.2b and 118.9a with get_rule. Propose the request field, the view data the client needs to offer the choice, and the AI's
+pick, and show me before changing the protocol. Start with failing tests for Jaya Ballard's emblem and the two perpetual
+costs. Run only the touched test classes by FQCN. Don't commit.
+```
+
+## 85. An exile play permission can't cast an Adventure
+
+**Status:** open · **Found:** 2026-11-27, rules-fixes runs CP-1 and FC-4 (refactors-to-do.md entry 18, line N77, with N11 and
+N12's rest); moved here 2026-11-28 by the owner
+
+**Failing tests:**
+- None yet. Add: Ragavan's or Daxos's "you may cast that card" on an exiled land card with an Adventure (one of the FIN towns)
+  lets its Adventure be cast but not the land be played; Nathan Drake, Treasure Hunter's exile cast can cast an Adventure.
+
+**What the rules require.** CR 716.3: as a player plays an adventurer card, they choose whether to play it normally or as an
+Adventure, and CR 716.3a: only the Adventure's characteristics are evaluated to see if it can be cast. The FIN towns' rulings let
+a "you may cast that card" effect cast the Adventure. No exile cast path does: `playCardFromExile` casts the card itself, the
+dispatch's `adventure` flag goes to the hand path, and `ExileReducedCastSupport.castFromExileWithNormalCostDuringResolution`
+also casts only the card. So `ExileTopCardMayPlayThisTurnEffect`'s `castOnly` gives such a land card no permission, and the
+permission can't be given without also letting the land be played.
+
+**Why it's large.** Every exile cast path (plain permission, reduced cost, free cast during resolution) needs an Adventure
+branch, and the request and the client have to say which half is cast.
+
+**Prompt to start it:**
+
+```
+Do missing-features-to-do.md entry 85: let an exile play or cast permission cast an adventurer card as an Adventure. Read
+AGENTS.md and agent-docs/ARCHITECTURE.md first, then playCardFromExile, the adventure flag in PlayCardRequestDispatchService,
+ExileReducedCastSupport.castFromExileWithNormalCostDuringResolution and ExileTopCardMayPlayThisTurnEffect. Verify CR 716.3 and
+716.3a with get_rule and the FIN towns' rulings with get_rulings. Start with failing tests (Ragavan or Daxos on a town, Nathan
+Drake, Treasure Hunter). Show me any protocol change first. Run only the touched test classes by FQCN. Don't commit.
+```
+
+---
+
 <!--
 Template — copy everything between the lines, give it the next number, and append above.
 

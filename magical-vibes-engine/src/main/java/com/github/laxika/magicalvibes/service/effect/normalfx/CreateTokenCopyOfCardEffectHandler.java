@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
  * Resolves {@link CreateTokenCopyOfCardEffect}: the copies of every card its subject names (or of its fixed or
  * triggering card) are created as one ordered token creation event (CR 616.1). A card the subject no longer finds where
  * it was put (CR 400.7) is not copied, so "exile it. Create a token that's a copy of it" copies nothing when nothing was
- * exiled.
+ * exiled. A card in exile face down has no characteristics to copy (CR 406.3a).
  */
 @Component
 @RequiredArgsConstructor
@@ -81,7 +81,7 @@ public class CreateTokenCopyOfCardEffectHandler implements NormalEffectHandlerBe
         }
         List<Card> sourceCards = new ArrayList<>();
         for (Card card : named) {
-            sourceCards.addAll(Collections.nCopies(copyCount, card));
+            sourceCards.addAll(Collections.nCopies(copyCount, copiedValues(gameData, card)));
         }
         CreateTokenCopyOfTargetPermanentEffect options = copyEffect.tokenCopyEffect();
         if (options.tappedAndAttacking() && options.chooseAttackTarget()) {
@@ -98,6 +98,14 @@ public class CreateTokenCopyOfCardEffectHandler implements NormalEffectHandlerBe
         }
         tokenCopySupport.createTokenCopies(gameData, entry, sourceCards, null,
                 tokenController(gameData, entry, options), options, attackTargetIds, creatureTypesInstead(copyEffect));
+    }
+
+    /**
+     * What a copy of {@code card} copies: nothing of a card in exile face down, which has no characteristics
+     * (CR 406.3a), else the card.
+     */
+    private static Card copiedValues(GameData gameData, Card card) {
+        return gameData.isExiledFaceDown(card.getId()) ? Card.namedRuntimePlaceholder("") : card;
     }
 
     /** "That player creates": the target player or the target permanent's controller; else the effect's controller. */

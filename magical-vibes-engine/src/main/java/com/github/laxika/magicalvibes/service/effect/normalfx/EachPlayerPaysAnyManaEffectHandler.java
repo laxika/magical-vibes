@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.cost.ResolutionCostPaymentService;
 import com.github.laxika.magicalvibes.model.EachPlayerPayManaState;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -45,6 +46,7 @@ public class EachPlayerPaysAnyManaEffectHandler implements NormalEffectHandlerBe
     private final LifeSupport lifeSupport;
     private final PotentialManaService potentialManaService;
     private final SubjectResolutionService subjectResolutionService;
+    private final ResolutionCostPaymentService costPayment;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -185,10 +187,11 @@ public class EachPlayerPaysAnyManaEffectHandler implements NormalEffectHandlerBe
         return low;
     }
 
+    /** Pays {@code amount}; no payment of this effect is a tax (Tax Taker), so none names a taxing player. */
     private void payNow(GameData gameData, UUID playerId, int amount, Resource resource, String cardName) {
         switch (resource) {
-            case MANA -> new ManaCost("{" + amount + "}").payResolutionCost(gameData.playerManaPools.get(playerId));
-            case X_MANA -> X_COST.payResolutionCost(gameData.playerManaPools.get(playerId), amount);
+            case MANA -> costPayment.payManaFromPool(gameData, playerId, new ManaCost("{" + amount + "}"), playerId);
+            case X_MANA -> costPayment.payManaFromPool(gameData, playerId, X_COST, amount, playerId);
             case ENERGY -> gameData.removePlayerEnergyCounters(playerId, amount);
             case LIFE -> lifeSupport.applyLifePayment(gameData, playerId, amount, cardName);
         }

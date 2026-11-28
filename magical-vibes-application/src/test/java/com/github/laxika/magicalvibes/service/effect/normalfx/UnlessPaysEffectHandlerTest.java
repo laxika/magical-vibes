@@ -424,6 +424,27 @@ class UnlessPaysEffectHandlerTest {
     }
 
     @Test
+    @DisplayName("A plain \"unless\" keeps the accepted players an earlier \"each player may\" choice of the entry recorded")
+    void plainUnlessKeepsAnEarlierChoicesAcceptedPlayers() {
+        gd.playerManaPools.get(player1Id).add(ManaColor.GREEN, 1);
+        gd.playerIdToName.put(player1Id, "Player1");
+        UnlessPaysEffect effect = UnlessPaysEffect.counterUnlessPays(1);
+        StackEntry entry = counterEntry(effect);
+        entry.setResolvingEffectIndex(0);
+        entry.setAcceptedPlayerIds(List.of(player2Id));
+        payerIsTheSpellsController(entry, effect);
+        gd.pendingEffectResolutionEntry = entry;
+        gd.pendingEffectResolutionIndex = 0;
+
+        assertThat(handler.nextStep(gd, entry, effect, 0)).isEqualTo(UnlessPaysEffectHandler.Step.ASK);
+        handler.resolve(gd, entry, effect);
+        handler.answer(gd, new Player(player1Id, "Player1"), true, gd.pendingMayAbilities.removeFirst(), effect);
+
+        assertThat(handler.nextStep(gd, entry, effect, 0)).isEqualTo(UnlessPaysEffectHandler.Step.PAID);
+        assertThat(entry.getAcceptedPlayerIds()).containsExactly(player2Id);
+    }
+
+    @Test
     @DisplayName("\"{G} for each wind counter\" reads as that many {G}, and as {0} with none")
     void manaPerAmountReadsAsThatManySymbols() {
         UnlessPaysEffect effect = UnlessPaysEffect.unlessYouPay(

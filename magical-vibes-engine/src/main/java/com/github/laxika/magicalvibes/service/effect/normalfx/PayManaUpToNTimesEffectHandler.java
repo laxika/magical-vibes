@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.cost.ResolutionCostPaymentService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -28,6 +29,7 @@ public class PayManaUpToNTimesEffectHandler implements NormalEffectHandlerBean {
     private final TriggeredAbilityStackService triggeredAbilityStackService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PotentialManaService potentialManaService;
+    private final ResolutionCostPaymentService costPayment;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -63,7 +65,7 @@ public class PayManaUpToNTimesEffectHandler implements NormalEffectHandlerBean {
 
             ManaCost payment = new ManaCost(e.manaCost());
             for (int i = 0; i < chosenPayments; i++) {
-                payment.payResolutionCost(pool);
+                costPayment.payManaFromPool(gameData, controllerId, payment, controllerId);
             }
             gameLogService.append(gameData, GameLog.text(
                     playerName + " pays " + e.manaCost() + " " + chosenPayments

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.cost.ResolutionCostPaymentService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -36,6 +37,7 @@ public class CopySpellForEachOtherCreatureWithManaEffectHandler implements Norma
     private final CopySupport copySupport;
     private final PlayerInputService playerInputService;
     private final PotentialManaService potentialManaService;
+    private final ResolutionCostPaymentService costPayment;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -115,7 +117,7 @@ public class CopySpellForEachOtherCreatureWithManaEffectHandler implements Norma
             cost.payResolutionCost(remaining);
         }
         for (int i = 0; i < chosenTargets.size(); i++) {
-            cost.payResolutionCost(pool);
+            costPayment.payManaFromPool(gameData, triggerEntry.getControllerId(), cost, triggerEntry.getControllerId());
         }
 
         for (Permanent target : chosenTargets) {

@@ -1116,7 +1116,12 @@ public class ManaCost {
         return canPayForSpecialAction(pool);
     }
 
-    /** Pays a resolution-time cost; see {@link #canPayResolutionCost(ManaPool)}. */
+    /**
+     * Pays a resolution-time cost from {@code pool}, only moving the mana; see {@link #canPayResolutionCost(ManaPool)}.
+     * A player's payment from their own pool goes through the engine's {@code ResolutionCostPaymentService}
+     * ({@code payManaFromPool}), which also raises the tax-paid event; call this directly only on a copied or virtual
+     * pool, to see what is affordable.
+     */
     public void payResolutionCost(ManaPool pool) {
         payForSpecialAction(pool);
     }

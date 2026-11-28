@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.cost;
 
+import com.github.laxika.magicalvibes.model.rules.ActionEvent;
 import com.github.laxika.magicalvibes.cards.e.ElvishSpiritGuide;
 import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -144,6 +145,21 @@ class ResolutionCostPaymentServiceTest {
         assertThat(service.canPay(gd, payerId, new PayManaCost("{2}"), null)).isTrue();
         assertThat(service.payManaFromPool(gd, payerId, new ManaCost("{2}"), UUID.randomUUID())).isTrue();
         assertThat(gd.playerManaPools.get(payerId).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    @DisplayName("An {X} cost is paid with the X chosen, raising the tax-paid event for the mana an opponent paid")
+    void xCostIsPaidWithItsXAsATax() {
+        gd.playerManaPools.get(payerId).add(ManaColor.GREEN, 3);
+        UUID taxingPlayerId = UUID.randomUUID();
+
+        assertThat(service.payManaFromPool(gd, payerId, new ManaCost("{X}"), 4, taxingPlayerId)).isFalse();
+        assertThat(gd.playerManaPools.get(payerId).getTotalAllMana()).isEqualTo(3);
+        assertThat(service.payManaFromPool(gd, payerId, new ManaCost("{X}"), 2, taxingPlayerId)).isTrue();
+
+        assertThat(gd.playerManaPools.get(payerId).getTotalAllMana()).isOne();
+        assertThat(gd.rulesEvents.pending().stream().flatMap(batch -> batch.events().stream()))
+                .containsExactly(new ActionEvent.TaxPaid(payerId, taxingPlayerId, 2));
     }
 
     @Test

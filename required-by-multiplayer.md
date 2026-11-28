@@ -68,3 +68,33 @@ the same result.
 **Needs.** Team play (Two-Headed Giant's shared turns and attacks). Then these effects say what their text says,
 `BoostEffect.allCreatures(…, attacking)` (an opponent's creatures can't be attacking on your turn), each with a test where a
 teammate's attacker gets the boost.
+
+## 5. Only the first opponent declares blockers
+
+**Found:** 2026-11-27, rules-fixes run CB-1 (refactors-to-do.md entry 18, line M11); moved here 2026-11-28 by the owner. CB-1
+fixed the `DefendingPlayer…` conditions.
+
+**Problem.** `CombatBlockService.handleDeclareBlockersStep`, `declareBlockers` and `getBlockableAttackerIndices` take the
+defending player as `getOpponentId`. So only the first opponent declares blockers, and that opponent may block every attacker,
+including the ones attacking another player.
+
+**Needs.** Each defending player declares blockers in APNAP order (CR 802.4), with only the creatures they control and only
+against the creatures attacking them, their planeswalkers or the battles they protect (CR 802.4a, 802.4b). That needs
+`CombatDamageService` to read more than one defending battlefield first (`buildBlockerMap` and its index-keyed damage state use
+`getOpponentId`'s), then the AI and the frontend. To settle as it is built: whether several defenders' blocks are one "one or
+more creatures become blocked" event.
+
+## 6. Sword-Point Diplomacy's caster doesn't choose the order of the revealed cards
+
+**Found:** 2026-11-27, rules-fixes run MC-1 (refactors-to-do.md entry 18, line O81); the owner chose the prompt 2026-11-28 and
+moved it here the same day
+
+**Problem.** Sword-Point Diplomacy reveals three cards, and for each one any opponent may pay 3 life to stop you from putting it
+into your hand. The engine processes the revealed cards in library order. Its ruling: "In a multiplayer game, each opponent in
+turn order chooses whether to pay life for one card before proceeding to the next card. You choose the order to perform this
+process for the cards". With one opponent, who sees every revealed card, the order changes no outcome.
+
+**Needs.** A caster prompt, card by card (the owner, 2026-11-28): the caster picks the next revealed card, each opponent in turn
+order chooses whether to pay life for it, then the caster picks the next. No player gets priority and no hidden information
+changes between the picks, so choosing the whole order up front would be equivalent. Test: in a three-player game, the caster's
+chosen order decides which card the second opponent can still afford to pay for.

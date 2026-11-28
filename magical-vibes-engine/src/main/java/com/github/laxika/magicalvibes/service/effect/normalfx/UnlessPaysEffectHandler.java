@@ -375,8 +375,11 @@ public class UnlessPaysEffectHandler implements NormalEffectHandlerBean {
             return unpaid.isEmpty() ? Step.NOTHING : Step.NOT_PAID;
         }
         if (state.currentPayer() == null) {
-            // "Those who didn't pay" (eachUnless) reads the payers who chose to pay (CR 101.4).
-            entry.setAcceptedPlayerIds(state.paidPlayerIds());
+            // "Those who didn't pay" (eachUnless) reads the payers who chose to pay (CR 101.4). No other branch reads
+            // them, so another "unless" keeps the accepted players of an earlier "each player may" choice of the entry.
+            if (unless.perPayer()) {
+                entry.setAcceptedPlayerIds(state.paidPlayerIds());
+            }
             if (unless.paidTogether() && state.anyPaid()) {
                 // The choices wait on the entry for paymentMadeTogether, which the resolution asks next.
                 entry.setUnlessAnswer(state);

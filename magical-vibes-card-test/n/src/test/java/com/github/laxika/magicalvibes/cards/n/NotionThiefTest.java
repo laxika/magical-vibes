@@ -161,6 +161,28 @@ class NotionThiefTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The draw Notion Thief makes instead stays a replaced draw after the new drawer's draw choice")
+    void redirectedDrawStaysReplacedAfterTheNewDrawersChoice() {
+        harness.addToBattlefield(player1, new NotionThief());
+        harness.addToBattlefield(player1, new Abundance());
+        Island island = new Island();
+        harness.setLibrary(player1, List.of(island));
+        harness.setLibrary(player2, List.of(new Forest()));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new Peek()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInHand(player1, "Island");
+        assertThat(gd.unreplacedDrawnCardIds).doesNotContain(island.getId());
+        assertThat(gd.drawEventDepth).isZero();
+    }
+
+    @Test
     @DisplayName("A Notion Thief that loses all abilities does not steal draws")
     void abilityLossStopsStealingDraws() {
         var thief = harness.addToBattlefieldAndReturn(player1, new NotionThief());

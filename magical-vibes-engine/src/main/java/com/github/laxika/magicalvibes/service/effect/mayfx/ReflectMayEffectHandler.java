@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.service.effect.mayfx;
 
+import com.github.laxika.magicalvibes.service.effect.cost.ResolutionCostPaymentService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaCost;
-import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -24,6 +24,7 @@ public class ReflectMayEffectHandler implements MayEffectHandlerBean {
     private final TriggeredAbilityStackService triggeredAbilityStackService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ReflectEffectHandler effectHandler;
     private final InputCompletionService inputCompletionService;
+    private final ResolutionCostPaymentService costPayment;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -33,7 +34,9 @@ public class ReflectMayEffectHandler implements MayEffectHandlerBean {
     @Override
     public void handle(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         var reflect = (ReflectEffect) ability.effects().getFirst();
-        if (accepted && pay(gameData, player, reflect.manaCost())) {
+        // A tax paid to the reflecting permanent's controller (Tax Taker).
+        if (accepted && costPayment.payManaFromPool(gameData, player.getId(), new ManaCost(reflect.manaCost()),
+                reflect.abilityControllerId())) {
             CreateTokenCopyOfSourceEffect copyEffect =
                     CreateTokenCopyOfSourceEffect.withoutSourceEffect(ReflectEffect.class);
             StackEntry tokenEntry = ReflexiveAbilitySupport.recordFor(gameData,
@@ -50,15 +53,5 @@ public class ReflectMayEffectHandler implements MayEffectHandlerBean {
 
         effectHandler.completeChoice(gameData, ability, reflect);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    private boolean pay(GameData gameData, Player player, String manaCost) {
-        ManaCost cost = new ManaCost(manaCost);
-        ManaPool pool = gameData.playerManaPools.get(player.getId());
-        if (!cost.canPayResolutionCost(pool)) {
-            return false;
-        }
-        cost.payResolutionCost(pool);
-        return true;
     }
 }

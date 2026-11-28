@@ -915,7 +915,7 @@ public class DrawService {
         boolean outermost = gameData.drawRedirectsAppliedToCurrentDraw.isEmpty();
         gameData.drawRedirectsAppliedToCurrentDraw.add(playerId);
         try {
-            resolveDrawCard(gameData, controllerId);
+            drawAsModifiedEvent(gameData, () -> resolveDrawCard(gameData, controllerId));
         } finally {
             if (outermost) {
                 gameData.drawRedirectsAppliedToCurrentDraw.clear();
@@ -1743,7 +1743,7 @@ public class DrawService {
         // A new draw of theirs, not one a doubling of their own made, so their doublers apply to it.
         gameData.currentDrawDoublingApplied.remove(drawerId);
         try {
-            resolveCurrentDrawCard(gameData, drawerId, false, null);
+            drawAsModifiedEvent(gameData, () -> resolveCurrentDrawCard(gameData, drawerId, false, null));
         } finally {
             if (outermost) {
                 gameData.extraDrawRedirectsAppliedToCurrentDraw.clear();
@@ -1797,15 +1797,25 @@ public class DrawService {
 
         UUID firstPlayerId = sourceControllerId.equals(gameData.activePlayerId) ? sourceControllerId : playerId;
         UUID secondPlayerId = firstPlayerId.equals(playerId) ? sourceControllerId : playerId;
-        // The two draws are the modified event, so neither is a draw the instruction asked for (CR 614.6). When a draw
-        // choice makes them wait, the event lasts until the waiting draws are performed.
-        gameData.drawEventDepth++;
-        boolean waiting = false;
-        try {
+        // The two draws are the modified event, so neither is a draw the instruction asked for.
+        drawAsModifiedEvent(gameData, () -> {
             resolveDrawCards(gameData, firstPlayerId, 1, null, true);
             if (gameData.status != GameStatus.FINISHED) {
                 resolveDrawCards(gameData, secondPlayerId, 1, null, true);
             }
+        });
+    }
+
+    /**
+     * Performs {@code draws}, the draws a replacement effect made instead of a draw, as that modified event: none of
+     * them is the draw the instruction asked for (CR 614.6). When a draw choice makes them wait, the event lasts until
+     * the waiting draws are performed ({@link PendingCardDraw#endOfModifiedEvent}).
+     */
+    private void drawAsModifiedEvent(GameData gameData, Runnable draws) {
+        gameData.drawEventDepth++;
+        boolean waiting = false;
+        try {
+            draws.run();
             waiting = gameData.status != GameStatus.FINISHED && drawChoicePending(gameData);
         } finally {
             if (waiting) {
